@@ -10,51 +10,41 @@
 
 <div class="glass-card">
 
-    <!-- ========== ШАПКА ========== -->
+    <!-- ===== ШАПКА ===== -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <h1>📸 Фото → XML</h1>
         <span style="color:#6a6a8a;font-size:0.9rem;">Протоколы охраны труда</span>
     </div>
-    <p class="subtitle">Сфоткай протокол → ИИ распознает → получи XML</p>
+    <p class="subtitle">Сфотографируйте протокол → ИИ распознает → заполнит форму → вы получите XML</p>
 
-    <!-- ========== ВКЛАДКИ ========== -->
+    <!-- ===== ВКЛАДКИ ===== -->
     <div class="tab">
-        <button class="active" onclick="showTab('protocol')">📷 Фото + Данные</button>
+        <button class="active" onclick="showTab('protocol')">📝 Данные</button>
+        <button onclick="showTab('photo')">📷 Фото</button>
         <button onclick="showTab('employees')">👤 Сотрудники</button>
         <button onclick="showTab('history')">📄 История</button>
     </div>
 
     <!-- ============================================================ -->
-    <!-- ===== ВКЛАДКА 1: ФОТО + ДАННЫЕ ===== -->
+    <!-- ===== ВКЛАДКА 1: ДАННЫЕ ===== -->
     <!-- ============================================================ -->
     <div id="tabProtocol">
 
-        <!-- БЛОК ЗАГРУЗКИ ФОТО -->
-        <div class="upload-area" id="uploadArea">
-            <span class="upload-icon">📷</span>
-            <p style="font-weight:500;">Нажми, чтобы сфоткать протокол</p>
-            <p style="color:#6a6a8a;font-size:0.9rem;">или выбери фото из галереи</p>
-            <input type="file" id="fileInput" accept="image/*" capture="environment">
+        <!-- === ОРГАНИЗАЦИЯ === -->
+        <h3>🏢 Организация</h3>
+        <div class="form-group">
+            <label>Название организации</label>
+            <input type="text" id="orgTitle" placeholder="Например: ООО Бэби-Бум">
+        </div>
+        <div class="form-group">
+            <label>ИНН организации</label>
+            <input type="text" id="orgInn" placeholder="Например: 2634800610">
         </div>
 
-        <!-- Превью фото -->
-        <div id="photoPreview" class="hidden" style="margin:16px 0;">
-            <img id="imagePreview" src="#" alt="Фото протокола" style="max-width:100%;border-radius:14px;border:1px solid rgba(255,255,255,0.1);">
-            <button class="btn-primary" onclick="recognizePhoto()" style="margin-top:12px;">🧠 Распознать ИИ</button>
-        </div>
+        <hr style="border-color:rgba(255,255,255,0.1);margin:20px 0;">
 
-        <!-- РЕЗУЛЬТАТ РАСПОЗНАВАНИЯ -->
-        <div id="recognitionResult" class="hidden" style="margin-top:16px;padding:16px;background:rgba(255,255,255,0.04);border-radius:12px;">
-            <h3>✅ Распознано:</h3>
-            <div id="recognizedData"></div>
-            <button class="btn-secondary" onclick="fillFormFromRecognition()" style="margin-top:8px;">📥 Заполнить форму</button>
-        </div>
-
-        <hr style="border-color:rgba(255,255,255,0.1);margin:24px 0;">
-
-        <!-- ===== ФОРМА ДАННЫХ ===== -->
-        <h3>📝 Данные протокола</h3>
-
+        <!-- === ПРОТОКОЛ === -->
+        <h3>📋 Протокол</h3>
         <div class="form-group">
             <label>Номер протокола</label>
             <input type="text" id="protocolNumber" placeholder="Например: 01/26">
@@ -63,36 +53,34 @@
             <label>Дата</label>
             <input type="date" id="protocolDate">
         </div>
-        <div class="form-group">
-            <label>ИНН организации</label>
-            <input type="text" id="orgInn" placeholder="2634800610">
-        </div>
-        <div class="form-group">
-            <label>Название организации</label>
-            <input type="text" id="orgTitle" placeholder="ООО Ромашка">
-        </div>
 
-        <!-- ===== ВЫБОР ПРОГРАММЫ ===== -->
+        <hr style="border-color:rgba(255,255,255,0.1);margin:20px 0;">
+
+        <!-- === ПРОГРАММЫ ОБУЧЕНИЯ === -->
+        <h3>📚 Программа обучения</h3>
         <div class="form-group">
-            <label>📚 Программа обучения</label>
-            <select id="programSelect">
-                <option value="1">Оказание первой помощи пострадавшим</option>
-                <option value="2">Использование (применение) СИЗ</option>
-                <option value="3">Общие вопросы охраны труда и СУОТ</option>
-                <option value="4">Безопасные методы и приемы работ при воздействии вредных факторов</option>
+            <label>Выберите программу:</label>
+            <select id="programSelect" style="padding:10px;background:rgba(255,255,255,0.07);border-radius:12px;color:#fff;">
+                <option value="1">1. Оказание первой помощи пострадавшим</option>
+                <option value="2">2. Использование (применение) СИЗ</option>
+                <option value="3">3. Общие вопросы охраны труда и СУОТ</option>
+                <option value="4">4. Безопасные методы и приемы работ при воздействии вредных факторов</option>
             </select>
         </div>
 
-        <!-- ===== СОТРУДНИКИ ===== -->
-        <h3 style="margin-top:20px;">👥 Сотрудники</h3>
+        <hr style="border-color:rgba(255,255,255,0.1);margin:20px 0;">
+
+        <!-- === СОТРУДНИКИ === -->
+        <h3>👥 Сотрудники</h3>
+        <p style="color:#a0a0c0;font-size:0.9rem;margin-bottom:12px;">Добавьте сотрудников вручную или распознайте из фото</p>
         <div id="employeesList"></div>
         <button class="btn-secondary" onclick="addEmployeeRow()" style="margin:12px 0;">➕ Добавить сотрудника</button>
 
-        <!-- ===== КНОПКИ ГЕНЕРАЦИИ ===== -->
+        <!-- === КНОПКИ ГЕНЕРАЦИИ === -->
         <button class="btn-primary" onclick="generateXML(false)" style="margin-top:8px;">⚡ Создать XML (выбранная программа)</button>
         <button class="btn-secondary" onclick="generateXML(true)" style="margin-top:8px;">📦 Создать XML для ВСЕХ программ (1-4)</button>
 
-        <!-- РЕЗУЛЬТАТ ГЕНЕРАЦИИ -->
+        <!-- РЕЗУЛЬТАТ -->
         <div id="result" class="hidden">
             <h3>✅ XML готов!</h3>
             <p><a id="downloadLink" href="#" download>📥 Скачать XML</a></p>
@@ -101,17 +89,45 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- ===== ВКЛАДКА 2: СОТРУДНИКИ ===== -->
+    <!-- ===== ВКЛАДКА 2: ФОТО ===== -->
+    <!-- ============================================================ -->
+    <div id="tabPhoto" class="hidden">
+        <h3>📷 Загрузите фото протокола</h3>
+        <p style="color:#a0a0c0;font-size:0.9rem;">ИИ распознает данные и заполнит форму</p>
+
+        <div class="upload-area" id="uploadArea">
+            <span class="upload-icon">📷</span>
+            <p style="font-weight:500;">Нажми, чтобы выбрать фото</p>
+            <p style="color:#6a6a8a;font-size:0.9rem;">или перетащите файл сюда</p>
+            <input type="file" id="fileInput" accept="image/*" capture="environment">
+        </div>
+
+        <div id="photoPreview" class="hidden" style="margin-top:16px;">
+            <img id="imagePreview" src="#" alt="Фото протокола" style="max-width:100%;border-radius:14px;border:1px solid rgba(255,255,255,0.1);">
+            <button class="btn-primary" onclick="recognizePhoto()" style="margin-top:12px;">🧠 Распознать данные</button>
+        </div>
+
+        <div id="recognitionResult" class="hidden" style="margin-top:16px;padding:16px;background:rgba(0,212,255,0.05);border-radius:12px;">
+            <h3>✅ Распознано:</h3>
+            <div id="recognizedData"></div>
+            <button class="btn-secondary" onclick="fillFormFromRecognition()" style="margin-top:8px;">📥 Заполнить форму</button>
+            <button class="btn-secondary" onclick="goToDataTab()" style="margin-top:8px;margin-left:8px;">📝 Перейти к данным</button>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ===== ВКЛАДКА 3: СОТРУДНИКИ ===== -->
     <!-- ============================================================ -->
     <div id="tabEmployees" class="hidden">
-        <h3>👤 База сотрудников (СНИЛС)</h3>
-        <p style="color:#a0a0c0;font-size:0.9rem;">Сотрудники сохраняются в браузере. При распознавании ФИО — СНИЛС подставится автоматически.</p>
+        <h3>👤 База сотрудников</h3>
+        <p style="color:#a0a0c0;font-size:0.9rem;">Сотрудники сохраняются автоматически при создании протокола.</p>
+        <p style="color:#a0a0c0;font-size:0.9rem;">При распознавании фото СНИЛС подставится автоматически.</p>
         <div id="employeeDB"></div>
         <button class="btn-secondary" onclick="clearEmployees()" style="margin-top:12px;">🗑 Очистить базу</button>
     </div>
 
     <!-- ============================================================ -->
-    <!-- ===== ВКЛАДКА 3: ИСТОРИЯ ===== -->
+    <!-- ===== ВКЛАДКА 4: ИСТОРИЯ ===== -->
     <!-- ============================================================ -->
     <div id="tabHistory" class="hidden">
         <h3>📄 История протоколов</h3>
