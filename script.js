@@ -1,5 +1,5 @@
 // ============================================================
-// ХРАНИЛИЩЕ (localStorage)
+// ХРАНИЛИЩЕ
 // ============================================================
 function getEmployees() {
     return JSON.parse(localStorage.getItem('employees') || '[]');
@@ -23,42 +23,85 @@ function showTab(name) {
     if (name === 'protocol') {
         document.getElementById('tabProtocol').classList.remove('hidden');
         document.querySelector('.tab button:nth-child(1)').classList.add('active');
+    } else if (name === 'photo') {
+        document.getElementById('tabPhoto').classList.remove('hidden');
+        document.querySelector('.tab button:nth-child(2)').classList.add('active');
     } else if (name === 'employees') {
         document.getElementById('tabEmployees').classList.remove('hidden');
-        document.querySelector('.tab button:nth-child(2)').classList.add('active');
+        document.querySelector('.tab button:nth-child(3)').classList.add('active');
         renderEmployeeDB();
     } else if (name === 'history') {
         document.getElementById('tabHistory').classList.remove('hidden');
-        document.querySelector('.tab button:nth-child(3)').classList.add('active');
+        document.querySelector('.tab button:nth-child(4)').classList.add('active');
         renderHistory();
     }
 }
 
+function goToDataTab() {
+    showTab('protocol');
+}
+
 // ============================================================
-// ФОТО + РАСПОЗНАВАНИЕ (ЗАГЛУШКА)
+// ФОТО + РАСПОЗНАВАНИЕ
 // ============================================================
 let uploadedFile = null;
 let recognizedEmployees = [];
 
-document.getElementById('fileInput').addEventListener('change', function(e) {
-    if (e.target.files.length > 0) {
-        uploadedFile = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-            document.getElementById('imagePreview').src = ev.target.result;
-            document.getElementById('photoPreview').classList.remove('hidden');
-            document.getElementById('uploadArea').style.display = 'none';
-        };
-        reader.readAsDataURL(uploadedFile);
-    }
-});
+const fileInput = document.getElementById('fileInput');
+if (fileInput) {
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            uploadedFile = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                document.getElementById('imagePreview').src = ev.target.result;
+                document.getElementById('photoPreview').classList.remove('hidden');
+                document.getElementById('uploadArea').style.display = 'none';
+            };
+            reader.readAsDataURL(uploadedFile);
+        }
+    });
+}
+
+// Обработка перетаскивания
+const uploadArea = document.getElementById('uploadArea');
+if (uploadArea) {
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#7c3aed';
+        this.style.background = 'rgba(124, 58, 237, 0.1)';
+    });
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.style.borderColor = 'rgba(124, 58, 237, 0.4)';
+        this.style.background = 'rgba(255,255,255,0.03)';
+    });
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.borderColor = 'rgba(124, 58, 237, 0.4)';
+        this.style.background = 'rgba(255,255,255,0.03)';
+        if (e.dataTransfer.files.length > 0) {
+            uploadedFile = e.dataTransfer.files[0];
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                document.getElementById('imagePreview').src = ev.target.result;
+                document.getElementById('photoPreview').classList.remove('hidden');
+                document.getElementById('uploadArea').style.display = 'none';
+            };
+            reader.readAsDataURL(uploadedFile);
+        }
+    });
+}
 
 function recognizePhoto() {
     if (!uploadedFile) {
         alert('Сначала загрузите фото!');
         return;
     }
-    // ЗАГЛУШКА: имитация распознавания
+
+    // ============================================
+    // ЗАГЛУШКА — здесь будет реальное ИИ
+    // ============================================
     const mockData = {
         protocol_number: "01/26",
         date: "2026-06-23",
@@ -71,13 +114,15 @@ function recognizePhoto() {
     };
 
     recognizedEmployees = mockData.employees;
-    let html = `<p><strong>Номер:</strong> ${mockData.protocol_number}</p>
-                <p><strong>Дата:</strong> ${mockData.date}</p>
-                <p><strong>ИНН:</strong> ${mockData.org_inn}</p>
-                <p><strong>Организация:</strong> ${mockData.org_title}</p>
-                <p><strong>Сотрудники (${mockData.employees.length}):</strong></p><ul>`;
+
+    let html = `<p><strong>📌 Номер:</strong> ${mockData.protocol_number}</p>
+                <p><strong>📅 Дата:</strong> ${mockData.date}</p>
+                <p><strong>🏢 ИНН:</strong> ${mockData.org_inn}</p>
+                <p><strong>🏢 Организация:</strong> ${mockData.org_title}</p>
+                <p><strong>👥 Сотрудники (${mockData.employees.length}):</strong></p>
+                <ul>`;
     mockData.employees.forEach(e => {
-        html += `<li>${e.last_name} ${e.first_name} — ${e.position} (${e.is_passed ? '✅ сдал' : '❌ не сдал'})</li>`;
+        html += `<li>${e.last_name} ${e.first_name} ${e.middle_name || ''} — ${e.position} (${e.is_passed ? '✅ сдал' : '❌ не сдал'})</li>`;
     });
     html += '</ul>';
     document.getElementById('recognizedData').innerHTML = html;
@@ -85,15 +130,16 @@ function recognizePhoto() {
 }
 
 function fillFormFromRecognition() {
-    document.getElementById('protocolNumber').value = '01/26';
-    document.getElementById('protocolDate').value = '2026-06-23';
-    document.getElementById('orgInn').value = '2634800610';
     document.getElementById('orgTitle').value = "ООО 'Бэби-Бум'";
+    document.getElementById('orgInn').value = "2634800610";
+    document.getElementById('protocolNumber').value = "01/26";
+    document.getElementById('protocolDate').value = "2026-06-23";
     
     document.getElementById('employeesList').innerHTML = '';
     recognizedEmployees.forEach(emp => {
         addEmployeeRow(emp);
     });
+    showTab('protocol');
 }
 
 // ============================================================
@@ -171,7 +217,7 @@ function generateXML(allPrograms = false) {
     const selectedProgramId = parseInt(document.getElementById('programSelect').value);
 
     if (!protocolNumber || !date || !orgInn || !orgTitle) {
-        alert('Заполните все поля протокола (номер, дата, ИНН, организация)');
+        alert('Заполните все поля: организация, номер протокола и дата');
         return;
     }
     if (employees.length === 0) {
@@ -365,10 +411,3 @@ document.addEventListener('input', function(e) {
 // ============================================================
 function init() {
     renderHistory();
-    renderEmployeeDB();
-    if (document.querySelectorAll('.employee-row').length === 0) {
-        addEmployeeRow();
-    }
-}
-
-init();
