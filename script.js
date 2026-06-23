@@ -1,12 +1,6 @@
 // ============================================================
-// ХРАНИЛИЩЕ
+// ХРАНИЛИЩЕ (localStorage)
 // ============================================================
-function getUsers() {
-    return JSON.parse(localStorage.getItem('users') || '{}');
-}
-function saveUsers(users) {
-    localStorage.setItem('users', JSON.stringify(users));
-}
 function getEmployees() {
     return JSON.parse(localStorage.getItem('employees') || '[]');
 }
@@ -18,70 +12,6 @@ function getHistory() {
 }
 function saveHistory(history) {
     localStorage.setItem('history', JSON.stringify(history));
-}
-let currentUser = localStorage.getItem('currentUser') || null;
-
-// ============================================================
-// АВТОРИЗАЦИЯ
-// ============================================================
-function showRegister() {
-    document.getElementById('loginForm').classList.add('hidden');
-    document.getElementById('registerForm').classList.remove('hidden');
-    document.getElementById('authMessage').classList.add('hidden');
-}
-function showLogin() {
-    document.getElementById('registerForm').classList.add('hidden');
-    document.getElementById('loginForm').classList.remove('hidden');
-    document.getElementById('authMessage').classList.add('hidden');
-}
-function register() {
-    const username = document.getElementById('regUsername').value.trim();
-    const pass = document.getElementById('regPassword').value;
-    const pass2 = document.getElementById('regPassword2').value;
-    const msg = document.getElementById('authMessage');
-    if (!username || !pass || !pass2) { showAuthMsg('Заполните все поля', 'error'); return; }
-    if (pass !== pass2) { showAuthMsg('Пароли не совпадают', 'error'); return; }
-    if (pass.length < 4) { showAuthMsg('Пароль ≥ 4 символов', 'error'); return; }
-    const users = getUsers();
-    if (users[username]) { showAuthMsg('Пользователь уже есть', 'error'); return; }
-    users[username] = { password: pass };
-    saveUsers(users);
-    showAuthMsg('Регистрация успешна! Войдите.', 'success');
-    showLogin();
-}
-function login() {
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const msg = document.getElementById('authMessage');
-    if (!username || !password) { showAuthMsg('Введите логин и пароль', 'error'); return; }
-    const users = getUsers();
-    if (!users[username] || users[username].password !== password) {
-        showAuthMsg('Неверный логин или пароль', 'error');
-        return;
-    }
-    currentUser = username;
-    localStorage.setItem('currentUser', currentUser);
-    document.getElementById('authSection').classList.add('hidden');
-    document.getElementById('mainSection').classList.remove('hidden');
-    renderEmployees();
-    renderHistory();
-    renderEmployeeDB();
-    if (document.querySelectorAll('.employee-row').length === 0) addEmployeeRow();
-}
-function logout() {
-    currentUser = null;
-    localStorage.removeItem('currentUser');
-    document.getElementById('mainSection').classList.add('hidden');
-    document.getElementById('authSection').classList.remove('hidden');
-    document.getElementById('loginForm').classList.remove('hidden');
-    document.getElementById('registerForm').classList.add('hidden');
-    document.getElementById('authMessage').classList.add('hidden');
-}
-function showAuthMsg(text, type) {
-    const msg = document.getElementById('authMessage');
-    msg.textContent = text;
-    msg.className = 'flash ' + type;
-    msg.classList.remove('hidden');
 }
 
 // ============================================================
@@ -105,7 +35,7 @@ function showTab(name) {
 }
 
 // ============================================================
-// ФОТО + РАСПОЗНАВАНИЕ (ИИ ЗАГЛУШКА)
+// ФОТО + РАСПОЗНАВАНИЕ (ЗАГЛУШКА)
 // ============================================================
 let uploadedFile = null;
 let recognizedEmployees = [];
@@ -128,7 +58,7 @@ function recognizePhoto() {
         alert('Сначала загрузите фото!');
         return;
     }
-    // Имитация распознавания (в реальности тут будет API нейросети)
+    // ЗАГЛУШКА: имитация распознавания
     const mockData = {
         protocol_number: "01/26",
         date: "2026-06-23",
@@ -145,7 +75,7 @@ function recognizePhoto() {
                 <p><strong>Дата:</strong> ${mockData.date}</p>
                 <p><strong>ИНН:</strong> ${mockData.org_inn}</p>
                 <p><strong>Организация:</strong> ${mockData.org_title}</p>
-                <p><strong>Сотрудники:</strong></p><ul>`;
+                <p><strong>Сотрудники (${mockData.employees.length}):</strong></p><ul>`;
     mockData.employees.forEach(e => {
         html += `<li>${e.last_name} ${e.first_name} — ${e.position} (${e.is_passed ? '✅ сдал' : '❌ не сдал'})</li>`;
     });
@@ -155,22 +85,19 @@ function recognizePhoto() {
 }
 
 function fillFormFromRecognition() {
-    // Заполняем форму данными из распознавания
     document.getElementById('protocolNumber').value = '01/26';
     document.getElementById('protocolDate').value = '2026-06-23';
     document.getElementById('orgInn').value = '2634800610';
     document.getElementById('orgTitle').value = "ООО 'Бэби-Бум'";
     
-    // Очищаем список сотрудников и добавляем распознанных
     document.getElementById('employeesList').innerHTML = '';
     recognizedEmployees.forEach(emp => {
         addEmployeeRow(emp);
     });
-    // СНИЛС подставится автоматически, если есть в базе
 }
 
 // ============================================================
-// РАБОТА С СОТРУДНИКАМИ
+// СОТРУДНИКИ
 // ============================================================
 function addEmployeeRow(data) {
     const container = document.getElementById('employeesList');
@@ -193,7 +120,6 @@ function addEmployeeRow(data) {
         </div>
     `;
     container.appendChild(div);
-    // Автоподстановка СНИЛС
     setTimeout(() => autoFillSnilsForRow(div), 100);
 }
 
@@ -236,10 +162,6 @@ function autoFillSnilsForRow(row) {
 // ============================================================
 // ГЕНЕРАЦИЯ XML
 // ============================================================
-function generateXML_AllPrograms() {
-    generateXML(true);
-}
-
 function generateXML(allPrograms = false) {
     const protocolNumber = document.getElementById('protocolNumber').value.trim();
     const date = document.getElementById('protocolDate').value;
@@ -317,6 +239,23 @@ function generateXML(allPrograms = false) {
     });
     saveHistory(history);
 
+    // Сохраняем сотрудников в базу
+    const existing = getEmployees();
+    employees.forEach(emp => {
+        if (!emp.snils) return;
+        const found = existing.find(e =>
+            e.last_name === emp.last_name &&
+            e.first_name === emp.first_name &&
+            e.position === emp.position
+        );
+        if (!found) {
+            existing.push({ ...emp });
+        } else {
+            found.snils = emp.snils;
+        }
+    });
+    saveEmployees(existing);
+
     // Скачиваем
     const blob = new Blob([xml], { type: 'application/xml' });
     const url = URL.createObjectURL(blob);
@@ -325,6 +264,7 @@ function generateXML(allPrograms = false) {
     document.getElementById('result').classList.remove('hidden');
 
     renderHistory();
+    renderEmployeeDB();
     alert('✅ XML создан! Нажмите "Скачать XML"');
 }
 
@@ -340,7 +280,7 @@ function renderEmployeeDB() {
     const container = document.getElementById('employeeDB');
     const employees = getEmployees();
     if (employees.length === 0) {
-        container.innerHTML = '<p style="color:#6a6a8a;">База пуста. Сотрудники добавляются при создании протокола.</p>';
+        container.innerHTML = '<p style="color:#6a6a8a;">База пуста. Сотрудники добавляются автоматически при создании протокола.</p>';
         return;
     }
     let html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;margin-top:12px;">';
@@ -379,4 +319,56 @@ function renderHistory() {
         html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
             <td style="padding:8px;">${item.protocolNumber}</td>
             <td style="padding:8px;">${item.date}</td>
-            <td style="padding:8px;">${item.orgTitle}</
+            <td style="padding:8px;">${item.orgTitle || ''}</td>
+            <td style="padding:8px;">${item.programs || ''}</td>
+            <td style="padding:8px;">${item.employees || ''}</td>
+        </tr>`;
+    });
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+function clearHistory() {
+    if (confirm('Удалить всю историю?')) {
+        saveHistory([]);
+        renderHistory();
+    }
+}
+
+// ============================================================
+// АВТОПОДСТАНОВКА СНИЛС (глобальная)
+// ============================================================
+document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('emp-snils') && e.target.value === '') {
+        const row = e.target.closest('.employee-row');
+        if (!row) return;
+        const last = row.querySelector('.emp-last').value.trim();
+        const first = row.querySelector('.emp-first').value.trim();
+        const middle = row.querySelector('.emp-middle').value.trim();
+        const position = row.querySelector('.emp-position').value.trim();
+        if (!last || !first) return;
+        const employees = getEmployees();
+        const found = employees.find(emp =>
+            emp.last_name.toLowerCase() === last.toLowerCase() &&
+            emp.first_name.toLowerCase() === first.toLowerCase() &&
+            (emp.middle_name || '').toLowerCase() === (middle || '').toLowerCase() &&
+            emp.position.toLowerCase() === position.toLowerCase()
+        );
+        if (found && found.snils) {
+            e.target.value = found.snils;
+        }
+    }
+});
+
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================================
+function init() {
+    renderHistory();
+    renderEmployeeDB();
+    if (document.querySelectorAll('.employee-row').length === 0) {
+        addEmployeeRow();
+    }
+}
+
+init();
