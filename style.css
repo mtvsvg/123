@@ -57,7 +57,7 @@ input, select {
     font-size: 1rem;
     outline: none;
 }
-input:focus {
+input:focus, select:focus {
     border-color: #7c3aed;
     box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.3);
 }
@@ -91,6 +91,27 @@ input::placeholder {
 }
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.15);
+}
+.upload-area {
+    border: 2px dashed rgba(124, 58, 237, 0.4);
+    border-radius: 16px;
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: rgba(255, 255, 255, 0.03);
+}
+.upload-area:hover {
+    border-color: #7c3aed;
+    background: rgba(124, 58, 237, 0.08);
+}
+.upload-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    display: block;
+}
+.upload-area input {
+    display: none;
 }
 .employee-card {
     background: rgba(255, 255, 255, 0.05);
@@ -179,19 +200,15 @@ input::placeholder {
     border: 1px solid rgba(0, 212, 255, 0.25);
     color: #00d4ff;
 }
-.nav-links {
-    margin-top: 20px;
-    display: flex;
-    gap: 16px;
-    justify-content: center;
+#photoPreview img {
+    max-width: 100%;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.1);
 }
-.nav-links a {
-    color: #a0a0c0;
-    text-decoration: none;
-    font-weight: 500;
-}
-.nav-links a:hover {
-    color: #00d4ff;
+#recognitionResult {
+    background: rgba(0, 212, 255, 0.05);
+    border-radius: 14px;
+    padding: 16px;
 }
 @media (max-width: 600px) {
     .glass-card { padding: 20px 16px; }
