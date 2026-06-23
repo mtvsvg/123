@@ -42,11 +42,12 @@ function goToDataTab() {
 }
 
 // ============================================================
-// ФОТО + РАСПОЗНАВАНИЕ
+// ФОТО
 // ============================================================
 let uploadedFile = null;
 let recognizedEmployees = [];
 
+// Загрузка через кнопку
 const fileInput = document.getElementById('fileInput');
 if (fileInput) {
     fileInput.addEventListener('change', function(e) {
@@ -63,7 +64,7 @@ if (fileInput) {
     });
 }
 
-// Обработка перетаскивания
+// Перетаскивание
 const uploadArea = document.getElementById('uploadArea');
 if (uploadArea) {
     uploadArea.addEventListener('dragover', function(e) {
@@ -99,9 +100,7 @@ function recognizePhoto() {
         return;
     }
 
-    // ============================================
-    // ЗАГЛУШКА — здесь будет реальное ИИ
-    // ============================================
+    // ЗАГЛУШКА - имитация распознавания
     const mockData = {
         protocol_number: "01/26",
         date: "2026-06-23",
@@ -411,3 +410,10 @@ document.addEventListener('input', function(e) {
 // ============================================================
 function init() {
     renderHistory();
+    renderEmployeeDB();
+    if (document.querySelectorAll('.employee-row').length === 0) {
+        addEmployeeRow();
+    }
+}
+
+init();
