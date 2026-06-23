@@ -1,5 +1,5 @@
 // ============================================================
-// 1. ХРАНИЛИЩЕ (localStorage)
+// ХРАНИЛИЩЕ
 // ============================================================
 function getUsers() {
     return JSON.parse(localStorage.getItem('users') || '{}');
@@ -19,11 +19,10 @@ function getHistory() {
 function saveHistory(history) {
     localStorage.setItem('history', JSON.stringify(history));
 }
-
 let currentUser = localStorage.getItem('currentUser') || null;
 
 // ============================================================
-// 2. АВТОРИЗАЦИЯ
+// АВТОРИЗАЦИЯ
 // ============================================================
 function showRegister() {
     document.getElementById('loginForm').classList.add('hidden');
@@ -35,54 +34,31 @@ function showLogin() {
     document.getElementById('loginForm').classList.remove('hidden');
     document.getElementById('authMessage').classList.add('hidden');
 }
-
 function register() {
     const username = document.getElementById('regUsername').value.trim();
     const pass = document.getElementById('regPassword').value;
     const pass2 = document.getElementById('regPassword2').value;
     const msg = document.getElementById('authMessage');
-
-    if (!username || !pass || !pass2) {
-        showAuthMsg('Заполните все поля', 'error');
-        return;
-    }
-    if (pass !== pass2) {
-        showAuthMsg('Пароли не совпадают', 'error');
-        return;
-    }
-    if (pass.length < 4) {
-        showAuthMsg('Пароль должен быть не менее 4 символов', 'error');
-        return;
-    }
-
+    if (!username || !pass || !pass2) { showAuthMsg('Заполните все поля', 'error'); return; }
+    if (pass !== pass2) { showAuthMsg('Пароли не совпадают', 'error'); return; }
+    if (pass.length < 4) { showAuthMsg('Пароль ≥ 4 символов', 'error'); return; }
     const users = getUsers();
-    if (users[username]) {
-        showAuthMsg('Пользователь уже существует', 'error');
-        return;
-    }
-
+    if (users[username]) { showAuthMsg('Пользователь уже есть', 'error'); return; }
     users[username] = { password: pass };
     saveUsers(users);
     showAuthMsg('Регистрация успешна! Войдите.', 'success');
     showLogin();
 }
-
 function login() {
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
     const msg = document.getElementById('authMessage');
-
-    if (!username || !password) {
-        showAuthMsg('Введите логин и пароль', 'error');
-        return;
-    }
-
+    if (!username || !password) { showAuthMsg('Введите логин и пароль', 'error'); return; }
     const users = getUsers();
     if (!users[username] || users[username].password !== password) {
         showAuthMsg('Неверный логин или пароль', 'error');
         return;
     }
-
     currentUser = username;
     localStorage.setItem('currentUser', currentUser);
     document.getElementById('authSection').classList.add('hidden');
@@ -90,11 +66,8 @@ function login() {
     renderEmployees();
     renderHistory();
     renderEmployeeDB();
-    if (document.querySelectorAll('.employee-row').length === 0) {
-        addEmployeeRow();
-    }
+    if (document.querySelectorAll('.employee-row').length === 0) addEmployeeRow();
 }
-
 function logout() {
     currentUser = null;
     localStorage.removeItem('currentUser');
@@ -104,7 +77,6 @@ function logout() {
     document.getElementById('registerForm').classList.add('hidden');
     document.getElementById('authMessage').classList.add('hidden');
 }
-
 function showAuthMsg(text, type) {
     const msg = document.getElementById('authMessage');
     msg.textContent = text;
@@ -113,7 +85,7 @@ function showAuthMsg(text, type) {
 }
 
 // ============================================================
-// 3. ВКЛАДКИ
+// ВКЛАДКИ
 // ============================================================
 function showTab(name) {
     document.querySelectorAll('.tab button').forEach(b => b.classList.remove('active'));
@@ -133,7 +105,72 @@ function showTab(name) {
 }
 
 // ============================================================
-// 4. РАБОТА С СОТРУДНИКАМИ (в протоколе)
+// ФОТО + РАСПОЗНАВАНИЕ (ИИ ЗАГЛУШКА)
+// ============================================================
+let uploadedFile = null;
+let recognizedEmployees = [];
+
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+        uploadedFile = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            document.getElementById('imagePreview').src = ev.target.result;
+            document.getElementById('photoPreview').classList.remove('hidden');
+            document.getElementById('uploadArea').style.display = 'none';
+        };
+        reader.readAsDataURL(uploadedFile);
+    }
+});
+
+function recognizePhoto() {
+    if (!uploadedFile) {
+        alert('Сначала загрузите фото!');
+        return;
+    }
+    // Имитация распознавания (в реальности тут будет API нейросети)
+    const mockData = {
+        protocol_number: "01/26",
+        date: "2026-06-23",
+        org_inn: "2634800610",
+        org_title: "ООО 'Бэби-Бум'",
+        employees: [
+            { last_name: "Иванов", first_name: "Иван", middle_name: "Иванович", position: "Инженер", is_passed: true },
+            { last_name: "Петров", first_name: "Петр", middle_name: "Петрович", position: "Техник", is_passed: false }
+        ]
+    };
+
+    recognizedEmployees = mockData.employees;
+    let html = `<p><strong>Номер:</strong> ${mockData.protocol_number}</p>
+                <p><strong>Дата:</strong> ${mockData.date}</p>
+                <p><strong>ИНН:</strong> ${mockData.org_inn}</p>
+                <p><strong>Организация:</strong> ${mockData.org_title}</p>
+                <p><strong>Сотрудники:</strong></p><ul>`;
+    mockData.employees.forEach(e => {
+        html += `<li>${e.last_name} ${e.first_name} — ${e.position} (${e.is_passed ? '✅ сдал' : '❌ не сдал'})</li>`;
+    });
+    html += '</ul>';
+    document.getElementById('recognizedData').innerHTML = html;
+    document.getElementById('recognitionResult').classList.remove('hidden');
+}
+
+function fillFormFromRecognition() {
+    // Заполняем форму данными из распознавания
+    document.getElementById('protocolNumber').value = '01/26';
+    document.getElementById('protocolDate').value = '2026-06-23';
+    document.getElementById('orgInn').value = '2634800610';
+    document.getElementById('orgTitle').value = "ООО 'Бэби-Бум'";
+    
+    // Очищаем список сотрудников и добавляем распознанных
+    document.getElementById('employeesList').innerHTML = '';
+    recognizedEmployees.forEach(emp => {
+        addEmployeeRow(emp);
+    });
+    // СНИЛС подставится автоматически, если есть в базе
+}
+
+// ============================================================
+// РАБОТА С СОТРУДНИКАМИ
 // ============================================================
 function addEmployeeRow(data) {
     const container = document.getElementById('employeesList');
@@ -156,6 +193,8 @@ function addEmployeeRow(data) {
         </div>
     `;
     container.appendChild(div);
+    // Автоподстановка СНИЛС
+    setTimeout(() => autoFillSnilsForRow(div), 100);
 }
 
 function getEmployeesFromForm() {
@@ -175,25 +214,48 @@ function getEmployeesFromForm() {
     return result;
 }
 
+function autoFillSnilsForRow(row) {
+    const last = row.querySelector('.emp-last').value.trim();
+    const first = row.querySelector('.emp-first').value.trim();
+    const middle = row.querySelector('.emp-middle').value.trim();
+    const position = row.querySelector('.emp-position').value.trim();
+    const snilsInput = row.querySelector('.emp-snils');
+    if (!last || !first || snilsInput.value) return;
+    const employees = getEmployees();
+    const found = employees.find(emp =>
+        emp.last_name.toLowerCase() === last.toLowerCase() &&
+        emp.first_name.toLowerCase() === first.toLowerCase() &&
+        (emp.middle_name || '').toLowerCase() === (middle || '').toLowerCase() &&
+        emp.position.toLowerCase() === position.toLowerCase()
+    );
+    if (found && found.snils) {
+        snilsInput.value = found.snils;
+    }
+}
+
 // ============================================================
-// 5. ГЕНЕРАЦИЯ XML (чистый браузер)
+// ГЕНЕРАЦИЯ XML
 // ============================================================
-function generateXML() {
+function generateXML_AllPrograms() {
+    generateXML(true);
+}
+
+function generateXML(allPrograms = false) {
     const protocolNumber = document.getElementById('protocolNumber').value.trim();
     const date = document.getElementById('protocolDate').value;
     const orgInn = document.getElementById('orgInn').value.trim();
     const orgTitle = document.getElementById('orgTitle').value.trim();
     const employees = getEmployeesFromForm();
+    const selectedProgramId = parseInt(document.getElementById('programSelect').value);
 
     if (!protocolNumber || !date || !orgInn || !orgTitle) {
-        alert('Заполните все поля протокола');
+        alert('Заполните все поля протокола (номер, дата, ИНН, организация)');
         return;
     }
     if (employees.length === 0) {
         alert('Добавьте хотя бы одного сотрудника');
         return;
     }
-
     let hasError = false;
     employees.forEach(emp => {
         if (!emp.snils) {
@@ -210,11 +272,13 @@ function generateXML() {
         4: "Безопасные методы и приемы выполнения работ при воздействии вредных и (или) опасных производственных факторов, источников опасности, идентифицированных в рамках специальной оценки условий труда и оценки профессиональных рисков"
     };
 
+    let programIds = allPrograms ? [1,2,3,4] : [selectedProgramId];
+
     let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
     xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
 
     employees.forEach(emp => {
-        [1, 4].forEach(progId => {
+        programIds.forEach(progId => {
             xml += '\t<RegistryRecord>\n';
             xml += '\t\t<Worker>\n';
             xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
@@ -240,17 +304,20 @@ function generateXML() {
 
     xml += '</RegistrySet>';
 
+    // Сохраняем в историю
     const history = getHistory();
     history.push({
         protocolNumber,
         date,
         orgTitle,
         employees: employees.map(e => `${e.last_name} ${e.first_name}`).join(', '),
+        programs: programIds.join(', '),
         xml,
         created: new Date().toISOString()
     });
     saveHistory(history);
 
+    // Скачиваем
     const blob = new Blob([xml], { type: 'application/xml' });
     const url = URL.createObjectURL(blob);
     document.getElementById('downloadLink').href = url;
@@ -267,13 +334,13 @@ function escXml(str) {
 }
 
 // ============================================================
-// 6. БАЗА СОТРУДНИКОВ (для автоподстановки)
+// БАЗА СОТРУДНИКОВ
 // ============================================================
 function renderEmployeeDB() {
     const container = document.getElementById('employeeDB');
     const employees = getEmployees();
     if (employees.length === 0) {
-        container.innerHTML = '<p style="color:#6a6a8a;">База пуста. Добавьте сотрудников вручную.</p>';
+        container.innerHTML = '<p style="color:#6a6a8a;">База пуста. Сотрудники добавляются при создании протокола.</p>';
         return;
     }
     let html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;margin-top:12px;">';
@@ -297,7 +364,7 @@ function clearEmployees() {
 }
 
 // ============================================================
-// 7. ИСТОРИЯ
+// ИСТОРИЯ
 // ============================================================
 function renderHistory() {
     const container = document.getElementById('historyList');
@@ -307,75 +374,9 @@ function renderHistory() {
         return;
     }
     let html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;margin-top:12px;">';
-    html += '<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.1);"><th style="text-align:left;padding:8px;">Номер</th><th style="text-align:left;padding:8px;">Дата</th><th style="text-align:left;padding:8px;">Организация</th><th style="text-align:left;padding:8px;">Сотрудники</th></tr></thead><tbody>';
+    html += '<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.1);"><th style="text-align:left;padding:8px;">Номер</th><th style="text-align:left;padding:8px;">Дата</th><th style="text-align:left;padding:8px;">Организация</th><th style="text-align:left;padding:8px;">Программы</th><th style="text-align:left;padding:8px;">Сотрудники</th></tr></thead><tbody>';
     history.slice().reverse().forEach(item => {
         html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
             <td style="padding:8px;">${item.protocolNumber}</td>
             <td style="padding:8px;">${item.date}</td>
-            <td style="padding:8px;">${item.orgTitle}</td>
-            <td style="padding:8px;">${item.employees}</td>
-        </tr>`;
-    });
-    html += '</tbody></table></div>';
-    container.innerHTML = html;
-}
-
-function clearHistory() {
-    if (confirm('Удалить всю историю?')) {
-        saveHistory([]);
-        renderHistory();
-    }
-}
-
-// ============================================================
-// 8. АВТОПОДСТАНОВКА СНИЛС
-// ============================================================
-function autoFillSnils() {
-    document.addEventListener('input', function(e) {
-        if (e.target.classList.contains('emp-snils') && e.target.value === '') {
-            const row = e.target.closest('.employee-row');
-            if (!row) return;
-            const last = row.querySelector('.emp-last').value.trim();
-            const first = row.querySelector('.emp-first').value.trim();
-            const middle = row.querySelector('.emp-middle').value.trim();
-            const position = row.querySelector('.emp-position').value.trim();
-            if (!last || !first) return;
-
-            const employees = getEmployees();
-            const found = employees.find(emp =>
-                emp.last_name.toLowerCase() === last.toLowerCase() &&
-                emp.first_name.toLowerCase() === first.toLowerCase() &&
-                (emp.middle_name || '').toLowerCase() === (middle || '').toLowerCase() &&
-                emp.position.toLowerCase() === position.toLowerCase()
-            );
-            if (found && found.snils) {
-                e.target.value = found.snils;
-            }
-        }
-    });
-}
-
-// ============================================================
-// 9. ИНИЦИАЛИЗАЦИЯ
-// ============================================================
-function init() {
-    if (currentUser) {
-        document.getElementById('authSection').classList.add('hidden');
-        document.getElementById('mainSection').classList.remove('hidden');
-        renderEmployees();
-        renderHistory();
-        renderEmployeeDB();
-        if (document.querySelectorAll('.employee-row').length === 0) {
-            addEmployeeRow();
-        }
-        autoFillSnils();
-    } else {
-        document.getElementById('authSection').classList.remove('hidden');
-        document.getElementById('mainSection').classList.add('hidden');
-        document.getElementById('loginForm').classList.remove('hidden');
-        document.getElementById('registerForm').classList.add('hidden');
-    }
-}
-
-// Запускаем при загрузке
-document.addEventListener('DOMContentLoaded', init);
+            <td style="padding:8px;">${item.orgTitle}</
