@@ -178,28 +178,6 @@ input::placeholder {
 .tab button:hover {
     background: rgba(255,255,255,0.05);
 }
-.auth-box {
-    max-width: 400px;
-    margin: 0 auto;
-}
-.auth-box input {
-    margin-bottom: 12px;
-}
-.flash {
-    padding: 10px 14px;
-    border-radius: 10px;
-    margin-bottom: 12px;
-}
-.flash.error {
-    background: rgba(255, 0, 100, 0.15);
-    border: 1px solid rgba(255, 0, 100, 0.3);
-    color: #ff6b8a;
-}
-.flash.success {
-    background: rgba(0, 212, 255, 0.12);
-    border: 1px solid rgba(0, 212, 255, 0.25);
-    color: #00d4ff;
-}
 #photoPreview img {
     max-width: 100%;
     border-radius: 14px;
