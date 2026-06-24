@@ -68,10 +68,11 @@ input::placeholder {
     background: rgba(255,255,255,0.07);
     border: 1px solid rgba(255,255,255,0.12);
     border-radius: 12px;
-    padding: 8px 16px;
+    padding: 10px 14px;
     color: #fff;
     font-size: 1rem;
-    min-width: 200px;
+    width: 100%;
+    margin-top: 4px;
     cursor: pointer;
 }
 #orgSelector option {
@@ -102,6 +103,7 @@ input::placeholder {
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s;
+    display: inline-block;
 }
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.15);
@@ -220,5 +222,5 @@ input::placeholder {
     .emp-row { flex-direction: column; }
     .emp-row input { min-width: 100%; }
     .tab button { padding: 6px 12px; font-size: 0.9rem; }
-    #orgSelector { min-width: 140px; font-size: 0.9rem; }
+    #addOrgForm input { min-width: 100%; }
 }
