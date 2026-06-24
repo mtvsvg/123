@@ -217,6 +217,11 @@ input::placeholder {
     flex: 1;
     min-width: 150px;
 }
+#programSelect option {
+    background: #1a1a3e;
+    color: #fff;
+    padding: 8px;
+}
 @media (max-width: 600px) {
     .glass-card { padding: 20px 16px; }
     .emp-row { flex-direction: column; }
