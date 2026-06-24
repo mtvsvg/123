@@ -181,7 +181,7 @@ function getEmployeesFromForm() {
 document.getElementById('importBtn').addEventListener('click', function() {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.txt,.csv,.xlsx,.xls';
+    input.accept = '.txt,.csv';
     input.style.display = 'none';
     document.body.appendChild(input);
     
@@ -196,7 +196,7 @@ document.getElementById('importBtn').addEventListener('click', function() {
         
         reader.onload = function(event) {
             const content = event.target.result;
-            const employees = parseFileContent(content, file.name);
+            const employees = parseFileContent(content);
             
             if (employees.length === 0) {
                 alert('❌ Не удалось распознать данные. Проверьте формат файла.');
@@ -204,24 +204,23 @@ document.getElementById('importBtn').addEventListener('click', function() {
                 return;
             }
             
-            // Очищаем текущих сотрудников и добавляем новых
             document.getElementById('employeesContainer').innerHTML = '';
             employees.forEach(emp => addEmployee(emp));
             alert(`✅ Загружено ${employees.length} сотрудников!`);
             document.body.removeChild(input);
         };
         
-        reader.readAsText(file);
+        reader.readAsText(file, 'UTF-8');
     };
     
     input.click();
 });
 
-function parseFileContent(content, filename) {
+function parseFileContent(content) {
     const lines = content.split(/\r?\n/).filter(line => line.trim());
     const employees = [];
     
-    // Определяем разделитель: запятая, точка с запятой или табуляция
+    // Определяем разделитель
     let delimiter = ',';
     if (lines.length > 0) {
         const firstLine = lines[0];
@@ -233,41 +232,29 @@ function parseFileContent(content, filename) {
     lines.forEach(line => {
         const parts = line.split(delimiter).map(s => s.trim());
         if (parts.length >= 5) {
-            // Формат: Фамилия, Имя, Отчество, Должность, СНИЛС, Сдал(да/нет)
-            const emp = {
+            // Фамилия, Имя, Отчество, Должность, СНИЛС, Сдал
+            employees.push({
                 last_name: parts[0] || '',
                 first_name: parts[1] || '',
                 middle_name: parts[2] || '',
                 position: parts[3] || '',
                 snils: parts[4] || '',
-                is_passed: true
-            };
-            // Проверяем 6-й столбец (Сдал/Не сдал)
-            if (parts.length >= 6) {
-                const passedStr = parts[5].toLowerCase();
-                emp.is_passed = !(passedStr.includes('нет') || passedStr.includes('false') || passedStr.includes('не сдал'));
-            }
-            if (emp.last_name && emp.first_name) {
-                employees.push(emp);
-            }
+                is_passed: parts.length >= 6 ? !parts[5].toLowerCase().includes('нет') : true
+            });
         } else if (parts.length >= 4) {
-            // Минимальный формат: Фамилия, Имя, Должность, СНИЛС
-            const emp = {
+            // Фамилия, Имя, Должность, СНИЛС
+            employees.push({
                 last_name: parts[0] || '',
                 first_name: parts[1] || '',
                 middle_name: '',
                 position: parts[2] || '',
                 snils: parts[3] || '',
                 is_passed: true
-            };
-            if (emp.last_name && emp.first_name) {
-                employees.push(emp);
-            }
+            });
         } else {
-            // Пробуем парсить через пробелы (для простых TXT)
+            // Пробуем парсить через пробелы
             const words = line.split(/\s+/);
             if (words.length >= 3) {
-                // Ищем СНИЛС
                 let snils = '';
                 let position = '';
                 let nameParts = [];
