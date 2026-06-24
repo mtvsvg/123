@@ -48,26 +48,26 @@ function renderOrganizations() {
     }
 }
 
-function showAddOrgForm() {
-    const form = document.getElementById('addOrgForm');
-    if (form.classList.contains('hidden')) {
-        form.classList.remove('hidden');
-    } else {
-        form.classList.add('hidden');
-    }
+function openOrgModal() {
+    document.getElementById('orgModal').classList.remove('hidden');
+    document.getElementById('newOrgTitle').value = '';
+    document.getElementById('newOrgInn').value = '';
+    document.getElementById('newOrgTitle').focus();
 }
 
-function closeAddOrgForm() {
-    document.getElementById('addOrgForm').classList.add('hidden');
+function closeOrgModal() {
+    document.getElementById('orgModal').classList.add('hidden');
 }
 
 function addOrganization() {
     const title = document.getElementById('newOrgTitle').value.trim();
     const inn = document.getElementById('newOrgInn').value.trim();
+    
     if (!title || !inn) {
         alert('Заполните название и ИНН организации');
         return;
     }
+    
     const orgs = getOrganizations();
     const newOrg = {
         id: Date.now(),
@@ -76,12 +76,14 @@ function addOrganization() {
     };
     orgs.push(newOrg);
     saveOrganizations(orgs);
-    document.getElementById('newOrgTitle').value = '';
-    document.getElementById('newOrgInn').value = '';
-    document.getElementById('addOrgForm').classList.add('hidden');
+    
+    closeOrgModal();
     renderOrganizations();
+    
+    // Автоматически выбираем новую организацию
     document.getElementById('orgSelector').value = newOrg.id;
     selectOrganization(newOrg.id);
+    
     alert('Организация добавлена!');
 }
 
@@ -100,42 +102,27 @@ function selectOrganization(orgId) {
 // ИНИЦИАЛИЗАЦИЯ
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
-    // Рендерим организации
     renderOrganizations();
+    renderHistory();
+    renderEmployeeDB();
     
-    // Обработчик для плюсика
-    const addBtn = document.getElementById('addOrgBtn');
-    if (addBtn) {
-        addBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            showAddOrgForm();
-        });
-    }
+    // Кнопка "+" открывает модальное окно
+    document.getElementById('addOrgBtn').addEventListener('click', openOrgModal);
     
-    // Обработчик для выбора организации
-    const orgSelector = document.getElementById('orgSelector');
-    if (orgSelector) {
-        orgSelector.addEventListener('change', function() {
-            if (this.value) {
-                selectOrganization(parseInt(this.value));
-            } else {
-                document.getElementById('orgTitleHidden').value = '';
-                document.getElementById('orgInnHidden').value = '';
-            }
-        });
-    }
+    // Выбор организации
+    document.getElementById('orgSelector').addEventListener('change', function() {
+        if (this.value) {
+            selectOrganization(parseInt(this.value));
+        } else {
+            document.getElementById('orgTitleHidden').value = '';
+            document.getElementById('orgInnHidden').value = '';
+        }
+    });
     
-    // Инициализация вкладок
-    showTab('protocol');
-    
-    // Добавляем первую строку сотрудника
+    // Добавляем первого сотрудника
     if (document.querySelectorAll('.employee-row').length === 0) {
         addEmployeeRow();
     }
-    
-    // Рендерим историю и сотрудников
-    renderHistory();
-    renderEmployeeDB();
 });
 
 // ============================================================
@@ -224,7 +211,6 @@ function recognizePhoto() {
         return;
     }
 
-    // ЗАГЛУШКА - имитация распознавания
     const mockData = {
         protocol_number: "01/26",
         date: "2026-06-23",
@@ -379,27 +365,4 @@ function generateXML(allPrograms = false) {
         4: "Безопасные методы и приемы выполнения работ при воздействии вредных и (или) опасных производственных факторов, источников опасности, идентифицированных в рамках специальной оценки условий труда и оценки профессиональных рисков"
     };
 
-    let programIds = allPrograms ? [1,2,3,4] : [selectedProgramId];
-
-    let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
-    xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
-
-    employees.forEach(emp => {
-        programIds.forEach(progId => {
-            xml += '\t<RegistryRecord>\n';
-            xml += '\t\t<Worker>\n';
-            xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
-            xml += `\t\t\t<FirstName>${escXml(emp.first_name)}</FirstName>\n`;
-            xml += `\t\t\t<MiddleName>${escXml(emp.middle_name)}</MiddleName>\n`;
-            xml += `\t\t\t<Snils>${escXml(emp.snils)}</Snils>\n`;
-            xml += `\t\t\t<Position>${escXml(emp.position)}</Position>\n`;
-            xml += `\t\t\t<EmployerInn>${escXml(orgInn)}</EmployerInn>\n`;
-            xml += `\t\t\t<EmployerTitle>${escXml(orgTitle)}</EmployerTitle>\n`;
-            xml += '\t\t</Worker>\n';
-            xml += '\t\t<Organization>\n';
-            xml += `\t\t\t<Inn>${escXml(orgInn)}</Inn>\n`;
-            xml += `\t\t\t<Title>${escXml(orgTitle)}</Title>\n`;
-            xml += '\t\t</Organization>\n';
-            xml += `\t\t<Test isPassed="${emp.is_passed ? 'true' : 'false'}" learnProgramId="${progId}">\n`;
-            xml += `\t\t\t<Date>${escXml(date)}</Date>\n`;
-            xml += `\t
+    let programIds = allPrograms
