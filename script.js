@@ -1,23 +1,23 @@
 // ============================================================
 // ХРАНИЛИЩЕ
 // ============================================================
-function getOrganizations() {
+function getOrgs() {
     return JSON.parse(localStorage.getItem('organizations') || '[]');
 }
-function saveOrganizations(orgs) {
+function saveOrgs(orgs) {
     localStorage.setItem('organizations', JSON.stringify(orgs));
 }
 function getEmployees() {
     return JSON.parse(localStorage.getItem('employees') || '[]');
 }
-function saveEmployees(employees) {
-    localStorage.setItem('employees', JSON.stringify(employees));
+function saveEmployees(emps) {
+    localStorage.setItem('employees', JSON.stringify(emps));
 }
 function getHistory() {
     return JSON.parse(localStorage.getItem('history') || '[]');
 }
-function saveHistory(history) {
-    localStorage.setItem('history', JSON.stringify(history));
+function saveHistory(hist) {
+    localStorage.setItem('history', JSON.stringify(hist));
 }
 
 let currentOrgId = localStorage.getItem('currentOrgId') || null;
@@ -25,318 +25,108 @@ let currentOrgId = localStorage.getItem('currentOrgId') || null;
 // ============================================================
 // ОРГАНИЗАЦИИ
 // ============================================================
-function renderOrganizations() {
-    const selector = document.getElementById('orgSelector');
-    const orgs = getOrganizations();
-    selector.innerHTML = '<option value="">-- Выберите организацию --</option>';
+function renderOrgs() {
+    const select = document.getElementById('orgSelect');
+    const orgs = getOrgs();
+    select.innerHTML = '<option value="">-- Выберите организацию --</option>';
     orgs.forEach(org => {
-        const option = document.createElement('option');
-        option.value = org.id;
-        option.textContent = `${org.title} (${org.inn})`;
-        selector.appendChild(option);
+        const opt = document.createElement('option');
+        opt.value = org.id;
+        opt.textContent = `${org.name} (${org.inn})`;
+        select.appendChild(opt);
     });
     if (currentOrgId) {
-        selector.value = currentOrgId;
+        select.value = currentOrgId;
         const org = orgs.find(o => o.id == currentOrgId);
         if (org) {
-            document.getElementById('orgTitleHidden').value = org.title;
-            document.getElementById('orgInnHidden').value = org.inn;
+            document.getElementById('orgNameHidden')?.remove();
+            document.getElementById('orgInnHidden')?.remove();
         }
-    } else {
-        document.getElementById('orgTitleHidden').value = '';
-        document.getElementById('orgInnHidden').value = '';
     }
 }
 
-// ===== ОТКРЫТИЕ / ЗАКРЫТИЕ МОДАЛЬНОГО ОКНА =====
-function openOrgModal() {
-    document.getElementById('orgModal').classList.remove('hidden');
-    document.getElementById('newOrgTitle').value = '';
-    document.getElementById('newOrgInn').value = '';
-    document.getElementById('newOrgTitle').focus();
-}
-
-function closeOrgModal() {
-    document.getElementById('orgModal').classList.add('hidden');
-}
-
-function saveOrganization() {
-    const title = document.getElementById('newOrgTitle').value.trim();
-    const inn = document.getElementById('newOrgInn').value.trim();
-    
-    if (!title || !inn) {
-        alert('Заполните название и ИНН организации');
-        return;
-    }
-    
-    const orgs = getOrganizations();
-    const newOrg = {
-        id: Date.now(),
-        title: title,
-        inn: inn
-    };
-    orgs.push(newOrg);
-    saveOrganizations(orgs);
-    
-    closeOrgModal();
-    renderOrganizations();
-    
-    // Автоматически выбираем новую организацию
-    document.getElementById('orgSelector').value = newOrg.id;
-    selectOrganization(newOrg.id);
-    
-    alert('Организация добавлена!');
-}
-
-function selectOrganization(orgId) {
-    currentOrgId = orgId;
-    localStorage.setItem('currentOrgId', currentOrgId);
-    const orgs = getOrganizations();
-    const org = orgs.find(o => o.id == orgId);
-    if (org) {
-        document.getElementById('orgTitleHidden').value = org.title;
-        document.getElementById('orgInnHidden').value = org.inn;
-    }
-}
-
-// ============================================================
-// ПРЯМЫЕ ОБРАБОТЧИКИ (без DOMContentLoaded для кнопок)
-// ============================================================
-
-// Кнопка "+" в шапке
-document.getElementById('addOrgBtn').onclick = function(e) {
-    e.preventDefault();
-    openOrgModal();
-};
-
-// Кнопка "✖" в модальном окне
-document.getElementById('closeModalBtn').onclick = function(e) {
-    e.preventDefault();
-    closeOrgModal();
-};
-
-// Кнопка "Отмена"
-document.getElementById('cancelModalBtn').onclick = function(e) {
-    e.preventDefault();
-    closeOrgModal();
-};
-
-// Кнопка "Сохранить"
-document.getElementById('saveOrgBtn').onclick = function(e) {
-    e.preventDefault();
-    saveOrganization();
-};
-
-// Закрытие по клику вне окна
-document.getElementById('orgModal').onclick = function(e) {
-    if (e.target === this) {
-        closeOrgModal();
-    }
-};
-
-// ============================================================
-// ОСТАЛЬНЫЕ ОБРАБОТЧИКИ (DOMContentLoaded для остального)
-// ============================================================
-document.addEventListener('DOMContentLoaded', function() {
-    renderOrganizations();
-    renderHistory();
-    renderEmployeeDB();
-    
-    // Выбор организации
-    document.getElementById('orgSelector').addEventListener('change', function() {
-        if (this.value) {
-            selectOrganization(parseInt(this.value));
-        } else {
-            document.getElementById('orgTitleHidden').value = '';
-            document.getElementById('orgInnHidden').value = '';
-        }
-    });
-    
-    // Добавляем первого сотрудника
-    if (document.querySelectorAll('.employee-row').length === 0) {
-        addEmployeeRow();
-    }
-    
-    // Фото: загрузка через кнопку
-    const fileInput = document.getElementById('fileInput');
-    if (fileInput) {
-        fileInput.addEventListener('change', function(e) {
-            if (e.target.files.length > 0) {
-                uploadedFile = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = function(ev) {
-                    document.getElementById('imagePreview').src = ev.target.result;
-                    document.getElementById('photoPreview').classList.remove('hidden');
-                    document.getElementById('uploadArea').style.display = 'none';
-                };
-                reader.readAsDataURL(uploadedFile);
-            }
-        });
-    }
-
-    // Фото: перетаскивание
-    const uploadArea = document.getElementById('uploadArea');
-    if (uploadArea) {
-        uploadArea.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            this.style.borderColor = '#7c3aed';
-            this.style.background = 'rgba(124, 58, 237, 0.1)';
-        });
-        uploadArea.addEventListener('dragleave', function(e) {
-            e.preventDefault();
-            this.style.borderColor = 'rgba(124, 58, 237, 0.4)';
-            this.style.background = 'rgba(255,255,255,0.03)';
-        });
-        uploadArea.addEventListener('drop', function(e) {
-            e.preventDefault();
-            this.style.borderColor = 'rgba(124, 58, 237, 0.4)';
-            this.style.background = 'rgba(255,255,255,0.03)';
-            if (e.dataTransfer.files.length > 0) {
-                uploadedFile = e.dataTransfer.files[0];
-                const reader = new FileReader();
-                reader.onload = function(ev) {
-                    document.getElementById('imagePreview').src = ev.target.result;
-                    document.getElementById('photoPreview').classList.remove('hidden');
-                    document.getElementById('uploadArea').style.display = 'none';
-                };
-                reader.readAsDataURL(uploadedFile);
-            }
-        });
+// ===== ПОКАЗАТЬ/СКРЫТЬ ФОРМУ =====
+document.getElementById('showOrgFormBtn').addEventListener('click', function() {
+    const form = document.getElementById('orgForm');
+    form.classList.toggle('hidden');
+    if (!form.classList.contains('hidden')) {
+        document.getElementById('orgNameInput').focus();
     }
 });
 
-// ============================================================
-// ВКЛАДКИ
-// ============================================================
-function showTab(name) {
-    document.querySelectorAll('.tab button').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('[id^="tab"]').forEach(t => t.classList.add('hidden'));
-    if (name === 'protocol') {
-        document.getElementById('tabProtocol').classList.remove('hidden');
-        document.querySelector('.tab button:nth-child(1)').classList.add('active');
-    } else if (name === 'photo') {
-        document.getElementById('tabPhoto').classList.remove('hidden');
-        document.querySelector('.tab button:nth-child(2)').classList.add('active');
-    } else if (name === 'employees') {
-        document.getElementById('tabEmployees').classList.remove('hidden');
-        document.querySelector('.tab button:nth-child(3)').classList.add('active');
-        renderEmployeeDB();
-    } else if (name === 'history') {
-        document.getElementById('tabHistory').classList.remove('hidden');
-        document.querySelector('.tab button:nth-child(4)').classList.add('active');
-        renderHistory();
-    }
-}
+document.getElementById('cancelOrgBtn').addEventListener('click', function() {
+    document.getElementById('orgForm').classList.add('hidden');
+});
 
-function goToDataTab() {
-    showTab('protocol');
-}
-
-// ============================================================
-// ФОТО (ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ)
-// ============================================================
-let uploadedFile = null;
-let recognizedEmployees = [];
-
-function recognizePhoto() {
-    if (!uploadedFile) {
-        alert('Сначала загрузите фото!');
+// ===== СОХРАНИТЬ ОРГАНИЗАЦИЮ =====
+document.getElementById('saveOrgBtn').addEventListener('click', function() {
+    const name = document.getElementById('orgNameInput').value.trim();
+    const inn = document.getElementById('orgInnInput').value.trim();
+    if (!name || !inn) {
+        alert('Заполните название и ИНН');
         return;
     }
-
-    const mockData = {
-        protocol_number: "01/26",
-        date: "2026-06-23",
-        org_inn: "2634800610",
-        org_title: "ООО 'Бэби-Бум'",
-        employees: [
-            { last_name: "Иванов", first_name: "Иван", middle_name: "Иванович", position: "Инженер", is_passed: true },
-            { last_name: "Петров", first_name: "Петр", middle_name: "Петрович", position: "Техник", is_passed: false }
-        ]
+    const orgs = getOrgs();
+    const newOrg = {
+        id: Date.now(),
+        name: name,
+        inn: inn
     };
+    orgs.push(newOrg);
+    saveOrgs(orgs);
+    document.getElementById('orgNameInput').value = '';
+    document.getElementById('orgInnInput').value = '';
+    document.getElementById('orgForm').classList.add('hidden');
+    renderOrgs();
+    document.getElementById('orgSelect').value = newOrg.id;
+    selectOrg(newOrg.id);
+    alert('✅ Организация добавлена!');
+});
 
-    recognizedEmployees = mockData.employees;
-
-    let html = `<p><strong>📌 Номер:</strong> ${mockData.protocol_number}</p>
-                <p><strong>📅 Дата:</strong> ${mockData.date}</p>
-                <p><strong>🏢 ИНН:</strong> ${mockData.org_inn}</p>
-                <p><strong>🏢 Организация:</strong> ${mockData.org_title}</p>
-                <p><strong>👥 Сотрудники (${mockData.employees.length}):</strong></p>
-                <ul>`;
-    mockData.employees.forEach(e => {
-        html += `<li>${e.last_name} ${e.first_name} ${e.middle_name || ''} — ${e.position} (${e.is_passed ? '✅ сдал' : '❌ не сдал'})</li>`;
-    });
-    html += '</ul>';
-    document.getElementById('recognizedData').innerHTML = html;
-    document.getElementById('recognitionResult').classList.remove('hidden');
-}
-
-function fillFormFromRecognition() {
-    const orgs = getOrganizations();
-    let existingOrg = orgs.find(o => o.inn === "2634800610");
-    if (existingOrg) {
-        document.getElementById('orgSelector').value = existingOrg.id;
-        selectOrganization(existingOrg.id);
-    } else {
-        const newOrg = {
-            id: Date.now(),
-            title: "ООО 'Бэби-Бум'",
-            inn: "2634800610"
-        };
-        orgs.push(newOrg);
-        saveOrganizations(orgs);
-        renderOrganizations();
-        document.getElementById('orgSelector').value = newOrg.id;
-        selectOrganization(newOrg.id);
+// ===== ВЫБОР ОРГАНИЗАЦИИ =====
+document.getElementById('orgSelect').addEventListener('change', function() {
+    if (this.value) {
+        selectOrg(parseInt(this.value));
     }
-    
-    document.getElementById('protocolNumber').value = "01/26";
-    document.getElementById('protocolDate').value = "2026-06-23";
-    
-    document.getElementById('employeesList').innerHTML = '';
-    recognizedEmployees.forEach(emp => {
-        addEmployeeRow(emp);
-    });
-    showTab('protocol');
+});
+
+function selectOrg(id) {
+    currentOrgId = id;
+    localStorage.setItem('currentOrgId', currentOrgId);
 }
 
 // ============================================================
 // СОТРУДНИКИ
 // ============================================================
-function addEmployeeRow(data) {
-    const container = document.getElementById('employeesList');
+function addEmployee(data) {
+    const container = document.getElementById('employeesContainer');
     const div = document.createElement('div');
-    div.className = 'employee-card employee-row';
+    div.className = 'employee-card';
     div.innerHTML = `
-        <div class="emp-row">
-            <input type="text" class="emp-last" placeholder="Фамилия" value="${data?.last_name || ''}">
-            <input type="text" class="emp-first" placeholder="Имя" value="${data?.first_name || ''}">
-            <input type="text" class="emp-middle" placeholder="Отчество" value="${data?.middle_name || ''}">
-        </div>
-        <div class="emp-row">
-            <input type="text" class="emp-position" placeholder="Должность" value="${data?.position || ''}">
-            <input type="text" class="emp-snils" placeholder="СНИЛС" value="${data?.snils || ''}">
-            <label>
-                <input type="checkbox" class="emp-passed" ${data?.is_passed !== false ? 'checked' : ''}>
-                Сдал
-            </label>
-            <button class="btn-secondary" onclick="this.closest('.employee-card').remove()" style="padding:4px 12px;">✖</button>
-        </div>
+        <input type="text" class="emp-last" placeholder="Фамилия" value="${data?.last_name || ''}">
+        <input type="text" class="emp-first" placeholder="Имя" value="${data?.first_name || ''}">
+        <input type="text" class="emp-middle" placeholder="Отчество" value="${data?.middle_name || ''}">
+        <input type="text" class="emp-position" placeholder="Должность" value="${data?.position || ''}">
+        <input type="text" class="emp-snils" placeholder="СНИЛС" value="${data?.snils || ''}">
+        <label class="emp-check">
+            <input type="checkbox" class="emp-passed" ${data?.is_passed !== false ? 'checked' : ''}>
+            Сдал
+        </label>
+        <button class="btn-remove" onclick="this.closest('.employee-card').remove()">✖</button>
     `;
     container.appendChild(div);
-    setTimeout(() => autoFillSnilsForRow(div), 100);
 }
 
 function getEmployeesFromForm() {
-    const rows = document.querySelectorAll('.employee-row');
+    const cards = document.querySelectorAll('.employee-card');
     const result = [];
-    rows.forEach(row => {
-        const last = row.querySelector('.emp-last').value.trim();
-        const first = row.querySelector('.emp-first').value.trim();
-        const middle = row.querySelector('.emp-middle').value.trim();
-        const position = row.querySelector('.emp-position').value.trim();
-        const snils = row.querySelector('.emp-snils').value.trim();
-        const passed = row.querySelector('.emp-passed').checked;
+    cards.forEach(card => {
+        const last = card.querySelector('.emp-last').value.trim();
+        const first = card.querySelector('.emp-first').value.trim();
+        const middle = card.querySelector('.emp-middle').value.trim();
+        const position = card.querySelector('.emp-position').value.trim();
+        const snils = card.querySelector('.emp-snils').value.trim();
+        const passed = card.querySelector('.emp-passed').checked;
         if (last || first || position) {
             result.push({ last_name: last, first_name: first, middle_name: middle, position, snils, is_passed: passed });
         }
@@ -344,37 +134,151 @@ function getEmployeesFromForm() {
     return result;
 }
 
-function autoFillSnilsForRow(row) {
-    const last = row.querySelector('.emp-last').value.trim();
-    const first = row.querySelector('.emp-first').value.trim();
-    const middle = row.querySelector('.emp-middle').value.trim();
-    const position = row.querySelector('.emp-position').value.trim();
-    const snilsInput = row.querySelector('.emp-snils');
-    if (!last || !first || snilsInput.value) return;
-    const employees = getEmployees();
-    const found = employees.find(emp =>
-        emp.last_name.toLowerCase() === last.toLowerCase() &&
-        emp.first_name.toLowerCase() === first.toLowerCase() &&
-        (emp.middle_name || '').toLowerCase() === (middle || '').toLowerCase() &&
-        emp.position.toLowerCase() === position.toLowerCase()
-    );
-    if (found && found.snils) {
-        snilsInput.value = found.snils;
+// Добавляем первого сотрудника при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    renderOrgs();
+    if (document.querySelectorAll('.employee-card').length === 0) {
+        addEmployee();
     }
-}
+});
 
 // ============================================================
 // ГЕНЕРАЦИЯ XML
 // ============================================================
-function generateXML(allPrograms = false) {
+document.getElementById('generateBtn').addEventListener('click', function() {
     const protocolNumber = document.getElementById('protocolNumber').value.trim();
     const date = document.getElementById('protocolDate').value;
-    const orgTitle = document.getElementById('orgTitleHidden').value.trim();
-    const orgInn = document.getElementById('orgInnHidden').value.trim();
+    const orgSelect = document.getElementById('orgSelect');
+    const orgId = orgSelect.value;
+    const orgs = getOrgs();
+    const org = orgs.find(o => o.id == parseInt(orgId));
     const employees = getEmployeesFromForm();
-    const selectedProgramId = parseInt(document.getElementById('programSelect').value);
+    const programId = parseInt(document.getElementById('programSelect').value);
 
-    if (!protocolNumber || !date || !orgInn || !orgTitle) {
-        alert('Выберите организацию, заполните номер протокола и дату');
+    // ===== ПРОВЕРКИ =====
+    if (!orgId || !org) {
+        alert('Выберите организацию');
         return;
-   
+    }
+    if (!protocolNumber || !date) {
+        alert('Заполните номер и дату протокола');
+        return;
+    }
+    if (employees.length === 0) {
+        alert('Добавьте хотя бы одного сотрудника');
+        return;
+    }
+    let hasError = false;
+    employees.forEach(emp => {
+        if (!emp.snils) {
+            alert(`У сотрудника ${emp.last_name} ${emp.first_name} не указан СНИЛС!`);
+            hasError = true;
+        }
+    });
+    if (hasError) return;
+
+    // ===== ПРОГРАММЫ =====
+    const programs = {
+        1: "Оказание первой помощи пострадавшим",
+        2: "Использование (применение) средств индивидуальной защиты",
+        3: "Общие вопросы охраны труда и функционирования системы управления охраной труда",
+        4: "Безопасные методы и приемы выполнения работ при воздействии вредных и (или) опасных производственных факторов, источников опасности, идентифицированных в рамках специальной оценки условий труда и оценки профессиональных рисков"
+    };
+
+    // ===== ФОРМИРУЕМ XML =====
+    let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+    xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
+
+    employees.forEach(emp => {
+        // Для каждой программы (1 и 4) создаём запись
+        [1, 4].forEach(progId => {
+            xml += '\t<RegistryRecord>\n';
+            xml += '\t\t<Worker>\n';
+            xml += `\t\t\t<LastName>${escapeXml(emp.last_name)}</LastName>\n`;
+            xml += `\t\t\t<FirstName>${escapeXml(emp.first_name)}</FirstName>\n`;
+            xml += `\t\t\t<MiddleName>${escapeXml(emp.middle_name)}</MiddleName>\n`;
+            xml += `\t\t\t<Snils>${escapeXml(emp.snils)}</Snils>\n`;
+            xml += `\t\t\t<Position>${escapeXml(emp.position)}</Position>\n`;
+            xml += `\t\t\t<EmployerInn>${escapeXml(org.inn)}</EmployerInn>\n`;
+            xml += `\t\t\t<EmployerTitle>${escapeXml(org.name)}</EmployerTitle>\n`;
+            xml += '\t\t</Worker>\n';
+            xml += '\t\t<Organization>\n';
+            xml += `\t\t\t<Inn>${escapeXml(org.inn)}</Inn>\n`;
+            xml += `\t\t\t<Title>${escapeXml(org.name)}</Title>\n`;
+            xml += '\t\t</Organization>\n';
+            xml += `\t\t<Test isPassed="${emp.is_passed ? 'true' : 'false'}" learnProgramId="${progId}">\n`;
+            xml += `\t\t\t<Date>${escapeXml(date)}</Date>\n`;
+            xml += `\t\t\t<ProtocolNumber>${escapeXml(protocolNumber)}</ProtocolNumber>\n`;
+            xml += `\t\t\t<LearnProgramTitle>${escapeXml(programs[progId] || 'Неизвестная программа')}</LearnProgramTitle>\n`;
+            xml += '\t\t</Test>\n';
+            xml += '\t</RegistryRecord>\n';
+        });
+    });
+
+    xml += '</RegistrySet>';
+
+    // ===== СОХРАНЯЕМ В ИСТОРИЮ =====
+    const history = getHistory();
+    history.push({
+        protocolNumber,
+        date,
+        orgName: org.name,
+        employees: employees.map(e => `${e.last_name} ${e.first_name}`).join(', '),
+        xml,
+        created: new Date().toISOString()
+    });
+    saveHistory(history);
+
+    // ===== СОХРАНЯЕМ СОТРУДНИКОВ =====
+    const existing = getEmployees();
+    employees.forEach(emp => {
+        if (!emp.snils) return;
+        const found = existing.find(e =>
+            e.last_name === emp.last_name &&
+            e.first_name === emp.first_name &&
+            e.position === emp.position
+        );
+        if (!found) {
+            existing.push({ ...emp });
+        } else {
+            found.snils = emp.snils;
+        }
+    });
+    saveEmployees(existing);
+
+    // ===== СКАЧИВАЕМ =====
+    const blob = new Blob([xml], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
+    document.getElementById('downloadLink').href = url;
+    document.getElementById('downloadLink').download = `${protocolNumber.replace('/', '_')}_${date}.xml`;
+    document.getElementById('resultBlock').classList.remove('hidden');
+
+    alert('✅ XML создан! Нажмите "Скачать XML"');
+});
+
+function escapeXml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ============================================================
+// ДОБАВЛЕНИЕ СОТРУДНИКА (глобально)
+// ============================================================
+window.addEmployee = function(data) {
+    const container = document.getElementById('employeesContainer');
+    const div = document.createElement('div');
+    div.className = 'employee-card';
+    div.innerHTML = `
+        <input type="text" class="emp-last" placeholder="Фамилия" value="${data?.last_name || ''}">
+        <input type="text" class="emp-first" placeholder="Имя" value="${data?.first_name || ''}">
+        <input type="text" class="emp-middle" placeholder="Отчество" value="${data?.middle_name || ''}">
+        <input type="text" class="emp-position" placeholder="Должность" value="${data?.position || ''}">
+        <input type="text" class="emp-snils" placeholder="СНИЛС" value="${data?.snils || ''}">
+        <label class="emp-check">
+            <input type="checkbox" class="emp-passed" ${data?.is_passed !== false ? 'checked' : ''}>
+            Сдал
+        </label>
+        <button class="btn-remove" onclick="this.closest('.employee-card').remove()">✖</button>
+    `;
+    container.appendChild(div);
+};
