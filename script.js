@@ -197,7 +197,6 @@ document.getElementById('importBtn').addEventListener('click', function() {
         reader.onload = function(event) {
             let content = event.target.result;
             
-            // Пробуем разные кодировки
             if (/[����]/.test(content) || !/[а-яА-Я]/.test(content)) {
                 try {
                     const bytes = new Uint8Array(content.length);
@@ -232,7 +231,7 @@ document.getElementById('importBtn').addEventListener('click', function() {
 });
 
 // ============================================================
-// 🧠 СУПЕР-УМНЫЙ ПАРСЕР (НОРМАЛИЗУЕТ ПРОБЕЛЫ)
+// 🧠 УМНЫЙ ПАРСЕР
 // ============================================================
 function smartParse(content) {
     const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
@@ -242,12 +241,8 @@ function smartParse(content) {
         let trimmed = line.trim();
         if (!trimmed) return;
         
-        // ===== ГЛАВНОЕ: УДАЛЯЕМ ЛИШНИЕ ПРОБЕЛЫ =====
-        // Заменяем табуляции на пробелы
         trimmed = trimmed.replace(/\t/g, ' ');
-        // Удаляем все лишние пробелы (больше одного подряд)
         trimmed = trimmed.replace(/\s+/g, ' ');
-        // Удаляем пробелы в начале и конце
         trimmed = trimmed.trim();
         
         const result = parseLineUniversal(trimmed);
@@ -259,9 +254,8 @@ function smartParse(content) {
     return employees;
 }
 
-// ===== УНИВЕРСАЛЬНЫЙ ПАРСЕР (ЛЮБОЙ ПОРЯДОК) =====
 function parseLineUniversal(line) {
-    // 1. Находим СНИЛС
+    // 1. Находим СНИЛС (в любом формате)
     let snils = '';
     let snilsMatch = line.match(/\d{3}[- ]?\d{3}[- ]?\d{3}[- ]?\d{2}/);
     if (snilsMatch) {
@@ -269,10 +263,8 @@ function parseLineUniversal(line) {
         line = line.replace(snilsMatch[0], '').trim();
     }
     
-    // 2. Разбиваем на слова
     let words = line.split(/\s+/).filter(w => w.length > 0);
     
-    // 3. Ищем "сдал"/"не сдал" и убираем
     let is_passed = true;
     const newWords = [];
     for (let w of words) {
@@ -287,11 +279,9 @@ function parseLineUniversal(line) {
     
     if (words.length < 2) return null;
     
-    // 4. Определяем, где ФИО, а где должность
     let nameParts = [];
     let positionParts = [];
     
-    // Список частых должностей
     const commonPositions = [
         'инженер', 'техник', 'механик', 'специалист', 'мастер', 'бригадир',
         'директор', 'менеджер', 'бухгалтер', 'экономист', 'юрист', 'конструктор',
@@ -303,7 +293,6 @@ function parseLineUniversal(line) {
         'наладчик', 'оператор', 'машинист', 'крановщик', 'стропальщик'
     ];
     
-    // Проверяем, является ли слово ФИО или должностью
     let i = 0;
     while (i < words.length) {
         const w = words[i];
@@ -324,12 +313,9 @@ function parseLineUniversal(line) {
         }
     }
     
-    // Если ФИО не найдено — пробуем альтернативный подход
     if (nameParts.length < 2) {
-        // Простой вариант: первые 2-3 слова — ФИО, остальное — должность
         const firstThree = words.slice(0, Math.min(3, words.length));
         if (firstThree.length >= 2) {
-            // Проверяем, что первые слова действительно похожи на ФИО
             const likelyName = firstThree.every(w => /^[А-ЯЁ][а-яё]{1,19}$/.test(w) || /^[A-Z][a-z]{1,19}$/.test(w));
             if (likelyName || firstThree.length === 3) {
                 nameParts = firstThree;
@@ -338,23 +324,18 @@ function parseLineUniversal(line) {
         }
     }
     
-    // Если всё ещё нет ФИО — пробуем последний вариант
     if (nameParts.length < 2) {
-        // Берём первые 2 слова как ФИО
         nameParts = words.slice(0, 2);
         positionParts = words.slice(2);
     }
     
-    // Если нет ФИО — возвращаем null
     if (nameParts.length < 2) return null;
     
-    // Формируем результат
     let last_name = nameParts[0] || '';
     let first_name = nameParts[1] || '';
     let middle_name = nameParts[2] || '';
     let position = positionParts.join(' ') || '';
     
-    // Если должность не найдена, но есть ещё слова — берём их
     if (!position && words.length > nameParts.length) {
         position = words.slice(nameParts.length).join(' ');
     }
@@ -370,7 +351,24 @@ function parseLineUniversal(line) {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ XML
+// 🔧 ФОРМАТИРОВАНИЕ СНИЛС
+// ============================================================
+function formatSnils(snils) {
+    // Удаляем все лишние символы, оставляем только цифры
+    let clean = snils.replace(/\D/g, '');
+    
+    // Если меньше 11 цифр — возвращаем как есть
+    if (clean.length < 11) return snils;
+    
+    // Берем последние 11 цифр (на случай, если ввели что-то лишнее)
+    clean = clean.slice(-11);
+    
+    // Форматируем: XXX-XXX-XXX XX
+    return clean.slice(0, 3) + '-' + clean.slice(3, 6) + '-' + clean.slice(6, 9) + ' ' + clean.slice(9, 11);
+}
+
+// ============================================================
+// ГЕНЕРАЦИЯ XML (С ФОРМАТИРОВАНИЕМ СНИЛС)
 // ============================================================
 document.getElementById('generateBtn').addEventListener('click', function() {
     const protocolNumber = document.getElementById('protocolNumber').value.trim();
@@ -419,13 +417,16 @@ document.getElementById('generateBtn').addEventListener('click', function() {
     xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
 
     employees.forEach(emp => {
+        // ===== ФОРМАТИРУЕМ СНИЛС =====
+        const formattedSnils = formatSnils(emp.snils);
+        
         selectedPrograms.forEach(progId => {
             xml += '\t<RegistryRecord>\n';
             xml += '\t\t<Worker>\n';
             xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
             xml += `\t\t\t<FirstName>${escXml(emp.first_name)}</FirstName>\n`;
             xml += `\t\t\t<MiddleName>${escXml(emp.middle_name)}</MiddleName>\n`;
-            xml += `\t\t\t<Snils>${escXml(emp.snils)}</Snils>\n`;
+            xml += `\t\t\t<Snils>${escXml(formattedSnils)}</Snils>\n`;
             xml += `\t\t\t<Position>${escXml(emp.position)}</Position>\n`;
             xml += `\t\t\t<EmployerInn>${escXml(org.inn)}</EmployerInn>\n`;
             xml += `\t\t\t<EmployerTitle>${escXml(org.name)}</EmployerTitle>\n`;
