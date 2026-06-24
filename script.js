@@ -39,7 +39,6 @@ function renderOrganizations() {
         selector.value = currentOrgId;
         const org = orgs.find(o => o.id == currentOrgId);
         if (org) {
-            // Данные организации сохраняются в hidden поля
             document.getElementById('orgTitleHidden').value = org.title;
             document.getElementById('orgInnHidden').value = org.inn;
         }
@@ -50,14 +49,19 @@ function renderOrganizations() {
 }
 
 function showAddOrgForm() {
-    document.getElementById('addOrgForm').classList.remove('hidden');
+    const form = document.getElementById('addOrgForm');
+    if (form.classList.contains('hidden')) {
+        form.classList.remove('hidden');
+    } else {
+        form.classList.add('hidden');
+    }
 }
 
 function addOrganization() {
     const title = document.getElementById('newOrgTitle').value.trim();
     const inn = document.getElementById('newOrgInn').value.trim();
     if (!title || !inn) {
-        alert('Заполните название и ИНН');
+        alert('Заполните название и ИНН организации');
         return;
     }
     const orgs = getOrganizations();
@@ -74,6 +78,7 @@ function addOrganization() {
     renderOrganizations();
     document.getElementById('orgSelector').value = newOrg.id;
     selectOrganization(newOrg.id);
+    alert('Организация добавлена!');
 }
 
 function selectOrganization(orgId) {
@@ -86,18 +91,6 @@ function selectOrganization(orgId) {
         document.getElementById('orgInnHidden').value = org.inn;
     }
 }
-
-// Событие выбора организации
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('orgSelector').addEventListener('change', function() {
-        if (this.value) {
-            selectOrganization(parseInt(this.value));
-        } else {
-            document.getElementById('orgTitleHidden').value = '';
-            document.getElementById('orgInnHidden').value = '';
-        }
-    });
-});
 
 // ============================================================
 // ВКЛАДКИ
@@ -219,7 +212,6 @@ function fillFormFromRecognition() {
         document.getElementById('orgSelector').value = existingOrg.id;
         selectOrganization(existingOrg.id);
     } else {
-        // Добавляем новую организацию
         const newOrg = {
             id: Date.now(),
             title: "ООО 'Бэби-Бум'",
@@ -372,7 +364,6 @@ function generateXML(allPrograms = false) {
 
     xml += '</RegistrySet>';
 
-    // Сохраняем в историю
     const history = getHistory();
     history.push({
         protocolNumber,
@@ -385,7 +376,6 @@ function generateXML(allPrograms = false) {
     });
     saveHistory(history);
 
-    // Сохраняем сотрудников в базу
     const existing = getEmployees();
     employees.forEach(emp => {
         if (!emp.snils) return;
@@ -394,13 +384,4 @@ function generateXML(allPrograms = false) {
             e.first_name === emp.first_name &&
             e.position === emp.position
         );
-        if (!found) {
-            existing.push({ ...emp });
-        } else {
-            found.snils = emp.snils;
-        }
-    });
-    saveEmployees(existing);
-
-    // Скачиваем
-    const blob = new Bl
+        if (!found)
