@@ -23,10 +23,10 @@
     </div>
     <p class="subtitle">Сфотографируйте протокол → ИИ распознает → заполнит форму → вы получите XML</p>
 
-    <!-- ===== ФОРМА ДОБАВЛЕНИЯ ОРГАНИЗАЦИИ ===== -->
-    <div id="addOrgForm" class="hidden" style="background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;margin-bottom:16px;">
-        <h4>➕ Добавить организацию</h4>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+    <!-- ===== ФОРМА ДОБАВЛЕНИЯ ОРГАНИЗАЦИИ (всплывающее окно) ===== -->
+    <div id="addOrgForm" class="hidden" style="background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.1);">
+        <h4 style="margin-bottom:8px;">➕ Добавить организацию</h4>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <input type="text" id="newOrgTitle" placeholder="Название организации" style="flex:2;min-width:200px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 14px;color:#fff;">
             <input type="text" id="newOrgInn" placeholder="ИНН" style="flex:1;min-width:120px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 14px;color:#fff;">
             <button class="btn-secondary" onclick="addOrganization()" style="flex:0;">Сохранить</button>
@@ -46,18 +46,6 @@
     <!-- ===== ВКЛАДКА 1: ДАННЫЕ ===== -->
     <!-- ============================================================ -->
     <div id="tabProtocol">
-
-        <h3>🏢 Организация</h3>
-        <div class="form-group">
-            <label>Название организации</label>
-            <input type="text" id="orgTitle" readonly style="background:rgba(255,255,255,0.04);cursor:default;">
-        </div>
-        <div class="form-group">
-            <label>ИНН организации</label>
-            <input type="text" id="orgInn" readonly style="background:rgba(255,255,255,0.04);cursor:default;">
-        </div>
-
-        <hr style="border-color:rgba(255,255,255,0.1);margin:20px 0;">
 
         <h3>📋 Протокол</h3>
         <div class="form-group">
