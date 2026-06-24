@@ -368,7 +368,7 @@ function formatSnils(snils) {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ XML (С ФОРМАТИРОВАНИЕМ СНИЛС)
+// ГЕНЕРАЦИЯ XML
 // ============================================================
 document.getElementById('generateBtn').addEventListener('click', function() {
     const protocolNumber = document.getElementById('protocolNumber').value.trim();
@@ -426,6 +426,7 @@ document.getElementById('generateBtn').addEventListener('click', function() {
             xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
             xml += `\t\t\t<FirstName>${escXml(emp.first_name)}</FirstName>\n`;
             xml += `\t\t\t<MiddleName>${escXml(emp.middle_name)}</MiddleName>\n`;
+            // ===== ВСТАВЛЯЕМ ФОРМАТИРОВАННЫЙ СНИЛС =====
             xml += `\t\t\t<Snils>${escXml(formattedSnils)}</Snils>\n`;
             xml += `\t\t\t<Position>${escXml(emp.position)}</Position>\n`;
             xml += `\t\t\t<EmployerInn>${escXml(org.inn)}</EmployerInn>\n`;
