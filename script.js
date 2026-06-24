@@ -176,7 +176,7 @@ function getEmployeesFromForm() {
 }
 
 // ============================================================
-// 📤 ИМПОРТ ИЗ ФАЙЛА
+// 📤 ИМПОРТ ИЗ ФАЙЛА (С ПРАВИЛЬНОЙ КОДИРОВКОЙ)
 // ============================================================
 document.getElementById('importBtn').addEventListener('click', function() {
     const input = document.createElement('input');
@@ -192,52 +192,78 @@ document.getElementById('importBtn').addEventListener('click', function() {
         }
         
         const file = e.target.files[0];
-        const reader = new FileReader();
         
-        reader.onload = function(event) {
+        // Пробуем прочитать в разных кодировках
+        // Сначала пробуем UTF-8
+        const readerUtf8 = new FileReader();
+        readerUtf8.onload = function(event) {
             let content = event.target.result;
             
-            // Пробуем разные кодировки
-            if (content.includes('�') || content.includes('�')) {
-                try {
-                    const bytes = new Uint8Array(content.length);
-                    for (let i = 0; i < content.length; i++) {
-                        bytes[i] = content.charCodeAt(i) & 0xFF;
+            // Проверяем, есть ли кракозябры
+            const hasCracked = /[����]/.test(content) || /[а-яА-Я]/.test(content) === false && content.length > 0;
+            
+            if (hasCracked) {
+                // Если есть проблемы — пробуем Windows-1251
+                const reader1251 = new FileReader();
+                reader1251.onload = function(e2) {
+                    try {
+                        const bytes = new Uint8Array(e2.target.result);
+                        const decoder = new TextDecoder('windows-1251');
+                        const decoded = decoder.decode(bytes);
+                        
+                        // Проверяем, есть ли русские буквы
+                        if (/[а-яА-Я]/.test(decoded)) {
+                            processContent(decoded);
+                        } else {
+                            // Если не помогло — пробуем UTF-8 ещё раз
+                            const readerUtf8_2 = new FileReader();
+                            readerUtf8_2.onload = function(e3) {
+                                processContent(e3.target.result);
+                            };
+                            readerUtf8_2.readAsText(file, 'UTF-8');
+                        }
+                    } catch(err) {
+                        // Если ошибка — показываем исходное содержимое
+                        processContent(content);
                     }
-                    const decoder = new TextDecoder('windows-1251');
-                    content = decoder.decode(bytes);
-                } catch(e) {}
+                };
+                reader1251.readAsArrayBuffer(file);
+            } else {
+                processContent(content);
             }
-            
-            const employees = smartParse(content);
-            
-            if (employees.length === 0) {
-                alert('❌ Не удалось распознать данные. Проверьте формат файла.');
-                document.body.removeChild(input);
-                return;
-            }
-            
-            document.getElementById('employeesContainer').innerHTML = '';
-            employees.forEach(emp => addEmployee(emp));
-            alert(`✅ Загружено ${employees.length} сотрудников!`);
-            document.body.removeChild(input);
         };
-        
-        reader.readAsBinaryString(file);
+        readerUtf8.readAsText(file, 'UTF-8');
     };
     
     input.click();
 });
 
-// ============================================================
-// 🧠 УМНЫЙ ПАРСЕР
-// ============================================================
-function smartParse(content) {
-    // Удаляем BOM
+// ===== ОБРАБОТКА СОДЕРЖИМОГО =====
+function processContent(content) {
+    // Удаляем BOM если есть
     if (content.charCodeAt(0) === 0xFEFF) {
         content = content.slice(1);
     }
     
+    const employees = smartParse(content);
+    
+    if (employees.length === 0) {
+        alert('❌ Не удалось распознать данные. Проверьте формат файла.\n\n' +
+              'Файл должен содержать строки с:\n' +
+              '- Фамилия Имя Отчество СНИЛС Должность\n' +
+              '- или через табуляцию: Фамилия\tИмя\tОтчество\tСНИЛС\tДолжность');
+        return;
+    }
+    
+    document.getElementById('employeesContainer').innerHTML = '';
+    employees.forEach(emp => addEmployee(emp));
+    alert(`✅ Загружено ${employees.length} сотрудников!`);
+}
+
+// ============================================================
+// 🧠 УМНЫЙ ПАРСЕР
+// ============================================================
+function smartParse(content) {
     const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
     const employees = [];
     
@@ -386,7 +412,7 @@ function parseLine(line) {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ XML (С ПРАВИЛЬНОЙ КОДИРОВКОЙ)
+// ГЕНЕРАЦИЯ XML
 // ============================================================
 document.getElementById('generateBtn').addEventListener('click', function() {
     const protocolNumber = document.getElementById('protocolNumber').value.trim();
@@ -489,15 +515,17 @@ document.getElementById('generateBtn').addEventListener('click', function() {
     });
     saveEmployees(existing);
 
-    // ===== СОЗДАЁМ XML С ПРАВИЛЬНОЙ КОДИРОВКОЙ =====
-    // Используем Blob с правильным типом и кодировкой
-    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+    // Создаём XML с правильной кодировкой UTF-8
+    const encoder = new TextEncoder();
+    const encoded = encoder.encode(xml);
+    const blob = new Blob([encoded], { type: 'application/xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
+    
     document.getElementById('downloadLink').href = url;
     document.getElementById('downloadLink').download = `${protocolNumber.replace('/', '_')}_${date}.xml`;
     document.getElementById('resultBlock').classList.remove('hidden');
 
-    alert('✅ XML создан в кодировке UTF-8! Нажмите "Скачать XML"');
+    alert('✅ XML создан! Нажмите "Скачать XML"');
 });
 
 function escXml(str) {
