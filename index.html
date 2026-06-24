@@ -1,150 +1,153 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Охрана труда - Протоколы</title>
-    <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фото → XML Протокол</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container" id="app">
 
-        <!-- ========================================================= -->
-        <!--  ШАПКА С ОРГАНИЗАЦИЯМИ (НОВЫЙ БЛОК)                       -->
-        <!-- ========================================================= -->
-        <header class="org-header">
-            <div class="org-header__left">
-                <span class="org-header__icon">🏢</span>
-                <span class="org-header__title">Организация</span>
-            </div>
-            <div class="org-header__right">
-                <select id="orgSelect" @change="onOrgChange">
-                    <option v-for="org in organizations" :key="org.id" :value="org.id">
-                        {{ org.name }}
-                    </option>
-                </select>
-                <div class="org-fields">
-                    <div class="field-group">
-                        <label>ИНН</label>
-                        <input type="text" id="orgInn" disabled />
-                    </div>
-                    <div class="field-group">
-                        <label>Название</label>
-                        <input type="text" id="orgName" disabled />
-                    </div>
-                </div>
-                <button class="btn-add-org" @click="addOrg">+ Добавить</button>
-            </div>
-        </header>
+<div class="glass-card">
 
-        <!-- ========================================================= -->
-        <!--  ВАШИ ВКЛАДКИ (ОСТАВЛЕНЫ БЕЗ ИЗМЕНЕНИЙ)                   -->
-        <!-- ========================================================= -->
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="tab1">Проверка знаний</button>
-            <button class="tab-btn" data-tab="tab2">Инструктажи</button>
-            <button class="tab-btn" data-tab="tab3">Журналы</button>
+    <!-- ===== ШАПКА С ВЫБОРОМ ОРГАНИЗАЦИИ ===== -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:12px;">
+        <h1>📸 Фото → XML</h1>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <label style="color:#a0a0c0;font-weight:500;">🏢 Организация:</label>
+            <select id="orgSelector" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:8px 16px;color:#fff;font-size:1rem;min-width:200px;">
+                <option value="">-- Выберите организацию --</option>
+            </select>
+            <button class="btn-secondary" onclick="showAddOrgForm()" style="padding:6px 14px;">➕</button>
         </div>
+    </div>
+    <p class="subtitle">Сфотографируйте протокол → ИИ распознает → заполнит форму → вы получите XML</p>
 
-        <!-- ========================================================= -->
-        <!--  ВКЛАДКА 1                                                 -->
-        <!-- ========================================================= -->
-        <div id="tab1" class="tab-content active">
-            <div class="program-selector">
-                <span class="label">Выберите программу обучения</span>
-                <div class="program-list">
-                    <span class="program-item active" data-program="Пожарная безопасность">Пожарная безопасность</span>
-                    <span class="program-item" data-program="Электробезопасность">Электробезопасность</span>
-                    <span class="program-item hidden-program" data-program="Охрана труда (общая)">Охрана труда (общая)</span>
-                    <span class="program-item hidden-program" data-program="Работа на высоте">Работа на высоте</span>
-                    <span class="program-item hidden-program" data-program="Газовое хозяйство">Газовое хозяйство</span>
-                </div>
-            </div>
-
-            <div class="protocol-block">
-                <h3>📋 Протоколы проверки знаний</h3>
-                <div class="protocol-item">
-                    <div class="info">
-                        <span><strong>№ 45</strong> от 23.06.2026</span>
-                        <span><strong>Программа:</strong> Пожарная безопасность</span>
-                        <span><strong>Сотрудников:</strong> 12</span>
-                    </div>
-                    <span class="badge">Действует</span>
-                </div>
-                <div class="protocol-item">
-                    <div class="info">
-                        <span><strong>№ 32</strong> от 10.06.2026</span>
-                        <span><strong>Программа:</strong> Электробезопасность</span>
-                        <span><strong>Сотрудников:</strong> 8</span>
-                    </div>
-                    <span class="badge">Действует</span>
-                </div>
-                <div class="protocol-item archived">
-                    <div class="info">
-                        <span><strong>№ 18</strong> от 20.05.2026</span>
-                        <span><strong>Программа:</strong> Охрана труда (общая)</span>
-                        <span><strong>Сотрудников:</strong> 5</span>
-                    </div>
-                    <span class="badge archived-badge">Архив</span>
-                </div>
-            </div>
+    <!-- ===== ФОРМА ДОБАВЛЕНИЯ ОРГАНИЗАЦИИ ===== -->
+    <div id="addOrgForm" class="hidden" style="background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;margin-bottom:16px;">
+        <h4>➕ Добавить организацию</h4>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+            <input type="text" id="newOrgTitle" placeholder="Название организации" style="flex:2;min-width:200px;">
+            <input type="text" id="newOrgInn" placeholder="ИНН" style="flex:1;min-width:120px;">
+            <button class="btn-secondary" onclick="addOrganization()" style="flex:0;">Сохранить</button>
+            <button class="btn-secondary" onclick="document.getElementById('addOrgForm').classList.add('hidden')" style="flex:0;">✖</button>
         </div>
-
-        <!-- ========================================================= -->
-        <!--  ВКЛАДКА 2                                                 -->
-        <!-- ========================================================= -->
-        <div id="tab2" class="tab-content">
-            <div class="protocol-block">
-                <h3>📌 Инструктажи</h3>
-                <div class="protocol-item">
-                    <div class="info">
-                        <span><strong>Вводный</strong> — 15.06.2026</span>
-                        <span><strong>Проводил:</strong> Иванов И.И.</span>
-                        <span><strong>Охват:</strong> 9 чел.</span>
-                    </div>
-                    <span class="badge">Проведён</span>
-                </div>
-                <div class="protocol-item">
-                    <div class="info">
-                        <span><strong>Первичный на рабочем месте</strong> — 22.06.2026</span>
-                        <span><strong>Проводил:</strong> Петров П.П.</span>
-                        <span><strong>Охват:</strong> 4 чел.</span>
-                    </div>
-                    <span class="badge">Проведён</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- ========================================================= -->
-        <!--  ВКЛАДКА 3                                                 -->
-        <!-- ========================================================= -->
-        <div id="tab3" class="tab-content">
-            <div class="protocol-block">
-                <h3>📚 Журналы регистрации</h3>
-                <div class="protocol-item">
-                    <div class="info">
-                        <span><strong>Журнал №1</strong> — инструктажей</span>
-                        <span><strong>Записей:</strong> 34</span>
-                    </div>
-                    <span class="badge">Активен</span>
-                </div>
-                <div class="protocol-item">
-                    <div class="info">
-                        <span><strong>Журнал №2</strong> — проверки знаний</span>
-                        <span><strong>Записей:</strong> 27</span>
-                    </div>
-                    <span class="badge">Активен</span>
-                </div>
-            </div>
-        </div>
-
     </div>
 
-    <!-- ============================================================= -->
-    <!--  ПОДКЛЮЧЕНИЕ VUE.JS И SCRIPT.JS                              -->
-    <!-- ============================================================= -->
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.min.js"></script>
-    <script src="script.js"></script>
+    <!-- ===== ВКЛАДКИ ===== -->
+    <div class="tab">
+        <button class="active" onclick="showTab('protocol')">📝 Данные</button>
+        <button onclick="showTab('photo')">📷 Фото</button>
+        <button onclick="showTab('employees')">👤 Сотрудники</button>
+        <button onclick="showTab('history')">📄 История</button>
+    </div>
 
+    <!-- ============================================================ -->
+    <!-- ===== ВКЛАДКА 1: ДАННЫЕ ===== -->
+    <!-- ============================================================ -->
+    <div id="tabProtocol">
+
+        <h3>🏢 Организация</h3>
+        <div class="form-group">
+            <label>Название организации</label>
+            <input type="text" id="orgTitle">
+        </div>
+        <div class="form-group">
+            <label>ИНН организации</label>
+            <input type="text" id="orgInn">
+        </div>
+
+        <hr style="border-color:rgba(255,255,255,0.1);margin:20px 0;">
+
+        <h3>📋 Протокол</h3>
+        <div class="form-group">
+            <label>Номер протокола</label>
+            <input type="text" id="protocolNumber" placeholder="Например: 01/26">
+        </div>
+        <div class="form-group">
+            <label>Дата</label>
+            <input type="date" id="protocolDate">
+        </div>
+
+        <hr style="border-color:rgba(255,255,255,0.1);margin:20px 0;">
+
+        <h3>📚 Программа обучения</h3>
+        <div class="form-group">
+            <label>Выберите программу:</label>
+            <select id="programSelect" style="padding:10px;background:rgba(255,255,255,0.07);border-radius:12px;color:#fff;width:100%;border:1px solid rgba(255,255,255,0.12);">
+                <option value="1">1. Оказание первой помощи пострадавшим</option>
+                <option value="2">2. Использование (применение) СИЗ</option>
+                <option value="3">3. Общие вопросы охраны труда и СУОТ</option>
+                <option value="4">4. Безопасные методы и приемы работ при воздействии вредных факторов</option>
+            </select>
+        </div>
+
+        <hr style="border-color:rgba(255,255,255,0.1);margin:20px 0;">
+
+        <h3>👥 Сотрудники</h3>
+        <p style="color:#a0a0c0;font-size:0.9rem;margin-bottom:12px;">Добавьте сотрудников вручную или распознайте из фото</p>
+        <div id="employeesList"></div>
+        <button class="btn-secondary" onclick="addEmployeeRow()" style="margin:12px 0;">➕ Добавить сотрудника</button>
+
+        <button class="btn-primary" onclick="generateXML(false)" style="margin-top:8px;">⚡ Создать XML (выбранная программа)</button>
+        <button class="btn-secondary" onclick="generateXML(true)" style="margin-top:8px;">📦 Создать XML для ВСЕХ программ (1-4)</button>
+
+        <div id="result" class="hidden">
+            <h3>✅ XML готов!</h3>
+            <p><a id="downloadLink" href="#" download>📥 Скачать XML</a></p>
+            <button class="btn-secondary" onclick="document.getElementById('result').classList.add('hidden')">✖ Закрыть</button>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ===== ВКЛАДКА 2: ФОТО ===== -->
+    <!-- ============================================================ -->
+    <div id="tabPhoto" class="hidden">
+        <h3>📷 Загрузите фото протокола</h3>
+        <p style="color:#a0a0c0;font-size:0.9rem;">ИИ распознает данные и заполнит форму</p>
+
+        <div class="upload-area" id="uploadArea">
+            <span class="upload-icon">📷</span>
+            <p style="font-weight:500;">Нажми, чтобы выбрать фото</p>
+            <p style="color:#6a6a8a;font-size:0.9rem;">или перетащите файл сюда</p>
+            <input type="file" id="fileInput" accept="image/*" capture="environment">
+        </div>
+
+        <div id="photoPreview" class="hidden" style="margin-top:16px;">
+            <img id="imagePreview" src="#" alt="Фото протокола" style="max-width:100%;border-radius:14px;border:1px solid rgba(255,255,255,0.1);">
+            <button class="btn-primary" onclick="recognizePhoto()" style="margin-top:12px;">🧠 Распознать данные</button>
+        </div>
+
+        <div id="recognitionResult" class="hidden" style="margin-top:16px;padding:16px;background:rgba(0,212,255,0.05);border-radius:12px;">
+            <h3>✅ Распознано:</h3>
+            <div id="recognizedData"></div>
+            <button class="btn-secondary" onclick="fillFormFromRecognition()" style="margin-top:8px;">📥 Заполнить форму</button>
+            <button class="btn-secondary" onclick="goToDataTab()" style="margin-top:8px;margin-left:8px;">📝 Перейти к данным</button>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ===== ВКЛАДКА 3: СОТРУДНИКИ ===== -->
+    <!-- ============================================================ -->
+    <div id="tabEmployees" class="hidden">
+        <h3>👤 База сотрудников</h3>
+        <p style="color:#a0a0c0;font-size:0.9rem;">Сотрудники сохраняются автоматически при создании протокола.</p>
+        <p style="color:#a0a0c0;font-size:0.9rem;">При распознавании фото СНИЛС подставится автоматически.</p>
+        <div id="employeeDB"></div>
+        <button class="btn-secondary" onclick="clearEmployees()" style="margin-top:12px;">🗑 Очистить базу</button>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ===== ВКЛАДКА 4: ИСТОРИЯ ===== -->
+    <!-- ============================================================ -->
+    <div id="tabHistory" class="hidden">
+        <h3>📄 История протоколов</h3>
+        <div id="historyList"></div>
+        <button class="btn-secondary" onclick="clearHistory()" style="margin-top:12px;">🗑 Очистить историю</button>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
