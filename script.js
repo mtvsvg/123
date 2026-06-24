@@ -48,6 +48,7 @@ function renderOrganizations() {
     }
 }
 
+// ===== ОТКРЫТИЕ / ЗАКРЫТИЕ МОДАЛЬНОГО ОКНА =====
 function openOrgModal() {
     document.getElementById('orgModal').classList.remove('hidden');
     document.getElementById('newOrgTitle').value = '';
@@ -59,7 +60,7 @@ function closeOrgModal() {
     document.getElementById('orgModal').classList.add('hidden');
 }
 
-function addOrganization() {
+function saveOrganization() {
     const title = document.getElementById('newOrgTitle').value.trim();
     const inn = document.getElementById('newOrgInn').value.trim();
     
@@ -99,15 +100,47 @@ function selectOrganization(orgId) {
 }
 
 // ============================================================
-// ИНИЦИАЛИЗАЦИЯ
+// ПРЯМЫЕ ОБРАБОТЧИКИ (без DOMContentLoaded для кнопок)
+// ============================================================
+
+// Кнопка "+" в шапке
+document.getElementById('addOrgBtn').onclick = function(e) {
+    e.preventDefault();
+    openOrgModal();
+};
+
+// Кнопка "✖" в модальном окне
+document.getElementById('closeModalBtn').onclick = function(e) {
+    e.preventDefault();
+    closeOrgModal();
+};
+
+// Кнопка "Отмена"
+document.getElementById('cancelModalBtn').onclick = function(e) {
+    e.preventDefault();
+    closeOrgModal();
+};
+
+// Кнопка "Сохранить"
+document.getElementById('saveOrgBtn').onclick = function(e) {
+    e.preventDefault();
+    saveOrganization();
+};
+
+// Закрытие по клику вне окна
+document.getElementById('orgModal').onclick = function(e) {
+    if (e.target === this) {
+        closeOrgModal();
+    }
+};
+
+// ============================================================
+// ОСТАЛЬНЫЕ ОБРАБОТЧИКИ (DOMContentLoaded для остального)
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
     renderOrganizations();
     renderHistory();
     renderEmployeeDB();
-    
-    // Кнопка "+" открывает модальное окно
-    document.getElementById('addOrgBtn').addEventListener('click', openOrgModal);
     
     // Выбор организации
     document.getElementById('orgSelector').addEventListener('change', function() {
@@ -122,6 +155,53 @@ document.addEventListener('DOMContentLoaded', function() {
     // Добавляем первого сотрудника
     if (document.querySelectorAll('.employee-row').length === 0) {
         addEmployeeRow();
+    }
+    
+    // Фото: загрузка через кнопку
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                uploadedFile = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    document.getElementById('imagePreview').src = ev.target.result;
+                    document.getElementById('photoPreview').classList.remove('hidden');
+                    document.getElementById('uploadArea').style.display = 'none';
+                };
+                reader.readAsDataURL(uploadedFile);
+            }
+        });
+    }
+
+    // Фото: перетаскивание
+    const uploadArea = document.getElementById('uploadArea');
+    if (uploadArea) {
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#7c3aed';
+            this.style.background = 'rgba(124, 58, 237, 0.1)';
+        });
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.borderColor = 'rgba(124, 58, 237, 0.4)';
+            this.style.background = 'rgba(255,255,255,0.03)';
+        });
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = 'rgba(124, 58, 237, 0.4)';
+            this.style.background = 'rgba(255,255,255,0.03)';
+            if (e.dataTransfer.files.length > 0) {
+                uploadedFile = e.dataTransfer.files[0];
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    document.getElementById('imagePreview').src = ev.target.result;
+                    document.getElementById('photoPreview').classList.remove('hidden');
+                    document.getElementById('uploadArea').style.display = 'none';
+                };
+                reader.readAsDataURL(uploadedFile);
+            }
+        });
     }
 });
 
@@ -153,57 +233,10 @@ function goToDataTab() {
 }
 
 // ============================================================
-// ФОТО
+// ФОТО (ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ)
 // ============================================================
 let uploadedFile = null;
 let recognizedEmployees = [];
-
-document.addEventListener('DOMContentLoaded', function() {
-    const fileInput = document.getElementById('fileInput');
-    if (fileInput) {
-        fileInput.addEventListener('change', function(e) {
-            if (e.target.files.length > 0) {
-                uploadedFile = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = function(ev) {
-                    document.getElementById('imagePreview').src = ev.target.result;
-                    document.getElementById('photoPreview').classList.remove('hidden');
-                    document.getElementById('uploadArea').style.display = 'none';
-                };
-                reader.readAsDataURL(uploadedFile);
-            }
-        });
-    }
-
-    const uploadArea = document.getElementById('uploadArea');
-    if (uploadArea) {
-        uploadArea.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            this.style.borderColor = '#7c3aed';
-            this.style.background = 'rgba(124, 58, 237, 0.1)';
-        });
-        uploadArea.addEventListener('dragleave', function(e) {
-            e.preventDefault();
-            this.style.borderColor = 'rgba(124, 58, 237, 0.4)';
-            this.style.background = 'rgba(255,255,255,0.03)';
-        });
-        uploadArea.addEventListener('drop', function(e) {
-            e.preventDefault();
-            this.style.borderColor = 'rgba(124, 58, 237, 0.4)';
-            this.style.background = 'rgba(255,255,255,0.03)';
-            if (e.dataTransfer.files.length > 0) {
-                uploadedFile = e.dataTransfer.files[0];
-                const reader = new FileReader();
-                reader.onload = function(ev) {
-                    document.getElementById('imagePreview').src = ev.target.result;
-                    document.getElementById('photoPreview').classList.remove('hidden');
-                    document.getElementById('uploadArea').style.display = 'none';
-                };
-                reader.readAsDataURL(uploadedFile);
-            }
-        });
-    }
-});
 
 function recognizePhoto() {
     if (!uploadedFile) {
@@ -344,25 +377,4 @@ function generateXML(allPrograms = false) {
     if (!protocolNumber || !date || !orgInn || !orgTitle) {
         alert('Выберите организацию, заполните номер протокола и дату');
         return;
-    }
-    if (employees.length === 0) {
-        alert('Добавьте хотя бы одного сотрудника');
-        return;
-    }
-    let hasError = false;
-    employees.forEach(emp => {
-        if (!emp.snils) {
-            alert(`У сотрудника ${emp.last_name} ${emp.first_name} не указан СНИЛС!`);
-            hasError = true;
-        }
-    });
-    if (hasError) return;
-
-    const programs = {
-        1: "Оказание первой помощи пострадавшим",
-        2: "Использование (применение) средств индивидуальной защиты",
-        3: "Общие вопросы охраны труда и функционирования системы управления охраной труда",
-        4: "Безопасные методы и приемы выполнения работ при воздействии вредных и (или) опасных производственных факторов, источников опасности, идентифицированных в рамках специальной оценки условий труда и оценки профессиональных рисков"
-    };
-
-    let programIds = allPrograms
+   
