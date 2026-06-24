@@ -176,7 +176,7 @@ function getEmployeesFromForm() {
 }
 
 // ============================================================
-// 📤 ИМПОРТ ИЗ ФАЙЛА (С ПРАВИЛЬНОЙ КОДИРОВКОЙ)
+// 📤 ИМПОРТ ИЗ ФАЙЛА
 // ============================================================
 document.getElementById('importBtn').addEventListener('click', function() {
     const input = document.createElement('input');
@@ -193,75 +193,47 @@ document.getElementById('importBtn').addEventListener('click', function() {
         
         const file = e.target.files[0];
         
-        // Пробуем прочитать в разных кодировках
-        // Сначала пробуем UTF-8
-        const readerUtf8 = new FileReader();
-        readerUtf8.onload = function(event) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
             let content = event.target.result;
             
-            // Проверяем, есть ли кракозябры
-            const hasCracked = /[����]/.test(content) || /[а-яА-Я]/.test(content) === false && content.length > 0;
-            
-            if (hasCracked) {
-                // Если есть проблемы — пробуем Windows-1251
-                const reader1251 = new FileReader();
-                reader1251.onload = function(e2) {
-                    try {
-                        const bytes = new Uint8Array(e2.target.result);
-                        const decoder = new TextDecoder('windows-1251');
-                        const decoded = decoder.decode(bytes);
-                        
-                        // Проверяем, есть ли русские буквы
-                        if (/[а-яА-Я]/.test(decoded)) {
-                            processContent(decoded);
-                        } else {
-                            // Если не помогло — пробуем UTF-8 ещё раз
-                            const readerUtf8_2 = new FileReader();
-                            readerUtf8_2.onload = function(e3) {
-                                processContent(e3.target.result);
-                            };
-                            readerUtf8_2.readAsText(file, 'UTF-8');
-                        }
-                    } catch(err) {
-                        // Если ошибка — показываем исходное содержимое
-                        processContent(content);
+            // Пробуем разные кодировки
+            if (/[����]/.test(content) || !/[а-яА-Я]/.test(content)) {
+                try {
+                    const bytes = new Uint8Array(content.length);
+                    for (let i = 0; i < content.length; i++) {
+                        bytes[i] = content.charCodeAt(i) & 0xFF;
                     }
-                };
-                reader1251.readAsArrayBuffer(file);
-            } else {
-                processContent(content);
+                    const decoder = new TextDecoder('windows-1251');
+                    content = decoder.decode(bytes);
+                } catch(e) {}
             }
+            
+            // Удаляем BOM
+            if (content.charCodeAt(0) === 0xFEFF) {
+                content = content.slice(1);
+            }
+            
+            const employees = smartParse(content);
+            
+            if (employees.length === 0) {
+                alert('❌ Не удалось распознать данные. Проверьте формат файла.');
+                return;
+            }
+            
+            document.getElementById('employeesContainer').innerHTML = '';
+            employees.forEach(emp => addEmployee(emp));
+            alert(`✅ Загружено ${employees.length} сотрудников!`);
         };
-        readerUtf8.readAsText(file, 'UTF-8');
+        
+        reader.readAsBinaryString(file);
     };
     
     input.click();
 });
 
-// ===== ОБРАБОТКА СОДЕРЖИМОГО =====
-function processContent(content) {
-    // Удаляем BOM если есть
-    if (content.charCodeAt(0) === 0xFEFF) {
-        content = content.slice(1);
-    }
-    
-    const employees = smartParse(content);
-    
-    if (employees.length === 0) {
-        alert('❌ Не удалось распознать данные. Проверьте формат файла.\n\n' +
-              'Файл должен содержать строки с:\n' +
-              '- Фамилия Имя Отчество СНИЛС Должность\n' +
-              '- или через табуляцию: Фамилия\tИмя\tОтчество\tСНИЛС\tДолжность');
-        return;
-    }
-    
-    document.getElementById('employeesContainer').innerHTML = '';
-    employees.forEach(emp => addEmployee(emp));
-    alert(`✅ Загружено ${employees.length} сотрудников!`);
-}
-
 // ============================================================
-// 🧠 УМНЫЙ ПАРСЕР
+// 🧠 СУПЕР-УМНЫЙ ПАРСЕР (ЛЮБОЙ ПОРЯДОК)
 // ============================================================
 function smartParse(content) {
     const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
@@ -270,7 +242,11 @@ function smartParse(content) {
     lines.forEach(line => {
         const trimmed = line.trim();
         if (!trimmed) return;
-        const result = parseLine(trimmed);
+        
+        // Нормализуем строку: заменяем табуляции на пробелы, убираем лишние пробелы
+        let normalized = trimmed.replace(/\t+/g, ' ').replace(/\s+/g, ' ');
+        
+        const result = parseLineUniversal(normalized);
         if (result) {
             employees.push(result);
         }
@@ -279,136 +255,143 @@ function smartParse(content) {
     return employees;
 }
 
-function parseLine(line) {
-    // Проверяем табуляцию
-    if (line.includes('\t')) {
-        const parts = line.split('\t').map(s => s.trim());
-        if (parts.length >= 4) {
-            let last_name = parts[0] || '';
-            let first_name = parts[1] || '';
-            let middle_name = parts[2] || '';
-            let position = '';
-            let snils = '';
-            
-            let snilsIndex = -1;
-            parts.forEach((p, i) => {
-                const clean = p.replace(/[\s-]/g, '');
-                if (/^\d{11}$/.test(clean)) {
-                    snils = clean;
-                    snilsIndex = i;
-                }
-            });
-            
-            if (snilsIndex >= 0) {
-                const nameParts = [];
-                parts.forEach((p, i) => {
-                    if (i === snilsIndex) return;
-                    if (i < 3) {
-                        nameParts.push(p);
-                    } else {
-                        position += p + ' ';
-                    }
-                });
-                if (nameParts.length >= 2) {
-                    last_name = nameParts[0] || '';
-                    first_name = nameParts[1] || '';
-                    middle_name = nameParts[2] || '';
-                }
-                position = position.trim();
-            } else {
-                if (parts.length >= 4) {
-                    last_name = parts[0] || '';
-                    first_name = parts[1] || '';
-                    middle_name = parts[2] || '';
-                    position = parts.slice(3).join(' ') || '';
-                }
-            }
-            
-            if (last_name && first_name) {
-                return {
-                    last_name: last_name,
-                    first_name: first_name,
-                    middle_name: middle_name || '',
-                    position: position || '',
-                    snils: snils || '',
-                    is_passed: true
-                };
-            }
-        }
-    }
-    
-    // Через пробелы
-    line = line.replace(/\s+/g, ' ').trim();
-    
+// ===== УНИВЕРСАЛЬНЫЙ ПАРСЕР (ЛЮБОЙ ПОРЯДОК) =====
+function parseLineUniversal(line) {
+    // 1. Находим СНИЛС
     let snils = '';
     let snilsMatch = line.match(/\d{3}[- ]?\d{3}[- ]?\d{3}[- ]?\d{2}/);
     if (snilsMatch) {
         snils = snilsMatch[0].replace(/[\s-]/g, '');
+        line = line.replace(snilsMatch[0], '').trim();
     }
     
-    let remaining = line;
-    if (snils) {
-        remaining = remaining.replace(snilsMatch[0], '').trim();
-    }
+    // 2. Разбиваем на слова
+    let words = line.split(/\s+/).filter(w => w.length > 0);
     
-    const words = remaining.split(/\s+/).filter(w => w.length > 0);
+    // 3. Ищем "сдал"/"не сдал" и убираем
+    let is_passed = true;
+    const newWords = [];
+    for (let w of words) {
+        const lower = w.toLowerCase();
+        if (lower.includes('сдал') || lower.includes('сдан')) {
+            is_passed = !lower.includes('не');
+        } else {
+            newWords.push(w);
+        }
+    }
+    words = newWords;
+    
     if (words.length < 2) return null;
     
-    let nameEnd = 0;
-    let nameCount = 0;
+    // 4. Определяем, где ФИО, а где должность
+    // ФИО — это 2-3 слова подряд, которые начинаются с заглавной буквы и не являются "специалист" и т.п.
+    // Должность — всё остальное
     
-    for (let i = 0; i < words.length; i++) {
+    let nameParts = [];
+    let positionParts = [];
+    
+    // Список частых должностей (чтобы не путать с ФИО)
+    const commonPositions = [
+        'инженер', 'техник', 'механик', 'специалист', 'мастер', 'бригадир',
+        'директор', 'менеджер', 'бухгалтер', 'экономист', 'юрист', 'конструктор',
+        'технолог', 'электрик', 'сварщик', 'токарь', 'фрезеровщик', 'слесарь',
+        'водитель', 'грузчик', 'кладовщик', 'уборщик', 'охранник', 'программист',
+        'системный', 'администратор', 'начальник', 'заведующий', 'главный',
+        'ведущий', 'старший', 'младший', 'помощник', 'заместитель'
+    ];
+    
+    let i = 0;
+    while (i < words.length) {
         const w = words[i];
-        if (/^[А-ЯЁ][а-яё]{1,19}$/.test(w) || /^[A-Z][a-z]{1,19}$/.test(w)) {
-            nameCount++;
-            if (nameCount >= 3) {
-                nameEnd = i + 1;
-                break;
-            }
+        const lower = w.toLowerCase();
+        
+        // Проверяем, является ли слово частью ФИО (начинается с заглавной, не должность)
+        const isName = /^[А-ЯЁ][а-яё]{1,19}$/.test(w) || /^[A-Z][a-z]{1,19}$/.test(w);
+        const isPosition = commonPositions.some(pos => lower.includes(pos) || pos.includes(lower));
+        
+        if (isName && !isPosition && nameParts.length < 3) {
+            nameParts.push(w);
+            i++;
+        } else if (isName && !isPosition && nameParts.length >= 3) {
+            // Если уже есть 3 части ФИО — остальное должность
+            positionParts.push(w);
+            i++;
         } else {
-            if (nameCount >= 2) {
-                nameEnd = i;
-                break;
-            } else {
-                nameCount = 0;
+            // Если слово не похоже на имя — это должность
+            positionParts.push(w);
+            i++;
+        }
+    }
+    
+    // Если ФИО не найдено — пробуем альтернативный подход
+    if (nameParts.length < 2) {
+        // Ищем в строке 2-3 слова подряд, которые начинаются с заглавной
+        const allWords = words;
+        let bestName = [];
+        let bestPosition = [];
+        
+        for (let start = 0; start < allWords.length - 1; start++) {
+            let candidate = [];
+            let pos = [];
+            
+            for (let j = start; j < Math.min(start + 3, allWords.length); j++) {
+                const w = allWords[j];
+                const lower = w.toLowerCase();
+                const isName = /^[А-ЯЁ][а-яё]{1,19}$/.test(w) || /^[A-Z][a-z]{1,19}$/.test(w);
+                const isPosition = commonPositions.some(pos2 => lower.includes(pos2) || pos2.includes(lower));
+                
+                if (isName && !isPosition) {
+                    candidate.push(w);
+                } else {
+                    break;
+                }
+            }
+            
+            if (candidate.length >= 2) {
+                const remaining = allWords.slice(start + candidate.length);
+                if (remaining.length > 0) {
+                    bestName = candidate;
+                    bestPosition = remaining;
+                    break;
+                }
+            }
+        }
+        
+        if (bestName.length >= 2) {
+            nameParts = bestName;
+            positionParts = bestPosition;
+        } else {
+            // Самый простой вариант: первые 2-3 слова — ФИО, остальное — должность
+            const firstThree = allWords.slice(0, Math.min(3, allWords.length));
+            if (firstThree.length >= 2) {
+                nameParts = firstThree;
+                positionParts = allWords.slice(firstThree.length);
             }
         }
     }
     
-    if (nameEnd === 0 || nameEnd < 2) {
-        nameEnd = Math.min(3, words.length);
+    // Если всё ещё нет ФИО — возвращаем null
+    if (nameParts.length < 2) return null;
+    
+    // Формируем результат
+    let last_name = nameParts[0] || '';
+    let first_name = nameParts[1] || '';
+    let middle_name = nameParts[2] || '';
+    let position = positionParts.join(' ') || '';
+    
+    // Если должность не найдена, но есть ещё слова — берём их
+    if (!position && words.length > nameParts.length) {
+        position = words.slice(nameParts.length).join(' ');
     }
     
-    const nameWords = words.slice(0, nameEnd);
-    const positionWords = words.slice(nameEnd);
-    
-    let last_name = nameWords[0] || '';
-    let first_name = nameWords[1] || '';
-    let middle_name = nameWords[2] || '';
-    let position = positionWords.join(' ') || '';
-    
-    if (!position && words.length > nameEnd) {
-        position = words.slice(nameEnd).join(' ');
-    }
-    
-    let is_passed = true;
-    const lowerLine = line.toLowerCase();
-    if (lowerLine.includes('не сдал') || lowerLine.includes('не сдан') || lowerLine.includes('несдал')) {
-        is_passed = false;
-    }
-    
-    if (last_name && first_name) {
-        return {
-            last_name: last_name,
-            first_name: first_name,
-            middle_name: middle_name || '',
-            position: position || '',
-            snils: snils || '',
-            is_passed: is_passed
-        };
-    }
-    
-    return null;
+    return {
+        last_name: last_name,
+        first_name: first_name,
+        middle_name: middle_name || '',
+        position: position || '',
+        snils: snils || '',
+        is_passed: is_passed
+    };
 }
 
 // ============================================================
@@ -515,7 +498,6 @@ document.getElementById('generateBtn').addEventListener('click', function() {
     });
     saveEmployees(existing);
 
-    // Создаём XML с правильной кодировкой UTF-8
     const encoder = new TextEncoder();
     const encoded = encoder.encode(xml);
     const blob = new Blob([encoded], { type: 'application/xml;charset=utf-8' });
