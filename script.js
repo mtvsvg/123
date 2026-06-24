@@ -35,7 +35,6 @@ function renderOrganizations() {
         option.textContent = `${org.title} (${org.inn})`;
         selector.appendChild(option);
     });
-    // Восстанавливаем выбранную
     if (currentOrgId) {
         selector.value = currentOrgId;
         const org = orgs.find(o => o.id == currentOrgId);
@@ -43,6 +42,9 @@ function renderOrganizations() {
             document.getElementById('orgTitle').value = org.title;
             document.getElementById('orgInn').value = org.inn;
         }
+    } else {
+        document.getElementById('orgTitle').value = '';
+        document.getElementById('orgInn').value = '';
     }
 }
 
@@ -69,7 +71,6 @@ function addOrganization() {
     document.getElementById('newOrgInn').value = '';
     document.getElementById('addOrgForm').classList.add('hidden');
     renderOrganizations();
-    // Автоматически выбираем новую организацию
     document.getElementById('orgSelector').value = newOrg.id;
     selectOrganization(newOrg.id);
 }
@@ -90,6 +91,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('orgSelector').addEventListener('change', function() {
         if (this.value) {
             selectOrganization(parseInt(this.value));
+        } else {
+            document.getElementById('orgTitle').value = '';
+            document.getElementById('orgInn').value = '';
         }
     });
 });
@@ -207,8 +211,26 @@ function recognizePhoto() {
 }
 
 function fillFormFromRecognition() {
-    document.getElementById('orgTitle').value = "ООО 'Бэби-Бум'";
-    document.getElementById('orgInn').value = "2634800610";
+    // Проверяем, есть ли организация с таким ИНН
+    const orgs = getOrganizations();
+    const existingOrg = orgs.find(o => o.inn === "2634800610");
+    if (existingOrg) {
+        document.getElementById('orgSelector').value = existingOrg.id;
+        selectOrganization(existingOrg.id);
+    } else {
+        // Добавляем новую организацию
+        const newOrg = {
+            id: Date.now(),
+            title: "ООО 'Бэби-Бум'",
+            inn: "2634800610"
+        };
+        orgs.push(newOrg);
+        saveOrganizations(orgs);
+        renderOrganizations();
+        document.getElementById('orgSelector').value = newOrg.id;
+        selectOrganization(newOrg.id);
+    }
+    
     document.getElementById('protocolNumber').value = "01/26";
     document.getElementById('protocolDate').value = "2026-06-23";
     
@@ -368,36 +390,4 @@ function generateXML(allPrograms = false) {
         if (!emp.snils) return;
         const found = existing.find(e =>
             e.last_name === emp.last_name &&
-            e.first_name === emp.first_name &&
-            e.position === emp.position
-        );
-        if (!found) {
-            existing.push({ ...emp });
-        } else {
-            found.snils = emp.snils;
-        }
-    });
-    saveEmployees(existing);
-
-    // Скачиваем
-    const blob = new Blob([xml], { type: 'application/xml' });
-    const url = URL.createObjectURL(blob);
-    document.getElementById('downloadLink').href = url;
-    document.getElementById('downloadLink').download = `${protocolNumber.replace('/', '_')}_${date}.xml`;
-    document.getElementById('result').classList.remove('hidden');
-
-    renderHistory();
-    renderEmployeeDB();
-    alert('✅ XML создан! Нажмите "Скачать XML"');
-}
-
-function escXml(str) {
-    if (!str) return '';
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-// ============================================================
-// БАЗА СОТРУДНИКОВ
-// ============================================================
-function renderEmployeeDB() {
-    const
+            e.first
