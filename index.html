@@ -15,7 +15,7 @@
         <h1>📸 Фото → XML</h1>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
             <span style="color:#a0a0c0;font-weight:500;">ОРГАНИЗАЦИЯ</span>
-            <button class="btn-secondary" onclick="showAddOrgForm()" style="padding:6px 14px;font-size:1.2rem;">➕</button>
+            <button class="btn-secondary" id="addOrgBtn" style="padding:6px 14px;font-size:1.2rem;">➕</button>
         </div>
     </div>
     <p class="subtitle">Сфотографируйте протокол → ИИ распознает → заполнит форму → вы получите XML</p>
@@ -28,14 +28,14 @@
         </select>
     </div>
 
-    <!-- ===== ФОРМА ДОБАВЛЕНИЯ ОРГАНИЗАЦИИ (всплывающее окно) ===== -->
+    <!-- ===== ФОРМА ДОБАВЛЕНИЯ ОРГАНИЗАЦИИ ===== -->
     <div id="addOrgForm" class="hidden" style="background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.1);">
         <h4 style="margin-bottom:8px;">➕ Добавить организацию</h4>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <input type="text" id="newOrgTitle" placeholder="Название организации" style="flex:2;min-width:200px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 14px;color:#fff;">
             <input type="text" id="newOrgInn" placeholder="ИНН" style="flex:1;min-width:120px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 14px;color:#fff;">
             <button class="btn-secondary" onclick="addOrganization()" style="flex:0;">Сохранить</button>
-            <button class="btn-secondary" onclick="document.getElementById('addOrgForm').classList.add('hidden')" style="flex:0;">✖</button>
+            <button class="btn-secondary" onclick="closeAddOrgForm()" style="flex:0;">✖</button>
         </div>
     </div>
 
@@ -67,7 +67,7 @@
         <h3>📚 Программа обучения</h3>
         <div class="form-group">
             <label>Выберите программу:</label>
-            <select id="programSelect" style="padding:10px;background:rgba(255,255,255,0.07);border-radius:12px;color:#fff;width:100%;border:1px solid rgba(255,255,255,0.12);">
+            <select id="programSelect" style="padding:10px;background:rgba(255,255,255,0.15);border-radius:12px;color:#fff;width:100%;border:1px solid rgba(255,255,255,0.3);">
                 <option value="1">1. Оказание первой помощи пострадавшим</option>
                 <option value="2">2. Использование (применение) СИЗ</option>
                 <option value="3">3. Общие вопросы охраны труда и СУОТ</option>
