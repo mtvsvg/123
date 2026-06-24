@@ -15,7 +15,7 @@
         <h1>📸 Фото → XML</h1>
         <div style="display:flex;align-items:center;gap:12px;">
             <span style="color:#a0a0c0;font-weight:500;">ОРГАНИЗАЦИЯ</span>
-            <button id="addOrgBtn" class="btn-secondary" style="padding:6px 14px;font-size:1.2rem;line-height:1;">➕</button>
+            <button class="btn-secondary" id="addOrgBtn" style="padding:6px 14px;font-size:1.4rem;line-height:1;cursor:pointer;">➕</button>
         </div>
     </div>
     <p class="subtitle">Сфотографируйте протокол → ИИ распознает → заполнит форму → вы получите XML</p>
@@ -35,7 +35,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>➕ Добавить организацию</h3>
-                <button class="modal-close" onclick="closeOrgModal()">✖</button>
+                <button class="modal-close" id="closeModalBtn">✖</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -48,8 +48,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeOrgModal()">Отмена</button>
-                <button class="btn-primary" onclick="addOrganization()" style="width:auto;padding:10px 24px;">Сохранить</button>
+                <button class="btn-secondary" id="cancelModalBtn">Отмена</button>
+                <button class="btn-primary" id="saveOrgBtn" style="width:auto;padding:10px 24px;">Сохранить</button>
             </div>
         </div>
     </div>
