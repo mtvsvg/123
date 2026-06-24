@@ -3,160 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Фото → XML Протокол</title>
+    <title>Генератор XML протоколов</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="glass-card">
+<div class="container">
 
-    <!-- ===== ШАПКА С КНОПКОЙ "+" ===== -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:12px;">
-        <h1>📸 Фото → XML</h1>
-        <div style="display:flex;align-items:center;gap:12px;">
-            <span style="color:#a0a0c0;font-weight:500;">ОРГАНИЗАЦИЯ</span>
-            <button class="btn-secondary" id="addOrgBtn" style="padding:6px 14px;font-size:1.4rem;line-height:1;cursor:pointer;">➕</button>
+    <h1>📄 Генератор XML протоколов</h1>
+    <p class="desc">Создайте XML-файл для загрузки в систему</p>
+
+    <!-- ============================================================ -->
+    <!-- БЛОК ОРГАНИЗАЦИИ -->
+    <!-- ============================================================ -->
+    <div class="block">
+        <div class="block-header">
+            <h2>🏢 Организация</h2>
+            <button class="btn-add" id="showOrgFormBtn">➕ Добавить</button>
         </div>
-    </div>
-    <p class="subtitle">Сфотографируйте протокол → ИИ распознает → заполнит форму → вы получите XML</p>
+        
+        <!-- Форма добавления организации (изначально скрыта) -->
+        <div id="orgForm" class="org-form hidden">
+            <input type="text" id="orgNameInput" placeholder="Название организации">
+            <input type="text" id="orgInnInput" placeholder="ИНН">
+            <button class="btn-save" id="saveOrgBtn">Сохранить</button>
+            <button class="btn-cancel" id="cancelOrgBtn">Отмена</button>
+        </div>
 
-    <!-- ===== ВЫБОР ОРГАНИЗАЦИИ ===== -->
-    <div style="margin-bottom:16px;">
-        <label style="color:#a0a0c0;font-weight:500;">Выберите организацию:</label>
-        <select id="orgSelector" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 14px;color:#fff;font-size:1rem;width:100%;margin-top:4px;cursor:pointer;">
+        <!-- Выбор организации -->
+        <select id="orgSelect" class="org-select">
             <option value="">-- Выберите организацию --</option>
         </select>
     </div>
 
     <!-- ============================================================ -->
-    <!-- ===== МОДАЛЬНОЕ ОКНО ДЛЯ ДОБАВЛЕНИЯ ОРГАНИЗАЦИИ ===== -->
+    <!-- БЛОК ПРОТОКОЛА -->
     <!-- ============================================================ -->
-    <div id="orgModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>➕ Добавить организацию</h3>
-                <button class="modal-close" id="closeModalBtn">✖</button>
+    <div class="block">
+        <h2>📋 Протокол</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Номер протокола</label>
+                <input type="text" id="protocolNumber" placeholder="01/26">
             </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Название организации</label>
-                    <input type="text" id="newOrgTitle" placeholder="Например: ООО Бэби-Бум">
-                </div>
-                <div class="form-group">
-                    <label>ИНН организации</label>
-                    <input type="text" id="newOrgInn" placeholder="Например: 2634800610">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" id="cancelModalBtn">Отмена</button>
-                <button class="btn-primary" id="saveOrgBtn" style="width:auto;padding:10px 24px;">Сохранить</button>
+            <div class="form-group">
+                <label>Дата</label>
+                <input type="date" id="protocolDate">
             </div>
         </div>
     </div>
 
-    <!-- ===== ВКЛАДКИ ===== -->
-    <div class="tab">
-        <button class="active" onclick="showTab('protocol')">📝 Данные</button>
-        <button onclick="showTab('photo')">📷 Фото</button>
-        <button onclick="showTab('employees')">👤 Сотрудники</button>
-        <button onclick="showTab('history')">📄 История</button>
+    <!-- ============================================================ -->
+    <!-- БЛОК ПРОГРАММЫ ОБУЧЕНИЯ -->
+    <!-- ============================================================ -->
+    <div class="block">
+        <h2>📚 Программа обучения</h2>
+        <select id="programSelect" class="program-select">
+            <option value="1">1. Оказание первой помощи пострадавшим</option>
+            <option value="2">2. Использование (применение) СИЗ</option>
+            <option value="3">3. Общие вопросы охраны труда и СУОТ</option>
+            <option value="4">4. Безопасные методы и приемы работ при воздействии вредных факторов</option>
+        </select>
     </div>
 
     <!-- ============================================================ -->
-    <!-- ===== ВКЛАДКА 1: ДАННЫЕ ===== -->
+    <!-- БЛОК СОТРУДНИКОВ -->
     <!-- ============================================================ -->
-    <div id="tabProtocol">
-
-        <h3>📋 Протокол</h3>
-        <div class="form-group">
-            <label>Номер протокола</label>
-            <input type="text" id="protocolNumber" placeholder="Например: 01/26">
+    <div class="block">
+        <div class="block-header">
+            <h2>👥 Сотрудники</h2>
+            <button class="btn-add" onclick="addEmployee()">➕ Добавить</button>
         </div>
-        <div class="form-group">
-            <label>Дата</label>
-            <input type="date" id="protocolDate">
-        </div>
-
-        <hr style="border-color:rgba(255,255,255,0.1);margin:20px 0;">
-
-        <h3>📚 Программа обучения</h3>
-        <div class="form-group">
-            <label>Выберите программу:</label>
-            <select id="programSelect" style="padding:10px;background:rgba(255,255,255,0.15);border-radius:12px;color:#fff;width:100%;border:1px solid rgba(255,255,255,0.3);">
-                <option value="1">1. Оказание первой помощи пострадавшим</option>
-                <option value="2">2. Использование (применение) СИЗ</option>
-                <option value="3">3. Общие вопросы охраны труда и СУОТ</option>
-                <option value="4">4. Безопасные методы и приемы работ при воздействии вредных факторов</option>
-            </select>
-        </div>
-
-        <hr style="border-color:rgba(255,255,255,0.1);margin:20px 0;">
-
-        <h3>👥 Сотрудники</h3>
-        <p style="color:#a0a0c0;font-size:0.9rem;margin-bottom:12px;">Добавьте сотрудников вручную или распознайте из фото</p>
-        <div id="employeesList"></div>
-        <button class="btn-secondary" onclick="addEmployeeRow()" style="margin:12px 0;">➕ Добавить сотрудника</button>
-
-        <button class="btn-primary" onclick="generateXML(false)" style="margin-top:8px;">⚡ Создать XML (выбранная программа)</button>
-        <button class="btn-secondary" onclick="generateXML(true)" style="margin-top:8px;">📦 Создать XML для ВСЕХ программ (1-4)</button>
-
-        <div id="result" class="hidden">
-            <h3>✅ XML готов!</h3>
-            <p><a id="downloadLink" href="#" download>📥 Скачать XML</a></p>
-            <button class="btn-secondary" onclick="document.getElementById('result').classList.add('hidden')">✖ Закрыть</button>
-        </div>
+        <div id="employeesContainer"></div>
     </div>
 
     <!-- ============================================================ -->
-    <!-- ===== ВКЛАДКА 2: ФОТО ===== -->
+    <!-- КНОПКА ГЕНЕРАЦИИ -->
     <!-- ============================================================ -->
-    <div id="tabPhoto" class="hidden">
-        <h3>📷 Загрузите фото протокола</h3>
-        <p style="color:#a0a0c0;font-size:0.9rem;">ИИ распознает данные и заполнит форму</p>
+    <button class="btn-generate" id="generateBtn">⚡ Создать XML</button>
 
-        <div class="upload-area" id="uploadArea">
-            <span class="upload-icon">📷</span>
-            <p style="font-weight:500;">Нажми, чтобы выбрать фото</p>
-            <p style="color:#6a6a8a;font-size:0.9rem;">или перетащите файл сюда</p>
-            <input type="file" id="fileInput" accept="image/*" capture="environment">
-        </div>
-
-        <div id="photoPreview" class="hidden" style="margin-top:16px;">
-            <img id="imagePreview" src="#" alt="Фото протокола" style="max-width:100%;border-radius:14px;border:1px solid rgba(255,255,255,0.1);">
-            <button class="btn-primary" onclick="recognizePhoto()" style="margin-top:12px;">🧠 Распознать данные</button>
-        </div>
-
-        <div id="recognitionResult" class="hidden" style="margin-top:16px;padding:16px;background:rgba(0,212,255,0.05);border-radius:12px;">
-            <h3>✅ Распознано:</h3>
-            <div id="recognizedData"></div>
-            <button class="btn-secondary" onclick="fillFormFromRecognition()" style="margin-top:8px;">📥 Заполнить форму</button>
-            <button class="btn-secondary" onclick="goToDataTab()" style="margin-top:8px;margin-left:8px;">📝 Перейти к данным</button>
-        </div>
+    <!-- ============================================================ -->
+    <!-- РЕЗУЛЬТАТ -->
+    <!-- ============================================================ -->
+    <div id="resultBlock" class="result-block hidden">
+        <h3>✅ XML готов!</h3>
+        <a id="downloadLink" href="#" download>📥 Скачать XML</a>
+        <button class="btn-cancel" onclick="document.getElementById('resultBlock').classList.add('hidden')">✖ Закрыть</button>
     </div>
-
-    <!-- ============================================================ -->
-    <!-- ===== ВКЛАДКА 3: СОТРУДНИКИ ===== -->
-    <!-- ============================================================ -->
-    <div id="tabEmployees" class="hidden">
-        <h3>👤 База сотрудников</h3>
-        <p style="color:#a0a0c0;font-size:0.9rem;">Сотрудники сохраняются автоматически при создании протокола.</p>
-        <p style="color:#a0a0c0;font-size:0.9rem;">При распознавании фото СНИЛС подставится автоматически.</p>
-        <div id="employeeDB"></div>
-        <button class="btn-secondary" onclick="clearEmployees()" style="margin-top:12px;">🗑 Очистить базу</button>
-    </div>
-
-    <!-- ============================================================ -->
-    <!-- ===== ВКЛАДКА 4: ИСТОРИЯ ===== -->
-    <!-- ============================================================ -->
-    <div id="tabHistory" class="hidden">
-        <h3>📄 История протоколов</h3>
-        <div id="historyList"></div>
-        <button class="btn-secondary" onclick="clearHistory()" style="margin-top:12px;">🗑 Очистить историю</button>
-    </div>
-
-    <!-- ===== СКРЫТЫЕ ПОЛЯ ДЛЯ ОРГАНИЗАЦИИ ===== -->
-    <input type="hidden" id="orgTitleHidden">
-    <input type="hidden" id="orgInnHidden">
 
 </div>
 
