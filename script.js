@@ -209,7 +209,6 @@ document.getElementById('importBtn').addEventListener('click', function() {
                 } catch(e) {}
             }
             
-            // Удаляем BOM
             if (content.charCodeAt(0) === 0xFEFF) {
                 content = content.slice(1);
             }
@@ -233,20 +232,25 @@ document.getElementById('importBtn').addEventListener('click', function() {
 });
 
 // ============================================================
-// 🧠 СУПЕР-УМНЫЙ ПАРСЕР (ЛЮБОЙ ПОРЯДОК)
+// 🧠 СУПЕР-УМНЫЙ ПАРСЕР (НОРМАЛИЗУЕТ ПРОБЕЛЫ)
 // ============================================================
 function smartParse(content) {
     const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
     const employees = [];
     
     lines.forEach(line => {
-        const trimmed = line.trim();
+        let trimmed = line.trim();
         if (!trimmed) return;
         
-        // Нормализуем строку: заменяем табуляции на пробелы, убираем лишние пробелы
-        let normalized = trimmed.replace(/\t+/g, ' ').replace(/\s+/g, ' ');
+        // ===== ГЛАВНОЕ: УДАЛЯЕМ ЛИШНИЕ ПРОБЕЛЫ =====
+        // Заменяем табуляции на пробелы
+        trimmed = trimmed.replace(/\t/g, ' ');
+        // Удаляем все лишние пробелы (больше одного подряд)
+        trimmed = trimmed.replace(/\s+/g, ' ');
+        // Удаляем пробелы в начале и конце
+        trimmed = trimmed.trim();
         
-        const result = parseLineUniversal(normalized);
+        const result = parseLineUniversal(trimmed);
         if (result) {
             employees.push(result);
         }
@@ -284,40 +288,37 @@ function parseLineUniversal(line) {
     if (words.length < 2) return null;
     
     // 4. Определяем, где ФИО, а где должность
-    // ФИО — это 2-3 слова подряд, которые начинаются с заглавной буквы и не являются "специалист" и т.п.
-    // Должность — всё остальное
-    
     let nameParts = [];
     let positionParts = [];
     
-    // Список частых должностей (чтобы не путать с ФИО)
+    // Список частых должностей
     const commonPositions = [
         'инженер', 'техник', 'механик', 'специалист', 'мастер', 'бригадир',
         'директор', 'менеджер', 'бухгалтер', 'экономист', 'юрист', 'конструктор',
         'технолог', 'электрик', 'сварщик', 'токарь', 'фрезеровщик', 'слесарь',
         'водитель', 'грузчик', 'кладовщик', 'уборщик', 'охранник', 'программист',
         'системный', 'администратор', 'начальник', 'заведующий', 'главный',
-        'ведущий', 'старший', 'младший', 'помощник', 'заместитель'
+        'ведущий', 'старший', 'младший', 'помощник', 'заместитель', 'швея',
+        'вышивальщица', 'раскройщик', 'комплектовщик', 'упаковщик', 'контролер',
+        'наладчик', 'оператор', 'машинист', 'крановщик', 'стропальщик'
     ];
     
+    // Проверяем, является ли слово ФИО или должностью
     let i = 0;
     while (i < words.length) {
         const w = words[i];
         const lower = w.toLowerCase();
         
-        // Проверяем, является ли слово частью ФИО (начинается с заглавной, не должность)
         const isName = /^[А-ЯЁ][а-яё]{1,19}$/.test(w) || /^[A-Z][a-z]{1,19}$/.test(w);
-        const isPosition = commonPositions.some(pos => lower.includes(pos) || pos.includes(lower));
+        const isPosition = commonPositions.some(pos => lower === pos || lower.includes(pos) || pos.includes(lower));
         
         if (isName && !isPosition && nameParts.length < 3) {
             nameParts.push(w);
             i++;
         } else if (isName && !isPosition && nameParts.length >= 3) {
-            // Если уже есть 3 части ФИО — остальное должность
             positionParts.push(w);
             i++;
         } else {
-            // Если слово не похоже на имя — это должность
             positionParts.push(w);
             i++;
         }
@@ -325,52 +326,26 @@ function parseLineUniversal(line) {
     
     // Если ФИО не найдено — пробуем альтернативный подход
     if (nameParts.length < 2) {
-        // Ищем в строке 2-3 слова подряд, которые начинаются с заглавной
-        const allWords = words;
-        let bestName = [];
-        let bestPosition = [];
-        
-        for (let start = 0; start < allWords.length - 1; start++) {
-            let candidate = [];
-            let pos = [];
-            
-            for (let j = start; j < Math.min(start + 3, allWords.length); j++) {
-                const w = allWords[j];
-                const lower = w.toLowerCase();
-                const isName = /^[А-ЯЁ][а-яё]{1,19}$/.test(w) || /^[A-Z][a-z]{1,19}$/.test(w);
-                const isPosition = commonPositions.some(pos2 => lower.includes(pos2) || pos2.includes(lower));
-                
-                if (isName && !isPosition) {
-                    candidate.push(w);
-                } else {
-                    break;
-                }
-            }
-            
-            if (candidate.length >= 2) {
-                const remaining = allWords.slice(start + candidate.length);
-                if (remaining.length > 0) {
-                    bestName = candidate;
-                    bestPosition = remaining;
-                    break;
-                }
-            }
-        }
-        
-        if (bestName.length >= 2) {
-            nameParts = bestName;
-            positionParts = bestPosition;
-        } else {
-            // Самый простой вариант: первые 2-3 слова — ФИО, остальное — должность
-            const firstThree = allWords.slice(0, Math.min(3, allWords.length));
-            if (firstThree.length >= 2) {
+        // Простой вариант: первые 2-3 слова — ФИО, остальное — должность
+        const firstThree = words.slice(0, Math.min(3, words.length));
+        if (firstThree.length >= 2) {
+            // Проверяем, что первые слова действительно похожи на ФИО
+            const likelyName = firstThree.every(w => /^[А-ЯЁ][а-яё]{1,19}$/.test(w) || /^[A-Z][a-z]{1,19}$/.test(w));
+            if (likelyName || firstThree.length === 3) {
                 nameParts = firstThree;
-                positionParts = allWords.slice(firstThree.length);
+                positionParts = words.slice(firstThree.length);
             }
         }
     }
     
-    // Если всё ещё нет ФИО — возвращаем null
+    // Если всё ещё нет ФИО — пробуем последний вариант
+    if (nameParts.length < 2) {
+        // Берём первые 2 слова как ФИО
+        nameParts = words.slice(0, 2);
+        positionParts = words.slice(2);
+    }
+    
+    // Если нет ФИО — возвращаем null
     if (nameParts.length < 2) return null;
     
     // Формируем результат
