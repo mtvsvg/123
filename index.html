@@ -10,18 +10,23 @@
 
 <div class="glass-card">
 
-    <!-- ===== ШАПКА С ВЫБОРОМ ОРГАНИЗАЦИИ ===== -->
+    <!-- ===== ШАПКА ===== -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:12px;">
         <h1>📸 Фото → XML</h1>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-            <label style="color:#a0a0c0;font-weight:500;">🏢 Организация:</label>
-            <select id="orgSelector" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:8px 16px;color:#fff;font-size:1rem;min-width:200px;">
-                <option value="">-- Выберите организацию --</option>
-            </select>
-            <button class="btn-secondary" onclick="showAddOrgForm()" style="padding:6px 14px;">➕</button>
+            <span style="color:#a0a0c0;font-weight:500;">ОРГАНИЗАЦИЯ</span>
+            <button class="btn-secondary" onclick="showAddOrgForm()" style="padding:6px 14px;font-size:1.2rem;">➕</button>
         </div>
     </div>
     <p class="subtitle">Сфотографируйте протокол → ИИ распознает → заполнит форму → вы получите XML</p>
+
+    <!-- ===== ВЫБОР ОРГАНИЗАЦИИ ===== -->
+    <div style="margin-bottom:16px;">
+        <label style="color:#a0a0c0;font-weight:500;">Выберите организацию:</label>
+        <select id="orgSelector" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 14px;color:#fff;font-size:1rem;width:100%;margin-top:4px;">
+            <option value="">-- Выберите организацию --</option>
+        </select>
+    </div>
 
     <!-- ===== ФОРМА ДОБАВЛЕНИЯ ОРГАНИЗАЦИИ (всплывающее окно) ===== -->
     <div id="addOrgForm" class="hidden" style="background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.1);">
@@ -133,6 +138,10 @@
         <div id="historyList"></div>
         <button class="btn-secondary" onclick="clearHistory()" style="margin-top:12px;">🗑 Очистить историю</button>
     </div>
+
+    <!-- ===== СКРЫТЫЕ ПОЛЯ ДЛЯ ОРГАНИЗАЦИИ ===== -->
+    <input type="hidden" id="orgTitleHidden">
+    <input type="hidden" id="orgInnHidden">
 
 </div>
 
