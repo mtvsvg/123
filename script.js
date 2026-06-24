@@ -39,12 +39,13 @@ function renderOrganizations() {
         selector.value = currentOrgId;
         const org = orgs.find(o => o.id == currentOrgId);
         if (org) {
-            document.getElementById('orgTitle').value = org.title;
-            document.getElementById('orgInn').value = org.inn;
+            // Данные организации сохраняются в hidden поля
+            document.getElementById('orgTitleHidden').value = org.title;
+            document.getElementById('orgInnHidden').value = org.inn;
         }
     } else {
-        document.getElementById('orgTitle').value = '';
-        document.getElementById('orgInn').value = '';
+        document.getElementById('orgTitleHidden').value = '';
+        document.getElementById('orgInnHidden').value = '';
     }
 }
 
@@ -81,8 +82,8 @@ function selectOrganization(orgId) {
     const orgs = getOrganizations();
     const org = orgs.find(o => o.id == orgId);
     if (org) {
-        document.getElementById('orgTitle').value = org.title;
-        document.getElementById('orgInn').value = org.inn;
+        document.getElementById('orgTitleHidden').value = org.title;
+        document.getElementById('orgInnHidden').value = org.inn;
     }
 }
 
@@ -92,8 +93,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (this.value) {
             selectOrganization(parseInt(this.value));
         } else {
-            document.getElementById('orgTitle').value = '';
-            document.getElementById('orgInn').value = '';
+            document.getElementById('orgTitleHidden').value = '';
+            document.getElementById('orgInnHidden').value = '';
         }
     });
 });
@@ -213,7 +214,7 @@ function recognizePhoto() {
 function fillFormFromRecognition() {
     // Проверяем, есть ли организация с таким ИНН
     const orgs = getOrganizations();
-    const existingOrg = orgs.find(o => o.inn === "2634800610");
+    let existingOrg = orgs.find(o => o.inn === "2634800610");
     if (existingOrg) {
         document.getElementById('orgSelector').value = existingOrg.id;
         selectOrganization(existingOrg.id);
@@ -310,13 +311,13 @@ function autoFillSnilsForRow(row) {
 function generateXML(allPrograms = false) {
     const protocolNumber = document.getElementById('protocolNumber').value.trim();
     const date = document.getElementById('protocolDate').value;
-    const orgInn = document.getElementById('orgInn').value.trim();
-    const orgTitle = document.getElementById('orgTitle').value.trim();
+    const orgTitle = document.getElementById('orgTitleHidden').value.trim();
+    const orgInn = document.getElementById('orgInnHidden').value.trim();
     const employees = getEmployeesFromForm();
     const selectedProgramId = parseInt(document.getElementById('programSelect').value);
 
     if (!protocolNumber || !date || !orgInn || !orgTitle) {
-        alert('Заполните все поля: организация, номер протокола и дата');
+        alert('Выберите организацию, заполните номер протокола и дату');
         return;
     }
     if (employees.length === 0) {
@@ -390,4 +391,16 @@ function generateXML(allPrograms = false) {
         if (!emp.snils) return;
         const found = existing.find(e =>
             e.last_name === emp.last_name &&
-            e.first
+            e.first_name === emp.first_name &&
+            e.position === emp.position
+        );
+        if (!found) {
+            existing.push({ ...emp });
+        } else {
+            found.snils = emp.snils;
+        }
+    });
+    saveEmployees(existing);
+
+    // Скачиваем
+    const blob = new Bl
