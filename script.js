@@ -37,11 +37,6 @@ function renderOrgs() {
     });
     if (currentOrgId) {
         select.value = currentOrgId;
-        const org = orgs.find(o => o.id == currentOrgId);
-        if (org) {
-            document.getElementById('orgNameHidden')?.remove();
-            document.getElementById('orgInnHidden')?.remove();
-        }
     }
 }
 
@@ -83,16 +78,54 @@ document.getElementById('saveOrgBtn').addEventListener('click', function() {
     alert('✅ Организация добавлена!');
 });
 
+// ===== УДАЛИТЬ ОРГАНИЗАЦИЮ =====
+document.getElementById('deleteOrgBtn').addEventListener('click', function() {
+    const select = document.getElementById('orgSelect');
+    const orgId = select.value;
+    if (!orgId) {
+        alert('Сначала выберите организацию для удаления');
+        return;
+    }
+    if (!confirm('Удалить выбранную организацию?')) return;
+    
+    let orgs = getOrgs();
+    orgs = orgs.filter(o => o.id != parseInt(orgId));
+    saveOrgs(orgs);
+    
+    if (currentOrgId == orgId) {
+        currentOrgId = null;
+        localStorage.removeItem('currentOrgId');
+    }
+    renderOrgs();
+    document.getElementById('orgSelect').value = '';
+    alert('✅ Организация удалена');
+});
+
 // ===== ВЫБОР ОРГАНИЗАЦИИ =====
 document.getElementById('orgSelect').addEventListener('change', function() {
     if (this.value) {
         selectOrg(parseInt(this.value));
+    } else {
+        currentOrgId = null;
+        localStorage.removeItem('currentOrgId');
     }
 });
 
 function selectOrg(id) {
     currentOrgId = id;
     localStorage.setItem('currentOrgId', currentOrgId);
+}
+
+// ============================================================
+// ПОЛУЧЕНИЕ ВЫБРАННЫХ ПРОГРАММ
+// ============================================================
+function getSelectedPrograms() {
+    const checkboxes = document.querySelectorAll('#programsContainer input[type="checkbox"]:checked');
+    const programs = [];
+    checkboxes.forEach(cb => {
+        programs.push(parseInt(cb.value));
+    });
+    return programs;
 }
 
 // ============================================================
@@ -143,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================================
-// ГЕНЕРАЦИЯ XML (ИСПРАВЛЕНА)
+// ГЕНЕРАЦИЯ XML
 // ============================================================
 document.getElementById('generateBtn').addEventListener('click', function() {
     const protocolNumber = document.getElementById('protocolNumber').value.trim();
@@ -153,7 +186,7 @@ document.getElementById('generateBtn').addEventListener('click', function() {
     const orgs = getOrgs();
     const org = orgs.find(o => o.id == parseInt(orgId));
     const employees = getEmployeesFromForm();
-    const selectedProgramId = parseInt(document.getElementById('programSelect').value);
+    const selectedPrograms = getSelectedPrograms();
 
     // ===== ПРОВЕРКИ =====
     if (!orgId || !org) {
@@ -166,6 +199,10 @@ document.getElementById('generateBtn').addEventListener('click', function() {
     }
     if (employees.length === 0) {
         alert('Добавьте хотя бы одного сотрудника');
+        return;
+    }
+    if (selectedPrograms.length === 0) {
+        alert('Выберите хотя бы одну программу обучения');
         return;
     }
     let hasError = false;
@@ -185,32 +222,33 @@ document.getElementById('generateBtn').addEventListener('click', function() {
         4: "Безопасные методы и приемы выполнения работ при воздействии вредных и (или) опасных производственных факторов, источников опасности, идентифицированных в рамках специальной оценки условий труда и оценки профессиональных рисков"
     };
 
-    // ===== ФОРМИРУЕМ XML (ТОЛЬКО ВЫБРАННАЯ ПРОГРАММА) =====
+    // ===== ФОРМИРУЕМ XML =====
     let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
     xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
 
     employees.forEach(emp => {
-        // ===== ТОЛЬКО ОДНА ЗАПИСЬ — С ВЫБРАННОЙ ПРОГРАММОЙ =====
-        xml += '\t<RegistryRecord>\n';
-        xml += '\t\t<Worker>\n';
-        xml += `\t\t\t<LastName>${escapeXml(emp.last_name)}</LastName>\n`;
-        xml += `\t\t\t<FirstName>${escapeXml(emp.first_name)}</FirstName>\n`;
-        xml += `\t\t\t<MiddleName>${escapeXml(emp.middle_name)}</MiddleName>\n`;
-        xml += `\t\t\t<Snils>${escapeXml(emp.snils)}</Snils>\n`;
-        xml += `\t\t\t<Position>${escapeXml(emp.position)}</Position>\n`;
-        xml += `\t\t\t<EmployerInn>${escapeXml(org.inn)}</EmployerInn>\n`;
-        xml += `\t\t\t<EmployerTitle>${escapeXml(org.name)}</EmployerTitle>\n`;
-        xml += '\t\t</Worker>\n';
-        xml += '\t\t<Organization>\n';
-        xml += `\t\t\t<Inn>${escapeXml(org.inn)}</Inn>\n`;
-        xml += `\t\t\t<Title>${escapeXml(org.name)}</Title>\n`;
-        xml += '\t\t</Organization>\n';
-        xml += `\t\t<Test isPassed="${emp.is_passed ? 'true' : 'false'}" learnProgramId="${selectedProgramId}">\n`;
-        xml += `\t\t\t<Date>${escapeXml(date)}</Date>\n`;
-        xml += `\t\t\t<ProtocolNumber>${escapeXml(protocolNumber)}</ProtocolNumber>\n`;
-        xml += `\t\t\t<LearnProgramTitle>${escapeXml(programs[selectedProgramId] || 'Неизвестная программа')}</LearnProgramTitle>\n`;
-        xml += '\t\t</Test>\n';
-        xml += '\t</RegistryRecord>\n';
+        selectedPrograms.forEach(progId => {
+            xml += '\t<RegistryRecord>\n';
+            xml += '\t\t<Worker>\n';
+            xml += `\t\t\t<LastName>${escapeXml(emp.last_name)}</LastName>\n`;
+            xml += `\t\t\t<FirstName>${escapeXml(emp.first_name)}</FirstName>\n`;
+            xml += `\t\t\t<MiddleName>${escapeXml(emp.middle_name)}</MiddleName>\n`;
+            xml += `\t\t\t<Snils>${escapeXml(emp.snils)}</Snils>\n`;
+            xml += `\t\t\t<Position>${escapeXml(emp.position)}</Position>\n`;
+            xml += `\t\t\t<EmployerInn>${escapeXml(org.inn)}</EmployerInn>\n`;
+            xml += `\t\t\t<EmployerTitle>${escapeXml(org.name)}</EmployerTitle>\n`;
+            xml += '\t\t</Worker>\n';
+            xml += '\t\t<Organization>\n';
+            xml += `\t\t\t<Inn>${escapeXml(org.inn)}</Inn>\n`;
+            xml += `\t\t\t<Title>${escapeXml(org.name)}</Title>\n`;
+            xml += '\t\t</Organization>\n';
+            xml += `\t\t<Test isPassed="${emp.is_passed ? 'true' : 'false'}" learnProgramId="${progId}">\n`;
+            xml += `\t\t\t<Date>${escapeXml(date)}</Date>\n`;
+            xml += `\t\t\t<ProtocolNumber>${escapeXml(protocolNumber)}</ProtocolNumber>\n`;
+            xml += `\t\t\t<LearnProgramTitle>${escapeXml(programs[progId] || 'Неизвестная программа')}</LearnProgramTitle>\n`;
+            xml += '\t\t</Test>\n';
+            xml += '\t</RegistryRecord>\n';
+        });
     });
 
     xml += '</RegistrySet>';
@@ -221,8 +259,7 @@ document.getElementById('generateBtn').addEventListener('click', function() {
         protocolNumber,
         date,
         orgName: org.name,
-        programId: selectedProgramId,
-        programName: programs[selectedProgramId],
+        programs: selectedPrograms.join(', '),
         employees: employees.map(e => `${e.last_name} ${e.first_name}`).join(', '),
         xml,
         created: new Date().toISOString()
