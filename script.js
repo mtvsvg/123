@@ -117,8 +117,22 @@ function selectOrg(id) {
 }
 
 // ============================================================
-// ПОЛУЧЕНИЕ ВЫБРАННЫХ ПРОГРАММ
+// ПРОГРАММЫ (быстрый выбор)
 // ============================================================
+function selectAllPrograms() {
+    document.querySelectorAll('#programsContainer input[type="checkbox"]').forEach(cb => cb.checked = true);
+}
+
+function clearAllPrograms() {
+    document.querySelectorAll('#programsContainer input[type="checkbox"]').forEach(cb => cb.checked = false);
+}
+
+function selectPrograms(ids) {
+    document.querySelectorAll('#programsContainer input[type="checkbox"]').forEach(cb => {
+        cb.checked = ids.includes(parseInt(cb.value));
+    });
+}
+
 function getSelectedPrograms() {
     const checkboxes = document.querySelectorAll('#programsContainer input[type="checkbox"]:checked');
     const programs = [];
@@ -145,9 +159,24 @@ function addEmployee(data) {
             <input type="checkbox" class="emp-passed" ${data?.is_passed !== false ? 'checked' : ''}>
             Сдал
         </label>
+        <button class="btn-copy" onclick="copyEmployee(this)">📋</button>
         <button class="btn-remove" onclick="this.closest('.employee-card').remove()">✖</button>
     `;
     container.appendChild(div);
+}
+
+// ===== КОПИРОВАНИЕ СОТРУДНИКА =====
+function copyEmployee(btn) {
+    const card = btn.closest('.employee-card');
+    const data = {
+        last_name: card.querySelector('.emp-last').value,
+        first_name: card.querySelector('.emp-first').value,
+        middle_name: card.querySelector('.emp-middle').value,
+        position: card.querySelector('.emp-position').value,
+        snils: card.querySelector('.emp-snils').value,
+        is_passed: card.querySelector('.emp-passed').checked
+    };
+    addEmployee(data);
 }
 
 function getEmployeesFromForm() {
@@ -176,146 +205,241 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================================
-// ГЕНЕРАЦИЯ XML
+// 🎤 ГОЛОСОВОЙ ВВОД (Web Speech API)
 // ============================================================
-document.getElementById('generateBtn').addEventListener('click', function() {
-    const protocolNumber = document.getElementById('protocolNumber').value.trim();
-    const date = document.getElementById('protocolDate').value;
-    const orgSelect = document.getElementById('orgSelect');
-    const orgId = orgSelect.value;
-    const orgs = getOrgs();
-    const org = orgs.find(o => o.id == parseInt(orgId));
-    const employees = getEmployeesFromForm();
-    const selectedPrograms = getSelectedPrograms();
-
-    // ===== ПРОВЕРКИ =====
-    if (!orgId || !org) {
-        alert('Выберите организацию');
+document.getElementById('voiceBtn').addEventListener('click', function() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert('Голосовой ввод не поддерживается в этом браузере. Используйте Chrome или Edge.');
         return;
     }
-    if (!protocolNumber || !date) {
-        alert('Заполните номер и дату протокола');
-        return;
-    }
-    if (employees.length === 0) {
-        alert('Добавьте хотя бы одного сотрудника');
-        return;
-    }
-    if (selectedPrograms.length === 0) {
-        alert('Выберите хотя бы одну программу обучения');
-        return;
-    }
-    let hasError = false;
-    employees.forEach(emp => {
-        if (!emp.snils) {
-            alert(`У сотрудника ${emp.last_name} ${emp.first_name} не указан СНИЛС!`);
-            hasError = true;
-        }
-    });
-    if (hasError) return;
-
-    // ===== ПРОГРАММЫ =====
-    const programs = {
-        1: "Оказание первой помощи пострадавшим",
-        2: "Использование (применение) средств индивидуальной защиты",
-        3: "Общие вопросы охраны труда и функционирования системы управления охраной труда",
-        4: "Безопасные методы и приемы выполнения работ при воздействии вредных и (или) опасных производственных факторов, источников опасности, идентифицированных в рамках специальной оценки условий труда и оценки профессиональных рисков"
-    };
-
-    // ===== ФОРМИРУЕМ XML =====
-    let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
-    xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
-
-    employees.forEach(emp => {
-        selectedPrograms.forEach(progId => {
-            xml += '\t<RegistryRecord>\n';
-            xml += '\t\t<Worker>\n';
-            xml += `\t\t\t<LastName>${escapeXml(emp.last_name)}</LastName>\n`;
-            xml += `\t\t\t<FirstName>${escapeXml(emp.first_name)}</FirstName>\n`;
-            xml += `\t\t\t<MiddleName>${escapeXml(emp.middle_name)}</MiddleName>\n`;
-            xml += `\t\t\t<Snils>${escapeXml(emp.snils)}</Snils>\n`;
-            xml += `\t\t\t<Position>${escapeXml(emp.position)}</Position>\n`;
-            xml += `\t\t\t<EmployerInn>${escapeXml(org.inn)}</EmployerInn>\n`;
-            xml += `\t\t\t<EmployerTitle>${escapeXml(org.name)}</EmployerTitle>\n`;
-            xml += '\t\t</Worker>\n';
-            xml += '\t\t<Organization>\n';
-            xml += `\t\t\t<Inn>${escapeXml(org.inn)}</Inn>\n`;
-            xml += `\t\t\t<Title>${escapeXml(org.name)}</Title>\n`;
-            xml += '\t\t</Organization>\n';
-            xml += `\t\t<Test isPassed="${emp.is_passed ? 'true' : 'false'}" learnProgramId="${progId}">\n`;
-            xml += `\t\t\t<Date>${escapeXml(date)}</Date>\n`;
-            xml += `\t\t\t<ProtocolNumber>${escapeXml(protocolNumber)}</ProtocolNumber>\n`;
-            xml += `\t\t\t<LearnProgramTitle>${escapeXml(programs[progId] || 'Неизвестная программа')}</LearnProgramTitle>\n`;
-            xml += '\t\t</Test>\n';
-            xml += '\t</RegistryRecord>\n';
-        });
-    });
-
-    xml += '</RegistrySet>';
-
-    // ===== СОХРАНЯЕМ В ИСТОРИЮ =====
-    const history = getHistory();
-    history.push({
-        protocolNumber,
-        date,
-        orgName: org.name,
-        programs: selectedPrograms.join(', '),
-        employees: employees.map(e => `${e.last_name} ${e.first_name}`).join(', '),
-        xml,
-        created: new Date().toISOString()
-    });
-    saveHistory(history);
-
-    // ===== СОХРАНЯЕМ СОТРУДНИКОВ =====
-    const existing = getEmployees();
-    employees.forEach(emp => {
-        if (!emp.snils) return;
-        const found = existing.find(e =>
-            e.last_name === emp.last_name &&
-            e.first_name === emp.first_name &&
-            e.position === emp.position
-        );
-        if (!found) {
-            existing.push({ ...emp });
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ru-RU';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    
+    // Показываем статус
+    const btn = this;
+    const originalText = btn.textContent;
+    btn.textContent = '🎤 Слушаю...';
+    btn.style.background = 'rgba(255,50,50,0.2)';
+    btn.style.borderColor = 'rgba(255,50,50,0.3)';
+    
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        console.log('Распознано:', transcript);
+        
+        // Парсим текст
+        const employee = parseVoiceText(transcript);
+        if (employee) {
+            addEmployee(employee);
+            alert('✅ Добавлен сотрудник: ' + employee.last_name + ' ' + employee.first_name);
         } else {
-            found.snils = emp.snils;
+            alert('❌ Не удалось распознать данные. Формат: "Фамилия Имя Отчество, должность, СНИЛС, сдал/не сдал"');
         }
-    });
-    saveEmployees(existing);
-
-    // ===== СКАЧИВАЕМ =====
-    const blob = new Blob([xml], { type: 'application/xml' });
-    const url = URL.createObjectURL(blob);
-    document.getElementById('downloadLink').href = url;
-    document.getElementById('downloadLink').download = `${protocolNumber.replace('/', '_')}_${date}.xml`;
-    document.getElementById('resultBlock').classList.remove('hidden');
-
-    alert('✅ XML создан! Нажмите "Скачать XML"');
+    };
+    
+    recognition.onerror = function(event) {
+        alert('Ошибка распознавания: ' + event.error);
+    };
+    
+    recognition.onend = function() {
+        btn.textContent = originalText;
+        btn.style.background = '';
+        btn.style.borderColor = '';
+    };
+    
+    recognition.start();
 });
 
-function escapeXml(str) {
-    if (!str) return '';
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function parseVoiceText(text) {
+    // Очищаем текст
+    text = text.replace(/[.,;:!?]/g, '');
+    const parts = text.split(',').map(s => s.trim());
+    
+    if (parts.length < 2) {
+        // Пробуем парсить через запятые
+        const words = text.split(/\s+/);
+        // Ищем СНИЛС
+        const snilsMatch = text.match(/\d{3}-\d{3}-\d{3}\s?\d{2}/);
+        const snils = snilsMatch ? snilsMatch[0] : '';
+        
+        // Ищем "сдал" или "не сдал"
+        const passed = text.includes('не сдал') ? false : text.includes('сдал') ? true : true;
+        
+        // Ищем должность (обычно после ФИО)
+        let position = '';
+        let nameParts = [];
+        let remaining = text;
+        
+        if (snils) {
+            remaining = remaining.replace(snils, '').trim();
+        }
+        // Убираем "сдал"/"не сдал"
+        remaining = remaining.replace(/сдал|не сдал/g, '').trim();
+        
+        // Пытаемся выделить должность (то, что после ФИО)
+        const words2 = remaining.split(/\s+/);
+        if (words2.length >= 3) {
+            // Первые 3 слова — ФИО, остальное — должность
+            nameParts = words2.slice(0, 3);
+            position = words2.slice(3).join(' ');
+        } else {
+            nameParts = words2;
+        }
+        
+        if (nameParts.length < 2) return null;
+        
+        return {
+            last_name: nameParts[0] || '',
+            first_name: nameParts[1] || '',
+            middle_name: nameParts[2] || '',
+            position: position || '',
+            snils: snils || '',
+            is_passed: passed
+        };
+    }
+    
+    // Если есть запятые — парсим по ним
+    let namePart = parts[0].trim();
+    const position = parts[1]?.trim() || '';
+    const snils = parts[2]?.trim() || '';
+    const passed = parts[3]?.trim()?.includes('не сдал') ? false : true;
+    
+    // Парсим ФИО
+    const nameWords = namePart.split(/\s+/);
+    if (nameWords.length < 2) return null;
+    
+    return {
+        last_name: nameWords[0] || '',
+        first_name: nameWords[1] || '',
+        middle_name: nameWords[2] || '',
+        position: position || '',
+        snils: snils || '',
+        is_passed: passed
+    };
 }
 
 // ============================================================
-// ДОБАВЛЕНИЕ СОТРУДНИКА (глобально)
+// 📎 РАСПОЗНАВАНИЕ ФОТО (Tesseract.js)
 // ============================================================
-window.addEmployee = function(data) {
-    const container = document.getElementById('employeesContainer');
-    const div = document.createElement('div');
-    div.className = 'employee-card';
-    div.innerHTML = `
-        <input type="text" class="emp-last" placeholder="Фамилия" value="${data?.last_name || ''}">
-        <input type="text" class="emp-first" placeholder="Имя" value="${data?.first_name || ''}">
-        <input type="text" class="emp-middle" placeholder="Отчество" value="${data?.middle_name || ''}">
-        <input type="text" class="emp-position" placeholder="Должность" value="${data?.position || ''}">
-        <input type="text" class="emp-snils" placeholder="СНИЛС" value="${data?.snils || ''}">
-        <label class="emp-check">
-            <input type="checkbox" class="emp-passed" ${data?.is_passed !== false ? 'checked' : ''}>
-            Сдал
-        </label>
-        <button class="btn-remove" onclick="this.closest('.employee-card').remove()">✖</button>
-    `;
-    container.appendChild(div);
-};
+document.getElementById('photoBtn').addEventListener('click', function() {
+    // Создаем скрытый input для выбора файла
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    
+    input.onchange = async function(e) {
+        if (!e.target.files.length) {
+            document.body.removeChild(input);
+            return;
+        }
+        
+        const file = e.target.files[0];
+        const btn = document.getElementById('photoBtn');
+        const originalText = btn.textContent;
+        btn.textContent = '⏳ Распознаю...';
+        btn.style.background = 'rgba(255,200,0,0.2)';
+        btn.style.borderColor = 'rgba(255,200,0,0.3)';
+        
+        try {
+            // Используем Tesseract.js
+            const result = await Tesseract.recognize(file, 'rus', {
+                logger: (m) => {
+                    if (m.status === 'recognizing text') {
+                        console.log('Прогресс:', m.progress);
+                    }
+                }
+            });
+            
+            const text = result.data.text;
+            console.log('Распознанный текст:', text);
+            
+            // Парсим текст
+            const parsed = parsePhotoText(text);
+            if (parsed) {
+                // Заполняем поля
+                if (parsed.protocol_number) {
+                    document.getElementById('protocolNumber').value = parsed.protocol_number;
+                }
+                if (parsed.date) {
+                    document.getElementById('protocolDate').value = parsed.date;
+                }
+                if (parsed.org_inn) {
+                    // Проверяем, есть ли такая организация
+                    const orgs = getOrgs();
+                    let org = orgs.find(o => o.inn === parsed.org_inn);
+                    if (!org && parsed.org_title) {
+                        org = {
+                            id: Date.now(),
+                            name: parsed.org_title,
+                            inn: parsed.org_inn
+                        };
+                        orgs.push(org);
+                        saveOrgs(orgs);
+                        renderOrgs();
+                    }
+                    if (org) {
+                        document.getElementById('orgSelect').value = org.id;
+                        selectOrg(org.id);
+                    }
+                }
+                // Добавляем сотрудников
+                if (parsed.employees && parsed.employees.length > 0) {
+                    document.getElementById('employeesContainer').innerHTML = '';
+                    parsed.employees.forEach(emp => {
+                        addEmployee(emp);
+                    });
+                }
+                alert('✅ Данные из фото загружены! Проверьте и отредактируйте при необходимости.');
+            } else {
+                alert('❌ Не удалось распознать данные на фото. Проверьте качество снимка.');
+            }
+        } catch (error) {
+            console.error('Ошибка распознавания:', error);
+            alert('Ошибка распознавания. Попробуйте другое фото.');
+        }
+        
+        btn.textContent = originalText;
+        btn.style.background = '';
+        btn.style.borderColor = '';
+        document.body.removeChild(input);
+    };
+    
+    input.click();
+});
+
+function parsePhotoText(text) {
+    const result = {
+        protocol_number: '',
+        date: '',
+        org_inn: '',
+        org_title: '',
+        employees: []
+    };
+    
+    // Ищем номер протокола (цифры с /)
+    const protocolMatch = text.match(/\d{1,2}\s*\/\s*\d{2,4}/);
+    if (protocolMatch) {
+        result.protocol_number = protocolMatch[0].replace(/\s/g, '');
+    }
+    
+    // Ищем дату (дд.мм.гггг или гггг-мм-дд)
+    const dateMatch = text.match(/\d{2}\.\d{2}\.\d{4}|\d{4}-\d{2}-\d{2}/);
+    if (dateMatch) {
+        let d = dateMatch[0];
+        if (d.includes('.')) {
+            const parts = d.split('.');
+            result.date = parts[2] + '-' + parts[1] + '-' + parts[0];
+        } else {
+            result.date = d;
+        }
+    }
+    
+    // Ищем ИНН (10 или 12 цифр)
+    const innMatch = text.match(/\b\d{10}\b|\b\d{12}\b/);
+    if (innMatch) {
+        result.org_inn = innMatch[0
