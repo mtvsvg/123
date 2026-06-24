@@ -176,12 +176,12 @@ function getEmployeesFromForm() {
 }
 
 // ============================================================
-// 📤 ИМПОРТ ИЗ ФАЙЛА
+// 📤 УМНЫЙ ИМПОРТ ИЗ ФАЙЛА
 // ============================================================
 document.getElementById('importBtn').addEventListener('click', function() {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.txt,.csv';
+    input.accept = '.txt,.csv,.xlsx,.xls';
     input.style.display = 'none';
     document.body.appendChild(input);
     
@@ -196,7 +196,7 @@ document.getElementById('importBtn').addEventListener('click', function() {
         
         reader.onload = function(event) {
             const content = event.target.result;
-            const employees = parseFileContent(content);
+            const employees = smartParse(content);
             
             if (employees.length === 0) {
                 alert('❌ Не удалось распознать данные. Проверьте формат файла.');
@@ -204,6 +204,7 @@ document.getElementById('importBtn').addEventListener('click', function() {
                 return;
             }
             
+            // Очищаем и добавляем
             document.getElementById('employeesContainer').innerHTML = '';
             employees.forEach(emp => addEmployee(emp));
             alert(`✅ Загружено ${employees.length} сотрудников!`);
@@ -216,76 +217,201 @@ document.getElementById('importBtn').addEventListener('click', function() {
     input.click();
 });
 
-function parseFileContent(content) {
-    const lines = content.split(/\r?\n/).filter(line => line.trim());
+// ============================================================
+// 🧠 УМНЫЙ ПАРСЕР (ЛЮБОЙ ФОРМАТ)
+// ============================================================
+function smartParse(content) {
+    const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
     const employees = [];
     
-    // Определяем разделитель
-    let delimiter = ',';
-    if (lines.length > 0) {
-        const firstLine = lines[0];
-        if (firstLine.includes('\t')) delimiter = '\t';
-        else if (firstLine.includes(';')) delimiter = ';';
-        else if (firstLine.includes(',')) delimiter = ',';
-    }
-    
     lines.forEach(line => {
-        const parts = line.split(delimiter).map(s => s.trim());
-        if (parts.length >= 5) {
-            // Фамилия, Имя, Отчество, Должность, СНИЛС, Сдал
-            employees.push({
-                last_name: parts[0] || '',
-                first_name: parts[1] || '',
-                middle_name: parts[2] || '',
-                position: parts[3] || '',
-                snils: parts[4] || '',
-                is_passed: parts.length >= 6 ? !parts[5].toLowerCase().includes('нет') : true
-            });
-        } else if (parts.length >= 4) {
-            // Фамилия, Имя, Должность, СНИЛС
-            employees.push({
-                last_name: parts[0] || '',
-                first_name: parts[1] || '',
-                middle_name: '',
-                position: parts[2] || '',
-                snils: parts[3] || '',
-                is_passed: true
-            });
+        // Пробуем разные разделители
+        let parts = null;
+        let delimiter = null;
+        
+        // Проверяем табуляцию
+        if (line.includes('\t')) {
+            parts = line.split('\t').map(s => s.trim());
+            delimiter = '\t';
+        }
+        // Проверяем точку с запятой
+        else if (line.includes(';')) {
+            parts = line.split(';').map(s => s.trim());
+            delimiter = ';';
+        }
+        // Проверяем запятую
+        else if (line.includes(',')) {
+            parts = line.split(',').map(s => s.trim());
+            delimiter = ',';
+        }
+        
+        // Если есть разделитель — парсим по частям
+        if (parts && parts.length >= 2) {
+            const emp = parseParts(parts);
+            if (emp) employees.push(emp);
         } else {
-            // Пробуем парсить через пробелы
-            const words = line.split(/\s+/);
-            if (words.length >= 3) {
-                let snils = '';
-                let position = '';
-                let nameParts = [];
-                let foundSnils = false;
-                
-                for (let i = 0; i < words.length; i++) {
-                    if (/^\d{3}-\d{3}-\d{3}\s?\d{2}$/.test(words[i]) || /^\d{11}$/.test(words[i])) {
-                        snils = words[i];
-                        foundSnils = true;
-                    } else if (!foundSnils && nameParts.length < 3) {
-                        nameParts.push(words[i]);
-                    } else if (foundSnils) {
-                        position += words[i] + ' ';
-                    }
-                }
-                
-                if (nameParts.length >= 2) {
-                    employees.push({
-                        last_name: nameParts[0] || '',
-                        first_name: nameParts[1] || '',
-                        middle_name: nameParts[2] || '',
-                        position: position.trim() || '',
-                        snils: snils || '',
-                        is_passed: true
-                    });
-                }
+            // Если разделителя нет — пробуем через пробелы
+            const words = line.split(/\s+/).filter(w => w.length > 0);
+            if (words.length >= 2) {
+                const emp = parseWords(words);
+                if (emp) employees.push(emp);
             }
         }
     });
     
     return employees;
+}
+
+// ===== ПАРСИНГ ПО ЧАСТЯМ (разделители) =====
+function parseParts(parts) {
+    let last_name = '', first_name = '', middle_name = '', position = '', snils = '';
+    let is_passed = true;
+    
+    // Ищем СНИЛС (в любом формате)
+    let snilsIndex = -1;
+    parts.forEach((p, i) => {
+        const clean = p.replace(/[\s-]/g, '');
+        if (/^\d{11}$/.test(clean)) {
+            snils = clean;
+            snilsIndex = i;
+        }
+    });
+    
+    // Ищем "сдал"/"не сдал"
+    let passedIndex = -1;
+    parts.forEach((p, i) => {
+        const lower = p.toLowerCase();
+        if (lower.includes('сдал') || lower.includes('сдан') || lower.includes('не сдал') || lower.includes('не сдан')) {
+            passedIndex = i;
+            is_passed = !lower.includes('не');
+        }
+    });
+    
+    // Ищем должность (остальные слова, которые не ФИО и не СНИЛС и не "сдал")
+    let positionParts = [];
+    let nameParts = [];
+    
+    parts.forEach((p, i) => {
+        if (i === snilsIndex || i === passedIndex) return;
+        const lower = p.toLowerCase();
+        // Если слово похоже на должность (длинное, не похоже на имя)
+        if (p.length > 2 && !isNameWord(p) && !isSnilsWord(p)) {
+            positionParts.push(p);
+        } else {
+            nameParts.push(p);
+        }
+    });
+    
+    position = positionParts.join(' ');
+    
+    // Парсим ФИО из nameParts
+    if (nameParts.length >= 2) {
+        last_name = nameParts[0] || '';
+        first_name = nameParts[1] || '';
+        middle_name = nameParts[2] || '';
+    }
+    
+    // Если ФИО не распарсилось — пробуем найти 2-3 слова подряд
+    if (!last_name && !first_name) {
+        const allWords = parts.filter((p, i) => i !== snilsIndex && i !== passedIndex);
+        if (allWords.length >= 2) {
+            last_name = allWords[0] || '';
+            first_name = allWords[1] || '';
+            middle_name = allWords[2] || '';
+            if (allWords.length > 3) {
+                position = allWords.slice(3).join(' ');
+            }
+        }
+    }
+    
+    // Если СНИЛС не найден — ищем среди всех частей
+    if (!snils) {
+        parts.forEach(p => {
+            const clean = p.replace(/[\s-]/g, '');
+            if (/^\d{11}$/.test(clean) && !snils) {
+                snils = clean;
+            }
+        });
+    }
+    
+    if (last_name && first_name) {
+        return { last_name, first_name, middle_name, position, snils, is_passed };
+    }
+    return null;
+}
+
+// ===== ПАРСИНГ ПО СЛОВАМ (без разделителей) =====
+function parseWords(words) {
+    let last_name = '', first_name = '', middle_name = '', position = '', snils = '';
+    let is_passed = true;
+    
+    // Ищем СНИЛС (в любом формате)
+    let snilsIndex = -1;
+    words.forEach((w, i) => {
+        const clean = w.replace(/[\s-]/g, '');
+        if (/^\d{11}$/.test(clean)) {
+            snils = clean;
+            snilsIndex = i;
+        }
+    });
+    
+    // Ищем "сдал"/"не сдал"
+    let passedIndex = -1;
+    words.forEach((w, i) => {
+        const lower = w.toLowerCase();
+        if (lower.includes('сдал') || lower.includes('сдан') || lower.includes('не сдал') || lower.includes('не сдан')) {
+            passedIndex = i;
+            is_passed = !lower.includes('не');
+        }
+    });
+    
+    // Убираем СНИЛС и "сдал" из списка слов
+    let cleanWords = words.filter((_, i) => i !== snilsIndex && i !== passedIndex);
+    
+    // Ищем должность (слова, которые не похожи на ФИО)
+    let nameWords = [];
+    let positionWords = [];
+    
+    cleanWords.forEach((w, i) => {
+        if (w.length > 2 && !isNameWord(w) && !isSnilsWord(w)) {
+            positionWords.push(w);
+        } else {
+            nameWords.push(w);
+        }
+    });
+    
+    // Если nameWords меньше 2 — пробуем первые 3 слова как ФИО, остальное как должность
+    if (nameWords.length < 2 && cleanWords.length >= 3) {
+        nameWords = cleanWords.slice(0, 3);
+        positionWords = cleanWords.slice(3);
+    } else if (cleanWords.length >= 2) {
+        // Берем первые 2-3 слова как ФИО
+        nameWords = cleanWords.slice(0, Math.min(3, cleanWords.length));
+        positionWords = cleanWords.slice(nameWords.length);
+    }
+    
+    if (nameWords.length >= 2) {
+        last_name = nameWords[0] || '';
+        first_name = nameWords[1] || '';
+        middle_name = nameWords[2] || '';
+        position = positionWords.join(' ') || '';
+    }
+    
+    if (last_name && first_name) {
+        return { last_name, first_name, middle_name, position, snils, is_passed };
+    }
+    return null;
+}
+
+// ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+function isNameWord(word) {
+    // Проверяем, похоже ли слово на имя (начинается с заглавной, 2-15 букв)
+    return /^[А-ЯЁ][а-яё]{1,14}$/.test(word) || /^[A-Z][a-z]{1,14}$/.test(word);
+}
+
+function isSnilsWord(word) {
+    const clean = word.replace(/[\s-]/g, '');
+    return /^\d{11}$/.test(clean);
 }
 
 // ============================================================
