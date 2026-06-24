@@ -1,16 +1,14 @@
 new Vue({
     el: '#app',
     data: {
-        // Стартовый список организаций
         organizations: [
             { id: 1, inn: '7723456789', name: 'ООО "БЭБИ БУМ"' },
             { id: 2, inn: '7701123456', name: 'АО "ТрансСервис"' },
             { id: 3, inn: '7812345678', name: 'ООО "Депо-Сервис"' }
         ],
-        selectedOrgId: null // будет загружен из localStorage
+        selectedOrgId: null
     },
     mounted() {
-        // 1. Загружаем сохранённую организацию из localStorage
         const saved = localStorage.getItem('selectedOrgId');
         if (saved && this.organizations.some(o => o.id === Number(saved))) {
             this.selectedOrgId = Number(saved);
@@ -18,16 +16,9 @@ new Vue({
             this.selectedOrgId = this.organizations[0].id;
         }
 
-        // 2. Заполняем выпадающий список
         this.populateSelect();
-
-        // 3. Обновляем поля ИНН / Название
         this.updateOrgFields();
-
-        // 4. Вкладки
         this.initTabs();
-
-        // 5. Выбор программы обучения (без прозрачности)
         this.initProgramSelector();
     },
     methods: {
@@ -38,7 +29,7 @@ new Vue({
             this.organizations.forEach(org => {
                 const opt = document.createElement('option');
                 opt.value = org.id;
-                opt.textContent = `${org.name} (ИНН ${org.inn})`;
+                opt.textContent = org.name;
                 if (org.id === this.selectedOrgId) {
                     opt.selected = true;
                 }
@@ -65,14 +56,12 @@ new Vue({
             const val = Number(e.target.value);
             if (val) {
                 this.selectedOrgId = val;
-                // СОХРАНЯЕМ В localStorage
                 localStorage.setItem('selectedOrgId', String(val));
                 this.updateOrgFields();
             }
         },
 
         addOrg() {
-            // Просто добавляем тестовую организацию для демонстрации
             const newId = Date.now();
             const newOrg = {
                 id: newId,
@@ -80,14 +69,12 @@ new Vue({
                 name: `ООО "Фирма ${newId.toString().slice(-4)}"`
             };
             this.organizations.push(newOrg);
-            // Выбираем новую
             this.selectedOrgId = newId;
             localStorage.setItem('selectedOrgId', String(newId));
             this.populateSelect();
             this.updateOrgFields();
         },
 
-        // ----- ВКЛАДКИ -----
         initTabs() {
             const btns = document.querySelectorAll('.tab-btn');
             const contents = document.querySelectorAll('.tab-content');
@@ -103,7 +90,6 @@ new Vue({
             });
         },
 
-        // ----- ПРОГРАММЫ (без прозрачности) -----
         initProgramSelector() {
             const items = document.querySelectorAll('.program-item');
             items.forEach(item => {
@@ -116,7 +102,6 @@ new Vue({
         }
     },
 
-    // Дополнительный вотчер для реактивности при изменении списка
     watch: {
         organizations: {
             deep: true,
