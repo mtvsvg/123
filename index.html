@@ -22,7 +22,7 @@
             <button class="btn-add" id="showOrgFormBtn">➕ Добавить</button>
         </div>
         
-        <!-- Форма добавления организации (изначально скрыта) -->
+        <!-- Форма добавления организации -->
         <div id="orgForm" class="org-form hidden">
             <input type="text" id="orgNameInput" placeholder="Название организации">
             <input type="text" id="orgInnInput" placeholder="ИНН">
@@ -30,10 +30,13 @@
             <button class="btn-cancel" id="cancelOrgBtn">Отмена</button>
         </div>
 
-        <!-- Выбор организации -->
-        <select id="orgSelect" class="org-select">
-            <option value="">-- Выберите организацию --</option>
-        </select>
+        <!-- Выбор организации с кнопкой удаления -->
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <select id="orgSelect" class="org-select" style="flex:1;min-width:200px;">
+                <option value="">-- Выберите организацию --</option>
+            </select>
+            <button class="btn-delete" id="deleteOrgBtn" title="Удалить выбранную организацию">🗑</button>
+        </div>
     </div>
 
     <!-- ============================================================ -->
@@ -54,16 +57,29 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- БЛОК ПРОГРАММЫ ОБУЧЕНИЯ -->
+    <!-- БЛОК ПРОГРАММ ОБУЧЕНИЯ (ЧЕКБОКСЫ) -->
     <!-- ============================================================ -->
     <div class="block">
-        <h2>📚 Программа обучения</h2>
-        <select id="programSelect" class="program-select">
-            <option value="1">1. Оказание первой помощи пострадавшим</option>
-            <option value="2">2. Использование (применение) СИЗ</option>
-            <option value="3">3. Общие вопросы охраны труда и СУОТ</option>
-            <option value="4">4. Безопасные методы и приемы работ при воздействии вредных факторов</option>
-        </select>
+        <h2>📚 Программы обучения</h2>
+        <p style="color:#8888aa;font-size:14px;margin-bottom:10px;">Выберите программы для сотрудников:</p>
+        <div id="programsContainer" style="display:flex;flex-wrap:wrap;gap:12px;">
+            <label class="program-check">
+                <input type="checkbox" value="1" checked>
+                1. Оказание первой помощи
+            </label>
+            <label class="program-check">
+                <input type="checkbox" value="2">
+                2. Использование СИЗ
+            </label>
+            <label class="program-check">
+                <input type="checkbox" value="3">
+                3. Общие вопросы охраны труда
+            </label>
+            <label class="program-check">
+                <input type="checkbox" value="4">
+                4. Безопасные методы и приемы работ
+            </label>
+        </div>
     </div>
 
     <!-- ============================================================ -->
