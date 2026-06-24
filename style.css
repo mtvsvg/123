@@ -160,6 +160,20 @@ input::placeholder {
     background: rgba(255, 255, 255, 0.12);
 }
 
+.btn-delete {
+    background: rgba(255, 70, 70, 0.15);
+    color: #ff6b6b;
+    border: 1px solid rgba(255, 70, 70, 0.2);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s;
+}
+.btn-delete:hover {
+    background: rgba(255, 70, 70, 0.25);
+}
+
 .btn-generate {
     width: 100%;
     padding: 16px;
@@ -249,6 +263,33 @@ input::placeholder {
 }
 .employee-card .btn-remove:hover {
     background: rgba(255, 70, 70, 0.25);
+}
+
+/* ===== ПРОГРАММЫ (ЧЕКБОКСЫ) ===== */
+.program-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ccc;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: background 0.2s;
+}
+.program-check:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+.program-check input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #7c3aed;
+    cursor: pointer;
+}
+.program-check input[type="checkbox"]:checked + span {
+    color: #fff;
 }
 
 .result-block {
