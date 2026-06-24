@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Генератор XML протоколов</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Подключаем Tesseract.js через CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
 
@@ -24,7 +22,6 @@
             <button class="btn-add" id="showOrgFormBtn">➕ Добавить</button>
         </div>
         
-        <!-- Форма добавления организации -->
         <div id="orgForm" class="org-form hidden">
             <input type="text" id="orgNameInput" placeholder="Название организации">
             <input type="text" id="orgInnInput" placeholder="ИНН">
@@ -32,7 +29,6 @@
             <button class="btn-cancel" id="cancelOrgBtn">Отмена</button>
         </div>
 
-        <!-- Выбор организации с кнопкой удаления -->
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
             <select id="orgSelect" class="org-select" style="flex:1;min-width:200px;">
                 <option value="">-- Выберите организацию --</option>
@@ -59,34 +55,29 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- БЛОК ПРОГРАММ ОБУЧЕНИЯ (ЧЕКБОКСЫ) -->
+    <!-- БЛОК ПРОГРАММ -->
     <!-- ============================================================ -->
     <div class="block">
         <div class="block-header">
             <h2>📚 Программы обучения</h2>
-            <div style="display:flex;gap:8px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button class="btn-add" onclick="selectAllPrograms()">✅ Все</button>
                 <button class="btn-add" onclick="selectPrograms([1,4])">📌 1+4</button>
                 <button class="btn-add" onclick="clearAllPrograms()">✖ Снять</button>
             </div>
         </div>
-        <p style="color:#8888aa;font-size:14px;margin-bottom:10px;">Выберите программы для сотрудников:</p>
         <div id="programsContainer" style="display:flex;flex-wrap:wrap;gap:12px;">
             <label class="program-check">
-                <input type="checkbox" value="1" checked>
-                1. Оказание первой помощи
+                <input type="checkbox" value="1" checked> 1. Оказание первой помощи
             </label>
             <label class="program-check">
-                <input type="checkbox" value="2">
-                2. Использование СИЗ
+                <input type="checkbox" value="2"> 2. Использование СИЗ
             </label>
             <label class="program-check">
-                <input type="checkbox" value="3">
-                3. Общие вопросы охраны труда
+                <input type="checkbox" value="3"> 3. Общие вопросы охраны труда
             </label>
             <label class="program-check">
-                <input type="checkbox" value="4">
-                4. Безопасные методы и приемы работ
+                <input type="checkbox" value="4"> 4. Безопасные методы и приемы работ
             </label>
         </div>
     </div>
@@ -99,11 +90,14 @@
             <h2>👥 Сотрудники</h2>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button class="btn-add" onclick="addEmployee()">➕ Добавить</button>
-                <button class="btn-add" id="voiceBtn">🎤 Диктовать</button>
-                <button class="btn-add" id="photoBtn">📎 Фото</button>
+                <button class="btn-add" id="importBtn">📤 Импорт из файла</button>
             </div>
         </div>
         <div id="employeesContainer"></div>
+        <p style="color:#6a6a8a;font-size:13px;margin-top:8px;">
+            💡 Формат файла: каждая строка — сотрудник. 
+            <strong>Фамилия, Имя, Отчество, Должность, СНИЛС, Сдал(да/нет)</strong>
+        </p>
     </div>
 
     <!-- ============================================================ -->
