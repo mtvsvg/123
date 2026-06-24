@@ -53,12 +53,15 @@ h1 {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .block-header h2 {
     font-size: 18px;
     color: #ccc;
     font-weight: 600;
+    margin: 0;
 }
 
 h2 {
@@ -264,6 +267,19 @@ input::placeholder {
 .employee-card .btn-remove:hover {
     background: rgba(255, 70, 70, 0.25);
 }
+.employee-card .btn-copy {
+    background: rgba(0, 212, 255, 0.12);
+    color: #00d4ff;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.2s;
+}
+.employee-card .btn-copy:hover {
+    background: rgba(0, 212, 255, 0.2);
+}
 
 /* ===== ПРОГРАММЫ (ЧЕКБОКСЫ) ===== */
 .program-check {
@@ -292,6 +308,7 @@ input::placeholder {
     color: #fff;
 }
 
+/* ===== РЕЗУЛЬТАТ ===== */
 .result-block {
     margin-top: 20px;
     padding: 20px;
@@ -321,6 +338,40 @@ input::placeholder {
     margin-top: 8px;
 }
 
+/* ===== СТАТУС РАСПОЗНАВАНИЯ ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-left: 8px;
+}
+.status-badge.recording {
+    background: rgba(255, 50, 50, 0.2);
+    color: #ff6b6b;
+    animation: pulse 1s infinite;
+}
+.status-badge.success {
+    background: rgba(0, 212, 255, 0.15);
+    color: #00d4ff;
+}
+.status-badge.error {
+    background: rgba(255, 50, 50, 0.15);
+    color: #ff6b6b;
+}
+.status-badge.loading {
+    background: rgba(255, 200, 0, 0.15);
+    color: #ffd700;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ===== АДАПТИВ ===== */
 @media (max-width: 600px) {
     .container { padding: 18px 14px; }
     .form-row { flex-direction: column; }
@@ -328,4 +379,6 @@ input::placeholder {
     .org-form input { min-width: 100%; }
     .employee-card { flex-direction: column; }
     .employee-card input { min-width: 100%; }
+    .block-header { flex-direction: column; align-items: stretch; }
+    .block-header .btn-add { width: 100%; text-align: center; }
 }
