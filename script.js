@@ -176,7 +176,7 @@ function getEmployeesFromForm() {
 }
 
 // ============================================================
-// 📤 ИМПОРТ ИЗ ФАЙЛА (С АВТООПРЕДЕЛЕНИЕМ КОДИРОВКИ)
+// 📤 ИМПОРТ ИЗ ФАЙЛА
 // ============================================================
 document.getElementById('importBtn').addEventListener('click', function() {
     const input = document.createElement('input');
@@ -195,30 +195,14 @@ document.getElementById('importBtn').addEventListener('click', function() {
         const reader = new FileReader();
         
         reader.onload = function(event) {
-            // Пробуем прочитать в разных кодировках
-            const rawData = event.target.result;
+            let content = event.target.result;
             
-            // Пробуем UTF-8
-            let content = rawData;
-            
-            // Проверяем, есть ли битые символы (ромбики)
-            if (content.includes('�') || content.includes('�')) {
-                // Пробуем Windows-1251 (через decodeURIComponent)
-                try {
-                    const decoder = new TextDecoder('windows-1251');
-                    const bytes = new Uint8Array(rawData.split('').map(c => c.charCodeAt(0)));
-                    content = decoder.decode(bytes);
-                } catch(e) {
-                    // Если не получилось — оставляем как есть
-                }
-            }
-            
-            // Если всё ещё есть ромбики — пробуем перекодировать через Blob
+            // Пробуем разные кодировки
             if (content.includes('�') || content.includes('�')) {
                 try {
-                    const bytes = new Uint8Array(rawData.length);
-                    for (let i = 0; i < rawData.length; i++) {
-                        bytes[i] = rawData.charCodeAt(i) & 0xFF;
+                    const bytes = new Uint8Array(content.length);
+                    for (let i = 0; i < content.length; i++) {
+                        bytes[i] = content.charCodeAt(i) & 0xFF;
                     }
                     const decoder = new TextDecoder('windows-1251');
                     content = decoder.decode(bytes);
@@ -228,8 +212,7 @@ document.getElementById('importBtn').addEventListener('click', function() {
             const employees = smartParse(content);
             
             if (employees.length === 0) {
-                alert('❌ Не удалось распознать данные. Проверьте формат файла.\n\n' +
-                      'Убедитесь, что файл сохранён в кодировке UTF-8 или Windows-1251.');
+                alert('❌ Не удалось распознать данные. Проверьте формат файла.');
                 document.body.removeChild(input);
                 return;
             }
@@ -247,10 +230,10 @@ document.getElementById('importBtn').addEventListener('click', function() {
 });
 
 // ============================================================
-// 🧠 УМНЫЙ ПАРСЕР (ОБНОВЛЁН)
+// 🧠 УМНЫЙ ПАРСЕР
 // ============================================================
 function smartParse(content) {
-    // Удаляем BOM (Byte Order Mark)
+    // Удаляем BOM
     if (content.charCodeAt(0) === 0xFEFF) {
         content = content.slice(1);
     }
@@ -261,7 +244,6 @@ function smartParse(content) {
     lines.forEach(line => {
         const trimmed = line.trim();
         if (!trimmed) return;
-        
         const result = parseLine(trimmed);
         if (result) {
             employees.push(result);
@@ -272,18 +254,16 @@ function smartParse(content) {
 }
 
 function parseLine(line) {
-    // Проверяем табуляцию как разделитель
+    // Проверяем табуляцию
     if (line.includes('\t')) {
         const parts = line.split('\t').map(s => s.trim());
         if (parts.length >= 4) {
-            // Формат: Фамилия, Имя, Отчество, СНИЛС, Должность
             let last_name = parts[0] || '';
             let first_name = parts[1] || '';
             let middle_name = parts[2] || '';
             let position = '';
             let snils = '';
             
-            // Ищем СНИЛС среди частей
             let snilsIndex = -1;
             parts.forEach((p, i) => {
                 const clean = p.replace(/[\s-]/g, '');
@@ -293,7 +273,6 @@ function parseLine(line) {
                 }
             });
             
-            // Если СНИЛС найден — собираем остальное
             if (snilsIndex >= 0) {
                 const nameParts = [];
                 parts.forEach((p, i) => {
@@ -311,7 +290,6 @@ function parseLine(line) {
                 }
                 position = position.trim();
             } else {
-                // Если СНИЛС не найден — первые 3 части ФИО, остальное должность
                 if (parts.length >= 4) {
                     last_name = parts[0] || '';
                     first_name = parts[1] || '';
@@ -333,10 +311,9 @@ function parseLine(line) {
         }
     }
     
-    // Если табуляции нет — пробуем через пробелы
+    // Через пробелы
     line = line.replace(/\s+/g, ' ').trim();
     
-    // Ищем СНИЛС
     let snils = '';
     let snilsMatch = line.match(/\d{3}[- ]?\d{3}[- ]?\d{3}[- ]?\d{2}/);
     if (snilsMatch) {
@@ -349,10 +326,8 @@ function parseLine(line) {
     }
     
     const words = remaining.split(/\s+/).filter(w => w.length > 0);
-    
     if (words.length < 2) return null;
     
-    // Ищем должность
     let nameEnd = 0;
     let nameCount = 0;
     
@@ -411,7 +386,7 @@ function parseLine(line) {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ XML
+// ГЕНЕРАЦИЯ XML (С ПРАВИЛЬНОЙ КОДИРОВКОЙ)
 // ============================================================
 document.getElementById('generateBtn').addEventListener('click', function() {
     const protocolNumber = document.getElementById('protocolNumber').value.trim();
@@ -514,13 +489,15 @@ document.getElementById('generateBtn').addEventListener('click', function() {
     });
     saveEmployees(existing);
 
-    const blob = new Blob([xml], { type: 'application/xml' });
+    // ===== СОЗДАЁМ XML С ПРАВИЛЬНОЙ КОДИРОВКОЙ =====
+    // Используем Blob с правильным типом и кодировкой
+    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     document.getElementById('downloadLink').href = url;
     document.getElementById('downloadLink').download = `${protocolNumber.replace('/', '_')}_${date}.xml`;
     document.getElementById('resultBlock').classList.remove('hidden');
 
-    alert('✅ XML создан! Нажмите "Скачать XML"');
+    alert('✅ XML создан в кодировке UTF-8! Нажмите "Скачать XML"');
 });
 
 function escXml(str) {
