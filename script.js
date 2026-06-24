@@ -96,8 +96,14 @@ function selectOrganization(orgId) {
     }
 }
 
-// Обработчик для плюсика
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================================
 document.addEventListener('DOMContentLoaded', function() {
+    // Рендерим организации
+    renderOrganizations();
+    
+    // Обработчик для плюсика
     const addBtn = document.getElementById('addOrgBtn');
     if (addBtn) {
         addBtn.addEventListener('click', function(e) {
@@ -107,14 +113,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Обработчик для выбора организации
-    document.getElementById('orgSelector').addEventListener('change', function() {
-        if (this.value) {
-            selectOrganization(parseInt(this.value));
-        } else {
-            document.getElementById('orgTitleHidden').value = '';
-            document.getElementById('orgInnHidden').value = '';
-        }
-    });
+    const orgSelector = document.getElementById('orgSelector');
+    if (orgSelector) {
+        orgSelector.addEventListener('change', function() {
+            if (this.value) {
+                selectOrganization(parseInt(this.value));
+            } else {
+                document.getElementById('orgTitleHidden').value = '';
+                document.getElementById('orgInnHidden').value = '';
+            }
+        });
+    }
+    
+    // Инициализация вкладок
+    showTab('protocol');
+    
+    // Добавляем первую строку сотрудника
+    if (document.querySelectorAll('.employee-row').length === 0) {
+        addEmployeeRow();
+    }
+    
+    // Рендерим историю и сотрудников
+    renderHistory();
+    renderEmployeeDB();
 });
 
 // ============================================================
@@ -150,50 +171,52 @@ function goToDataTab() {
 let uploadedFile = null;
 let recognizedEmployees = [];
 
-const fileInput = document.getElementById('fileInput');
-if (fileInput) {
-    fileInput.addEventListener('change', function(e) {
-        if (e.target.files.length > 0) {
-            uploadedFile = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                document.getElementById('imagePreview').src = ev.target.result;
-                document.getElementById('photoPreview').classList.remove('hidden');
-                document.getElementById('uploadArea').style.display = 'none';
-            };
-            reader.readAsDataURL(uploadedFile);
-        }
-    });
-}
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                uploadedFile = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    document.getElementById('imagePreview').src = ev.target.result;
+                    document.getElementById('photoPreview').classList.remove('hidden');
+                    document.getElementById('uploadArea').style.display = 'none';
+                };
+                reader.readAsDataURL(uploadedFile);
+            }
+        });
+    }
 
-const uploadArea = document.getElementById('uploadArea');
-if (uploadArea) {
-    uploadArea.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        this.style.borderColor = '#7c3aed';
-        this.style.background = 'rgba(124, 58, 237, 0.1)';
-    });
-    uploadArea.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        this.style.borderColor = 'rgba(124, 58, 237, 0.4)';
-        this.style.background = 'rgba(255,255,255,0.03)';
-    });
-    uploadArea.addEventListener('drop', function(e) {
-        e.preventDefault();
-        this.style.borderColor = 'rgba(124, 58, 237, 0.4)';
-        this.style.background = 'rgba(255,255,255,0.03)';
-        if (e.dataTransfer.files.length > 0) {
-            uploadedFile = e.dataTransfer.files[0];
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                document.getElementById('imagePreview').src = ev.target.result;
-                document.getElementById('photoPreview').classList.remove('hidden');
-                document.getElementById('uploadArea').style.display = 'none';
-            };
-            reader.readAsDataURL(uploadedFile);
-        }
-    });
-}
+    const uploadArea = document.getElementById('uploadArea');
+    if (uploadArea) {
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#7c3aed';
+            this.style.background = 'rgba(124, 58, 237, 0.1)';
+        });
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.borderColor = 'rgba(124, 58, 237, 0.4)';
+            this.style.background = 'rgba(255,255,255,0.03)';
+        });
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = 'rgba(124, 58, 237, 0.4)';
+            this.style.background = 'rgba(255,255,255,0.03)';
+            if (e.dataTransfer.files.length > 0) {
+                uploadedFile = e.dataTransfer.files[0];
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    document.getElementById('imagePreview').src = ev.target.result;
+                    document.getElementById('photoPreview').classList.remove('hidden');
+                    document.getElementById('uploadArea').style.display = 'none';
+                };
+                reader.readAsDataURL(uploadedFile);
+            }
+        });
+    }
+});
 
 function recognizePhoto() {
     if (!uploadedFile) {
@@ -379,13 +402,4 @@ function generateXML(allPrograms = false) {
             xml += '\t\t</Organization>\n';
             xml += `\t\t<Test isPassed="${emp.is_passed ? 'true' : 'false'}" learnProgramId="${progId}">\n`;
             xml += `\t\t\t<Date>${escXml(date)}</Date>\n`;
-            xml += `\t\t\t<ProtocolNumber>${escXml(protocolNumber)}</ProtocolNumber>\n`;
-            xml += `\t\t\t<LearnProgramTitle>${escXml(programs[progId] || 'Неизвестная программа')}</LearnProgramTitle>\n`;
-            xml += '\t\t</Test>\n';
-            xml += '\t</RegistryRecord>\n';
-        });
-    });
-
-    xml += '</RegistrySet>';
-
-    const history = getHistory
+            xml += `\t
