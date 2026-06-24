@@ -7,22 +7,22 @@
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
     <div class="container" id="app">
 
         <!-- ========================================================= -->
-        <!--  ШАПКА С ОРГАНИЗАЦИЯМИ (ГЛАВНОЕ ПОЛЕ)                      -->
+        <!--  ШАПКА С ОРГАНИЗАЦИЯМИ (НОВЫЙ БЛОК)                       -->
         <!-- ========================================================= -->
         <header class="org-header">
-            <div class="org-header__label">
-                <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                Организации
+            <div class="org-header__left">
+                <span class="org-header__icon">🏢</span>
+                <span class="org-header__title">Организация</span>
             </div>
-
-            <div class="org-selector">
-                <!-- ВЫБОР ОРГАНИЗАЦИИ (сохраняется в localStorage) -->
-                <select id="orgSelect" @change="onOrgChange"></select>
-
+            <div class="org-header__right">
+                <select id="orgSelect" @change="onOrgChange">
+                    <option v-for="org in organizations" :key="org.id" :value="org.id">
+                        {{ org.name }}
+                    </option>
+                </select>
                 <div class="org-fields">
                     <div class="field-group">
                         <label>ИНН</label>
@@ -33,13 +33,12 @@
                         <input type="text" id="orgName" disabled />
                     </div>
                 </div>
-
                 <button class="btn-add-org" @click="addOrg">+ Добавить</button>
             </div>
         </header>
 
         <!-- ========================================================= -->
-        <!--  ВКЛАДКИ                                                    -->
+        <!--  ВАШИ ВКЛАДКИ (ОСТАВЛЕНЫ БЕЗ ИЗМЕНЕНИЙ)                   -->
         <!-- ========================================================= -->
         <div class="tabs">
             <button class="tab-btn active" data-tab="tab1">Проверка знаний</button>
@@ -52,8 +51,8 @@
         <!-- ========================================================= -->
         <div id="tab1" class="tab-content active">
             <div class="program-selector">
-                <span class="label">Программа обучения</span>
-                <div class="program-list" id="programList">
+                <span class="label">Выберите программу обучения</span>
+                <div class="program-list">
                     <span class="program-item active" data-program="Пожарная безопасность">Пожарная безопасность</span>
                     <span class="program-item" data-program="Электробезопасность">Электробезопасность</span>
                     <span class="program-item hidden-program" data-program="Охрана труда (общая)">Охрана труда (общая)</span>
@@ -80,13 +79,13 @@
                     </div>
                     <span class="badge">Действует</span>
                 </div>
-                <div class="protocol-item" style="border-left-color:#94a3b8; opacity:0.75;">
+                <div class="protocol-item archived">
                     <div class="info">
                         <span><strong>№ 18</strong> от 20.05.2026</span>
                         <span><strong>Программа:</strong> Охрана труда (общая)</span>
                         <span><strong>Сотрудников:</strong> 5</span>
                     </div>
-                    <span class="badge" style="background:#e2e8f0; color:#475569;">Архив</span>
+                    <span class="badge archived-badge">Архив</span>
                 </div>
             </div>
         </div>
