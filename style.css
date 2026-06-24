@@ -111,11 +111,11 @@ input::placeholder {
     min-width: 140px;
 }
 
-.org-select, .program-select {
+.org-select {
     margin-top: 4px;
     cursor: pointer;
 }
-.org-select option, .program-select option {
+.org-select option {
     background: #1a1a3e;
     color: #fff;
 }
@@ -281,7 +281,7 @@ input::placeholder {
     background: rgba(0, 212, 255, 0.2);
 }
 
-/* ===== ПРОГРАММЫ (ЧЕКБОКСЫ) ===== */
+/* ===== ПРОГРАММЫ ===== */
 .program-check {
     display: flex;
     align-items: center;
@@ -303,9 +303,6 @@ input::placeholder {
     height: 18px;
     accent-color: #7c3aed;
     cursor: pointer;
-}
-.program-check input[type="checkbox"]:checked + span {
-    color: #fff;
 }
 
 /* ===== РЕЗУЛЬТАТ ===== */
@@ -336,39 +333,6 @@ input::placeholder {
 }
 .result-block .btn-cancel {
     margin-top: 8px;
-}
-
-/* ===== СТАТУС РАСПОЗНАВАНИЯ ===== */
-.status-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
-    margin-left: 8px;
-}
-.status-badge.recording {
-    background: rgba(255, 50, 50, 0.2);
-    color: #ff6b6b;
-    animation: pulse 1s infinite;
-}
-.status-badge.success {
-    background: rgba(0, 212, 255, 0.15);
-    color: #00d4ff;
-}
-.status-badge.error {
-    background: rgba(255, 50, 50, 0.15);
-    color: #ff6b6b;
-}
-.status-badge.loading {
-    background: rgba(255, 200, 0, 0.15);
-    color: #ffd700;
-    animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
 }
 
 /* ===== АДАПТИВ ===== */
