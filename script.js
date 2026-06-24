@@ -57,6 +57,10 @@ function showAddOrgForm() {
     }
 }
 
+function closeAddOrgForm() {
+    document.getElementById('addOrgForm').classList.add('hidden');
+}
+
 function addOrganization() {
     const title = document.getElementById('newOrgTitle').value.trim();
     const inn = document.getElementById('newOrgInn').value.trim();
@@ -91,6 +95,27 @@ function selectOrganization(orgId) {
         document.getElementById('orgInnHidden').value = org.inn;
     }
 }
+
+// Обработчик для плюсика
+document.addEventListener('DOMContentLoaded', function() {
+    const addBtn = document.getElementById('addOrgBtn');
+    if (addBtn) {
+        addBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            showAddOrgForm();
+        });
+    }
+    
+    // Обработчик для выбора организации
+    document.getElementById('orgSelector').addEventListener('change', function() {
+        if (this.value) {
+            selectOrganization(parseInt(this.value));
+        } else {
+            document.getElementById('orgTitleHidden').value = '';
+            document.getElementById('orgInnHidden').value = '';
+        }
+    });
+});
 
 // ============================================================
 // ВКЛАДКИ
@@ -205,7 +230,6 @@ function recognizePhoto() {
 }
 
 function fillFormFromRecognition() {
-    // Проверяем, есть ли организация с таким ИНН
     const orgs = getOrganizations();
     let existingOrg = orgs.find(o => o.inn === "2634800610");
     if (existingOrg) {
@@ -364,24 +388,4 @@ function generateXML(allPrograms = false) {
 
     xml += '</RegistrySet>';
 
-    const history = getHistory();
-    history.push({
-        protocolNumber,
-        date,
-        orgTitle,
-        employees: employees.map(e => `${e.last_name} ${e.first_name}`).join(', '),
-        programs: programIds.join(', '),
-        xml,
-        created: new Date().toISOString()
-    });
-    saveHistory(history);
-
-    const existing = getEmployees();
-    employees.forEach(emp => {
-        if (!emp.snils) return;
-        const found = existing.find(e =>
-            e.last_name === emp.last_name &&
-            e.first_name === emp.first_name &&
-            e.position === emp.position
-        );
-        if (!found)
+    const history = getHistory
