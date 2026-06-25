@@ -11,9 +11,6 @@ body {
     min-height: 100vh;
 }
 
-/* ============================================================ */
-/* ГЛАВНАЯ СТРАНИЦА */
-/* ============================================================ */
 #mainPage {
     background: linear-gradient(145deg, #0a0a1a 0%, #12122a 50%, #0a0a1a 100%);
     min-height: 100vh;
@@ -25,7 +22,6 @@ body {
     padding: 0 20px;
 }
 
-/* ШАПКА */
 .header {
     padding: 16px 0;
     border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -95,7 +91,6 @@ body {
     background: rgba(255,255,255,0.12);
 }
 
-/* ГЕРОЙ */
 .hero {
     padding: 60px 0 40px;
 }
@@ -186,7 +181,6 @@ body {
     font-size: 14px;
 }
 
-/* ГЕРОЙ КАРТИНКА */
 .hero-image {
     display: flex;
     justify-content: center;
@@ -206,7 +200,6 @@ body {
     display: block;
 }
 
-/* ПРЕИМУЩЕСТВА */
 .features {
     padding: 40px 0 60px;
 }
@@ -258,7 +251,6 @@ body {
     line-height: 1.6;
 }
 
-/* ПОДВАЛ */
 .footer {
     border-top: 1px solid rgba(255,255,255,0.05);
     padding: 32px 0;
@@ -294,9 +286,6 @@ body {
     font-size: 13px;
 }
 
-/* ============================================================ */
-/* СТРАНИЦЫ (Обучение, Риски, Аналитика) */
-/* ============================================================ */
 .page {
     min-height: 100vh;
     padding: 30px 0 60px;
@@ -305,7 +294,6 @@ body {
     display: none !important;
 }
 
-/* СТИЛИ ДЛЯ СТРАНИЦЫ ОБУЧЕНИЯ (из старого кода) */
 .block {
     background: rgba(255, 255, 255, 0.03);
     border-radius: 14px;
@@ -590,7 +578,6 @@ input::placeholder {
     margin-top: 8px;
 }
 
-/* АДАПТИВ */
 @media (max-width: 768px) {
     .hero-inner {
         grid-template-columns: 1fr;
@@ -618,4 +605,6 @@ input::placeholder {
 }
 @media (max-width: 500px) {
     .features-grid {
-        grid-template
+        grid-template-columns: 1fr;
+    }
+}
