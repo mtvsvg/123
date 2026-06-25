@@ -38,72 +38,116 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- БЛОК ПРОТОКОЛА -->
+    <!-- ВКЛАДКИ -->
     <!-- ============================================================ -->
-    <div class="block">
-        <h2>📋 Протокол</h2>
-        <div class="form-row">
-            <div class="form-group">
-                <label>Номер протокола</label>
-                <input type="text" id="protocolNumber" placeholder="01/26">
+    <div class="tab">
+        <button class="active" onclick="showTab('staff')">📋 Штатное расписание</button>
+        <button onclick="showTab('protocol')">📝 Протокол</button>
+        <button onclick="showTab('employees')">👤 База сотрудников</button>
+        <button onclick="showTab('history')">📄 История</button>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ===== ВКЛАДКА 1: ШТАТНОЕ РАСПИСАНИЕ ===== -->
+    <!-- ============================================================ -->
+    <div id="tabStaff">
+        <div class="block">
+            <div class="block-header">
+                <h2>📋 Штатное расписание</h2>
+                <button class="btn-add" id="staffImportBtn">📤 Загрузить файл</button>
             </div>
-            <div class="form-group">
-                <label>Дата</label>
-                <input type="date" id="protocolDate">
+            <p style="color:#8888aa;font-size:14px;margin-bottom:12px;">
+                Загрузите файл со штатным расписанием. Выберите сотрудников для добавления в протокол.
+            </p>
+            <div id="staffContainer">
+                <p style="color:#6a6a8a;text-align:center;padding:20px;">
+                    Нет загруженных сотрудников. Нажмите "Загрузить файл".
+                </p>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
+                <button class="btn-primary" id="addSelectedBtn" style="width:auto;padding:10px 24px;">➕ Добавить выбранных в протокол</button>
+                <button class="btn-secondary" onclick="selectAllStaff()">✅ Выбрать всех</button>
+                <button class="btn-secondary" onclick="deselectAllStaff()">✖ Снять всех</button>
+                <button class="btn-secondary" onclick="clearStaff()">🗑 Очистить штатное</button>
             </div>
         </div>
     </div>
 
     <!-- ============================================================ -->
-    <!-- БЛОК ПРОГРАММ -->
+    <!-- ===== ВКЛАДКА 2: ПРОТОКОЛ ===== -->
     <!-- ============================================================ -->
-    <div class="block">
-        <div class="block-header">
-            <h2>📚 Программы обучения</h2>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="btn-add" onclick="selectAllPrograms()">✅ Все</button>
-                <button class="btn-add" onclick="selectPrograms([1,4])">📌 1+4</button>
-                <button class="btn-add" onclick="clearAllPrograms()">✖ Снять</button>
+    <div id="tabProtocol" class="hidden">
+        <div class="block">
+            <div class="block-header">
+                <h2>📝 Текущий протокол</h2>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn-add" onclick="clearProtocol()">🗑 Очистить</button>
+                </div>
             </div>
-        </div>
-        <div id="programsContainer" style="display:flex;flex-wrap:wrap;gap:12px;">
-            <label class="program-check">
-                <input type="checkbox" value="1" checked> 1. Оказание первой помощи
-            </label>
-            <label class="program-check">
-                <input type="checkbox" value="2"> 2. Использование СИЗ
-            </label>
-            <label class="program-check">
-                <input type="checkbox" value="3"> 3. Общие вопросы охраны труда
-            </label>
-            <label class="program-check">
-                <input type="checkbox" value="4"> 4. Безопасные методы и приемы работ
-            </label>
+            <div id="protocolContainer">
+                <p style="color:#6a6a8a;text-align:center;padding:20px;">
+                    В протоколе пока нет сотрудников. Добавьте их из штатного расписания.
+                </p>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
+                <button class="btn-generate" id="generateBtn" style="width:auto;padding:12px 32px;">⚡ Создать XML</button>
+            </div>
         </div>
     </div>
 
     <!-- ============================================================ -->
-    <!-- БЛОК СОТРУДНИКОВ -->
+    <!-- ===== ВКЛАДКА 3: БАЗА СОТРУДНИКОВ ===== -->
     <!-- ============================================================ -->
-    <div class="block">
-        <div class="block-header">
-            <h2>👥 Сотрудники</h2>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="btn-add" onclick="addEmployee()">➕ Добавить</button>
-                <button class="btn-add" id="importBtn">📤 Импорт из файла</button>
-            </div>
+    <div id="tabEmployees" class="hidden">
+        <div class="block">
+            <h2>👤 База сотрудников</h2>
+            <p style="color:#8888aa;font-size:14px;margin-bottom:12px;">
+                Все сотрудники, которые были добавлены в протоколы, сохраняются здесь.
+            </p>
+            <div id="employeeDB"></div>
+            <button class="btn-secondary" onclick="clearEmployeesDB()" style="margin-top:12px;">🗑 Очистить базу</button>
         </div>
-        <div id="employeesContainer"></div>
-        <p style="color:#6a6a8a;font-size:13px;margin-top:8px;">
-            💡 Формат файла: каждая строка — сотрудник.<br>
-            <strong>Фамилия, Имя, Отчество, Должность, СНИЛС, Сдал(да/нет)</strong>
-        </p>
     </div>
 
     <!-- ============================================================ -->
-    <!-- КНОПКА ГЕНЕРАЦИИ -->
+    <!-- ===== ВКЛАДКА 4: ИСТОРИЯ ===== -->
     <!-- ============================================================ -->
-    <button class="btn-generate" id="generateBtn">⚡ Создать XML</button>
+    <div id="tabHistory" class="hidden">
+        <div class="block">
+            <h2>📄 История протоколов</h2>
+            <div id="historyList"></div>
+            <button class="btn-secondary" onclick="clearHistory()" style="margin-top:12px;">🗑 Очистить историю</button>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ===== МОДАЛЬНОЕ ОКНО ДЛЯ ДАТЫ И НОМЕРА ===== -->
+    <!-- ============================================================ -->
+    <div id="protocolModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📝 Добавить в протокол</h3>
+                <button class="modal-close" onclick="closeProtocolModal()">✖</button>
+            </div>
+            <div class="modal-body">
+                <p style="color:#8888aa;margin-bottom:12px;">
+                    Выбрано сотрудников: <strong id="selectedCount">0</strong>
+                </p>
+                <div class="form-group">
+                    <label>Номер протокола</label>
+                    <input type="text" id="modalProtocolNumber" placeholder="Например: 01/26">
+                </div>
+                <div class="form-group">
+                    <label>Дата</label>
+                    <input type="date" id="modalProtocolDate">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeProtocolModal()">Отмена</button>
+                <button class="btn-primary" id="confirmAddToProtocol" style="width:auto;padding:10px 24px;">➕ Добавить в протокол</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ============================================================ -->
     <!-- РЕЗУЛЬТАТ -->
