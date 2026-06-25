@@ -1,5 +1,5 @@
 // ============================================================
-// ХРАНИЛИЩЕ
+// ХРАНИЛИЩЕ (localStorage)
 // ============================================================
 function getOrgs() {
     return JSON.parse(localStorage.getItem('organizations') || '[]');
@@ -22,8 +22,8 @@ function saveProtocol(protocol) {
 function getHistory() {
     return JSON.parse(localStorage.getItem('history') || '[]');
 }
-function saveHistory(hist) {
-    localStorage.setItem('history', JSON.stringify(hist));
+function saveHistory(history) {
+    localStorage.setItem('history', JSON.stringify(history));
 }
 
 let currentOrgId = localStorage.getItem('currentOrgId') || null;
@@ -47,11 +47,7 @@ function renderOrgs() {
 }
 
 document.getElementById('showOrgFormBtn').addEventListener('click', function() {
-    const form = document.getElementById('orgForm');
-    form.classList.toggle('hidden');
-    if (!form.classList.contains('hidden')) {
-        document.getElementById('orgNameInput').focus();
-    }
+    document.getElementById('orgForm').classList.toggle('hidden');
 });
 
 document.getElementById('cancelOrgBtn').addEventListener('click', function() {
@@ -206,7 +202,7 @@ function clearStaff() {
 }
 
 // ============================================================
-// 📤 ИМПОРТ ШТАТНОГО РАСПИСАНИЯ
+// ИМПОРТ ШТАТНОГО РАСПИСАНИЯ
 // ============================================================
 document.getElementById('staffImportBtn').addEventListener('click', function() {
     const input = document.createElement('input');
@@ -220,34 +216,21 @@ document.getElementById('staffImportBtn').addEventListener('click', function() {
             document.body.removeChild(input);
             return;
         }
-        
         const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = function(event) {
-            const bytes = new Uint8Array(event.target.result);
-            let content = '';
-            
-            try {
-                const decoder = new TextDecoder('utf-8', { fatal: true });
-                content = decoder.decode(bytes);
-                if (!/[а-яА-Я]/.test(content)) throw new Error('Нет русских букв');
-            } catch(e) {
-                try {
-                    const decoder = new TextDecoder('windows-1251');
-                    content = decoder.decode(bytes);
-                } catch(e2) {
-                    const decoder = new TextDecoder('utf-8');
-                    content = decoder.decode(bytes);
-                }
-            }
-            
+            let content = event.target.result;
+            // Пробуем разные кодировки
             if (/[����]/.test(content) || !/[а-яА-Я]/.test(content)) {
                 try {
+                    const bytes = new Uint8Array(content.length);
+                    for (let i = 0; i < content.length; i++) {
+                        bytes[i] = content.charCodeAt(i) & 0xFF;
+                    }
                     const decoder = new TextDecoder('windows-1251');
                     content = decoder.decode(bytes);
                 } catch(e) {}
             }
-            
             if (content.charCodeAt(0) === 0xFEFF) content = content.slice(1);
             
             const employees = smartParse(content);
@@ -256,24 +239,28 @@ document.getElementById('staffImportBtn').addEventListener('click', function() {
                 document.body.removeChild(input);
                 return;
             }
-            
-            saveStaff(employees);
+            const currentStaff = getStaff();
+            employees.forEach(emp => {
+                if (!currentStaff.some(e => e.last_name === emp.last_name && e.first_name === emp.first_name && e.snils === emp.snils)) {
+                    currentStaff.push(emp);
+                }
+            });
+            saveStaff(currentStaff);
             renderStaff();
             alert(`✅ Загружено ${employees.length} сотрудников в штатное расписание!`);
             document.body.removeChild(input);
         };
-        reader.readAsArrayBuffer(file);
+        reader.readAsBinaryString(file);
     };
     input.click();
 });
 
 // ============================================================
-// 🧠 ПАРСЕР
+// ПАРСЕР
 // ============================================================
 function smartParse(content) {
     const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
     const employees = [];
-    
     lines.forEach(line => {
         let trimmed = line.trim();
         if (!trimmed) return;
@@ -283,7 +270,6 @@ function smartParse(content) {
         const result = parseLine(trimmed);
         if (result) employees.push(result);
     });
-    
     return employees;
 }
 
@@ -294,32 +280,27 @@ function parseLine(line) {
         snils = snilsMatch[0].replace(/[\s-]/g, '');
         line = line.replace(snilsMatch[0], '').trim();
     }
-    
     const words = line.split(/\s+/).filter(w => w.length > 0);
     if (words.length < 2) return null;
     
-    const commonPositions = [
-        'инженер', 'техник', 'механик', 'специалист', 'мастер', 'бригадир',
-        'директор', 'менеджер', 'бухгалтер', 'экономист', 'юрист', 'конструктор',
-        'технолог', 'электрик', 'сварщик', 'токарь', 'фрезеровщик', 'слесарь',
-        'водитель', 'грузчик', 'кладовщик', 'уборщик', 'охранник', 'программист',
-        'администратор', 'начальник', 'заведующий', 'главный', 'ведущий',
-        'старший', 'младший', 'помощник', 'заместитель', 'швея', 'вышивальщица',
-        'раскройщик', 'комплектовщик', 'упаковщик', 'контролер', 'наладчик',
-        'оператор', 'машинист', 'крановщик', 'стропальщик', 'троллейбуса',
-        'автобуса', 'трамвая', 'отк', 'спец', 'мех', 'энерг', 'снабж'
-    ];
+    const commonPositions = ['инженер','техник','механик','специалист','мастер','бригадир',
+        'директор','менеджер','бухгалтер','экономист','юрист','конструктор',
+        'технолог','электрик','сварщик','токарь','фрезеровщик','слесарь',
+        'водитель','грузчик','кладовщик','уборщик','охранник','программист',
+        'администратор','начальник','заведующий','главный','ведущий',
+        'старший','младший','помощник','заместитель','швея','вышивальщица',
+        'раскройщик','комплектовщик','упаковщик','контролер','наладчик',
+        'оператор','машинист','крановщик','стропальщик','троллейбуса',
+        'автобуса','трамвая','отк','спец','мех','энерг','снабж'];
     
     let nameParts = [];
     let positionParts = [];
     let i = 0;
-    
     while (i < words.length) {
         const w = words[i];
         const lower = w.toLowerCase();
         const isName = /^[А-ЯЁ][а-яё]{1,19}$/.test(w) || /^[A-Z][a-z]{1,19}$/.test(w);
         const isPosition = commonPositions.some(pos => lower === pos || lower.includes(pos) || pos.includes(lower));
-        
         if (isName && !isPosition && nameParts.length < 3) {
             nameParts.push(w);
             i++;
@@ -328,7 +309,6 @@ function parseLine(line) {
             i++;
         }
     }
-    
     if (nameParts.length < 2) {
         const firstThree = words.slice(0, Math.min(3, words.length));
         if (firstThree.length >= 2) {
@@ -336,9 +316,7 @@ function parseLine(line) {
             positionParts = words.slice(firstThree.length);
         }
     }
-    
     if (nameParts.length < 2) return null;
-    
     return {
         last_name: nameParts[0] || '',
         first_name: nameParts[1] || '',
@@ -350,7 +328,7 @@ function parseLine(line) {
 }
 
 // ============================================================
-// ➕ ДОБАВЛЕНИЕ В ПРОТОКОЛ
+// ДОБАВЛЕНИЕ В ПРОТОКОЛ
 // ============================================================
 document.getElementById('addSelectedBtn').addEventListener('click', function() {
     const selected = getSelectedStaff();
@@ -402,4 +380,29 @@ function renderProtocol() {
                 <td>${emp.middle_name || ''}</td>
                 <td>${emp.position}</td>
                 <td>${emp.snils}</td>
-                <td><button class="
+                <td><button class="btn-remove" onclick="removeFromProtocol(${index})">✖</button></td>
+            </tr>
+        `;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function removeFromProtocol(index) {
+    const protocol = getProtocol();
+    protocol.splice(index, 1);
+    saveProtocol(protocol);
+    renderProtocol();
+}
+
+function clearProtocol() {
+    if (!confirm('Очистить протокол?')) return;
+    saveProtocol([]);
+    renderProtocol();
+}
+
+// ============================================================
+// ПРОГРАММЫ
+// ============================================================
+function selectAllPrograms() {
+    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]').forEach(cb => cb.checked = true);
