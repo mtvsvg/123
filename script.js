@@ -328,36 +328,73 @@ function parseLine(line) {
 }
 
 // ============================================================
-// МОДАЛЬНОЕ ОКНО (ДОБАВЛЕНИЕ В ПРОТОКОЛ)
+// ДОБАВЛЕНИЕ В ПРОТОКОЛ
 // ============================================================
-let pendingEmployees = [];
-
 document.getElementById('addSelectedBtn').addEventListener('click', function() {
     const selected = getSelectedStaff();
     if (selected.length === 0) {
         alert('Выберите хотя бы одного сотрудника');
         return;
     }
-    pendingEmployees = selected;
-    document.getElementById('selectedCount').textContent = selected.length;
-    document.getElementById('protocolModal').classList.remove('hidden');
-    document.getElementById('modalProtocolNumber').value = '';
-    document.getElementById('modalProtocolDate').value = '';
-    document.getElementById('modalProtocolNumber').focus();
+    const currentProtocol = getProtocol();
+    selected.forEach(emp => {
+        if (!currentProtocol.some(e => e.last_name === emp.last_name && e.first_name === emp.first_name && e.snils === emp.snils)) {
+            currentProtocol.push(emp);
+        }
+    });
+    saveProtocol(currentProtocol);
+    alert(`✅ Добавлено ${selected.length} сотрудников в протокол!`);
+    deselectAllStaff();
+    showTab('protocol');
 });
 
-function closeProtocolModal() {
-    document.getElementById('protocolModal').classList.add('hidden');
-    pendingEmployees = [];
-}
-
-document.getElementById('confirmAddToProtocol').addEventListener('click', function() {
-    const protocolNumber = document.getElementById('modalProtocolNumber').value.trim();
-    const protocolDate = document.getElementById('modalProtocolDate').value;
-    
-    if (!protocolNumber) {
-        alert('Введите номер протокола');
+// ============================================================
+// ПРОТОКОЛ
+// ============================================================
+function renderProtocol() {
+    const container = document.getElementById('protocolContainer');
+    const protocol = getProtocol();
+    if (protocol.length === 0) {
+        container.innerHTML = '<p style="color:#6a6a8a;text-align:center;padding:20px;">В протоколе пока нет сотрудников. Добавьте их из штатного расписания.</p>';
         return;
     }
-    if (!protocolDate) {
-        alert
+    let html = `
+        <table class="protocol-table">
+            <thead>
+                <tr>
+                    <th>Фамилия</th>
+                    <th>Имя</th>
+                    <th>Отчество</th>
+                    <th>Должность</th>
+                    <th>СНИЛС</th>
+                    <th style="width:60px;">Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    protocol.forEach((emp, index) => {
+        html += `
+            <tr>
+                <td>${emp.last_name}</td>
+                <td>${emp.first_name}</td>
+                <td>${emp.middle_name || ''}</td>
+                <td>${emp.position}</td>
+                <td>${emp.snils}</td>
+                <td><button class="btn-remove" onclick="removeFromProtocol(${index})">✖</button></td>
+            </tr>
+        `;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function removeFromProtocol(index) {
+    const protocol = getProtocol();
+    protocol.splice(index, 1);
+    saveProtocol(protocol);
+    renderProtocol();
+}
+
+function clearProtocol() {
+    if (!confirm('Очистить протокол?')) return;
+    saveProtocol([]
