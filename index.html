@@ -76,53 +76,55 @@
     <!-- ============================================================ -->
     <div id="tabProtocol" class="hidden">
         <div class="block">
-            <h2>📝 Протокол</h2>
-            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
-                <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0;">
-                    <label>Номер протокола</label>
-                    <input type="text" id="protocolNumber" placeholder="01/26">
-                </div>
-                <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0;">
-                    <label>Дата</label>
-                    <input type="date" id="protocolDate">
-                </div>
+            <div class="block-header">
+                <h2>📝 Протокол</h2>
+                <button class="btn-add" onclick="clearProtocol()">🗑 Очистить</button>
             </div>
-
-            <h3 style="margin-top:12px;">📚 Программы обучения</h3>
-            <div style="display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 16px 0;">
-                <label class="program-check">
-                    <input type="checkbox" value="1" checked> 1. Оказание первой помощи
-                </label>
-                <label class="program-check">
-                    <input type="checkbox" value="2"> 2. Использование СИЗ
-                </label>
-                <label class="program-check">
-                    <input type="checkbox" value="3"> 3. Общие вопросы охраны труда
-                </label>
-                <label class="program-check">
-                    <input type="checkbox" value="4"> 4. Безопасные методы и приемы работ
-                </label>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-                <button class="btn-add" onclick="selectAllPrograms()">✅ Все</button>
-                <button class="btn-add" onclick="selectPrograms([1,4])">📌 1+4</button>
-                <button class="btn-add" onclick="clearAllPrograms()">✖ Снять</button>
-            </div>
-
             <div id="protocolContainer">
                 <p style="color:#6a6a8a;text-align:center;padding:20px;">
                     В протоколе пока нет сотрудников. Добавьте их из штатного расписания.
                 </p>
             </div>
-
             <button class="btn-generate" id="generateBtn" style="margin-top:16px;">⚡ Создать XML</button>
+        </div>
+    </div>
 
-            <div id="resultBlock" class="result-block hidden">
-                <h3>✅ XML готов!</h3>
-                <a id="downloadLink" href="#" download>📥 Скачать XML</a>
-                <button class="btn-cancel" onclick="document.getElementById('resultBlock').classList.add('hidden')">✖ Закрыть</button>
+    <!-- ============================================================ -->
+    <!-- ===== МОДАЛЬНОЕ ОКНО ДЛЯ ДАТЫ И НОМЕРА ===== -->
+    <!-- ============================================================ -->
+    <div id="protocolModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📝 Добавить в протокол</h3>
+                <button class="modal-close" onclick="closeProtocolModal()">✖</button>
+            </div>
+            <div class="modal-body">
+                <p style="color:#8888aa;margin-bottom:12px;">
+                    Выбрано сотрудников: <strong id="selectedCount">0</strong>
+                </p>
+                <div class="form-group">
+                    <label>Номер протокола</label>
+                    <input type="text" id="modalProtocolNumber" placeholder="Например: 01/26">
+                </div>
+                <div class="form-group">
+                    <label>Дата</label>
+                    <input type="date" id="modalProtocolDate">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeProtocolModal()">Отмена</button>
+                <button class="btn-primary" id="confirmAddToProtocol" style="width:auto;padding:10px 24px;">➕ Добавить в протокол</button>
             </div>
         </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- РЕЗУЛЬТАТ -->
+    <!-- ============================================================ -->
+    <div id="resultBlock" class="result-block hidden">
+        <h3>✅ XML готов!</h3>
+        <a id="downloadLink" href="#" download>📥 Скачать XML</a>
+        <button class="btn-cancel" onclick="document.getElementById('resultBlock').classList.add('hidden')">✖ Закрыть</button>
     </div>
 
 </div>
