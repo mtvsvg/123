@@ -15,7 +15,7 @@ body {
 }
 
 .container {
-    max-width: 800px;
+    max-width: 900px;
     width: 100%;
     background: rgba(255, 255, 255, 0.04);
     backdrop-filter: blur(12px);
@@ -36,7 +36,7 @@ h1 {
 
 .desc {
     color: #8888aa;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
     font-size: 15px;
 }
 
@@ -177,6 +177,22 @@ input::placeholder {
     background: rgba(255, 70, 70, 0.25);
 }
 
+.btn-primary {
+    background: linear-gradient(135deg, #7c3aed, #00d4ff);
+    color: #fff;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-primary:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 30px rgba(124, 58, 237, 0.4);
+}
+
 .btn-generate {
     width: 100%;
     padding: 16px;
@@ -193,6 +209,20 @@ input::placeholder {
 .btn-generate:hover {
     transform: scale(1.01);
     box-shadow: 0 8px 30px rgba(124, 58, 237, 0.35);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ccc;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 10px 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-block;
+}
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .org-form {
@@ -225,60 +255,94 @@ input::placeholder {
     display: none !important;
 }
 
-/* ===== КАРТОЧКА СОТРУДНИКА ===== */
-.employee-card {
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: 10px;
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+/* ===== ВКЛАДКИ ===== */
+.tab {
     display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding-bottom: 12px;
     flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
 }
-.employee-card input {
-    flex: 1;
-    min-width: 100px;
+.tab button {
+    background: none;
+    border: none;
+    color: #8888aa;
+    padding: 8px 18px;
+    font-size: 15px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+    font-weight: 500;
 }
-.employee-card .emp-check {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #aaa;
+.tab button.active {
+    background: rgba(124, 58, 237, 0.2);
+    color: #fff;
+}
+.tab button:hover {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+}
+
+/* ===== ШТАТНОЕ РАСПИСАНИЕ ===== */
+.staff-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+}
+.staff-table th {
+    text-align: left;
+    padding: 10px 8px;
+    color: #8888aa;
+    font-weight: 500;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.staff-table td {
+    padding: 8px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
     font-size: 14px;
 }
-.employee-card .emp-check input[type="checkbox"] {
+.staff-table tr:hover {
+    background: rgba(255,255,255,0.03);
+}
+.staff-table input[type="checkbox"] {
     width: 18px;
     height: 18px;
     accent-color: #7c3aed;
     cursor: pointer;
 }
-.employee-card .btn-remove {
-    background: rgba(255, 70, 70, 0.15);
+
+/* ===== ПРОТОКОЛ ===== */
+.protocol-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+}
+.protocol-table th {
+    text-align: left;
+    padding: 10px 8px;
+    color: #8888aa;
+    font-weight: 500;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.protocol-table td {
+    padding: 8px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 14px;
+}
+.protocol-table .btn-remove {
+    background: rgba(255,70,70,0.15);
     color: #ff6b6b;
-    border: 1px solid rgba(255, 70, 70, 0.2);
-    padding: 4px 14px;
-    border-radius: 6px;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 13px;
-    transition: background 0.2s;
+    font-size: 12px;
 }
-.employee-card .btn-remove:hover {
-    background: rgba(255, 70, 70, 0.25);
-}
-.employee-card .btn-copy {
-    background: rgba(0, 212, 255, 0.12);
-    color: #00d4ff;
-    border: 1px solid rgba(0, 212, 255, 0.2);
-    padding: 4px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    transition: background 0.2s;
-}
-.employee-card .btn-copy:hover {
-    background: rgba(0, 212, 255, 0.2);
+.protocol-table .btn-remove:hover {
+    background: rgba(255,70,70,0.25);
 }
 
 /* ===== ПРОГРАММЫ ===== */
@@ -303,6 +367,75 @@ input::placeholder {
     height: 18px;
     accent-color: #7c3aed;
     cursor: pointer;
+}
+
+/* ===== МОДАЛЬНОЕ ОКНО ===== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.modal-overlay.hidden {
+    display: none !important;
+}
+.modal-content {
+    background: #1a1a3e;
+    border-radius: 24px;
+    max-width: 500px;
+    width: 90%;
+    padding: 0;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.modal-header h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.2rem;
+}
+.modal-close {
+    background: none;
+    border: none;
+    color: #a0a0c0;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0 8px;
+    transition: color 0.2s;
+}
+.modal-close:hover {
+    color: #fff;
+}
+.modal-body {
+    padding: 24px;
+}
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+.modal-footer .btn-primary {
+    width: auto;
+    padding: 10px 24px;
+}
+.modal-footer .btn-cancel {
+    padding: 10px 20px;
 }
 
 /* ===== РЕЗУЛЬТАТ ===== */
@@ -341,8 +474,12 @@ input::placeholder {
     .form-row { flex-direction: column; }
     .org-form { flex-direction: column; }
     .org-form input { min-width: 100%; }
-    .employee-card { flex-direction: column; }
-    .employee-card input { min-width: 100%; }
-    .block-header { flex-direction: column; align-items: stretch; }
-    .block-header .btn-add { width: 100%; text-align: center; }
+    .tab button { padding: 6px 12px; font-size: 13px; }
+    .staff-table, .protocol-table { font-size: 13px; }
+    .staff-table th, .staff-table td,
+    .protocol-table th, .protocol-table td { padding: 6px 4px; }
+    .modal-content { width: 95%; }
+    .modal-footer { flex-direction: column; }
+    .modal-footer .btn-primary,
+    .modal-footer .btn-cancel { width: 100%; text-align: center; }
 }
