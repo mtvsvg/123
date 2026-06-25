@@ -12,8 +12,6 @@
 <!-- ГЛАВНАЯ СТРАНИЦА -->
 <!-- ============================================================ -->
 <div id="mainPage">
-
-    <!-- ШАПКА -->
     <header class="header">
         <div class="container header-inner">
             <div class="logo">
@@ -26,11 +24,10 @@
                 <a href="#" class="nav-link" onclick="showPage('risks')">Оценка рисков</a>
                 <a href="#" class="nav-link" onclick="showPage('analytics')">Аналитика</a>
             </nav>
-            <button class="btn-login">Войти</button>
+            <button class="btn-login" onclick="alert('Вход в разработке')">Войти</button>
         </div>
     </header>
 
-    <!-- ГЕРОЙ -->
     <section class="hero">
         <div class="container hero-inner">
             <div class="hero-content">
@@ -42,7 +39,7 @@
                 </p>
                 <div class="hero-buttons">
                     <button class="btn-primary btn-hero" onclick="showPage('training')">Начать работу →</button>
-                    <button class="btn-secondary btn-hero">Узнать больше</button>
+                    <button class="btn-secondary btn-hero" onclick="alert('Подробнее в разработке')">Узнать больше</button>
                 </div>
                 <div class="hero-stats">
                     <div class="stat-item">
@@ -68,7 +65,6 @@
         </div>
     </section>
 
-    <!-- ПРЕИМУЩЕСТВА -->
     <section class="features">
         <div class="container">
             <div class="section-label">Преимущества</div>
@@ -98,7 +94,6 @@
         </div>
     </section>
 
-    <!-- ПОДВАЛ -->
     <footer class="footer">
         <div class="container footer-inner">
             <div>
@@ -109,7 +104,7 @@
                 <p class="footer-desc">Цифровой помощник специалиста по охране труда</p>
             </div>
             <div class="footer-links">
-                <a href="#">Главная</a>
+                <a href="#" onclick="showPage('main')">Главная</a>
                 <a href="#" onclick="showPage('training')">Обучение</a>
                 <a href="#" onclick="showPage('risks')">Оценка рисков</a>
                 <a href="#" onclick="showPage('analytics')">Аналитика</a>
@@ -122,17 +117,15 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- СТРАНИЦА "ОБУЧЕНИЕ" (ПРОТОКОЛЫ) -->
+<!-- СТРАНИЦА "ОБУЧЕНИЕ" -->
 <!-- ============================================================ -->
 <div id="trainingPage" class="page hidden">
     <div class="container">
-
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
             <h1 style="font-size:28px;font-weight:700;background:linear-gradient(135deg,#00d4ff,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">📄 Генератор протоколов</h1>
             <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
         </div>
 
-        <!-- БЛОК ОРГАНИЗАЦИИ -->
         <div class="block">
             <div class="block-header">
                 <h2>🏢 Организация</h2>
@@ -152,13 +145,11 @@
             </div>
         </div>
 
-        <!-- ВКЛАДКИ -->
         <div class="tab">
             <button class="active" onclick="showTab('staff')">📋 Штатное расписание</button>
             <button onclick="showTab('protocol')">📝 Протокол</button>
         </div>
 
-        <!-- ШТАТНОЕ РАСПИСАНИЕ -->
         <div id="tabStaff">
             <div class="block">
                 <div class="block-header">
@@ -182,7 +173,6 @@
             </div>
         </div>
 
-        <!-- ПРОТОКОЛ -->
         <div id="tabProtocol" class="hidden">
             <div class="block">
                 <h2>📝 Протокол</h2>
@@ -229,7 +219,7 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- СТРАНИЦА "ОЦЕНКА РИСКОВ" (ЗАГЛУШКА) -->
+<!-- СТРАНИЦА "ОЦЕНКА РИСКОВ" -->
 <!-- ============================================================ -->
 <div id="risksPage" class="page hidden">
     <div class="container" style="text-align:center;padding:60px 20px;">
@@ -243,7 +233,7 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- СТРАНИЦА "АНАЛИТИКА" (ЗАГЛУШКА) -->
+<!-- СТРАНИЦА "АНАЛИТИКА" -->
 <!-- ============================================================ -->
 <div id="analyticsPage" class="page hidden">
     <div class="container" style="text-align:center;padding:60px 20px;">
