@@ -176,7 +176,7 @@ function getEmployeesFromForm() {
 }
 
 // ============================================================
-// 📤 ИМПОРТ ИЗ ФАЙЛА
+// 📤 ИМПОРТ ИЗ ФАЙЛА (ПРИНУДИТЕЛЬНОЕ ОПРЕДЕЛЕНИЕ КОДИРОВКИ)
 // ============================================================
 document.getElementById('importBtn').addEventListener('click', function() {
     const input = document.createElement('input');
@@ -193,29 +193,55 @@ document.getElementById('importBtn').addEventListener('click', function() {
         
         const file = e.target.files[0];
         
+        // ===== ЧИТАЕМ КАК МАССИВ БАЙТ =====
         const reader = new FileReader();
         reader.onload = function(event) {
-            let content = event.target.result;
+            const bytes = new Uint8Array(event.target.result);
             
+            // ===== ПЫТАЕМСЯ ОПРЕДЕЛИТЬ КОДИРОВКУ =====
+            let content = '';
+            
+            // 1. Пробуем UTF-8
+            try {
+                const decoder = new TextDecoder('utf-8', { fatal: true });
+                content = decoder.decode(bytes);
+                // Проверяем, есть ли русские буквы
+                if (!/[а-яА-Я]/.test(content)) {
+                    throw new Error('Нет русских букв');
+                }
+            } catch(e) {
+                // 2. Пробуем Windows-1251
+                try {
+                    const decoder = new TextDecoder('windows-1251');
+                    content = decoder.decode(bytes);
+                } catch(e2) {
+                    // 3. Пробуем UTF-8 без строгой проверки
+                    const decoder = new TextDecoder('utf-8');
+                    content = decoder.decode(bytes);
+                }
+            }
+            
+            // Если всё ещё есть кракозябры — пробуем ещё раз через ArrayBuffer
             if (/[����]/.test(content) || !/[а-яА-Я]/.test(content)) {
                 try {
-                    const bytes = new Uint8Array(content.length);
-                    for (let i = 0; i < content.length; i++) {
-                        bytes[i] = content.charCodeAt(i) & 0xFF;
-                    }
                     const decoder = new TextDecoder('windows-1251');
                     content = decoder.decode(bytes);
                 } catch(e) {}
             }
             
+            // Удаляем BOM
             if (content.charCodeAt(0) === 0xFEFF) {
                 content = content.slice(1);
             }
             
+            // ===== ПАРСИМ =====
             const employees = smartParse(content);
             
             if (employees.length === 0) {
-                alert('❌ Не удалось распознать данные. Проверьте формат файла.');
+                alert('❌ Не удалось распознать данные. Проверьте формат файла.\n\n' +
+                      'Файл должен содержать строки с:\n' +
+                      '- Фамилия Имя Отчество СНИЛС Должность\n' +
+                      '- или через табуляцию: Фамилия\tИмя\tОтчество\tСНИЛС\tДолжность');
                 return;
             }
             
@@ -224,7 +250,7 @@ document.getElementById('importBtn').addEventListener('click', function() {
             alert(`✅ Загружено ${employees.length} сотрудников!`);
         };
         
-        reader.readAsBinaryString(file);
+        reader.readAsArrayBuffer(file);
     };
     
     input.click();
@@ -241,6 +267,7 @@ function smartParse(content) {
         let trimmed = line.trim();
         if (!trimmed) return;
         
+        // Нормализация: табуляции → пробелы, лишние пробелы → один
         trimmed = trimmed.replace(/\t/g, ' ');
         trimmed = trimmed.replace(/\s+/g, ' ');
         trimmed = trimmed.trim();
@@ -290,7 +317,8 @@ function parseLineUniversal(line) {
         'системный', 'администратор', 'начальник', 'заведующий', 'главный',
         'ведущий', 'старший', 'младший', 'помощник', 'заместитель', 'швея',
         'вышивальщица', 'раскройщик', 'комплектовщик', 'упаковщик', 'контролер',
-        'наладчик', 'оператор', 'машинист', 'крановщик', 'стропальщик'
+        'наладчик', 'оператор', 'машинист', 'крановщик', 'стропальщик',
+        'троллейбуса', 'автобуса', 'трамвая', 'маршрута'
     ];
     
     let i = 0;
@@ -354,16 +382,9 @@ function parseLineUniversal(line) {
 // 🔧 ФОРМАТИРОВАНИЕ СНИЛС
 // ============================================================
 function formatSnils(snils) {
-    // Удаляем все лишние символы, оставляем только цифры
     let clean = snils.replace(/\D/g, '');
-    
-    // Если меньше 11 цифр — возвращаем как есть
     if (clean.length < 11) return snils;
-    
-    // Берем последние 11 цифр (на случай, если ввели что-то лишнее)
     clean = clean.slice(-11);
-    
-    // Форматируем: XXX-XXX-XXX XX
     return clean.slice(0, 3) + '-' + clean.slice(3, 6) + '-' + clean.slice(6, 9) + ' ' + clean.slice(9, 11);
 }
 
@@ -417,7 +438,6 @@ document.getElementById('generateBtn').addEventListener('click', function() {
     xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
 
     employees.forEach(emp => {
-        // ===== ФОРМАТИРУЕМ СНИЛС =====
         const formattedSnils = formatSnils(emp.snils);
         
         selectedPrograms.forEach(progId => {
@@ -426,7 +446,6 @@ document.getElementById('generateBtn').addEventListener('click', function() {
             xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
             xml += `\t\t\t<FirstName>${escXml(emp.first_name)}</FirstName>\n`;
             xml += `\t\t\t<MiddleName>${escXml(emp.middle_name)}</MiddleName>\n`;
-            // ===== ВСТАВЛЯЕМ ФОРМАТИРОВАННЫЙ СНИЛС =====
             xml += `\t\t\t<Snils>${escXml(formattedSnils)}</Snils>\n`;
             xml += `\t\t\t<Position>${escXml(emp.position)}</Position>\n`;
             xml += `\t\t\t<EmployerInn>${escXml(org.inn)}</EmployerInn>\n`;
