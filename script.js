@@ -19,12 +19,6 @@ function getProtocol() {
 function saveProtocol(protocol) {
     localStorage.setItem('protocol', JSON.stringify(protocol));
 }
-function getHistory() {
-    return JSON.parse(localStorage.getItem('history') || '[]');
-}
-function saveHistory(history) {
-    localStorage.setItem('history', JSON.stringify(history));
-}
 
 let currentOrgId = localStorage.getItem('currentOrgId') || null;
 
@@ -256,7 +250,7 @@ document.getElementById('staffImportBtn').addEventListener('click', function() {
 });
 
 // ============================================================
-// ПАРСЕР
+// ПАРСЕР (ЛЮБОЙ ПОРЯДОК)
 // ============================================================
 function smartParse(content) {
     const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
@@ -395,6 +389,5 @@ function removeFromProtocol(index) {
     renderProtocol();
 }
 
-function clearProtocol() {
-    if (!confirm('Очистить протокол?')) return;
-    saveProtocol([]
+// ============================================================
+//
