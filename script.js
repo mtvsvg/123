@@ -1,4 +1,35 @@
 // ============================================================
+// ПЕРЕКЛЮЧЕНИЕ СТРАНИЦ
+// ============================================================
+function showPage(page) {
+    // Скрываем все страницы
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    document.getElementById('mainPage').style.display = 'none';
+    
+    // Показываем нужную
+    if (page === 'main') {
+        document.getElementById('mainPage').style.display = 'block';
+    } else if (page === 'training') {
+        document.getElementById('trainingPage').classList.remove('hidden');
+        // Переинициализируем обработчики для страницы обучения
+        initTrainingPage();
+    } else if (page === 'risks') {
+        document.getElementById('risksPage').classList.remove('hidden');
+    } else if (page === 'analytics') {
+        document.getElementById('analyticsPage').classList.remove('hidden');
+    }
+    
+    // Обновляем активную ссылку в навигации
+    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+    document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.textContent.trim() === 'Главная' && page === 'main') link.classList.add('active');
+        if (link.textContent.trim() === 'Обучение' && page === 'training') link.classList.add('active');
+        if (link.textContent.trim() === 'Оценка рисков' && page === 'risks') link.classList.add('active');
+        if (link.textContent.trim() === 'Аналитика' && page === 'analytics') link.classList.add('active');
+    });
+}
+
+// ============================================================
 // ХРАНИЛИЩЕ
 // ============================================================
 function getOrgs() {
@@ -23,6 +54,221 @@ function saveProtocol(protocol) {
 let currentOrgId = localStorage.getItem('currentOrgId') || null;
 
 // ============================================================
+// ИНИЦИАЛИЗАЦИЯ СТРАНИЦЫ ОБУЧЕНИЯ
+// ============================================================
+let trainingInited = false;
+
+function initTrainingPage() {
+    if (trainingInited) return;
+    trainingInited = true;
+    
+    renderOrgs();
+    renderStaff();
+    renderProtocol();
+    
+    // Обработчики для организации
+    document.getElementById('showOrgFormBtn').addEventListener('click', function() {
+        document.getElementById('orgForm').classList.toggle('hidden');
+    });
+    document.getElementById('cancelOrgBtn').addEventListener('click', function() {
+        document.getElementById('orgForm').classList.add('hidden');
+    });
+    document.getElementById('saveOrgBtn').addEventListener('click', function() {
+        const name = document.getElementById('orgNameInput').value.trim();
+        const inn = document.getElementById('orgInnInput').value.trim();
+        if (!name || !inn) {
+            alert('Заполните название и ИНН');
+            return;
+        }
+        const orgs = getOrgs();
+        const newOrg = { id: Date.now(), name: name, inn: inn };
+        orgs.push(newOrg);
+        saveOrgs(orgs);
+        document.getElementById('orgNameInput').value = '';
+        document.getElementById('orgInnInput').value = '';
+        document.getElementById('orgForm').classList.add('hidden');
+        renderOrgs();
+        document.getElementById('orgSelect').value = newOrg.id;
+        selectOrg(newOrg.id);
+        alert('✅ Организация добавлена!');
+    });
+    document.getElementById('deleteOrgBtn').addEventListener('click', function() {
+        const select = document.getElementById('orgSelect');
+        const orgId = select.value;
+        if (!orgId) {
+            alert('Сначала выберите организацию для удаления');
+            return;
+        }
+        if (!confirm('Удалить выбранную организацию?')) return;
+        let orgs = getOrgs();
+        orgs = orgs.filter(o => o.id != parseInt(orgId));
+        saveOrgs(orgs);
+        if (currentOrgId == orgId) {
+            currentOrgId = null;
+            localStorage.removeItem('currentOrgId');
+        }
+        renderOrgs();
+        document.getElementById('orgSelect').value = '';
+        alert('✅ Организация удалена');
+    });
+    document.getElementById('orgSelect').addEventListener('change', function() {
+        if (this.value) {
+            selectOrg(parseInt(this.value));
+        } else {
+            currentOrgId = null;
+            localStorage.removeItem('currentOrgId');
+        }
+    });
+    
+    // Обработчики для штатного расписания
+    document.getElementById('staffImportBtn').addEventListener('click', function() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.txt,.csv';
+        input.style.display = 'none';
+        document.body.appendChild(input);
+        
+        input.onchange = function(e) {
+            if (!e.target.files.length) {
+                document.body.removeChild(input);
+                return;
+            }
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                let content = event.target.result;
+                if (/[����]/.test(content) || !/[а-яА-Я]/.test(content)) {
+                    try {
+                        const bytes = new Uint8Array(content.length);
+                        for (let i = 0; i < content.length; i++) {
+                            bytes[i] = content.charCodeAt(i) & 0xFF;
+                        }
+                        const decoder = new TextDecoder('windows-1251');
+                        content = decoder.decode(bytes);
+                    } catch(e) {}
+                }
+                if (content.charCodeAt(0) === 0xFEFF) content = content.slice(1);
+                
+                const employees = smartParse(content);
+                if (employees.length === 0) {
+                    alert('❌ Не удалось распознать данные. Проверьте формат файла.');
+                    document.body.removeChild(input);
+                    return;
+                }
+                const currentStaff = getStaff();
+                employees.forEach(emp => {
+                    if (!currentStaff.some(e => e.last_name === emp.last_name && e.first_name === emp.first_name && e.snils === emp.snils)) {
+                        currentStaff.push(emp);
+                    }
+                });
+                saveStaff(currentStaff);
+                renderStaff();
+                alert(`✅ Загружено ${employees.length} сотрудников в штатное расписание!`);
+                document.body.removeChild(input);
+            };
+            reader.readAsBinaryString(file);
+        };
+        input.click();
+    });
+    
+    document.getElementById('addSelectedBtn').addEventListener('click', function() {
+        const selected = getSelectedStaff();
+        if (selected.length === 0) {
+            alert('Выберите хотя бы одного сотрудника');
+            return;
+        }
+        const currentProtocol = getProtocol();
+        selected.forEach(emp => {
+            if (!currentProtocol.some(e => e.last_name === emp.last_name && e.first_name === emp.first_name && e.snils === emp.snils)) {
+                currentProtocol.push(emp);
+            }
+        });
+        saveProtocol(currentProtocol);
+        alert(`✅ Добавлено ${selected.length} сотрудников в протокол!`);
+        deselectAllStaff();
+        showTab('protocol');
+    });
+    
+    // Обработчик генерации XML
+    document.getElementById('generateBtn').addEventListener('click', function() {
+        const protocolNumber = document.getElementById('protocolNumber').value.trim();
+        const date = document.getElementById('protocolDate').value;
+        const orgSelect = document.getElementById('orgSelect');
+        const orgId = orgSelect.value;
+        const orgs = getOrgs();
+        const org = orgs.find(o => o.id == parseInt(orgId));
+        const employees = getProtocol();
+        const selectedPrograms = getSelectedPrograms();
+
+        if (!orgId || !org) {
+            alert('Выберите организацию');
+            return;
+        }
+        if (!protocolNumber) {
+            alert('Введите номер протокола');
+            return;
+        }
+        if (!date) {
+            alert('Выберите дату протокола');
+            return;
+        }
+        if (employees.length === 0) {
+            alert('В протоколе нет сотрудников');
+            return;
+        }
+        if (selectedPrograms.length === 0) {
+            alert('Выберите хотя бы одну программу обучения');
+            return;
+        }
+
+        const programs = {
+            1: "Оказание первой помощи пострадавшим",
+            2: "Использование (применение) средств индивидуальной защиты",
+            3: "Общие вопросы охраны труда и функционирования системы управления охраной труда",
+            4: "Безопасные методы и приемы выполнения работ при воздействии вредных и (или) опасных производственных факторов, источников опасности, идентифицированных в рамках специальной оценки условий труда и оценки профессиональных рисков"
+        };
+
+        let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+        xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
+
+        employees.forEach(emp => {
+            selectedPrograms.forEach(progId => {
+                xml += '\t<RegistryRecord>\n';
+                xml += '\t\t<Worker>\n';
+                xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
+                xml += `\t\t\t<FirstName>${escXml(emp.first_name)}</FirstName>\n`;
+                xml += `\t\t\t<MiddleName>${escXml(emp.middle_name || '')}</MiddleName>\n`;
+                xml += `\t\t\t<Snils>${escXml(formatSnils(emp.snils))}</Snils>\n`;
+                xml += `\t\t\t<Position>${escXml(emp.position)}</Position>\n`;
+                xml += `\t\t\t<EmployerInn>${escXml(org.inn)}</EmployerInn>\n`;
+                xml += `\t\t\t<EmployerTitle>${escXml(org.name)}</EmployerTitle>\n`;
+                xml += '\t\t</Worker>\n';
+                xml += '\t\t<Organization>\n';
+                xml += `\t\t\t<Inn>${escXml(org.inn)}</Inn>\n`;
+                xml += `\t\t\t<Title>${escXml(org.name)}</Title>\n`;
+                xml += '\t\t</Organization>\n';
+                xml += `\t\t<Test isPassed="true" learnProgramId="${progId}">\n`;
+                xml += `\t\t\t<Date>${escXml(date)}</Date>\n`;
+                xml += `\t\t\t<ProtocolNumber>${escXml(protocolNumber)}</ProtocolNumber>\n`;
+                xml += `\t\t\t<LearnProgramTitle>${escXml(programs[progId] || 'Неизвестная программа')}</LearnProgramTitle>\n`;
+                xml += '\t\t</Test>\n';
+                xml += '\t</RegistryRecord>\n';
+            });
+        });
+
+        xml += '</RegistrySet>';
+
+        const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        document.getElementById('downloadLink').href = url;
+        document.getElementById('downloadLink').download = `${protocolNumber.replace('/', '_')}_${date}.xml`;
+        document.getElementById('resultBlock').classList.remove('hidden');
+
+        alert('✅ XML создан! Нажмите "Скачать XML"');
+    });
+}
+
+// ============================================================
 // ОРГАНИЗАЦИИ
 // ============================================================
 function renderOrgs() {
@@ -40,70 +286,13 @@ function renderOrgs() {
     }
 }
 
-document.getElementById('showOrgFormBtn').addEventListener('click', function() {
-    document.getElementById('orgForm').classList.toggle('hidden');
-});
-
-document.getElementById('cancelOrgBtn').addEventListener('click', function() {
-    document.getElementById('orgForm').classList.add('hidden');
-});
-
-document.getElementById('saveOrgBtn').addEventListener('click', function() {
-    const name = document.getElementById('orgNameInput').value.trim();
-    const inn = document.getElementById('orgInnInput').value.trim();
-    if (!name || !inn) {
-        alert('Заполните название и ИНН');
-        return;
-    }
-    const orgs = getOrgs();
-    const newOrg = { id: Date.now(), name: name, inn: inn };
-    orgs.push(newOrg);
-    saveOrgs(orgs);
-    document.getElementById('orgNameInput').value = '';
-    document.getElementById('orgInnInput').value = '';
-    document.getElementById('orgForm').classList.add('hidden');
-    renderOrgs();
-    document.getElementById('orgSelect').value = newOrg.id;
-    selectOrg(newOrg.id);
-    alert('✅ Организация добавлена!');
-});
-
-document.getElementById('deleteOrgBtn').addEventListener('click', function() {
-    const select = document.getElementById('orgSelect');
-    const orgId = select.value;
-    if (!orgId) {
-        alert('Сначала выберите организацию для удаления');
-        return;
-    }
-    if (!confirm('Удалить выбранную организацию?')) return;
-    let orgs = getOrgs();
-    orgs = orgs.filter(o => o.id != parseInt(orgId));
-    saveOrgs(orgs);
-    if (currentOrgId == orgId) {
-        currentOrgId = null;
-        localStorage.removeItem('currentOrgId');
-    }
-    renderOrgs();
-    document.getElementById('orgSelect').value = '';
-    alert('✅ Организация удалена');
-});
-
-document.getElementById('orgSelect').addEventListener('change', function() {
-    if (this.value) {
-        selectOrg(parseInt(this.value));
-    } else {
-        currentOrgId = null;
-        localStorage.removeItem('currentOrgId');
-    }
-});
-
 function selectOrg(id) {
     currentOrgId = id;
     localStorage.setItem('currentOrgId', currentOrgId);
 }
 
 // ============================================================
-// ВКЛАДКИ
+// ВКЛАДКИ ВНУТРИ ОБУЧЕНИЯ
 // ============================================================
 function showTab(name) {
     document.querySelectorAll('.tab button').forEach(b => b.classList.remove('active'));
@@ -196,90 +385,81 @@ function clearStaff() {
 }
 
 // ============================================================
-// ИМПОРТ ШТАТНОГО РАСПИСАНИЯ (ПРОСТОЕ РЕШЕНИЕ)
+// ПРОТОКОЛ
 // ============================================================
-document.getElementById('staffImportBtn').addEventListener('click', function() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.txt,.csv';
-    input.style.display = 'none';
-    document.body.appendChild(input);
-    
-    input.onchange = function(e) {
-        if (!e.target.files.length) {
-            document.body.removeChild(input);
-            return;
-        }
-        const file = e.target.files[0];
-        
-        // ПРОСТОЕ РЕШЕНИЕ: читаем как текст с указанием кодировки
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            let content = event.target.result;
-            
-            // Проверяем, есть ли кракозябры (ромбики или отсутствие русских букв)
-            const hasCracked = /[����]/.test(content) || !/[а-яА-Я]/.test(content);
-            
-            if (hasCracked) {
-                // Если есть проблемы — пробуем Windows-1251 через ArrayBuffer
-                try {
-                    const reader2 = new FileReader();
-                    reader2.onload = function(e2) {
-                        const bytes = new Uint8Array(e2.target.result);
-                        const decoder = new TextDecoder('windows-1251');
-                        const decoded = decoder.decode(bytes);
-                        
-                        // Проверяем, что получилось
-                        if (/[а-яА-Я]/.test(decoded)) {
-                            processContent(decoded);
-                        } else {
-                            // Если не помогло — пробуем UTF-8
-                            const reader3 = new FileReader();
-                            reader3.onload = function(e3) {
-                                processContent(e3.target.result);
-                            };
-                            reader3.readAsText(file, 'UTF-8');
-                        }
-                    };
-                    reader2.readAsArrayBuffer(file);
-                } catch(err) {
-                    alert('❌ Ошибка чтения файла. Попробуйте сохранить файл в кодировке UTF-8.');
-                    document.body.removeChild(input);
-                }
-            } else {
-                processContent(content);
-            }
-        };
-        reader.readAsText(file, 'UTF-8');
-    };
-    input.click();
-});
-
-function processContent(content) {
-    // Удаляем BOM
-    if (content.charCodeAt(0) === 0xFEFF) {
-        content = content.slice(1);
-    }
-    
-    const employees = smartParse(content);
-    if (employees.length === 0) {
-        alert('❌ Не удалось распознать данные. Проверьте формат файла.');
+function renderProtocol() {
+    const container = document.getElementById('protocolContainer');
+    const protocol = getProtocol();
+    if (protocol.length === 0) {
+        container.innerHTML = '<p style="color:#6a6a8a;text-align:center;padding:20px;">В протоколе пока нет сотрудников. Добавьте их из штатного расписания.</p>';
         return;
     }
-    
-    const currentStaff = getStaff();
-    employees.forEach(emp => {
-        if (!currentStaff.some(e => e.last_name === emp.last_name && e.first_name === emp.first_name && e.snils === emp.snils)) {
-            currentStaff.push(emp);
-        }
+    let html = `
+        <table class="protocol-table">
+            <thead>
+                <tr>
+                    <th>Фамилия</th>
+                    <th>Имя</th>
+                    <th>Отчество</th>
+                    <th>Должность</th>
+                    <th>СНИЛС</th>
+                    <th style="width:60px;">Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    protocol.forEach((emp, index) => {
+        html += `
+            <tr>
+                <td>${emp.last_name}</td>
+                <td>${emp.first_name}</td>
+                <td>${emp.middle_name || ''}</td>
+                <td>${emp.position}</td>
+                <td>${emp.snils}</td>
+                <td><button class="btn-remove" onclick="removeFromProtocol(${index})">✖</button></td>
+            </tr>
+        `;
     });
-    saveStaff(currentStaff);
-    renderStaff();
-    alert(`✅ Загружено ${employees.length} сотрудников в штатное расписание!`);
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function removeFromProtocol(index) {
+    const protocol = getProtocol();
+    protocol.splice(index, 1);
+    saveProtocol(protocol);
+    renderProtocol();
+}
+
+function clearProtocol() {
+    if (!confirm('Очистить протокол?')) return;
+    saveProtocol([]);
+    renderProtocol();
 }
 
 // ============================================================
-// ПАРСЕР (ЛЮБОЙ ПОРЯДОК)
+// ПРОГРАММЫ
+// ============================================================
+function selectAllPrograms() {
+    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]').forEach(cb => cb.checked = true);
+}
+function clearAllPrograms() {
+    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]').forEach(cb => cb.checked = false);
+}
+function selectPrograms(ids) {
+    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]').forEach(cb => {
+        cb.checked = ids.includes(parseInt(cb.value));
+    });
+}
+function getSelectedPrograms() {
+    const checkboxes = document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked');
+    const programs = [];
+    checkboxes.forEach(cb => programs.push(parseInt(cb.value)));
+    return programs;
+}
+
+// ============================================================
+// ПАРСЕР
 // ============================================================
 function smartParse(content) {
     const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
@@ -361,101 +541,6 @@ function parseLine(line) {
 }
 
 // ============================================================
-// ДОБАВЛЕНИЕ В ПРОТОКОЛ
-// ============================================================
-document.getElementById('addSelectedBtn').addEventListener('click', function() {
-    const selected = getSelectedStaff();
-    if (selected.length === 0) {
-        alert('Выберите хотя бы одного сотрудника');
-        return;
-    }
-    const currentProtocol = getProtocol();
-    selected.forEach(emp => {
-        if (!currentProtocol.some(e => e.last_name === emp.last_name && e.first_name === emp.first_name && e.snils === emp.snils)) {
-            currentProtocol.push(emp);
-        }
-    });
-    saveProtocol(currentProtocol);
-    alert(`✅ Добавлено ${selected.length} сотрудников в протокол!`);
-    deselectAllStaff();
-    showTab('protocol');
-});
-
-// ============================================================
-// ПРОТОКОЛ
-// ============================================================
-function renderProtocol() {
-    const container = document.getElementById('protocolContainer');
-    const protocol = getProtocol();
-    if (protocol.length === 0) {
-        container.innerHTML = '<p style="color:#6a6a8a;text-align:center;padding:20px;">В протоколе пока нет сотрудников. Добавьте их из штатного расписания.</p>';
-        return;
-    }
-    let html = `
-        <table class="protocol-table">
-            <thead>
-                <tr>
-                    <th>Фамилия</th>
-                    <th>Имя</th>
-                    <th>Отчество</th>
-                    <th>Должность</th>
-                    <th>СНИЛС</th>
-                    <th style="width:60px;">Действие</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-    protocol.forEach((emp, index) => {
-        html += `
-            <tr>
-                <td>${emp.last_name}</td>
-                <td>${emp.first_name}</td>
-                <td>${emp.middle_name || ''}</td>
-                <td>${emp.position}</td>
-                <td>${emp.snils}</td>
-                <td><button class="btn-remove" onclick="removeFromProtocol(${index})">✖</button></td>
-            </tr>
-        `;
-    });
-    html += '</tbody></table>';
-    container.innerHTML = html;
-}
-
-function removeFromProtocol(index) {
-    const protocol = getProtocol();
-    protocol.splice(index, 1);
-    saveProtocol(protocol);
-    renderProtocol();
-}
-
-function clearProtocol() {
-    if (!confirm('Очистить протокол?')) return;
-    saveProtocol([]);
-    renderProtocol();
-}
-
-// ============================================================
-// ПРОГРАММЫ
-// ============================================================
-function selectAllPrograms() {
-    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]').forEach(cb => cb.checked = true);
-}
-function clearAllPrograms() {
-    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]').forEach(cb => cb.checked = false);
-}
-function selectPrograms(ids) {
-    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]').forEach(cb => {
-        cb.checked = ids.includes(parseInt(cb.value));
-    });
-}
-function getSelectedPrograms() {
-    const checkboxes = document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked');
-    const programs = [];
-    checkboxes.forEach(cb => programs.push(parseInt(cb.value)));
-    return programs;
-}
-
-// ============================================================
 // ФОРМАТИРОВАНИЕ СНИЛС
 // ============================================================
 function formatSnils(snils) {
@@ -466,98 +551,21 @@ function formatSnils(snils) {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ XML
+// Экранирование XML
 // ============================================================
-document.getElementById('generateBtn').addEventListener('click', function() {
-    const protocolNumber = document.getElementById('protocolNumber').value.trim();
-    const date = document.getElementById('protocolDate').value;
-    const orgSelect = document.getElementById('orgSelect');
-    const orgId = orgSelect.value;
-    const orgs = getOrgs();
-    const org = orgs.find(o => o.id == parseInt(orgId));
-    const employees = getProtocol();
-    const selectedPrograms = getSelectedPrograms();
-
-    if (!orgId || !org) {
-        alert('Выберите организацию');
-        return;
-    }
-    if (!protocolNumber) {
-        alert('Введите номер протокола');
-        return;
-    }
-    if (!date) {
-        alert('Выберите дату протокола');
-        return;
-    }
-    if (employees.length === 0) {
-        alert('В протоколе нет сотрудников');
-        return;
-    }
-    if (selectedPrograms.length === 0) {
-        alert('Выберите хотя бы одну программу обучения');
-        return;
-    }
-
-    const programs = {
-        1: "Оказание первой помощи пострадавшим",
-        2: "Использование (применение) средств индивидуальной защиты",
-        3: "Общие вопросы охраны труда и функционирования системы управления охраной труда",
-        4: "Безопасные методы и приемы выполнения работ при воздействии вредных и (или) опасных производственных факторов, источников опасности, идентифицированных в рамках специальной оценки условий труда и оценки профессиональных рисков"
-    };
-
-    let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
-    xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
-
-    employees.forEach(emp => {
-        selectedPrograms.forEach(progId => {
-            xml += '\t<RegistryRecord>\n';
-            xml += '\t\t<Worker>\n';
-            xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
-            xml += `\t\t\t<FirstName>${escXml(emp.first_name)}</FirstName>\n`;
-            xml += `\t\t\t<MiddleName>${escXml(emp.middle_name || '')}</MiddleName>\n`;
-            xml += `\t\t\t<Snils>${escXml(formatSnils(emp.snils))}</Snils>\n`;
-            xml += `\t\t\t<Position>${escXml(emp.position)}</Position>\n`;
-            xml += `\t\t\t<EmployerInn>${escXml(org.inn)}</EmployerInn>\n`;
-            xml += `\t\t\t<EmployerTitle>${escXml(org.name)}</EmployerTitle>\n`;
-            xml += '\t\t</Worker>\n';
-            xml += '\t\t<Organization>\n';
-            xml += `\t\t\t<Inn>${escXml(org.inn)}</Inn>\n`;
-            xml += `\t\t\t<Title>${escXml(org.name)}</Title>\n`;
-            xml += '\t\t</Organization>\n';
-            xml += `\t\t<Test isPassed="true" learnProgramId="${progId}">\n`;
-            xml += `\t\t\t<Date>${escXml(date)}</Date>\n`;
-            xml += `\t\t\t<ProtocolNumber>${escXml(protocolNumber)}</ProtocolNumber>\n`;
-            xml += `\t\t\t<LearnProgramTitle>${escXml(programs[progId] || 'Неизвестная программа')}</LearnProgramTitle>\n`;
-            xml += '\t\t</Test>\n';
-            xml += '\t</RegistryRecord>\n';
-        });
-    });
-
-    xml += '</RegistrySet>';
-
-    const history = JSON.parse(localStorage.getItem('history') || '[]');
-    history.push({
-        protocolNumber,
-        date,
-        orgName: org.name,
-        employees: employees.map(e => `${e.last_name} ${e.first_name}`).join(', '),
-        programs: selectedPrograms.join(', '),
-        xml: xml,
-        created: new Date().toISOString()
-    });
-    localStorage.setItem('history', JSON.stringify(history));
-
-    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    document.getElementById('downloadLink').href = url;
-    document.getElementById('downloadLink').download = `${protocolNumber.replace('/', '_')}_${date}.xml`;
-    document.getElementById('resultBlock').classList.remove('hidden');
-
-    alert('✅ XML создан! Нажмите "Скачать XML"');
-});
-
 function escXml(str) {
     if (!str) return '';
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Показываем главную страницу
+    document.getElementById('mainPage').style.display = 'block';
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    
+    // Инициализируем страницу обучения при первом переходе
+    // (вызовется в showPage)
+});
