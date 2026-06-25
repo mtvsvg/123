@@ -196,7 +196,7 @@ function clearStaff() {
 }
 
 // ============================================================
-// ИМПОРТ ШТАТНОГО РАСПИСАНИЯ (С ПРАВИЛЬНОЙ КОДИРОВКОЙ)
+// ИМПОРТ ШТАТНОГО РАСПИСАНИЯ (ПРОСТОЕ РЕШЕНИЕ)
 // ============================================================
 document.getElementById('staffImportBtn').addEventListener('click', function() {
     const input = document.createElement('input');
@@ -212,58 +212,71 @@ document.getElementById('staffImportBtn').addEventListener('click', function() {
         }
         const file = e.target.files[0];
         
-        // Читаем как ArrayBuffer для точного определения кодировки
+        // ПРОСТОЕ РЕШЕНИЕ: читаем как текст с указанием кодировки
         const reader = new FileReader();
         reader.onload = function(event) {
-            const bytes = new Uint8Array(event.target.result);
+            let content = event.target.result;
             
-            // Пробуем Windows-1251 (самая частая причина кракозябр)
-            let content = '';
-            try {
-                const decoder = new TextDecoder('windows-1251');
-                content = decoder.decode(bytes);
-                // Проверяем, есть ли русские буквы
-                if (!/[а-яА-Я]/.test(content)) {
-                    throw new Error('Нет русских букв');
-                }
-            } catch(e) {
-                // Если не получилось — пробуем UTF-8
+            // Проверяем, есть ли кракозябры (ромбики или отсутствие русских букв)
+            const hasCracked = /[����]/.test(content) || !/[а-яА-Я]/.test(content);
+            
+            if (hasCracked) {
+                // Если есть проблемы — пробуем Windows-1251 через ArrayBuffer
                 try {
-                    const decoder = new TextDecoder('utf-8');
-                    content = decoder.decode(bytes);
-                } catch(e2) {
-                    // Если совсем ничего — оставляем как есть
-                    content = new TextDecoder('utf-8').decode(bytes);
+                    const reader2 = new FileReader();
+                    reader2.onload = function(e2) {
+                        const bytes = new Uint8Array(e2.target.result);
+                        const decoder = new TextDecoder('windows-1251');
+                        const decoded = decoder.decode(bytes);
+                        
+                        // Проверяем, что получилось
+                        if (/[а-яА-Я]/.test(decoded)) {
+                            processContent(decoded);
+                        } else {
+                            // Если не помогло — пробуем UTF-8
+                            const reader3 = new FileReader();
+                            reader3.onload = function(e3) {
+                                processContent(e3.target.result);
+                            };
+                            reader3.readAsText(file, 'UTF-8');
+                        }
+                    };
+                    reader2.readAsArrayBuffer(file);
+                } catch(err) {
+                    alert('❌ Ошибка чтения файла. Попробуйте сохранить файл в кодировке UTF-8.');
+                    document.body.removeChild(input);
                 }
+            } else {
+                processContent(content);
             }
-            
-            // Удаляем BOM если есть
-            if (content.charCodeAt(0) === 0xFEFF) {
-                content = content.slice(1);
-            }
-            
-            const employees = smartParse(content);
-            if (employees.length === 0) {
-                alert('❌ Не удалось распознать данные. Проверьте формат файла.');
-                document.body.removeChild(input);
-                return;
-            }
-            
-            const currentStaff = getStaff();
-            employees.forEach(emp => {
-                if (!currentStaff.some(e => e.last_name === emp.last_name && e.first_name === emp.first_name && e.snils === emp.snils)) {
-                    currentStaff.push(emp);
-                }
-            });
-            saveStaff(currentStaff);
-            renderStaff();
-            alert(`✅ Загружено ${employees.length} сотрудников в штатное расписание!`);
-            document.body.removeChild(input);
         };
-        reader.readAsArrayBuffer(file);
+        reader.readAsText(file, 'UTF-8');
     };
     input.click();
 });
+
+function processContent(content) {
+    // Удаляем BOM
+    if (content.charCodeAt(0) === 0xFEFF) {
+        content = content.slice(1);
+    }
+    
+    const employees = smartParse(content);
+    if (employees.length === 0) {
+        alert('❌ Не удалось распознать данные. Проверьте формат файла.');
+        return;
+    }
+    
+    const currentStaff = getStaff();
+    employees.forEach(emp => {
+        if (!currentStaff.some(e => e.last_name === emp.last_name && e.first_name === emp.first_name && e.snils === emp.snils)) {
+            currentStaff.push(emp);
+        }
+    });
+    saveStaff(currentStaff);
+    renderStaff();
+    alert(`✅ Загружено ${employees.length} сотрудников в штатное расписание!`);
+}
 
 // ============================================================
 // ПАРСЕР (ЛЮБОЙ ПОРЯДОК)
@@ -285,7 +298,6 @@ function smartParse(content) {
 
 function parseLine(line) {
     let snils = '';
-    // Ищем СНИЛС (в любом формате: 034-724-767 59 или 03472476759)
     let snilsMatch = line.match(/\d{3}[- ]?\d{3}[- ]?\d{3}[- ]?\d{2}/);
     if (snilsMatch) {
         snils = snilsMatch[0].replace(/[\s-]/g, '');
@@ -295,7 +307,6 @@ function parseLine(line) {
     const words = line.split(/\s+/).filter(w => w.length > 0);
     if (words.length < 2) return null;
     
-    // Список частых должностей
     const commonPositions = [
         'инженер','техник','механик','специалист','мастер','бригадир',
         'директор','менеджер','бухгалтер','экономист','юрист','конструктор',
@@ -307,7 +318,7 @@ function parseLine(line) {
         'оператор','машинист','крановщик','стропальщик','троллейбуса',
         'автобуса','трамвая','отк','спец','мех','энерг','снабж','электромонтер',
         'диспетчер','фельдшер','медицинская','сестра','кассир','сторож','вахтер',
-        'аккумуляторщик','маляр','тока','обмотчик','ремонтировщик','разр','отдела'
+        'аккумуляторщик','маляр','токарь','обмотчик','ремонтировщик','разр','отдела'
     ];
     
     let nameParts = [];
@@ -320,18 +331,15 @@ function parseLine(line) {
         const isName = /^[А-ЯЁ][а-яё]{1,19}$/.test(w) || /^[A-Z][a-z]{1,19}$/.test(w);
         const isPosition = commonPositions.some(pos => lower === pos || lower.includes(pos) || pos.includes(lower));
         
-        // Если слово похоже на имя и не должность — добавляем в ФИО
         if (isName && !isPosition && nameParts.length < 3) {
             nameParts.push(w);
             i++;
         } else {
-            // Иначе — это часть должности
             positionParts.push(w);
             i++;
         }
     }
     
-    // Если не нашли 2 части ФИО — берём первые 2-3 слова
     if (nameParts.length < 2) {
         const firstThree = words.slice(0, Math.min(3, words.length));
         if (firstThree.length >= 2) {
@@ -528,7 +536,6 @@ document.getElementById('generateBtn').addEventListener('click', function() {
 
     xml += '</RegistrySet>';
 
-    // Сохраняем в историю
     const history = JSON.parse(localStorage.getItem('history') || '[]');
     history.push({
         protocolNumber,
@@ -541,7 +548,6 @@ document.getElementById('generateBtn').addEventListener('click', function() {
     });
     localStorage.setItem('history', JSON.stringify(history));
 
-    // Скачиваем
     const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     document.getElementById('downloadLink').href = url;
