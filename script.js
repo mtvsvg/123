@@ -19,12 +19,6 @@ function getProtocol() {
 function saveProtocol(protocol) {
     localStorage.setItem('protocol', JSON.stringify(protocol));
 }
-function getEmployees() {
-    return JSON.parse(localStorage.getItem('employees') || '[]');
-}
-function saveEmployees(emps) {
-    localStorage.setItem('employees', JSON.stringify(emps));
-}
 function getHistory() {
     return JSON.parse(localStorage.getItem('history') || '[]');
 }
@@ -33,8 +27,6 @@ function saveHistory(hist) {
 }
 
 let currentOrgId = localStorage.getItem('currentOrgId') || null;
-let protocolNumber = localStorage.getItem('protocolNumber') || '';
-let protocolDate = localStorage.getItem('protocolDate') || '';
 
 // ============================================================
 // ОРГАНИЗАЦИИ
@@ -55,7 +47,11 @@ function renderOrgs() {
 }
 
 document.getElementById('showOrgFormBtn').addEventListener('click', function() {
-    document.getElementById('orgForm').classList.toggle('hidden');
+    const form = document.getElementById('orgForm');
+    form.classList.toggle('hidden');
+    if (!form.classList.contains('hidden')) {
+        document.getElementById('orgNameInput').focus();
+    }
 });
 
 document.getElementById('cancelOrgBtn').addEventListener('click', function() {
@@ -122,19 +118,15 @@ function selectOrg(id) {
 function showTab(name) {
     document.querySelectorAll('.tab button').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('[id^="tab"]').forEach(t => t.classList.add('hidden'));
-    const tabs = {
-        'staff': { el: 'tabStaff', index: 0 },
-        'protocol': { el: 'tabProtocol', index: 1 },
-        'employees': { el: 'tabEmployees', index: 2 },
-        'history': { el: 'tabHistory', index: 3 }
-    };
-    if (tabs[name]) {
-        document.getElementById(tabs[name].el).classList.remove('hidden');
-        document.querySelectorAll('.tab button')[tabs[name].index].classList.add('active');
+    if (name === 'staff') {
+        document.getElementById('tabStaff').classList.remove('hidden');
+        document.querySelector('.tab button:nth-child(1)').classList.add('active');
+        renderStaff();
+    } else if (name === 'protocol') {
+        document.getElementById('tabProtocol').classList.remove('hidden');
+        document.querySelector('.tab button:nth-child(2)').classList.add('active');
+        renderProtocol();
     }
-    if (name === 'protocol') renderProtocol();
-    if (name === 'employees') renderEmployeeDB();
-    if (name === 'history') renderHistory();
 }
 
 // ============================================================
@@ -151,9 +143,7 @@ function renderStaff() {
         <table class="staff-table">
             <thead>
                 <tr>
-                    <th style="width:40px;">
-                        <input type="checkbox" id="selectAllStaff" onchange="toggleAllStaff()">
-                    </th>
+                    <th style="width:40px;"><input type="checkbox" id="selectAllStaff" onchange="toggleAllStaff()"></th>
                     <th>Фамилия</th>
                     <th>Имя</th>
                     <th>Отчество</th>
@@ -177,32 +167,23 @@ function renderStaff() {
     });
     html += '</tbody></table>';
     container.innerHTML = html;
-    updateSelectedCount();
 }
 
 function toggleAllStaff() {
     const checked = document.getElementById('selectAllStaff').checked;
     document.querySelectorAll('.staff-check').forEach(cb => cb.checked = checked);
-    updateSelectedCount();
 }
 
 function selectAllStaff() {
     document.querySelectorAll('.staff-check').forEach(cb => cb.checked = true);
     const selectAll = document.getElementById('selectAllStaff');
     if (selectAll) selectAll.checked = true;
-    updateSelectedCount();
 }
 
 function deselectAllStaff() {
     document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
     const selectAll = document.getElementById('selectAllStaff');
     if (selectAll) selectAll.checked = false;
-    updateSelectedCount();
-}
-
-function updateSelectedCount() {
-    const count = document.querySelectorAll('.staff-check:checked').length;
-    document.getElementById('selectedCount').textContent = count;
 }
 
 function getSelectedStaff() {
@@ -276,12 +257,149 @@ document.getElementById('staffImportBtn').addEventListener('click', function() {
                 return;
             }
             
-            const currentStaff = getStaff();
-            employees.forEach(emp => {
-                if (!currentStaff.some(e => e.last_name === emp.last_name && e.first_name === emp.first_name && e.snils === emp.snils)) {
-                    currentStaff.push(emp);
-                }
-            });
-            saveStaff(currentStaff);
+            saveStaff(employees);
             renderStaff();
-            alert(`✅ Загружено ${employees.length} сотрудников в штатное расписание!
+            alert(`✅ Загружено ${employees.length} сотрудников в штатное расписание!`);
+            document.body.removeChild(input);
+        };
+        reader.readAsArrayBuffer(file);
+    };
+    input.click();
+});
+
+// ============================================================
+// 🧠 ПАРСЕР
+// ============================================================
+function smartParse(content) {
+    const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
+    const employees = [];
+    
+    lines.forEach(line => {
+        let trimmed = line.trim();
+        if (!trimmed) return;
+        trimmed = trimmed.replace(/\t/g, ' ');
+        trimmed = trimmed.replace(/\s+/g, ' ');
+        trimmed = trimmed.trim();
+        const result = parseLine(trimmed);
+        if (result) employees.push(result);
+    });
+    
+    return employees;
+}
+
+function parseLine(line) {
+    let snils = '';
+    let snilsMatch = line.match(/\d{3}[- ]?\d{3}[- ]?\d{3}[- ]?\d{2}/);
+    if (snilsMatch) {
+        snils = snilsMatch[0].replace(/[\s-]/g, '');
+        line = line.replace(snilsMatch[0], '').trim();
+    }
+    
+    const words = line.split(/\s+/).filter(w => w.length > 0);
+    if (words.length < 2) return null;
+    
+    const commonPositions = [
+        'инженер', 'техник', 'механик', 'специалист', 'мастер', 'бригадир',
+        'директор', 'менеджер', 'бухгалтер', 'экономист', 'юрист', 'конструктор',
+        'технолог', 'электрик', 'сварщик', 'токарь', 'фрезеровщик', 'слесарь',
+        'водитель', 'грузчик', 'кладовщик', 'уборщик', 'охранник', 'программист',
+        'администратор', 'начальник', 'заведующий', 'главный', 'ведущий',
+        'старший', 'младший', 'помощник', 'заместитель', 'швея', 'вышивальщица',
+        'раскройщик', 'комплектовщик', 'упаковщик', 'контролер', 'наладчик',
+        'оператор', 'машинист', 'крановщик', 'стропальщик', 'троллейбуса',
+        'автобуса', 'трамвая', 'отк', 'спец', 'мех', 'энерг', 'снабж'
+    ];
+    
+    let nameParts = [];
+    let positionParts = [];
+    let i = 0;
+    
+    while (i < words.length) {
+        const w = words[i];
+        const lower = w.toLowerCase();
+        const isName = /^[А-ЯЁ][а-яё]{1,19}$/.test(w) || /^[A-Z][a-z]{1,19}$/.test(w);
+        const isPosition = commonPositions.some(pos => lower === pos || lower.includes(pos) || pos.includes(lower));
+        
+        if (isName && !isPosition && nameParts.length < 3) {
+            nameParts.push(w);
+            i++;
+        } else {
+            positionParts.push(w);
+            i++;
+        }
+    }
+    
+    if (nameParts.length < 2) {
+        const firstThree = words.slice(0, Math.min(3, words.length));
+        if (firstThree.length >= 2) {
+            nameParts = firstThree;
+            positionParts = words.slice(firstThree.length);
+        }
+    }
+    
+    if (nameParts.length < 2) return null;
+    
+    return {
+        last_name: nameParts[0] || '',
+        first_name: nameParts[1] || '',
+        middle_name: nameParts[2] || '',
+        position: positionParts.join(' ') || '',
+        snils: snils || '',
+        is_passed: true
+    };
+}
+
+// ============================================================
+// ➕ ДОБАВЛЕНИЕ В ПРОТОКОЛ
+// ============================================================
+document.getElementById('addSelectedBtn').addEventListener('click', function() {
+    const selected = getSelectedStaff();
+    if (selected.length === 0) {
+        alert('Выберите хотя бы одного сотрудника');
+        return;
+    }
+    const currentProtocol = getProtocol();
+    selected.forEach(emp => {
+        if (!currentProtocol.some(e => e.last_name === emp.last_name && e.first_name === emp.first_name && e.snils === emp.snils)) {
+            currentProtocol.push(emp);
+        }
+    });
+    saveProtocol(currentProtocol);
+    alert(`✅ Добавлено ${selected.length} сотрудников в протокол!`);
+    deselectAllStaff();
+    showTab('protocol');
+});
+
+// ============================================================
+// ПРОТОКОЛ
+// ============================================================
+function renderProtocol() {
+    const container = document.getElementById('protocolContainer');
+    const protocol = getProtocol();
+    if (protocol.length === 0) {
+        container.innerHTML = '<p style="color:#6a6a8a;text-align:center;padding:20px;">В протоколе пока нет сотрудников. Добавьте их из штатного расписания.</p>';
+        return;
+    }
+    let html = `
+        <table class="protocol-table">
+            <thead>
+                <tr>
+                    <th>Фамилия</th>
+                    <th>Имя</th>
+                    <th>Отчество</th>
+                    <th>Должность</th>
+                    <th>СНИЛС</th>
+                    <th style="width:60px;">Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    protocol.forEach((emp, index) => {
+        html += `
+            <tr>
+                <td>${emp.last_name}</td>
+                <td>${emp.first_name}</td>
+                <td>${emp.middle_name || ''}</td>
+                <td>${emp.position}</td>
+                <td>${emp.snils}</td>
+                <td><button class="
