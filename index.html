@@ -3,120 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Генератор XML протоколов</title>
+    <title>Охрана труда — Цифровой помощник</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="container">
+<!-- ============================================================ -->
+<!-- ГЛАВНАЯ СТРАНИЦА -->
+<!-- ============================================================ -->
+<div id="mainPage">
 
-    <h1>📄 Генератор XML протоколов</h1>
-    <p class="desc">Загрузите штатное расписание, выберите сотрудников и создайте XML</p>
+    <!-- ШАПКА -->
+    <header class="header">
+        <div class="container header-inner">
+            <div class="logo">
+                <span class="logo-icon">🛡️</span>
+                <span class="logo-text">ОхранаТруда<span class="logo-dot">.</span>Про</span>
+            </div>
+            <nav class="nav">
+                <a href="#" class="nav-link active" onclick="showPage('main')">Главная</a>
+                <a href="#" class="nav-link" onclick="showPage('training')">Обучение</a>
+                <a href="#" class="nav-link" onclick="showPage('risks')">Оценка рисков</a>
+                <a href="#" class="nav-link" onclick="showPage('analytics')">Аналитика</a>
+            </nav>
+            <button class="btn-login">Войти</button>
+        </div>
+    </header>
 
-    <!-- ============================================================ -->
-    <!-- БЛОК ОРГАНИЗАЦИИ -->
-    <!-- ============================================================ -->
-    <div class="block">
-        <div class="block-header">
-            <h2>🏢 Организация</h2>
-            <button class="btn-add" id="showOrgFormBtn">➕ Добавить</button>
+    <!-- ГЕРОЙ -->
+    <section class="hero">
+        <div class="container hero-inner">
+            <div class="hero-content">
+                <div class="hero-badge">🚀 Новая версия 2.0</div>
+                <h1 class="hero-title">Умная охрана<br>труда для <span class="highlight">современных</span> компаний</h1>
+                <p class="hero-desc">
+                    Автоматизируйте обучение, оценивайте риски и создавайте<br>
+                    протоколы в несколько кликов. Всё в одном месте.
+                </p>
+                <div class="hero-buttons">
+                    <button class="btn-primary btn-hero" onclick="showPage('training')">Начать работу →</button>
+                    <button class="btn-secondary btn-hero">Узнать больше</button>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">500+</span>
+                        <span class="stat-label">сотрудников в системе</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">120+</span>
+                        <span class="stat-label">протоколов создано</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">98%</span>
+                        <span class="stat-label">экономия времени</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="hero-img-wrapper">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 350'%3E%3Crect width='400' height='350' fill='%231a1a3e'/%3E%3Ccircle cx='200' cy='150' r='80' fill='%237c3aed' opacity='0.2'/%3E%3Ccircle cx='200' cy='150' r='50' fill='%237c3aed' opacity='0.4'/%3E%3Crect x='140' y='230' width='120' height='10' rx='5' fill='%237c3aed' opacity='0.3'/%3E%3Crect x='150' y='250' width='100' height='10' rx='5' fill='%237c3aed' opacity='0.2'/%3E%3Ctext x='200' y='135' text-anchor='middle' font-size='60' fill='%2300d4ff' opacity='0.9'%3E🛡️%3C/text%3E%3Ctext x='200' y='200' text-anchor='middle' font-size='16' fill='%238888aa'%3EЦифровая охрана труда%3C/text%3E%3C/svg%3E"
+                         alt="Охрана труда" class="hero-img">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ПРЕИМУЩЕСТВА -->
+    <section class="features">
+        <div class="container">
+            <div class="section-label">Преимущества</div>
+            <h2 class="section-title">Почему выбирают <span class="highlight">нашу платформу</span></h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📋</div>
+                    <h3>Генерация протоколов</h3>
+                    <p>Создавайте протоколы обучения в несколько кликов. Загрузите штатное расписание и выберите сотрудников.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3>Оценка рисков</h3>
+                    <p>Интеллектуальная система анализирует должности и рабочее место, предлагая мероприятия по снижению рисков.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Аналитика</h3>
+                    <p>Отслеживайте статистику по обучению, рискам и мероприятиям. Принимайте решения на основе данных.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Автоматизация</h3>
+                    <p>Больше никакой рутины. Система сама напомнит о сроках обучения и обновит данные по сотрудникам.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ПОДВАЛ -->
+    <footer class="footer">
+        <div class="container footer-inner">
+            <div>
+                <div class="logo" style="justify-content:center;">
+                    <span class="logo-icon">🛡️</span>
+                    <span class="logo-text">ОхранаТруда<span class="logo-dot">.</span>Про</span>
+                </div>
+                <p class="footer-desc">Цифровой помощник специалиста по охране труда</p>
+            </div>
+            <div class="footer-links">
+                <a href="#">Главная</a>
+                <a href="#" onclick="showPage('training')">Обучение</a>
+                <a href="#" onclick="showPage('risks')">Оценка рисков</a>
+                <a href="#" onclick="showPage('analytics')">Аналитика</a>
+            </div>
+            <div class="footer-copy">
+                <p>© 2026 ОхранаТруда.Про</p>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- ============================================================ -->
+<!-- СТРАНИЦА "ОБУЧЕНИЕ" (ПРОТОКОЛЫ) -->
+<!-- ============================================================ -->
+<div id="trainingPage" class="page hidden">
+    <div class="container">
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h1 style="font-size:28px;font-weight:700;background:linear-gradient(135deg,#00d4ff,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">📄 Генератор протоколов</h1>
+            <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
         </div>
 
-        <div id="orgForm" class="org-form hidden">
-            <input type="text" id="orgNameInput" placeholder="Название организации">
-            <input type="text" id="orgInnInput" placeholder="ИНН">
-            <button class="btn-save" id="saveOrgBtn">Сохранить</button>
-            <button class="btn-cancel" id="cancelOrgBtn">Отмена</button>
-        </div>
-
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-            <select id="orgSelect" class="org-select" style="flex:1;min-width:200px;">
-                <option value="">-- Выберите организацию --</option>
-            </select>
-            <button class="btn-delete" id="deleteOrgBtn" title="Удалить выбранную организацию">🗑</button>
-        </div>
-    </div>
-
-    <!-- ============================================================ -->
-    <!-- ВКЛАДКИ -->
-    <!-- ============================================================ -->
-    <div class="tab">
-        <button class="active" onclick="showTab('staff')">📋 Штатное расписание</button>
-        <button onclick="showTab('protocol')">📝 Протокол</button>
-    </div>
-
-    <!-- ============================================================ -->
-    <!-- ===== ВКЛАДКА 1: ШТАТНОЕ РАСПИСАНИЕ ===== -->
-    <!-- ============================================================ -->
-    <div id="tabStaff">
+        <!-- БЛОК ОРГАНИЗАЦИИ -->
         <div class="block">
             <div class="block-header">
-                <h2>📋 Штатное расписание</h2>
-                <button class="btn-add" id="staffImportBtn">📤 Загрузить файл</button>
+                <h2>🏢 Организация</h2>
+                <button class="btn-add" id="showOrgFormBtn">➕ Добавить</button>
             </div>
-            <p style="color:#8888aa;font-size:14px;margin-bottom:12px;">
-                Загрузите файл со штатным расписанием. Выберите сотрудников для добавления в протокол.
-            </p>
-            <div id="staffContainer">
-                <p style="color:#6a6a8a;text-align:center;padding:20px;">
-                    Нет загруженных сотрудников. Нажмите "Загрузить файл".
+            <div id="orgForm" class="org-form hidden">
+                <input type="text" id="orgNameInput" placeholder="Название организации">
+                <input type="text" id="orgInnInput" placeholder="ИНН">
+                <button class="btn-save" id="saveOrgBtn">Сохранить</button>
+                <button class="btn-cancel" id="cancelOrgBtn">Отмена</button>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <select id="orgSelect" class="org-select" style="flex:1;min-width:200px;">
+                    <option value="">-- Выберите организацию --</option>
+                </select>
+                <button class="btn-delete" id="deleteOrgBtn" title="Удалить выбранную организацию">🗑</button>
+            </div>
+        </div>
+
+        <!-- ВКЛАДКИ -->
+        <div class="tab">
+            <button class="active" onclick="showTab('staff')">📋 Штатное расписание</button>
+            <button onclick="showTab('protocol')">📝 Протокол</button>
+        </div>
+
+        <!-- ШТАТНОЕ РАСПИСАНИЕ -->
+        <div id="tabStaff">
+            <div class="block">
+                <div class="block-header">
+                    <h2>📋 Штатное расписание</h2>
+                    <button class="btn-add" id="staffImportBtn">📤 Загрузить файл</button>
+                </div>
+                <p style="color:#8888aa;font-size:14px;margin-bottom:12px;">
+                    Загрузите файл со штатным расписанием. Выберите сотрудников для добавления в протокол.
                 </p>
+                <div id="staffContainer">
+                    <p style="color:#6a6a8a;text-align:center;padding:20px;">
+                        Нет загруженных сотрудников. Нажмите "Загрузить файл".
+                    </p>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
+                    <button class="btn-primary" id="addSelectedBtn" style="width:auto;padding:10px 24px;">➕ Добавить выбранных в протокол</button>
+                    <button class="btn-secondary" onclick="selectAllStaff()">✅ Выбрать всех</button>
+                    <button class="btn-secondary" onclick="deselectAllStaff()">✖ Снять всех</button>
+                    <button class="btn-secondary" onclick="clearStaff()">🗑 Очистить штатное</button>
+                </div>
             </div>
-            <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
-                <button class="btn-primary" id="addSelectedBtn" style="width:auto;padding:10px 24px;">➕ Добавить выбранных в протокол</button>
-                <button class="btn-secondary" onclick="selectAllStaff()">✅ Выбрать всех</button>
-                <button class="btn-secondary" onclick="deselectAllStaff()">✖ Снять всех</button>
-                <button class="btn-secondary" onclick="clearStaff()">🗑 Очистить штатное</button>
+        </div>
+
+        <!-- ПРОТОКОЛ -->
+        <div id="tabProtocol" class="hidden">
+            <div class="block">
+                <h2>📝 Протокол</h2>
+                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+                    <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0;">
+                        <label>Номер протокола</label>
+                        <input type="text" id="protocolNumber" placeholder="01/26">
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0;">
+                        <label>Дата</label>
+                        <input type="date" id="protocolDate">
+                    </div>
+                </div>
+
+                <h3 style="margin-top:12px;">📚 Программы обучения</h3>
+                <div style="display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 16px 0;">
+                    <label class="program-check"><input type="checkbox" value="1" checked> 1. Оказание первой помощи</label>
+                    <label class="program-check"><input type="checkbox" value="2"> 2. Использование СИЗ</label>
+                    <label class="program-check"><input type="checkbox" value="3"> 3. Общие вопросы охраны труда</label>
+                    <label class="program-check"><input type="checkbox" value="4"> 4. Безопасные методы и приемы работ</label>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                    <button class="btn-add" onclick="selectAllPrograms()">✅ Все</button>
+                    <button class="btn-add" onclick="selectPrograms([1,4])">📌 1+4</button>
+                    <button class="btn-add" onclick="clearAllPrograms()">✖ Снять</button>
+                </div>
+
+                <div id="protocolContainer">
+                    <p style="color:#6a6a8a;text-align:center;padding:20px;">
+                        В протоколе пока нет сотрудников. Добавьте их из штатного расписания.
+                    </p>
+                </div>
+
+                <button class="btn-generate" id="generateBtn" style="margin-top:16px;">⚡ Создать XML</button>
+
+                <div id="resultBlock" class="result-block hidden">
+                    <h3>✅ XML готов!</h3>
+                    <a id="downloadLink" href="#" download>📥 Скачать XML</a>
+                    <button class="btn-cancel" onclick="document.getElementById('resultBlock').classList.add('hidden')">✖ Закрыть</button>
+                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- ============================================================ -->
-    <!-- ===== ВКЛАДКА 2: ПРОТОКОЛ ===== -->
-    <!-- ============================================================ -->
-    <div id="tabProtocol" class="hidden">
-        <div class="block">
-            <h2>📝 Протокол</h2>
-            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
-                <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0;">
-                    <label>Номер протокола</label>
-                    <input type="text" id="protocolNumber" placeholder="01/26">
-                </div>
-                <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0;">
-                    <label>Дата</label>
-                    <input type="date" id="protocolDate">
-                </div>
-            </div>
-
-            <h3 style="margin-top:12px;">📚 Программы обучения</h3>
-            <div style="display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 16px 0;">
-                <label class="program-check"><input type="checkbox" value="1" checked> 1. Оказание первой помощи</label>
-                <label class="program-check"><input type="checkbox" value="2"> 2. Использование СИЗ</label>
-                <label class="program-check"><input type="checkbox" value="3"> 3. Общие вопросы охраны труда</label>
-                <label class="program-check"><input type="checkbox" value="4"> 4. Безопасные методы и приемы работ</label>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-                <button class="btn-add" onclick="selectAllPrograms()">✅ Все</button>
-                <button class="btn-add" onclick="selectPrograms([1,4])">📌 1+4</button>
-                <button class="btn-add" onclick="clearAllPrograms()">✖ Снять</button>
-            </div>
-
-            <div id="protocolContainer">
-                <p style="color:#6a6a8a;text-align:center;padding:20px;">
-                    В протоколе пока нет сотрудников. Добавьте их из штатного расписания.
-                </p>
-            </div>
-
-            <button class="btn-generate" id="generateBtn" style="margin-top:16px;">⚡ Создать XML</button>
-
-            <div id="resultBlock" class="result-block hidden">
-                <h3>✅ XML готов!</h3>
-                <a id="downloadLink" href="#" download>📥 Скачать XML</a>
-                <button class="btn-cancel" onclick="document.getElementById('resultBlock').classList.add('hidden')">✖ Закрыть</button>
-            </div>
-        </div>
+<!-- ============================================================ -->
+<!-- СТРАНИЦА "ОЦЕНКА РИСКОВ" (ЗАГЛУШКА) -->
+<!-- ============================================================ -->
+<div id="risksPage" class="page hidden">
+    <div class="container" style="text-align:center;padding:60px 20px;">
+        <div style="font-size:80px;margin-bottom:20px;">🧠</div>
+        <h2 style="font-size:28px;margin-bottom:12px;">Оценка профессиональных рисков</h2>
+        <p style="color:#8888aa;font-size:18px;max-width:600px;margin:0 auto 24px;">
+            Этот раздел находится в разработке. Скоро здесь появится интеллектуальная система оценки рисков.
+        </p>
+        <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
     </div>
+</div>
 
+<!-- ============================================================ -->
+<!-- СТРАНИЦА "АНАЛИТИКА" (ЗАГЛУШКА) -->
+<!-- ============================================================ -->
+<div id="analyticsPage" class="page hidden">
+    <div class="container" style="text-align:center;padding:60px 20px;">
+        <div style="font-size:80px;margin-bottom:20px;">📊</div>
+        <h2 style="font-size:28px;margin-bottom:12px;">Аналитика</h2>
+        <p style="color:#8888aa;font-size:18px;max-width:600px;margin:0 auto 24px;">
+            Этот раздел находится в разработке. Скоро здесь появятся дашборды и статистика.
+        </p>
+        <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
+    </div>
 </div>
 
 <script src="script.js"></script>
