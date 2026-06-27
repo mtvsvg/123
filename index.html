@@ -223,9 +223,6 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- СТРАНИЦА "КАРТА" (РАБОЧАЯ) -->
-<!-- ============================================================ -->
-<<!-- ============================================================ -->
 <!-- СТРАНИЦА "КАРТА" -->
 <!-- ============================================================ -->
 <div id="mapPage" class="page hidden">
@@ -235,24 +232,32 @@
             <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
         </div>
 
+        <!-- Панель управления -->
         <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:14px;border:1px solid rgba(255,255,255,0.06);">
-            <!-- Выбор цеха -->
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <label style="color:#8888aa;font-size:13px;">Цех:</label>
-                <select id="workshopSelect" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 12px;color:#fff;font-size:14px;">
+                <select id="workshopSelect" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 12px;color:#fff;font-size:14px;min-width:120px;">
                 </select>
                 <button class="btn-add" id="setWorkshopBtn">🏭 Редактировать</button>
-                <button class="btn-add" id="addWorkshopBtn" onclick="addNewWorkshop()">➕ Новый цех</button>
+                <button class="btn-add" onclick="addNewWorkshop()">➕ Новый цех</button>
             </div>
         </div>
 
         <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:14px;border:1px solid rgba(255,255,255,0.06);">
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <button class="btn-add" id="addWorkerPlaceBtn">👤 Рабочее место</button>
-                <button class="btn-add" id="addEvacuationBtn">🚪 Выход (эвакуация)</button>
+                <button class="btn-add" id="addEvacuationBtn">🚪 Выход</button>
                 <button class="btn-add" onclick="clearMap()">🗑 Очистить цех</button>
                 <button class="btn-primary" id="saveMapBtn" style="width:auto;padding:8px 20px;">💾 Сохранить</button>
             </div>
+        </div>
+
+        <!-- Масштаб -->
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;padding:8px 16px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid rgba(255,255,255,0.04);align-items:center;">
+            <span style="color:#8888aa;font-size:13px;">🔍 Масштаб:</span>
+            <input type="range" id="zoomSlider" min="0.5" max="2" step="0.1" value="1" style="flex:1;min-width:100px;accent-color:#7c3aed;">
+            <span id="zoomValue" style="color:#fff;font-size:13px;min-width:40px;">1.0</span>
+            <button class="btn-add" onclick="resetZoom()" style="padding:4px 12px;">↺ Сброс</button>
         </div>
 
         <!-- Информация -->
@@ -273,21 +278,21 @@
             <span style="color:#8888aa;font-size:12px;">🟦 <span style="color:#4a9eff;">Цех</span></span>
             <span style="color:#8888aa;font-size:12px;">👤 <span style="color:#ff6b6b;">Рабочее место</span></span>
             <span style="color:#8888aa;font-size:12px;">🟩 <span style="color:#4caf50;">Зона рабочего места</span></span>
-            <span style="color:#8888aa;font-size:12px;">🚪 <span style="color:#4caf50;">Выход (эвакуация)</span></span>
+            <span style="color:#8888aa;font-size:12px;">🚪 <span style="color:#4caf50;">Выход</span></span>
             <span style="color:#8888aa;font-size:12px;">❌ <span style="color:#ff6b6b;">Двойной клик — удалить</span></span>
         </div>
     </div>
 </div>
 
 <!-- ============================================================ -->
-<!-- МОДАЛЬНЫЕ ОКНА ДЛЯ КАРТЫ -->
+<!-- МОДАЛЬНЫЕ ОКНА -->
 <!-- ============================================================ -->
 
 <!-- Модальное окно для задания цеха -->
 <div id="workshopModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width:400px;">
         <div class="modal-header">
-            <h3>🏭 Задать цех</h3>
+            <h3>🏭 Настройка цеха</h3>
             <button class="modal-close" onclick="closeWorkshopModal()">✖</button>
         </div>
         <div class="modal-body">
@@ -326,6 +331,10 @@
             <div class="form-group">
                 <label>Должность сотрудника (опционально)</label>
                 <input type="text" id="workplacePositionInput" placeholder="Токарь">
+            </div>
+            <div class="form-group">
+                <label>Размер зоны (px)</label>
+                <input type="number" id="workplaceZoneInput" value="40" min="10" max="100">
             </div>
         </div>
         <div class="modal-footer">
