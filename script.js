@@ -299,7 +299,7 @@ function initTrainingPage() {
 }
 
 // ============================================================
-// КАРТА (ФИКСЫ)
+// КАРТА (ФИНАЛЬНАЯ ВЕРСИЯ)
 // ============================================================
 let mapData = {
     workshops: [],
@@ -317,7 +317,6 @@ let resizeCorner = '';
 let resizeStartX = 0, resizeStartY = 0;
 let resizeStartW = 0, resizeStartH = 0;
 let resizeStartXpos = 0, resizeStartYpos = 0;
-let saveTimeout = null;
 
 const canvas = document.getElementById('mapCanvas');
 const ctx = canvas.getContext('2d');
@@ -424,7 +423,7 @@ function getCanvasCoords(e) {
     const scaleY = 600 / rect.height;
     const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
     const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
-    return { x: Math.max(0, Math.min(900, (clientX - rect.left) * scaleX)), y: Math.max(0, Math.min(600, (clientY - rect.top) * scaleY)) };
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
 }
 
 function drawMap() {
@@ -445,7 +444,7 @@ function drawMap() {
         ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(900, i); ctx.stroke();
     }
     
-    // Участок без ограничений (растягивается на весь экран)
+    // Участок (без ограничений по размеру)
     const grad = ctx.createLinearGradient(ws.x, ws.y, ws.x + ws.w, ws.y + ws.h);
     grad.addColorStop(0, 'rgba(74, 158, 255, 0.06)');
     grad.addColorStop(1, 'rgba(74, 158, 255, 0.02)');
@@ -477,7 +476,7 @@ function drawMap() {
         ctx.strokeRect(c.cx - 6, c.cy - 6, 12, 12);
     });
     
-    // Рабочие места
+    // Рабочие места (человечек строго по центру зоны)
     if (ws.workplaces) {
         ws.workplaces.forEach((wp) => {
             const zoneSize = wp.zone || 40;
@@ -485,16 +484,12 @@ function drawMap() {
             const y = wp.y - zoneSize/2 - 10;
             const w = zoneSize;
             const h = zoneSize;
-            
-            // Человечек строго по центру зоны
             const centerX = wp.x;
             const centerY = wp.y - 10;
             
-            // Жёлтый фон
             ctx.fillStyle = 'rgba(255, 193, 7, 0.3)';
             ctx.fillRect(x, y, w, h);
             
-            // Чёрные диагональные полосы
             ctx.save();
             ctx.beginPath();
             ctx.rect(x, y, w, h);
@@ -514,7 +509,6 @@ function drawMap() {
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, w, h);
             
-            // Человечек строго по центру зоны
             ctx.fillStyle = '#ff6b6b';
             ctx.shadowColor = 'rgba(255, 107, 107, 0.3)';
             ctx.shadowBlur = 15;
@@ -630,7 +624,7 @@ function setupCanvasEvents() {
         }
     });
     
-    // Перетаскивание
+    // Перетаскивание и растягивание
     canvas.addEventListener('mousedown', function(e) {
         const coords = getCanvasCoords(e);
         const ws = getCurrentWorkshop();
@@ -685,8 +679,8 @@ function setupCanvasEvents() {
             if (wp) {
                 let newX = coords.x - dragOffsetX;
                 let newY = coords.y - dragOffsetY;
-                newX = Math.max(ws.x + 10, Math.min(ws.x + ws.w - 10, newX));
-                newY = Math.max(ws.y + 10, Math.min(ws.y + ws.h - 10, newY));
+                newX = Math.max(ws.x + 5, Math.min(ws.x + ws.w - 5, newX));
+                newY = Math.max(ws.y + 5, Math.min(ws.y + ws.h - 5, newY));
                 wp.x = newX;
                 wp.y = newY;
                 drawMap();
@@ -880,7 +874,7 @@ function deleteWorkshop() {
 
 function saveMap() {
     localStorage.setItem('mapData', JSON.stringify(mapData));
-    alert('✅ Карта сохранена!');
+    // Убрали alert, теперь сохранение происходит без всплывающего окна
 }
 
 function clearMap() {
