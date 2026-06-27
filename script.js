@@ -299,7 +299,7 @@ function initTrainingPage() {
 }
 
 // ============================================================
-// КАРТА (РАБОЧАЯ ВЕРСИЯ)
+// КАРТА (ОБНОВЛЁННАЯ — БЕЗ ПОЛЗУНКА, С РАСТЯГИВАНИЕМ)
 // ============================================================
 let mapData = {
     workshops: [],
@@ -309,7 +309,13 @@ let mapData = {
 let mapMode = 'view';
 let mapInited = false;
 let tempWorkplacePos = null;
-let zoomLevel = 1;
+
+// Переменные для растягивания
+let isResizing = false;
+let resizeCorner = '';
+let resizeStartX = 0, resizeStartY = 0;
+let resizeStartW = 0, resizeStartH = 0;
+let resizeStartXpos = 0, resizeStartYpos = 0;
 
 const canvas = document.getElementById('mapCanvas');
 const ctx = canvas.getContext('2d');
@@ -384,13 +390,6 @@ function initMapPage() {
         saveMap();
     });
     
-    // Масштаб
-    document.getElementById('zoomSlider').addEventListener('input', function() {
-        zoomLevel = parseInt(this.value) / 100;
-        document.getElementById('zoomValue').textContent = this.value + '%';
-        drawMap();
-    });
-    
     setupCanvasEvents();
     updateWorkshopSelect();
     updateInfo();
@@ -420,13 +419,6 @@ function updateInfo() {
     document.getElementById('evacuationCount').textContent = mapData.evacuationPoints ? mapData.evacuationPoints.length : 0;
 }
 
-function resetZoom() {
-    document.getElementById('zoomSlider').value = 100;
-    zoomLevel = 1;
-    document.getElementById('zoomValue').textContent = '100%';
-    drawMap();
-}
-
 function getCanvasCoords(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = 900 / rect.width;
@@ -441,14 +433,6 @@ function drawMap() {
     
     const ws = getCurrentWorkshop();
     if (!ws) return;
-    
-    // Применяем масштаб
-    const cx = ws.x + ws.w/2;
-    const cy = ws.y + ws.h/2;
-    const scaledW = ws.w * zoomLevel;
-    const scaledH = ws.h * zoomLevel;
-    const newX = cx - scaledW/2;
-    const newY = cy - scaledH/2;
     
     // Фон
     ctx.fillStyle = '#0a0a1a';
@@ -465,91 +449,138 @@ function drawMap() {
     }
     
     // Рисуем участок
-    const grad = ctx.createLinearGradient(newX, newY, newX + scaledW, newY + scaledH);
+    const grad = ctx.createLinearGradient(ws.x, ws.y, ws.x + ws.w, ws.y + ws.h);
     grad.addColorStop(0, 'rgba(74, 158, 255, 0.06)');
     grad.addColorStop(1, 'rgba(74, 158, 255, 0.02)');
     ctx.fillStyle = grad;
-    ctx.fillRect(newX, newY, scaledW, scaledH);
+    ctx.fillRect(ws.x, ws.y, ws.w, ws.h);
     ctx.strokeStyle = '#4a9eff';
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 5]);
-    ctx.strokeRect(newX, newY, scaledW, scaledH);
+    ctx.strokeRect(ws.x, ws.y, ws.w, ws.h);
     ctx.setLineDash([]);
     
     // Название участка
     ctx.fillStyle = 'rgba(74, 158, 255, 0.6)';
     ctx.font = '14px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`🏭 ${ws.name} (${ws.length}×${ws.width} м)`, newX + scaledW/2, newY + 30);
+    ctx.fillText(`🏭 ${ws.name} (${ws.length}×${ws.width} м)`, ws.x + ws.w/2, ws.y + 30);
     
-    // Рабочие места с учётом масштаба
+    // Углы для растягивания (маленькие квадратики)
+    const corners = [
+        { cx: ws.x, cy: ws.y, cursor: 'nw-resize' },
+        { cx: ws.x + ws.w, cy: ws.y, cursor: 'ne-resize' },
+        { cx: ws.x, cy: ws.y + ws.h, cursor: 'sw-resize' },
+        { cx: ws.x + ws.w, cy: ws.y + ws.h, cursor: 'se-resize' }
+    ];
+    corners.forEach(c => {
+        ctx.fillStyle = 'rgba(74, 158, 255, 0.8)';
+        ctx.fillRect(c.cx - 6, c.cy - 6, 12, 12);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(c.cx - 6, c.cy - 6, 12, 12);
+    });
+    
+    // Рабочие места с чёрно-жёлтой зоной
     if (ws.workplaces) {
         ws.workplaces.forEach((wp) => {
-            const wx = newX + (wp.x - ws.x) * zoomLevel;
-            const wy = newY + (wp.y - ws.y) * zoomLevel;
-            const zoneSize = (wp.zone || 40) * zoomLevel;
+            const zoneSize = wp.zone || 40;
+            // Чёрно-жёлтая полосатая зона
+            const x = wp.x - zoneSize/2;
+            const y = wp.y - zoneSize/2 - 10;
+            const w = zoneSize;
+            const h = zoneSize;
             
-            ctx.strokeStyle = 'rgba(76, 175, 80, 0.4)';
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([4, 4]);
-            ctx.strokeRect(wx - zoneSize/2, wy - zoneSize/2 - 10*zoomLevel, zoneSize, zoneSize);
-            ctx.setLineDash([]);
+            // Жёлтый фон
+            ctx.fillStyle = 'rgba(255, 193, 7, 0.3)';
+            ctx.fillRect(x, y, w, h);
             
+            // Чёрные диагональные полосы
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(x, y, w, h);
+            ctx.clip();
+            
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.lineWidth = 4;
+            for (let i = -h; i < w + h; i += 12) {
+                ctx.beginPath();
+                ctx.moveTo(x + i, y);
+                ctx.lineTo(x + i + h, y + h);
+                ctx.stroke();
+            }
+            ctx.restore();
+            
+            // Рамка зоны
+            ctx.strokeStyle = 'rgba(255, 193, 7, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, w, h);
+            
+            // Человечек
             ctx.fillStyle = '#ff6b6b';
             ctx.shadowColor = 'rgba(255, 107, 107, 0.3)';
             ctx.shadowBlur = 15;
             ctx.beginPath();
-            ctx.arc(wx, wy - 10*zoomLevel, 10*zoomLevel, 0, Math.PI * 2);
+            ctx.arc(wp.x, wp.y - 10, 10, 0, Math.PI * 2);
             ctx.fill();
             ctx.shadowBlur = 0;
-            ctx.fillRect(wx - 7*zoomLevel, wy - 2*zoomLevel, 14*zoomLevel, 18*zoomLevel);
-            ctx.fillRect(wx - 12*zoomLevel, wy + 12*zoomLevel, 7*zoomLevel, 10*zoomLevel);
-            ctx.fillRect(wx + 5*zoomLevel, wy + 12*zoomLevel, 7*zoomLevel, 10*zoomLevel);
+            ctx.fillRect(wp.x - 7, wp.y - 2, 14, 18);
+            ctx.fillRect(wp.x - 12, wp.y + 12, 7, 10);
+            ctx.fillRect(wp.x + 5, wp.y + 12, 7, 10);
             
+            // Название
             ctx.fillStyle = 'rgba(255,255,255,0.8)';
-            ctx.font = (10 * zoomLevel) + 'px sans-serif';
+            ctx.font = '10px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(wp.name.substring(0, 14), wx, wy + 42*zoomLevel);
+            ctx.fillText(wp.name.substring(0, 14), wp.x, wp.y + 42);
             if (wp.position) {
                 ctx.fillStyle = 'rgba(255,255,255,0.4)';
-                ctx.font = (8 * zoomLevel) + 'px sans-serif';
-                ctx.fillText(wp.position.substring(0, 16), wx, wy + 54*zoomLevel);
+                ctx.font = '8px sans-serif';
+                ctx.fillText(wp.position.substring(0, 16), wp.x, wp.y + 54);
             }
         });
     }
     
-    // Точки эвакуации с учётом масштаба
+    // Точки эвакуации (зелёный прямоугольник с надписью "ВЫХОД")
     if (mapData.evacuationPoints) {
         mapData.evacuationPoints.forEach((ep) => {
-            const ex = newX + (ep.x - ws.x) * zoomLevel;
-            const ey = newY + (ep.y - ws.y) * zoomLevel;
+            const ew = 60, eh = 30;
+            const ex = ep.x - ew/2;
+            const ey = ep.y - eh/2;
             
-            ctx.fillStyle = 'rgba(76, 175, 80, 0.2)';
-            ctx.shadowColor = 'rgba(76, 175, 80, 0.4)';
-            ctx.shadowBlur = 20;
-            ctx.beginPath();
-            ctx.arc(ex, ey, 20*zoomLevel, 0, Math.PI * 2);
-            ctx.fill();
+            // Зелёный прямоугольник
+            ctx.fillStyle = '#2e7d32';
+            ctx.shadowColor = 'rgba(46, 125, 50, 0.4)';
+            ctx.shadowBlur = 15;
+            ctx.fillRect(ex, ey, ew, eh);
             ctx.shadowBlur = 0;
-            ctx.fillStyle = '#4caf50';
-            ctx.beginPath();
-            ctx.arc(ex, ey, 12*zoomLevel, 0, Math.PI * 2);
-            ctx.fill();
+            
+            // Рамка
+            ctx.strokeStyle = '#4caf50';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(ex, ey, ew, eh);
+            
+            // Надпись "ВЫХОД"
             ctx.fillStyle = '#fff';
-            ctx.font = (16 * zoomLevel) + 'px sans-serif';
+            ctx.font = 'bold 12px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('⬆', ex, ey);
-            ctx.fillStyle = 'rgba(76, 175, 80, 0.7)';
-            ctx.font = (9 * zoomLevel) + 'px sans-serif';
-            ctx.textBaseline = 'top';
-            ctx.fillText(ep.name || 'Выход', ex, ey + 16*zoomLevel);
+            ctx.fillText('ВЫХОД', ep.x, ep.y);
             ctx.textBaseline = 'alphabetic';
+            
+            // Название (если есть)
+            if (ep.name && ep.name !== 'Выход') {
+                ctx.fillStyle = 'rgba(76, 175, 80, 0.7)';
+                ctx.font = '8px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(ep.name, ep.x, ey + eh + 14);
+            }
         });
     }
 }
 
 function setupCanvasEvents() {
+    // Клик для добавления
     canvas.addEventListener('click', function(e) {
         const coords = getCanvasCoords(e);
         const ws = getCurrentWorkshop();
@@ -561,7 +592,7 @@ function setupCanvasEvents() {
         if (mapMode === 'addWorkplace') {
             openWorkplaceModal(coords.x, coords.y);
         } else if (mapMode === 'addEvacuation') {
-            const name = prompt('Введите название выхода:', 'Выход ' + ((mapData.evacuationPoints ? mapData.evacuationPoints.length : 0) + 1));
+            const name = prompt('Введите название выхода (опционально):', '');
             if (name !== null) {
                 if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
                 mapData.evacuationPoints.push({ x: coords.x, y: coords.y, name: name.trim() || 'Выход', id: Date.now() });
@@ -575,6 +606,7 @@ function setupCanvasEvents() {
         }
     });
     
+    // Двойной клик для удаления
     canvas.addEventListener('dblclick', function(e) {
         const coords = getCanvasCoords(e);
         const ws = getCurrentWorkshop();
@@ -611,6 +643,100 @@ function setupCanvasEvents() {
                     return;
                 }
             }
+        }
+    });
+    
+    // Растягивание участка
+    canvas.addEventListener('mousedown', function(e) {
+        const coords = getCanvasCoords(e);
+        const ws = getCurrentWorkshop();
+        if (!ws) return;
+        
+        // Проверяем попадание в углы
+        const corners = [
+            { cx: ws.x, cy: ws.y, corner: 'tl' },
+            { cx: ws.x + ws.w, cy: ws.y, corner: 'tr' },
+            { cx: ws.x, cy: ws.y + ws.h, corner: 'bl' },
+            { cx: ws.x + ws.w, cy: ws.y + ws.h, corner: 'br' }
+        ];
+        
+        for (let c of corners) {
+            if (Math.abs(coords.x - c.cx) < 10 && Math.abs(coords.y - c.cy) < 10) {
+                isResizing = true;
+                resizeCorner = c.corner;
+                resizeStartX = coords.x;
+                resizeStartY = coords.y;
+                resizeStartW = ws.w;
+                resizeStartH = ws.h;
+                resizeStartXpos = ws.x;
+                resizeStartYpos = ws.y;
+                return;
+            }
+        }
+    });
+    
+    canvas.addEventListener('mousemove', function(e) {
+        const coords = getCanvasCoords(e);
+        const ws = getCurrentWorkshop();
+        if (!ws) return;
+        
+        if (isResizing) {
+            const dx = coords.x - resizeStartX;
+            const dy = coords.y - resizeStartY;
+            
+            switch(resizeCorner) {
+                case 'tl':
+                    ws.x = Math.max(0, Math.min(900 - 50, resizeStartXpos + dx));
+                    ws.y = Math.max(0, Math.min(600 - 50, resizeStartYpos + dy));
+                    ws.w = Math.max(50, resizeStartW - dx);
+                    ws.h = Math.max(50, resizeStartH - dy);
+                    break;
+                case 'tr':
+                    ws.y = Math.max(0, Math.min(600 - 50, resizeStartYpos + dy));
+                    ws.w = Math.max(50, resizeStartW + dx);
+                    ws.h = Math.max(50, resizeStartH - dy);
+                    break;
+                case 'bl':
+                    ws.x = Math.max(0, Math.min(900 - 50, resizeStartXpos + dx));
+                    ws.w = Math.max(50, resizeStartW - dx);
+                    ws.h = Math.max(50, resizeStartH + dy);
+                    break;
+                case 'br':
+                    ws.w = Math.max(50, resizeStartW + dx);
+                    ws.h = Math.max(50, resizeStartH + dy);
+                    break;
+            }
+            drawMap();
+        } else {
+            // Меняем курсор при наведении на углы
+            let cursor = 'default';
+            const corners = [
+                { cx: ws.x, cy: ws.y, cursor: 'nw-resize' },
+                { cx: ws.x + ws.w, cy: ws.y, cursor: 'ne-resize' },
+                { cx: ws.x, cy: ws.y + ws.h, cursor: 'sw-resize' },
+                { cx: ws.x + ws.w, cy: ws.y + ws.h, cursor: 'se-resize' }
+            ];
+            for (let c of corners) {
+                if (Math.abs(coords.x - c.cx) < 10 && Math.abs(coords.y - c.cy) < 10) {
+                    cursor = c.cursor;
+                    break;
+                }
+            }
+            canvas.style.cursor = cursor;
+        }
+    });
+    
+    canvas.addEventListener('mouseup', function() {
+        if (isResizing) {
+            isResizing = false;
+            saveMap();
+        }
+    });
+    
+    canvas.addEventListener('mouseleave', function() {
+        if (isResizing) {
+            isResizing = false;
+            saveMap();
         }
     });
 }
