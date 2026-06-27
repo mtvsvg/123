@@ -76,14 +76,14 @@
                     <p>Создавайте протоколы обучения в несколько кликов. Загрузите штатное расписание и выберите сотрудников.</p>
                 </div>
                 <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <h3>Листы ознакомления</h3>
+                    <p>Автоматически формируйте листы ознакомления с инструкциями, СОУТ, профрисками и СИЗ. Никаких штрафов!</p>
+                </div>
+                <div class="feature-card">
                     <div class="feature-icon">🧠</div>
                     <h3>Оценка рисков</h3>
                     <p>Интеллектуальная система анализирует должности и рабочее место, предлагая мероприятия по снижению рисков.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Аналитика</h3>
-                    <p>Отслеживайте статистику по обучению, рискам и мероприятиям. Принимайте решения на основе данных.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🔄</div>
@@ -148,8 +148,10 @@
         <div class="tab">
             <button class="active" onclick="showTab('staff')">📋 Штатное расписание</button>
             <button onclick="showTab('protocol')">📝 Протокол</button>
+            <button onclick="showTab('familiarization')">📋 Ознакомление</button>
         </div>
 
+        <!-- ===== ШТАТНОЕ РАСПИСАНИЕ ===== -->
         <div id="tabStaff">
             <div class="block">
                 <div class="block-header">
@@ -173,6 +175,7 @@
             </div>
         </div>
 
+        <!-- ===== ПРОТОКОЛ ===== -->
         <div id="tabProtocol" class="hidden">
             <div class="block">
                 <h2>📝 Протокол</h2>
@@ -212,6 +215,47 @@
                     <h3>✅ XML готов!</h3>
                     <a id="downloadLink" href="#" download>📥 Скачать XML</a>
                     <button class="btn-cancel" onclick="document.getElementById('resultBlock').classList.add('hidden')">✖ Закрыть</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ОЗНАКОМЛЕНИЕ ===== -->
+        <div id="tabFamiliarization" class="hidden">
+            <div class="block">
+                <h2>📋 Лист ознакомления</h2>
+                <p style="color:#8888aa;font-size:14px;margin-bottom:12px;">
+                    Выберите сотрудника из штатного расписания и сформируйте лист ознакомления со всеми необходимыми документами.
+                </p>
+                
+                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;align-items:end;">
+                    <div class="form-group" style="flex:2;min-width:200px;margin-bottom:0;">
+                        <label>Выберите сотрудника:</label>
+                        <select id="famEmployeeSelect" style="width:100%;">
+                            <option value="">-- Выберите сотрудника --</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" id="generateFamBtn" style="width:auto;padding:10px 24px;">📄 Составить лист ознакомления</button>
+                </div>
+
+                <!-- Документы для ознакомления (предустановленные) -->
+                <div style="margin-top:12px;">
+                    <h4 style="color:#ccc;margin-bottom:8px;">Документы для ознакомления:</h4>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                        <label class="doc-check"><input type="checkbox" value="Инструкция по охране труда" checked> 📄 Инструкция по охране труда</label>
+                        <label class="doc-check"><input type="checkbox" value="СОУТ (Спецоценка условий труда)" checked> 📊 СОУТ</label>
+                        <label class="doc-check"><input type="checkbox" value="Оценка профессиональных рисков" checked> ⚠️ Оценка профрисков</label>
+                        <label class="doc-check"><input type="checkbox" value="Нормы выдачи СИЗ" checked> 🦺 Нормы выдачи СИЗ</label>
+                        <label class="doc-check"><input type="checkbox" value="Правила внутреннего трудового распорядка" checked> 📋 ПВТР</label>
+                        <label class="doc-check"><input type="checkbox" value="Инструкция по пожарной безопасности" checked> 🔥 Пожарная безопасность</label>
+                        <label class="doc-check"><input type="checkbox" value="Инструкция по электробезопасности" checked> ⚡ Электробезопасность</label>
+                    </div>
+                </div>
+
+                <!-- Результат -->
+                <div id="famResult" class="hidden" style="margin-top:16px;padding:16px;background:rgba(0,212,255,0.05);border-radius:12px;border:1px solid rgba(0,212,255,0.15);">
+                    <h3 style="color:#00d4ff;margin-bottom:8px;">✅ Лист ознакомления сформирован</h3>
+                    <div id="famContent" style="font-size:14px;line-height:1.6;color:#ccc;"></div>
+                    <button class="btn-primary" id="printFamBtn" style="margin-top:12px;width:auto;padding:10px 24px;">🖨️ Печать / Сохранить PDF</button>
                 </div>
             </div>
         </div>
