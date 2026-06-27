@@ -1,551 +1,3 @@
-Ты прав! Исправляю все 4 пункта. Вот полный код:
-
----
-
-## 📁 ПОЛНЫЙ РАБОЧИЙ КОД (3 ФАЙЛА)
-
----
-
-### 1. `index.html`
-
-```html
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Охрана труда — Цифровой помощник</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-<!-- ============================================================ -->
-<!-- ГЛАВНАЯ СТРАНИЦА -->
-<!-- ============================================================ -->
-<div id="mainPage">
-    <header class="header">
-        <div class="container header-inner">
-            <div class="logo">
-                <span class="logo-icon">🛡️</span>
-                <span class="logo-text">ОхранаТруда<span class="logo-dot">.</span>Про</span>
-            </div>
-            <nav class="nav">
-                <a href="#" class="nav-link active" onclick="showPage('main')">Главная</a>
-                <a href="#" class="nav-link" onclick="showPage('training')">Обучение</a>
-                <a href="#" class="nav-link" onclick="showPage('map')">Карта</a>
-                <a href="#" class="nav-link" onclick="showPage('risks')">Оценка рисков</a>
-                <a href="#" class="nav-link" onclick="showPage('analytics')">Аналитика</a>
-            </nav>
-            <button class="btn-login" onclick="alert('Вход в разработке')">Войти</button>
-        </div>
-    </header>
-
-    <section class="hero">
-        <div class="container hero-inner">
-            <div class="hero-content">
-                <div class="hero-badge">🚀 Новая версия 2.0</div>
-                <h1 class="hero-title">Умная охрана<br>труда для <span class="highlight">современных</span> компаний</h1>
-                <p class="hero-desc">Автоматизируйте обучение, оценивайте риски и создавайте протоколы в несколько кликов.</p>
-                <div class="hero-buttons">
-                    <button class="btn-primary btn-hero" onclick="showPage('training')">Начать работу →</button>
-                    <button class="btn-secondary btn-hero" onclick="alert('Подробнее в разработке')">Узнать больше</button>
-                </div>
-                <div class="hero-stats">
-                    <div class="stat-item"><span class="stat-number">500+</span><span class="stat-label">сотрудников</span></div>
-                    <div class="stat-item"><span class="stat-number">120+</span><span class="stat-label">протоколов</span></div>
-                    <div class="stat-item"><span class="stat-number">98%</span><span class="stat-label">экономия времени</span></div>
-                </div>
-            </div>
-            <div class="hero-image">
-                <div class="hero-img-wrapper">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 350'%3E%3Crect width='400' height='350' fill='%231a1a3e'/%3E%3Ccircle cx='200' cy='150' r='80' fill='%237c3aed' opacity='0.2'/%3E%3Ccircle cx='200' cy='150' r='50' fill='%237c3aed' opacity='0.4'/%3E%3Crect x='140' y='230' width='120' height='10' rx='5' fill='%237c3aed' opacity='0.3'/%3E%3Crect x='150' y='250' width='100' height='10' rx='5' fill='%237c3aed' opacity='0.2'/%3E%3Ctext x='200' y='135' text-anchor='middle' font-size='60' fill='%2300d4ff' opacity='0.9'%3E🛡️%3C/text%3E%3Ctext x='200' y='200' text-anchor='middle' font-size='16' fill='%238888aa'%3EЦифровая охрана труда%3C/text%3E%3C/svg%3E" alt="Охрана труда" class="hero-img">
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="features">
-        <div class="container">
-            <div class="section-label">Преимущества</div>
-            <h2 class="section-title">Почему выбирают <span class="highlight">нас</span></h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">📋</div>
-                    <h3>Генерация протоколов</h3>
-                    <p>Загрузите штатное расписание, выберите сотрудников и создайте протокол за минуту.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📝</div>
-                    <h3>Листы ознакомления</h3>
-                    <p>Автоматически формируйте листы ознакомления с инструкциями, СОУТ и профрисками.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🗺️</div>
-                    <h3>Карта цеха</h3>
-                    <p>Визуализируйте рабочие места, расставляйте сотрудников и оценивайте риски.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔄</div>
-                    <h3>Автоматизация</h3>
-                    <p>Система сама напомнит о сроках обучения и обновит данные по сотрудникам.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <footer class="footer">
-        <div class="container footer-inner">
-            <div>
-                <div class="logo"><span class="logo-icon">🛡️</span><span class="logo-text">ОхранаТруда<span class="logo-dot">.</span>Про</span></div>
-                <p class="footer-desc">Цифровой помощник специалиста по охране труда</p>
-            </div>
-            <div class="footer-links">
-                <a href="#" onclick="showPage('main')">Главная</a>
-                <a href="#" onclick="showPage('training')">Обучение</a>
-                <a href="#" onclick="showPage('map')">Карта</a>
-                <a href="#" onclick="showPage('risks')">Оценка рисков</a>
-                <a href="#" onclick="showPage('analytics')">Аналитика</a>
-            </div>
-            <div class="footer-copy"><p>© 2026 ОхранаТруда.Про</p></div>
-        </div>
-    </footer>
-</div>
-
-<!-- ============================================================ -->
-<!-- СТРАНИЦА "ОБУЧЕНИЕ" -->
-<!-- ============================================================ -->
-<div id="trainingPage" class="page hidden">
-    <div class="container">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h1 style="font-size:28px;font-weight:700;background:linear-gradient(135deg,#00d4ff,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">📄 Генератор протоколов</h1>
-            <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
-        </div>
-
-        <div class="block">
-            <div class="block-header">
-                <h2>🏢 Организация</h2>
-                <button class="btn-add" id="showOrgFormBtn">➕ Добавить</button>
-            </div>
-            <div id="orgForm" class="org-form hidden">
-                <input type="text" id="orgNameInput" placeholder="Название организации">
-                <input type="text" id="orgInnInput" placeholder="ИНН">
-                <button class="btn-save" id="saveOrgBtn">Сохранить</button>
-                <button class="btn-cancel" id="cancelOrgBtn">Отмена</button>
-            </div>
-            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                <select id="orgSelect" class="org-select" style="flex:1;min-width:200px;">
-                    <option value="">-- Выберите организацию --</option>
-                </select>
-                <button class="btn-delete" id="deleteOrgBtn" title="Удалить">🗑</button>
-            </div>
-        </div>
-
-        <div class="tab">
-            <button class="active" onclick="showTab('staff')">📋 Штатное расписание</button>
-            <button onclick="showTab('protocol')">📝 Протокол</button>
-            <button onclick="showTab('familiarization')">📋 Ознакомление</button>
-        </div>
-
-        <div id="tabStaff">
-            <div class="block">
-                <div class="block-header">
-                    <h2>📋 Штатное расписание</h2>
-                    <button class="btn-add" id="staffImportBtn">📤 Загрузить файл</button>
-                </div>
-                <p style="color:#8888aa;font-size:14px;margin-bottom:12px;">Загрузите файл со штатным расписанием. Выберите сотрудников для добавления в протокол.</p>
-                <div id="staffContainer"><p style="color:#6a6a8a;text-align:center;padding:20px;">Нет загруженных сотрудников. Нажмите "Загрузить файл".</p></div>
-                <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
-                    <button class="btn-primary" id="addSelectedBtn" style="width:auto;padding:10px 24px;">➕ Добавить выбранных в протокол</button>
-                    <button class="btn-secondary" onclick="selectAllStaff()">✅ Выбрать всех</button>
-                    <button class="btn-secondary" onclick="deselectAllStaff()">✖ Снять всех</button>
-                    <button class="btn-secondary" onclick="clearStaff()">🗑 Очистить</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="tabProtocol" class="hidden">
-            <div class="block">
-                <h2>📝 Протокол</h2>
-                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
-                    <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0;">
-                        <label>Номер протокола</label>
-                        <input type="text" id="protocolNumber" placeholder="01/26">
-                    </div>
-                    <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0;">
-                        <label>Дата</label>
-                        <input type="date" id="protocolDate">
-                    </div>
-                </div>
-
-                <h3 style="margin-top:12px;">📚 Программы обучения</h3>
-                <div style="display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 16px 0;">
-                    <label class="program-check"><input type="checkbox" value="1" checked> 1. Оказание первой помощи</label>
-                    <label class="program-check"><input type="checkbox" value="2"> 2. Использование СИЗ</label>
-                    <label class="program-check"><input type="checkbox" value="3"> 3. Общие вопросы охраны труда</label>
-                    <label class="program-check"><input type="checkbox" value="4"> 4. Безопасные методы и приемы работ</label>
-                </div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-                    <button class="btn-add" onclick="selectAllPrograms()">✅ Все</button>
-                    <button class="btn-add" onclick="selectPrograms([1,4])">📌 1+4</button>
-                    <button class="btn-add" onclick="clearAllPrograms()">✖ Снять</button>
-                </div>
-
-                <div id="protocolContainer"><p style="color:#6a6a8a;text-align:center;padding:20px;">В протоколе пока нет сотрудников. Добавьте их из штатного расписания.</p></div>
-                <button class="btn-generate" id="generateBtn" style="margin-top:16px;">⚡ Создать XML</button>
-                <div id="resultBlock" class="result-block hidden">
-                    <h3>✅ XML готов!</h3>
-                    <a id="downloadLink" href="#" download>📥 Скачать XML</a>
-                    <button class="btn-cancel" onclick="document.getElementById('resultBlock').classList.add('hidden')">✖ Закрыть</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="tabFamiliarization" class="hidden">
-            <div class="block">
-                <h2>📋 Лист ознакомления</h2>
-                <p style="color:#8888aa;font-size:14px;margin-bottom:12px;">Выберите сотрудника и сформируйте лист ознакомления.</p>
-                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;align-items:end;">
-                    <div class="form-group" style="flex:2;min-width:200px;margin-bottom:0;">
-                        <label>Выберите сотрудника:</label>
-                        <select id="famEmployeeSelect" style="width:100%;"><option value="">-- Выберите сотрудника --</option></select>
-                    </div>
-                    <button class="btn-primary" id="generateFamBtn" style="width:auto;padding:10px 24px;">📄 Составить лист</button>
-                </div>
-                <div style="margin-top:12px;">
-                    <h4 style="color:#ccc;margin-bottom:8px;">Документы для ознакомления:</h4>
-                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                        <label class="doc-check"><input type="checkbox" value="Инструкция по охране труда" checked> 📄 Инструкция по охране труда</label>
-                        <label class="doc-check"><input type="checkbox" value="СОУТ (Спецоценка условий труда)" checked> 📊 СОУТ</label>
-                        <label class="doc-check"><input type="checkbox" value="Оценка профессиональных рисков" checked> ⚠️ Оценка профрисков</label>
-                        <label class="doc-check"><input type="checkbox" value="Нормы выдачи СИЗ" checked> 🦺 Нормы выдачи СИЗ</label>
-                        <label class="doc-check"><input type="checkbox" value="Правила внутреннего трудового распорядка" checked> 📋 ПВТР</label>
-                        <label class="doc-check"><input type="checkbox" value="Инструкция по пожарной безопасности" checked> 🔥 Пожарная безопасность</label>
-                        <label class="doc-check"><input type="checkbox" value="Инструкция по электробезопасности" checked> ⚡ Электробезопасность</label>
-                    </div>
-                </div>
-                <div id="famResult" class="hidden" style="margin-top:16px;padding:16px;background:rgba(0,212,255,0.05);border-radius:12px;border:1px solid rgba(0,212,255,0.15);">
-                    <h3 style="color:#00d4ff;margin-bottom:8px;">✅ Лист ознакомления сформирован</h3>
-                    <div id="famContent" style="font-size:14px;line-height:1.6;color:#ccc;"></div>
-                    <button class="btn-primary" id="printFamBtn" style="margin-top:12px;width:auto;padding:10px 24px;">🖨️ Печать / PDF</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ============================================================ -->
-<!-- СТРАНИЦА "КАРТА" -->
-<!-- ============================================================ -->
-<div id="mapPage" class="page hidden">
-    <div class="container">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-            <h1 style="font-size:28px;font-weight:700;background:linear-gradient(135deg,#00d4ff,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🗺️ Карта цеха</h1>
-            <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
-        </div>
-
-        <!-- Панель управления -->
-        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:14px;border:1px solid rgba(255,255,255,0.06);">
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                <label style="color:#8888aa;font-size:13px;">Участок:</label>
-                <select id="workshopSelect" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 12px;color:#fff;font-size:14px;min-width:120px;"></select>
-                <button class="btn-add" onclick="addNewWorkshop()">➕ Новый участок</button>
-                <button class="btn-add" id="editWorkshopBtn">✏️ Редактировать</button>
-                <button class="btn-add" onclick="deleteWorkshop()">🗑 Удалить участок</button>
-            </div>
-        </div>
-
-        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:14px;border:1px solid rgba(255,255,255,0.06);">
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                <button class="btn-add" id="addWorkerPlaceBtn">👤 Рабочее место</button>
-                <button class="btn-add" id="addEvacuationBtn">🚪 Выход</button>
-                <button class="btn-add" onclick="clearMap()">🗑 Очистить участок</button>
-                <button class="btn-primary" id="saveMapBtn" style="width:auto;padding:8px 20px;">💾 Сохранить</button>
-            </div>
-        </div>
-
-        <!-- Информация -->
-        <div id="mapInfo" style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px 16px;margin-bottom:12px;border:1px solid rgba(255,255,255,0.05);display:flex;gap:20px;flex-wrap:wrap;">
-            <span style="color:#8888aa;font-size:13px;">📐 Участок: <strong id="workshopSize" style="color:#fff;">не задан</strong></span>
-            <span style="color:#8888aa;font-size:13px;">👤 Рабочие места: <strong id="workerCount" style="color:#fff;">0</strong></span>
-            <span style="color:#8888aa;font-size:13px;">🚪 Выходы: <strong id="evacuationCount" style="color:#4caf50;">0</strong></span>
-            <span style="color:#8888aa;font-size:13px;">💡 Режим: <strong id="mapMode" style="color:#00d4ff;">Просмотр</strong></span>
-        </div>
-
-        <!-- Холст -->
-        <div style="position:relative;background:rgba(255,255,255,0.02);border-radius:14px;border:1px solid rgba(255,255,255,0.06);overflow:hidden;">
-            <canvas id="mapCanvas" width="900" height="600" style="width:100%;height:auto;display:block;cursor:crosshair;"></canvas>
-        </div>
-
-        <!-- Легенда -->
-        <div style="display:flex;gap:20px;margin-top:12px;flex-wrap:wrap;padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid rgba(255,255,255,0.04);">
-            <span style="color:#8888aa;font-size:12px;">🟦 <span style="color:#4a9eff;">Участок</span></span>
-            <span style="color:#8888aa;font-size:12px;">👤 <span style="color:#ff6b6b;">Рабочее место</span></span>
-            <span style="color:#8888aa;font-size:12px;">⚠️ <span style="color:#ff8f00;">Зона рабочего места</span></span>
-            <span style="color:#8888aa;font-size:12px;">🚪 <span style="color:#4caf50;">Выход</span></span>
-            <span style="color:#8888aa;font-size:12px;">🔄 <span style="color:#8888aa;">Перетащите человечка</span></span>
-            <span style="color:#8888aa;font-size:12px;">❌ <span style="color:#ff6b6b;">Двойной клик — удалить</span></span>
-        </div>
-    </div>
-</div>
-
-<!-- ============================================================ -->
-<!-- МОДАЛЬНЫЕ ОКНА -->
-<!-- ============================================================ -->
-
-<!-- Модальное окно для редактирования участка -->
-<div id="workshopModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width:400px;">
-        <div class="modal-header">
-            <h3>✏️ Редактирование участка</h3>
-            <button class="modal-close" onclick="closeWorkshopModal()">✖</button>
-        </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label>Название участка</label>
-                <input type="text" id="workshopNameInput" placeholder="Цех №1">
-            </div>
-            <div class="form-group">
-                <label>Длина (м)</label>
-                <input type="number" id="workshopLengthInput" placeholder="30" min="1" value="30">
-            </div>
-            <div class="form-group">
-                <label>Ширина (м)</label>
-                <input type="number" id="workshopWidthInput" placeholder="20" min="1" value="20">
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-cancel" onclick="closeWorkshopModal()">Отмена</button>
-            <button class="btn-primary" id="saveWorkshopBtn" style="width:auto;padding:10px 24px;">Сохранить</button>
-        </div>
-    </div>
-</div>
-
-<!-- Модальное окно для добавления рабочего места -->
-<div id="workplaceModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width:400px;">
-        <div class="modal-header">
-            <h3>👤 Добавление рабочего места</h3>
-            <button class="modal-close" onclick="closeWorkplaceModal()">✖</button>
-        </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label>Название рабочего места</label>
-                <input type="text" id="workplaceNameInput" placeholder="Токарный станок №3">
-            </div>
-            <div class="form-group">
-                <label>Должность сотрудника (опционально)</label>
-                <input type="text" id="workplacePositionInput" placeholder="Токарь">
-            </div>
-            <div class="form-group">
-                <label>Размер зоны (px)</label>
-                <input type="number" id="workplaceZoneInput" value="40" min="10" max="100">
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-cancel" onclick="closeWorkplaceModal()">Отмена</button>
-            <button class="btn-primary" id="saveWorkplaceBtn" style="width:auto;padding:10px 24px;">Добавить</button>
-        </div>
-    </div>
-</div>
-
-<!-- ============================================================ -->
-<!-- СТРАНИЦА "ОЦЕНКА РИСКОВ" -->
-<!-- ============================================================ -->
-<div id="risksPage" class="page hidden">
-    <div class="container" style="text-align:center;padding:60px 20px;">
-        <div style="font-size:80px;margin-bottom:20px;">🧠</div>
-        <h2 style="font-size:28px;margin-bottom:12px;">Оценка профессиональных рисков</h2>
-        <p style="color:#8888aa;font-size:18px;max-width:600px;margin:0 auto 24px;">В разработке</p>
-        <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
-    </div>
-</div>
-
-<!-- ============================================================ -->
-<!-- СТРАНИЦА "АНАЛИТИКА" -->
-<!-- ============================================================ -->
-<div id="analyticsPage" class="page hidden">
-    <div class="container" style="text-align:center;padding:60px 20px;">
-        <div style="font-size:80px;margin-bottom:20px;">📊</div>
-        <h2 style="font-size:28px;margin-bottom:12px;">Аналитика</h2>
-        <p style="color:#8888aa;font-size:18px;max-width:600px;margin:0 auto 24px;">В разработке</p>
-        <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
-    </div>
-</div>
-
-<script src="script.js"></script>
-</body>
-</html>
-```
-
----
-
-### 2. `style.css`
-
-```css
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: #0a0a1a; color: #e0e0e0; min-height: 100vh; }
-#mainPage { background: linear-gradient(145deg, #0a0a1a 0%, #12122a 50%, #0a0a1a 100%); min-height: 100vh; }
-.container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
-
-.header { padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.05); position: sticky; top: 0; background: rgba(10,10,26,0.8); backdrop-filter: blur(12px); z-index: 100; }
-.header-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-.logo { display: flex; align-items: center; gap: 10px; }
-.logo-icon { font-size: 28px; }
-.logo-text { font-size: 22px; font-weight: 700; color: #fff; }
-.logo-dot { color: #7c3aed; }
-.nav { display: flex; gap: 8px; flex-wrap: wrap; }
-.nav-link { color: #8888aa; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-size: 15px; font-weight: 500; transition: all 0.2s; cursor: pointer; }
-.nav-link:hover { color: #fff; background: rgba(255,255,255,0.05); }
-.nav-link.active { color: #fff; background: rgba(124,58,237,0.2); }
-.btn-login { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #ccc; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
-.btn-login:hover { background: rgba(255,255,255,0.12); }
-
-.hero { padding: 60px 0 40px; }
-.hero-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
-.hero-badge { display: inline-block; background: rgba(124,58,237,0.15); color: #b388ff; padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; margin-bottom: 16px; }
-.hero-title { font-size: 44px; font-weight: 700; line-height: 1.15; margin-bottom: 16px; color: #fff; }
-.highlight { background: linear-gradient(135deg, #00d4ff, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.hero-desc { color: #8888aa; font-size: 18px; line-height: 1.6; margin-bottom: 24px; }
-.hero-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 32px; }
-.btn-hero { padding: 12px 32px; font-size: 16px; }
-.btn-primary { background: linear-gradient(135deg, #7c3aed, #00d4ff); border: none; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-.btn-primary:hover { transform: scale(1.02); box-shadow: 0 8px 30px rgba(124,58,237,0.3); }
-.btn-secondary { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #ccc; padding: 12px 24px; border-radius: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
-.btn-secondary:hover { background: rgba(255,255,255,0.12); }
-.hero-stats { display: flex; gap: 40px; flex-wrap: wrap; }
-.stat-number { font-size: 28px; font-weight: 700; color: #fff; display: block; }
-.stat-label { color: #8888aa; font-size: 14px; }
-
-.hero-image { display: flex; justify-content: center; align-items: center; }
-.hero-img-wrapper { width: 100%; max-width: 400px; background: rgba(255,255,255,0.02); border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); padding: 20px; }
-.hero-img { width: 100%; height: auto; display: block; }
-
-.features { padding: 40px 0 60px; }
-.section-label { color: #7c3aed; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; text-align: center; margin-bottom: 8px; }
-.section-title { font-size: 32px; font-weight: 700; text-align: center; color: #fff; margin-bottom: 40px; }
-.features-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-.feature-card { background: rgba(255,255,255,0.03); border-radius: 16px; padding: 24px; border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s; }
-.feature-card:hover { transform: translateY(-4px); border-color: rgba(124,58,237,0.2); background: rgba(255,255,255,0.05); }
-.feature-icon { font-size: 36px; margin-bottom: 12px; }
-.feature-card h3 { font-size: 18px; color: #fff; margin-bottom: 8px; }
-.feature-card p { color: #8888aa; font-size: 14px; line-height: 1.6; }
-
-.footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 32px 0; }
-.footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
-.footer-desc { color: #666; font-size: 14px; margin-top: 4px; }
-.footer-links { display: flex; gap: 20px; }
-.footer-links a { color: #8888aa; text-decoration: none; font-size: 14px; transition: color 0.2s; cursor: pointer; }
-.footer-links a:hover { color: #fff; }
-.footer-copy { color: #555; font-size: 13px; }
-
-.page { min-height: 100vh; padding: 30px 0 60px; }
-.page.hidden { display: none !important; }
-
-.block { background: rgba(255,255,255,0.03); border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.05); }
-.block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
-.block-header h2 { font-size: 18px; color: #ccc; font-weight: 600; margin: 0; }
-.btn-add { background: rgba(124,58,237,0.2); color: #b388ff; border: 1px solid rgba(124,58,237,0.3); padding: 6px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: background 0.2s; }
-.btn-add:hover { background: rgba(124,58,237,0.35); }
-.btn-save { background: #7c3aed; color: #fff; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: background 0.2s; }
-.btn-save:hover { background: #6a2fd4; }
-.btn-cancel { background: rgba(255,255,255,0.06); color: #aaa; border: 1px solid rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: background 0.2s; }
-.btn-cancel:hover { background: rgba(255,255,255,0.12); }
-.btn-delete { background: rgba(255,70,70,0.15); color: #ff6b6b; border: 1px solid rgba(255,70,70,0.2); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 16px; transition: background 0.2s; }
-.btn-delete:hover { background: rgba(255,70,70,0.25); }
-.btn-generate { width: 100%; padding: 16px; background: linear-gradient(135deg, #7c3aed, #00d4ff); border: none; border-radius: 12px; color: #fff; font-size: 18px; font-weight: 700; cursor: pointer; transition: transform 0.15s, box-shadow 0.2s; margin-top: 8px; }
-.btn-generate:hover { transform: scale(1.01); box-shadow: 0 8px 30px rgba(124,58,237,0.35); }
-
-.org-form { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; padding: 12px; background: rgba(255,255,255,0.04); border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); }
-.org-form input { flex: 2; min-width: 140px; padding: 10px 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 15px; outline: none; }
-.org-form input:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.2); }
-.org-form .btn-save, .org-form .btn-cancel { flex: 0; min-width: 80px; }
-input, select { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 15px; outline: none; }
-input:focus, select:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.2); }
-input::placeholder { color: #666; }
-.org-select { margin-top: 4px; cursor: pointer; }
-.org-select option { background: #1a1a3e; color: #fff; }
-.hidden { display: none !important; }
-
-.tab { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; flex-wrap: wrap; }
-.tab button { background: none; border: none; color: #8888aa; padding: 8px 18px; font-size: 15px; cursor: pointer; border-radius: 8px; transition: all 0.2s; font-weight: 500; }
-.tab button.active { background: rgba(124,58,237,0.2); color: #fff; }
-.tab button:hover { background: rgba(255,255,255,0.05); color: #fff; }
-
-.staff-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-.staff-table th { text-align: left; padding: 10px 8px; color: #8888aa; font-weight: 500; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-.staff-table td { padding: 8px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 14px; }
-.staff-table tr:hover { background: rgba(255,255,255,0.03); }
-.staff-table input[type="checkbox"] { width: 18px; height: 18px; accent-color: #7c3aed; cursor: pointer; }
-
-.protocol-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-.protocol-table th { text-align: left; padding: 10px 8px; color: #8888aa; font-weight: 500; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-.protocol-table td { padding: 8px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 14px; }
-.protocol-table .btn-remove { background: rgba(255,70,70,0.15); color: #ff6b6b; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-.protocol-table .btn-remove:hover { background: rgba(255,70,70,0.25); }
-
-.program-check { display: flex; align-items: center; gap: 8px; color: #ccc; font-size: 14px; cursor: pointer; padding: 6px 12px; background: rgba(255,255,255,0.04); border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); transition: background 0.2s; }
-.program-check:hover { background: rgba(255,255,255,0.08); }
-.program-check input[type="checkbox"] { width: 18px; height: 18px; accent-color: #7c3aed; cursor: pointer; }
-
-.doc-check { display: flex; align-items: center; gap: 8px; color: #ccc; font-size: 14px; cursor: pointer; padding: 6px 12px; background: rgba(255,255,255,0.04); border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); transition: background 0.2s; }
-.doc-check:hover { background: rgba(255,255,255,0.08); }
-.doc-check input[type="checkbox"] { width: 18px; height: 18px; accent-color: #7c3aed; cursor: pointer; }
-
-.result-block { margin-top: 16px; padding: 20px; background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.2); border-radius: 12px; text-align: center; }
-.result-block h3 { color: #00d4ff; margin-bottom: 10px; }
-.result-block a { display: inline-block; background: #7c3aed; color: #fff; padding: 10px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 8px 0; }
-.result-block a:hover { background: #6a2fd4; }
-.result-block .btn-cancel { margin-top: 8px; }
-
-/* ===== КАРТА ===== */
-#mapCanvas { background: radial-gradient(ellipse at center, #141430 0%, #0a0a1a 100%); width: 100%; height: auto; aspect-ratio: 900/600; cursor: crosshair; touch-action: none; }
-
-/* ===== МОДАЛЬНЫЕ ОКНА ===== */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.modal-overlay.hidden { display: none !important; }
-.modal-content {
-    background: #1a1a3e;
-    border-radius: 24px;
-    max-width: 500px;
-    width: 90%;
-    padding: 0;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);
-    border: 1px solid rgba(255,255,255,0.1);
-    overflow: hidden;
-}
-.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-.modal-header h3 { margin: 0; color: #fff; font-size: 18px; }
-.modal-close { background: none; border: none; color: #a0a0c0; font-size: 24px; cursor: pointer; padding: 0 4px; transition: color 0.2s; }
-.modal-close:hover { color: #fff; }
-.modal-body { padding: 20px; }
-.modal-footer { display: flex; justify-content: flex-end; gap: 12px; padding: 12px 20px; border-top: 1px solid rgba(255,255,255,0.08); }
-.modal-footer .btn-primary { width: auto; padding: 8px 20px; }
-.modal-footer .btn-cancel { padding: 8px 20px; }
-
-#workshopSelect { cursor: pointer; }
-#workshopSelect option { background: #1a1a3e; color: #fff; }
-
-@media (max-width: 768px) { .hero-inner { grid-template-columns: 1fr; text-align: center; } .hero-title { font-size: 32px; } .hero-stats { justify-content: center; } .hero-buttons { justify-content: center; } .features-grid { grid-template-columns: 1fr 1fr; } .nav { gap: 4px; } .nav-link { padding: 6px 12px; font-size: 13px; } }
-@media (max-width: 500px) { .features-grid { grid-template-columns: 1fr; } }
-```
-
----
-
-### 3. `script.js` (ОБНОВЛЁННЫЙ — ПЕРЕТАСКИВАНИЕ, ФИКС РАСТЯГИВАНИЯ)
-
-```javascript
 // ============================================================
 // ПЕРЕКЛЮЧЕНИЕ СТРАНИЦ
 // ============================================================
@@ -831,4 +283,644 @@ function initTrainingPage() {
         let html = `<div style="text-align:center;margin-bottom:16px;"><h3 style="font-size:16px;font-weight:700;color:#fff;">ЛИСТ ОЗНАКОМЛЕНИЯ</h3><p style="color:#8888aa;font-size:13px;">с локальными нормативными актами и документами по охране труда</p></div>
             <table style="width:100%;border-collapse:collapse;margin-top:8px;"><tr><td style="padding:4px 8px;font-weight:600;width:200px;color:#ccc;">Организация:</td><td style="padding:4px 8px;color:#ccc;">${orgName}</td></tr>
             <tr><td style="padding:4px 8px;font-weight:600;color:#ccc;">ИНН:</td><td style="padding:4px 8px;color:#ccc;">${orgInn}</td></tr>
-            <tr><td style="padding:4px 8px;font-weight:600;color:#ccc;">Дата:</td><td style="padding:4px
+            <tr><td style="padding:4px 8px;font-weight:600;color:#ccc;">Дата:</td><td style="padding:4px 8px;color:#ccc;">${date}</td></tr></table>
+            <hr style="border-color:rgba(255,255,255,0.1);margin:12px 0;">
+            <table style="width:100%;border-collapse:collapse;margin-top:8px;"><tr style="border-bottom:1px solid rgba(255,255,255,0.08);"><th style="text-align:left;padding:8px;color:#8888aa;font-weight:500;">ФИО сотрудника</th><th style="text-align:left;padding:8px;color:#8888aa;font-weight:500;">Должность</th></tr>
+            <tr><td style="padding:8px;color:#ccc;">${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</td><td style="padding:8px;color:#ccc;">${emp.position}</td></tr></table>
+            <hr style="border-color:rgba(255,255,255,0.1);margin:12px 0;">
+            <table class="fam-table"><thead><tr><th style="text-align:left;padding:8px;color:#8888aa;font-weight:500;">№</th><th style="text-align:left;padding:8px;color:#8888aa;font-weight:500;">Наименование документа</th><th style="text-align:center;padding:8px;color:#8888aa;font-weight:500;">Ознакомлен</th><th style="text-align:center;padding:8px;color:#8888aa;font-weight:500;">Дата</th><th style="text-align:center;padding:8px;color:#8888aa;font-weight:500;">Подпись</th></tr></thead><tbody>`;
+        documents.forEach((doc, i) => { html += `<tr><td style="padding:8px;color:#ccc;">${i + 1}</td><td style="padding:8px;color:#ccc;">${doc}</td><td style="text-align:center;padding:8px;color:#ccc;">[ ]</td><td style="text-align:center;padding:8px;color:#ccc;">___ . ___ . 20___</td><td style="text-align:center;padding:8px;color:#ccc;">___________</td></tr>`; });
+        html += `</tbody></table><hr style="border-color:rgba(255,255,255,0.1);margin:12px 0;"><div style="font-size:12px;color:#8888aa;text-align:center;">С документами ознакомлен(а), согласен(на) и обязуюсь выполнять требования</div>
+            <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:12px;color:#8888aa;"><div>СОТ: ___________________ / _____________ /</div><div>Сотрудник: ___________________ / _____________ /</div></div>`;
+        contentDiv.innerHTML = html;
+        document.getElementById('famResult').classList.remove('hidden');
+    });
+    document.getElementById('printFamBtn').addEventListener('click', function() { window.print(); });
+}
+
+// ============================================================
+// КАРТА (ОБНОВЛЁННАЯ — ПЕРЕТАСКИВАНИЕ + ФИКС РАСТЯГИВАНИЯ)
+// ============================================================
+let mapData = {
+    workshops: [],
+    currentWorkshop: 0,
+    evacuationPoints: []
+};
+let mapMode = 'view';
+let mapInited = false;
+let tempWorkplacePos = null;
+let isDragging = false;
+let dragTarget = null;
+let dragOffsetX = 0, dragOffsetY = 0;
+let isResizing = false;
+let resizeCorner = '';
+let resizeStartX = 0, resizeStartY = 0;
+let resizeStartW = 0, resizeStartH = 0;
+let resizeStartXpos = 0, resizeStartYpos = 0;
+
+const canvas = document.getElementById('mapCanvas');
+const ctx = canvas.getContext('2d');
+
+function initMapPage() {
+    if (mapInited) return;
+    mapInited = true;
+    
+    // Загрузка данных
+    const saved = localStorage.getItem('mapData');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            if (parsed.workshops && parsed.workshops.length > 0) {
+                mapData = parsed;
+                if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
+                updateWorkshopSelect();
+                updateInfo();
+                drawMap();
+            }
+        } catch(e) {}
+    }
+    
+    // Если нет цехов — создаём дефолтный
+    if (mapData.workshops.length === 0) {
+        mapData.workshops.push({
+            id: Date.now(),
+            name: 'Основной цех',
+            length: 30,
+            width: 20,
+            x: 50, y: 50, w: 800, h: 500,
+            workplaces: []
+        });
+        mapData.currentWorkshop = 0;
+        mapData.evacuationPoints = [];
+        updateWorkshopSelect();
+        updateInfo();
+        drawMap();
+    }
+    
+    // События
+    document.getElementById('editWorkshopBtn').addEventListener('click', function() {
+        openWorkshopModal();
+    });
+    document.getElementById('addWorkerPlaceBtn').addEventListener('click', function() {
+        const ws = getCurrentWorkshop();
+        if (!ws) { alert('Сначала создайте участок'); return; }
+        mapMode = 'addWorkplace';
+        document.getElementById('mapMode').textContent = 'Добавление рабочего места';
+        document.getElementById('mapMode').style.color = '#ff6b6b';
+    });
+    document.getElementById('addEvacuationBtn').addEventListener('click', function() {
+        const ws = getCurrentWorkshop();
+        if (!ws) { alert('Сначала создайте участок'); return; }
+        mapMode = 'addEvacuation';
+        document.getElementById('mapMode').textContent = 'Добавление выхода';
+        document.getElementById('mapMode').style.color = '#4caf50';
+    });
+    document.getElementById('saveMapBtn').addEventListener('click', function() {
+        saveMap();
+    });
+    document.getElementById('saveWorkshopBtn').addEventListener('click', function() {
+        saveWorkshop();
+    });
+    document.getElementById('saveWorkplaceBtn').addEventListener('click', function() {
+        saveWorkplace();
+    });
+    document.getElementById('workshopSelect').addEventListener('change', function() {
+        mapData.currentWorkshop = parseInt(this.value);
+        updateInfo();
+        drawMap();
+        saveMap();
+    });
+    
+    setupCanvasEvents();
+    updateWorkshopSelect();
+    updateInfo();
+    drawMap();
+}
+
+function getCurrentWorkshop() {
+    return mapData.workshops[mapData.currentWorkshop] || null;
+}
+
+function updateWorkshopSelect() {
+    const select = document.getElementById('workshopSelect');
+    select.innerHTML = '';
+    mapData.workshops.forEach((ws, index) => {
+        const opt = document.createElement('option');
+        opt.value = index;
+        opt.textContent = ws.name || `Участок ${index + 1}`;
+        if (index === mapData.currentWorkshop) opt.selected = true;
+        select.appendChild(opt);
+    });
+}
+
+function updateInfo() {
+    const ws = getCurrentWorkshop();
+    document.getElementById('workshopSize').textContent = ws ? `${ws.name} (${ws.length}×${ws.width} м)` : 'не задан';
+    document.getElementById('workerCount').textContent = ws ? ws.workplaces.length : 0;
+    document.getElementById('evacuationCount').textContent = mapData.evacuationPoints ? mapData.evacuationPoints.length : 0;
+}
+
+function getCanvasCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = 900 / rect.width;
+    const scaleY = 600 / rect.height;
+    const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
+    const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
+    return { x: Math.max(0, Math.min(900, (clientX - rect.left) * scaleX)), y: Math.max(0, Math.min(600, (clientY - rect.top) * scaleY)) };
+}
+
+function drawMap() {
+    ctx.clearRect(0, 0, 900, 600);
+    
+    const ws = getCurrentWorkshop();
+    if (!ws) return;
+    
+    // Фон
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, 900, 600);
+    
+    // Сетка
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i < 900; i += 50) {
+        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 600); ctx.stroke();
+    }
+    for (let i = 0; i < 600; i += 50) {
+        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(900, i); ctx.stroke();
+    }
+    
+    // Рисуем участок
+    const grad = ctx.createLinearGradient(ws.x, ws.y, ws.x + ws.w, ws.y + ws.h);
+    grad.addColorStop(0, 'rgba(74, 158, 255, 0.06)');
+    grad.addColorStop(1, 'rgba(74, 158, 255, 0.02)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(ws.x, ws.y, ws.w, ws.h);
+    ctx.strokeStyle = '#4a9eff';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.strokeRect(ws.x, ws.y, ws.w, ws.h);
+    ctx.setLineDash([]);
+    
+    // Название участка
+    ctx.fillStyle = 'rgba(74, 158, 255, 0.6)';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`🏭 ${ws.name} (${ws.length}×${ws.width} м)`, ws.x + ws.w/2, ws.y + 30);
+    
+    // Углы для растягивания
+    const corners = [
+        { cx: ws.x, cy: ws.y, cursor: 'nw-resize' },
+        { cx: ws.x + ws.w, cy: ws.y, cursor: 'ne-resize' },
+        { cx: ws.x, cy: ws.y + ws.h, cursor: 'sw-resize' },
+        { cx: ws.x + ws.w, cy: ws.y + ws.h, cursor: 'se-resize' }
+    ];
+    corners.forEach(c => {
+        ctx.fillStyle = 'rgba(74, 158, 255, 0.8)';
+        ctx.fillRect(c.cx - 6, c.cy - 6, 12, 12);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(c.cx - 6, c.cy - 6, 12, 12);
+    });
+    
+    // Рабочие места с чёрно-жёлтой зоной
+    if (ws.workplaces) {
+        ws.workplaces.forEach((wp) => {
+            const zoneSize = wp.zone || 40;
+            const x = wp.x - zoneSize/2;
+            const y = wp.y - zoneSize/2 - 10;
+            const w = zoneSize;
+            const h = zoneSize;
+            
+            // Жёлтый фон
+            ctx.fillStyle = 'rgba(255, 193, 7, 0.3)';
+            ctx.fillRect(x, y, w, h);
+            
+            // Чёрные диагональные полосы
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(x, y, w, h);
+            ctx.clip();
+            
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.lineWidth = 4;
+            for (let i = -h; i < w + h; i += 12) {
+                ctx.beginPath();
+                ctx.moveTo(x + i, y);
+                ctx.lineTo(x + i + h, y + h);
+                ctx.stroke();
+            }
+            ctx.restore();
+            
+            // Рамка зоны
+            ctx.strokeStyle = 'rgba(255, 193, 7, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, w, h);
+            
+            // Человечек (внутри зоны, по центру)
+            ctx.fillStyle = '#ff6b6b';
+            ctx.shadowColor = 'rgba(255, 107, 107, 0.3)';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(wp.x, wp.y - 10, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillRect(wp.x - 7, wp.y - 2, 14, 18);
+            ctx.fillRect(wp.x - 12, wp.y + 12, 7, 10);
+            ctx.fillRect(wp.x + 5, wp.y + 12, 7, 10);
+            
+            // Название
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(wp.name.substring(0, 14), wp.x, wp.y + 42);
+            if (wp.position) {
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.font = '8px sans-serif';
+                ctx.fillText(wp.position.substring(0, 16), wp.x, wp.y + 54);
+            }
+        });
+    }
+    
+    // Точки эвакуации
+    if (mapData.evacuationPoints) {
+        mapData.evacuationPoints.forEach((ep) => {
+            const ew = 60, eh = 30;
+            const ex = ep.x - ew/2;
+            const ey = ep.y - eh/2;
+            
+            ctx.fillStyle = '#2e7d32';
+            ctx.shadowColor = 'rgba(46, 125, 50, 0.4)';
+            ctx.shadowBlur = 15;
+            ctx.fillRect(ex, ey, ew, eh);
+            ctx.shadowBlur = 0;
+            
+            ctx.strokeStyle = '#4caf50';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(ex, ey, ew, eh);
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('ВЫХОД', ep.x, ep.y);
+            ctx.textBaseline = 'alphabetic';
+        });
+    }
+}
+
+function setupCanvasEvents() {
+    // === КЛИК ДЛЯ ДОБАВЛЕНИЯ ===
+    canvas.addEventListener('click', function(e) {
+        const coords = getCanvasCoords(e);
+        const ws = getCurrentWorkshop();
+        if (!ws) return;
+        // Проверяем, что клик внутри участка
+        if (coords.x < ws.x || coords.x > ws.x + ws.w || coords.y < ws.y || coords.y > ws.y + ws.h) {
+            alert('Кликните внутри участка');
+            return;
+        }
+        if (mapMode === 'addWorkplace') {
+            openWorkplaceModal(coords.x, coords.y);
+        } else if (mapMode === 'addEvacuation') {
+            const name = prompt('Введите название выхода (опционально):', '');
+            if (name !== null) {
+                if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
+                mapData.evacuationPoints.push({ x: coords.x, y: coords.y, name: name.trim() || 'Выход', id: Date.now() });
+                updateInfo();
+                drawMap();
+                saveMap();
+                mapMode = 'view';
+                document.getElementById('mapMode').textContent = 'Просмотр';
+                document.getElementById('mapMode').style.color = '#00d4ff';
+            }
+        }
+    });
+    
+    // === ДВОЙНОЙ КЛИК ДЛЯ УДАЛЕНИЯ ===
+    canvas.addEventListener('dblclick', function(e) {
+        const coords = getCanvasCoords(e);
+        const ws = getCurrentWorkshop();
+        if (!ws) return;
+        
+        // Проверяем рабочие места
+        let found = -1;
+        if (ws.workplaces) {
+            ws.workplaces.forEach((wp, index) => {
+                const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
+                if (dist < 20) found = index;
+            });
+            if (found >= 0) {
+                if (confirm(`Удалить рабочее место "${ws.workplaces[found].name}"?`)) {
+                    ws.workplaces.splice(found, 1);
+                    updateInfo();
+                    drawMap();
+                    saveMap();
+                    return;
+                }
+            }
+        }
+        // Проверяем выходы
+        if (mapData.evacuationPoints) {
+            let evacFound = -1;
+            mapData.evacuationPoints.forEach((ep, index) => {
+                const dist = Math.sqrt((coords.x - ep.x) ** 2 + (coords.y - ep.y) ** 2);
+                if (dist < 20) evacFound = index;
+            });
+            if (evacFound >= 0) {
+                if (confirm(`Удалить выход "${mapData.evacuationPoints[evacFound].name}"?`)) {
+                    mapData.evacuationPoints.splice(evacFound, 1);
+                    updateInfo();
+                    drawMap();
+                    saveMap();
+                    return;
+                }
+            }
+        }
+    });
+    
+    // === НАЧАЛО ПЕРЕТАСКИВАНИЯ (ЛКМ ПО ЧЕЛОВЕЧКУ) ===
+    canvas.addEventListener('mousedown', function(e) {
+        const coords = getCanvasCoords(e);
+        const ws = getCurrentWorkshop();
+        if (!ws) return;
+        
+        // Проверяем, кликнули ли по человечку (рабочему месту)
+        if (ws.workplaces) {
+            for (let i = ws.workplaces.length - 1; i >= 0; i--) {
+                const wp = ws.workplaces[i];
+                const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
+                if (dist < 20) {
+                    isDragging = true;
+                    dragTarget = i;
+                    dragOffsetX = coords.x - wp.x;
+                    dragOffsetY = coords.y - wp.y;
+                    canvas.style.cursor = 'grabbing';
+                    return;
+                }
+            }
+        }
+        
+        // Проверяем углы для растягивания
+        const corners = [
+            { cx: ws.x, cy: ws.y, corner: 'tl' },
+            { cx: ws.x + ws.w, cy: ws.y, corner: 'tr' },
+            { cx: ws.x, cy: ws.y + ws.h, corner: 'bl' },
+            { cx: ws.x + ws.w, cy: ws.y + ws.h, corner: 'br' }
+        ];
+        for (let c of corners) {
+            if (Math.abs(coords.x - c.cx) < 10 && Math.abs(coords.y - c.cy) < 10) {
+                isResizing = true;
+                resizeCorner = c.corner;
+                resizeStartX = coords.x;
+                resizeStartY = coords.y;
+                resizeStartW = ws.w;
+                resizeStartH = ws.h;
+                resizeStartXpos = ws.x;
+                resizeStartYpos = ws.y;
+                canvas.style.cursor = c.cursor === 'tl' ? 'nw-resize' : c.cursor === 'tr' ? 'ne-resize' : c.cursor === 'bl' ? 'sw-resize' : 'se-resize';
+                return;
+            }
+        }
+    });
+    
+    // === ДВИЖЕНИЕ МЫШИ ===
+    canvas.addEventListener('mousemove', function(e) {
+        const coords = getCanvasCoords(e);
+        const ws = getCurrentWorkshop();
+        if (!ws) return;
+        
+        // Перетаскивание человечка
+        if (isDragging && dragTarget !== null) {
+            const wp = ws.workplaces[dragTarget];
+            if (wp) {
+                let newX = coords.x - dragOffsetX;
+                let newY = coords.y - dragOffsetY;
+                // Ограничиваем внутри участка
+                newX = Math.max(ws.x + 10, Math.min(ws.x + ws.w - 10, newX));
+                newY = Math.max(ws.y + 10, Math.min(ws.y + ws.h - 10, newY));
+                wp.x = newX;
+                wp.y = newY;
+                drawMap();
+            }
+            return;
+        }
+        
+        // Растягивание участка
+        if (isResizing) {
+            const dx = coords.x - resizeStartX;
+            const dy = coords.y - resizeStartY;
+            
+            switch(resizeCorner) {
+                case 'tl':
+                    ws.x = Math.max(0, Math.min(900 - 50, resizeStartXpos + dx));
+                    ws.y = Math.max(0, Math.min(600 - 50, resizeStartYpos + dy));
+                    ws.w = Math.max(50, resizeStartW - dx);
+                    ws.h = Math.max(50, resizeStartH - dy);
+                    break;
+                case 'tr':
+                    ws.y = Math.max(0, Math.min(600 - 50, resizeStartYpos + dy));
+                    ws.w = Math.max(50, resizeStartW + dx);
+                    ws.h = Math.max(50, resizeStartH - dy);
+                    break;
+                case 'bl':
+                    ws.x = Math.max(0, Math.min(900 - 50, resizeStartXpos + dx));
+                    ws.w = Math.max(50, resizeStartW - dx);
+                    ws.h = Math.max(50, resizeStartH + dy);
+                    break;
+                case 'br':
+                    ws.w = Math.max(50, resizeStartW + dx);
+                    ws.h = Math.max(50, resizeStartH + dy);
+                    break;
+            }
+            drawMap();
+            return;
+        }
+        
+        // Меняем курсор при наведении на углы или человечков
+        let cursor = 'default';
+        
+        // Проверяем человечков
+        if (ws.workplaces) {
+            for (let wp of ws.workplaces) {
+                const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
+                if (dist < 20) {
+                    cursor = 'grab';
+                    break;
+                }
+            }
+        }
+        
+        // Проверяем углы (если не наведены на человечка)
+        if (cursor === 'default') {
+            const corners = [
+                { cx: ws.x, cy: ws.y, c: 'nw-resize' },
+                { cx: ws.x + ws.w, cy: ws.y, c: 'ne-resize' },
+                { cx: ws.x, cy: ws.y + ws.h, c: 'sw-resize' },
+                { cx: ws.x + ws.w, cy: ws.y + ws.h, c: 'se-resize' }
+            ];
+            for (let c of corners) {
+                if (Math.abs(coords.x - c.cx) < 10 && Math.abs(coords.y - c.cy) < 10) {
+                    cursor = c.c;
+                    break;
+                }
+            }
+        }
+        
+        canvas.style.cursor = cursor;
+    });
+    
+    // === ОТПУСКАНИЕ ЛКМ ===
+    canvas.addEventListener('mouseup', function(e) {
+        if (isDragging) {
+            isDragging = false;
+            dragTarget = null;
+            canvas.style.cursor = 'default';
+            saveMap();
+        }
+        if (isResizing) {
+            isResizing = false;
+            canvas.style.cursor = 'default';
+            saveMap();
+        }
+    });
+    
+    canvas.addEventListener('mouseleave', function() {
+        if (isDragging) {
+            isDragging = false;
+            dragTarget = null;
+            canvas.style.cursor = 'default';
+            saveMap();
+        }
+        if (isResizing) {
+            isResizing = false;
+            canvas.style.cursor = 'default';
+            saveMap();
+        }
+    });
+}
+
+function openWorkshopModal() {
+    const ws = getCurrentWorkshop();
+    if (!ws) { alert('Сначала создайте участок'); return; }
+    const modal = document.getElementById('workshopModal');
+    modal.classList.remove('hidden');
+    document.getElementById('workshopNameInput').value = ws.name || '';
+    document.getElementById('workshopLengthInput').value = ws.length || 30;
+    document.getElementById('workshopWidthInput').value = ws.width || 20;
+    document.getElementById('workshopNameInput').focus();
+}
+
+function closeWorkshopModal() {
+    document.getElementById('workshopModal').classList.add('hidden');
+}
+
+function saveWorkshop() {
+    const ws = getCurrentWorkshop();
+    if (!ws) return;
+    const name = document.getElementById('workshopNameInput').value.trim() || 'Участок';
+    const length = parseInt(document.getElementById('workshopLengthInput').value) || 30;
+    const width = parseInt(document.getElementById('workshopWidthInput').value) || 20;
+    ws.name = name;
+    ws.length = length;
+    ws.width = width;
+    closeWorkshopModal();
+    updateWorkshopSelect();
+    updateInfo();
+    drawMap();
+    saveMap();
+}
+
+function openWorkplaceModal(x, y) {
+    tempWorkplacePos = { x, y };
+    const modal = document.getElementById('workplaceModal');
+    modal.classList.remove('hidden');
+    document.getElementById('workplaceNameInput').value = '';
+    document.getElementById('workplacePositionInput').value = '';
+    document.getElementById('workplaceZoneInput').value = 40;
+    document.getElementById('workplaceNameInput').focus();
+}
+
+function closeWorkplaceModal() {
+    document.getElementById('workplaceModal').classList.add('hidden');
+    tempWorkplacePos = null;
+    mapMode = 'view';
+    document.getElementById('mapMode').textContent = 'Просмотр';
+    document.getElementById('mapMode').style.color = '#00d4ff';
+}
+
+function saveWorkplace() {
+    if (!tempWorkplacePos) return;
+    const ws = getCurrentWorkshop();
+    if (!ws) return;
+    const name = document.getElementById('workplaceNameInput').value.trim() || 'Рабочее место ' + (ws.workplaces.length + 1);
+    const position = document.getElementById('workplacePositionInput').value.trim() || '';
+    const zone = parseInt(document.getElementById('workplaceZoneInput').value) || 40;
+    ws.workplaces.push({ x: tempWorkplacePos.x, y: tempWorkplacePos.y, name: name, position: position, zone: zone, id: Date.now() });
+    closeWorkplaceModal();
+    updateInfo();
+    drawMap();
+    saveMap();
+}
+
+function addNewWorkshop() {
+    const name = prompt('Введите название нового участка:', 'Участок ' + (mapData.workshops.length + 1));
+    if (!name) return;
+    mapData.workshops.push({
+        id: Date.now(),
+        name: name,
+        length: 30,
+        width: 20,
+        x: 50, y: 50, w: 800, h: 500,
+        workplaces: []
+    });
+    mapData.currentWorkshop = mapData.workshops.length - 1;
+    if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
+    updateWorkshopSelect();
+    updateInfo();
+    drawMap();
+    saveMap();
+}
+
+function deleteWorkshop() {
+    if (mapData.workshops.length <= 1) {
+        alert('Нельзя удалить единственный участок');
+        return;
+    }
+    if (!confirm('Удалить текущий участок со всеми данными?')) return;
+    mapData.workshops.splice(mapData.currentWorkshop, 1);
+    if (mapData.currentWorkshop >= mapData.workshops.length) {
+        mapData.currentWorkshop = mapData.workshops.length - 1;
+    }
+    updateWorkshopSelect();
+    updateInfo();
+    drawMap();
+    saveMap();
+}
+
+function saveMap() {
+    localStorage.setItem('mapData', JSON.stringify(mapData));
+    alert('✅ Карта сохранена!');
+}
+
+function clearMap() {
+    if (!confirm('Очистить текущий участок?')) return;
+    const ws = getCurrentWorkshop();
+    if (ws) {
+        ws.workplaces = [];
+        mapData.evacuationPoints = [];
+        updateInfo();
+        drawMap();
+        saveMap();
+    }
+}
+
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('mainPage').style.display = 'block';
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.textContent.trim() === 'Главная') link.classList.add('active');
+    });
+});
