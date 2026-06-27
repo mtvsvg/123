@@ -262,6 +262,13 @@
             <canvas id="mapCanvas" style="width:100%;height:auto;display:block;cursor:crosshair;touch-action:none;background:radial-gradient(ellipse at center,#141430 0%,#0a0a1a 100%);"></canvas>
         </div>
 
+        <!-- Контекстное меню (ПКМ) -->
+        <div id="contextMenu" class="context-menu hidden">
+            <div class="context-menu-item" onclick="showWorkplacePPE()">🦺 Подобрать СИЗ</div>
+            <div class="context-menu-item" onclick="editWorkplace()">✏️ Редактировать</div>
+            <div class="context-menu-item" onclick="deleteWorkplace()">🗑 Удалить</div>
+        </div>
+
         <div style="display:flex;gap:20px;margin-top:12px;flex-wrap:wrap;padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid rgba(255,255,255,0.04);">
             <span style="color:#8888aa;font-size:12px;">🟦 <span style="color:#4a9eff;">Участок</span></span>
             <span style="color:#8888aa;font-size:12px;">👤 <span style="color:#ff6b6b;">Рабочее место</span></span>
@@ -269,6 +276,51 @@
             <span style="color:#8888aa;font-size:12px;">🚪 <span style="color:#4caf50;">Выход</span></span>
             <span style="color:#8888aa;font-size:12px;">🔄 <span style="color:#8888aa;">Перетащите человечка</span></span>
             <span style="color:#8888aa;font-size:12px;">❌ <span style="color:#ff6b6b;">Двойной клик — удалить</span></span>
+            <span style="color:#8888aa;font-size:12px;">🖱️ <span style="color:#00d4ff;">ПКМ — СИЗ</span></span>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- МОДАЛЬНОЕ ОКНО ДЛЯ СИЗ -->
+<!-- ============================================================ -->
+<div id="ppeModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width:700px;max-height:80vh;overflow-y:auto;">
+        <div class="modal-header">
+            <h3>🦺 Средства индивидуальной защиты</h3>
+            <button class="modal-close" onclick="closePPEModal()">✖</button>
+        </div>
+        <div class="modal-body">
+            <div id="ppeLoading" style="text-align:center;padding:20px;color:#8888aa;">
+                ⏳ Загрузка данных...
+            </div>
+            <div id="ppeContent" style="display:none;">
+                <div style="background:rgba(124,58,237,0.1);padding:12px;border-radius:8px;margin-bottom:16px;border:1px solid rgba(124,58,237,0.2);">
+                    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                        <span style="color:#ccc;">👤 <strong id="ppeEmployeeName" style="color:#fff;">Сотрудник</strong></span>
+                        <span style="color:#ccc;">💼 <strong id="ppePosition" style="color:#fff;">Должность</strong></span>
+                    </div>
+                </div>
+                <div id="ppeList" style="display:flex;flex-direction:column;gap:8px;">
+                    <!-- Сюда будет вставлен список СИЗ -->
+                </div>
+                <div style="margin-top:16px;padding:12px;background:rgba(0,212,255,0.05);border-radius:8px;border:1px solid rgba(0,212,255,0.1);">
+                    <p style="color:#8888aa;font-size:12px;margin:0;">
+                        📋 Данные основаны на <strong>Приказе Минтруда РФ от 29.10.2021 № 767н</strong> 
+                        и актуальны на текущую дату.
+                    </p>
+                    <p style="color:#8888aa;font-size:12px;margin:4px 0 0 0;">
+                        🔗 Источник: <a href="https://xn--80akibicpdbetz7e2g.xn--p1ai/ppe" target="_blank" style="color:#7c3aed;text-decoration:none;">Онлайн Инспекция</a>
+                    </p>
+                </div>
+            </div>
+            <div id="ppeError" style="display:none;text-align:center;padding:20px;color:#ff6b6b;">
+                ❌ Не удалось загрузить данные. Попробуйте позже.
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closePPEModal()">Закрыть</button>
+            <button class="btn-primary" onclick="exportPPE()" style="width:auto;padding:10px 24px;">📥 Экспорт в PDF</button>
         </div>
     </div>
 </div>
@@ -316,12 +368,15 @@
                 <input type="text" id="workplaceNameInput" placeholder="Токарный станок №3">
             </div>
             <div class="form-group">
-                <label>Должность сотрудника (опционально)</label>
+                <label>Должность/Профессия сотрудника</label>
                 <input type="text" id="workplacePositionInput" placeholder="Токарь">
+                <div style="font-size:12px;color:#8888aa;margin-top:4px;">
+                    💡 Введите должность для подбора СИЗ по Приказу 767н
+                </div>
             </div>
             <div class="form-group">
                 <label>Размер зоны (px)</label>
-                <input type="number" id="workplaceZoneInput" value="40" min="10" max="100">
+                <input type="number" id="workplaceZoneInput" value="50" min="10" max="100">
             </div>
         </div>
         <div class="modal-footer">
