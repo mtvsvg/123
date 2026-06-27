@@ -149,11 +149,10 @@ input::placeholder { color: #666; }
 #workshopSelect { cursor: pointer; }
 #workshopSelect option { background: #1a1a3e; color: #fff; }
 
-/* ===== КАНВАС НА ВСЮ ШИРИНУ ===== */
 #mapCanvas {
     width: 100% !important;
     height: auto !important;
-    min-height: 550px;
+    min-height: 500px;
     max-height: 80vh;
     aspect-ratio: auto;
     background: radial-gradient(ellipse at center, #141430 0%, #0a0a1a 100%);
