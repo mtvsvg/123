@@ -17,7 +17,6 @@ function showPage(page) {
         document.getElementById('mapPage').classList.remove('hidden');
         document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
         document.querySelectorAll('.nav-link').forEach(link => { if (link.textContent.trim() === 'Карта') link.classList.add('active'); });
-        initMapPage();
     } else if (page === 'risks') {
         document.getElementById('risksPage').classList.remove('hidden');
         document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
@@ -139,7 +138,7 @@ function fillFamEmployeeSelect() {
 }
 
 // ============================================================
-// ПАРСЕР (РАБОТАЕТ)
+// ПАРСЕР
 // ============================================================
 function smartParse(content) {
     const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
@@ -299,70 +298,12 @@ function initTrainingPage() {
 }
 
 // ============================================================
-// КАРТА РАБОЧИХ МЕСТ
+// ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
 // ============================================================
-let mapData = { walls: [], workers: [] };
-let mapMode = 'view';
-let selectedMap = 'default';
-let mapInited = false;
-let isDrawingWall = false;
-let wallStartX = 0, wallStartY = 0;
-let dragIndex = null, dragOffsetX = 0, dragOffsetY = 0;
-const canvas = document.getElementById('mapCanvas');
-const ctx = canvas.getContext('2d');
-
-function initMapPage() {
-    if (mapInited) return;
-    mapInited = true;
-    document.getElementById('mapSelect').addEventListener('change', function() { selectedMap = this.value; loadMap(); });
-    document.getElementById('addWallBtn').addEventListener('click', function() { mapMode = 'addWall'; document.getElementById('mapMode').textContent = 'Добавление стены'; document.getElementById('mapMode').style.color = '#4a9eff'; });
-    document.getElementById('addWorkerBtn').addEventListener('click', function() {
-        const staff = getStaff();
-        if (staff.length === 0) { alert('Сначала загрузите штатное расписание на вкладке "Обучение"'); return; }
-        mapMode = 'addWorker';
-        document.getElementById('mapMode').textContent = 'Добавление рабочего места';
-        document.getElementById('mapMode').style.color = '#ff6b6b';
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('mainPage').style.display = 'block';
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.textContent.trim() === 'Главная') link.classList.add('active');
     });
-    document.getElementById('saveMapBtn').addEventListener('click', function() { saveMap(); });
-    loadMap();
-    setupCanvasEvents();
-}
-
-function loadMap() {
-    const saved = localStorage.getItem('mapData_' + selectedMap);
-    mapData = saved ? JSON.parse(saved) : { walls: [], workers: [] };
-    updateCounters();
-    drawMap();
-}
-
-function saveMap() {
-    localStorage.setItem('mapData_' + selectedMap, JSON.stringify(mapData));
-    alert('✅ Карта сохранена!');
-}
-
-function clearMap() {
-    if (!confirm('Очистить всю карту?')) return;
-    mapData = { walls: [], workers: [] };
-    updateCounters();
-    drawMap();
-}
-
-function updateCounters() {
-    document.getElementById('wallCount').textContent = mapData.walls.length;
-    document.getElementById('workerCount').textContent = mapData.workers.length;
-}
-
-function getCanvasCoords(e) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = 900 / rect.width;
-    const scaleY = 600 / rect.height;
-    const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
-    const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
-    return { x: Math.max(0, Math.min(900, (clientX - rect.left) * scaleX)), y: Math.max(0, Math.min(600, (clientY - rect.top) * scaleY)) };
-}
-
-function drawMap() {
-    ctx.clearRect(0, 0, 900, 600);
-    // Сетка
-    ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 0.5;
-    for (let i = 0; i < 900; i += 50) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 600); ctx.st
+});
