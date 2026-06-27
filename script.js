@@ -17,6 +17,7 @@ function showPage(page) {
         document.getElementById('mapPage').classList.remove('hidden');
         document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
         document.querySelectorAll('.nav-link').forEach(link => { if (link.textContent.trim() === 'Карта') link.classList.add('active'); });
+        initMapPage();
     } else if (page === 'risks') {
         document.getElementById('risksPage').classList.remove('hidden');
         document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
@@ -304,8 +305,7 @@ let mapData = {
     workshop: { name: '', length: 30, width: 20, x: 50, y: 50, w: 800, h: 500 },
     workplaces: []
 };
-
-let mapMode = 'view'; // 'view' | 'addWorkplace'
+let mapMode = 'view';
 let mapInited = false;
 let tempWorkplacePos = null;
 
@@ -561,19 +561,17 @@ function setupCanvasEvents() {
         const coords = getCanvasCoords(e);
         
         if (mapMode === 'addWorkplace') {
-            // Проверяем, что клик внутри цеха
             const w = mapData.workshop;
-            if (coords.x >= w.x && coords.x <= w.x + w.w && coords.y >= w.y && coords.y <= w.y + w.h) {
+            if (w.name && coords.x >= w.x && coords.x <= w.x + w.w && coords.y >= w.y && coords.y <= w.y + w.h) {
                 openWorkplaceModal(coords.x, coords.y);
             } else {
-                alert('Кликните внутри цеха');
+                alert('Сначала задайте цех и кликните внутри него');
             }
         }
     });
     
     canvas.addEventListener('dblclick', function(e) {
         const coords = getCanvasCoords(e);
-        // Проверяем, кликнули ли по рабочему месту
         let found = -1;
         mapData.workplaces.forEach((wp, index) => {
             const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
@@ -589,3 +587,14 @@ function setupCanvasEvents() {
         }
     });
 }
+
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('mainPage').style.display = 'block';
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.textContent.trim() === 'Главная') link.classList.add('active');
+    });
+});
