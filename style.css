@@ -151,5 +151,14 @@ input::placeholder { color: #666; }
 #workshopSelect { cursor: pointer; }
 #workshopSelect option { background: #1a1a3e; color: #fff; }
 
+/* ===== УВЕЛИЧИВАЕМ РАЗМЕР КАНВАСА ===== */
+#mapCanvas {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1200/600;
+    max-width: 100%;
+    min-height: 500px;
+}
+
 @media (max-width: 768px) { .hero-inner { grid-template-columns: 1fr; text-align: center; } .hero-title { font-size: 32px; } .hero-stats { justify-content: center; } .hero-buttons { justify-content: center; } .features-grid { grid-template-columns: 1fr 1fr; } .nav { gap: 4px; } .nav-link { padding: 6px 12px; font-size: 13px; } }
 @media (max-width: 500px) { .features-grid { grid-template-columns: 1fr; } }
