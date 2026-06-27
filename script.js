@@ -298,12 +298,294 @@ function initTrainingPage() {
 }
 
 // ============================================================
-// ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
+// КАРТА ЦЕХА
 // ============================================================
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('mainPage').style.display = 'block';
-    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-    document.querySelectorAll('.nav-link').forEach(link => {
-        if (link.textContent.trim() === 'Главная') link.classList.add('active');
+let mapData = {
+    workshop: { name: '', length: 30, width: 20, x: 50, y: 50, w: 800, h: 500 },
+    workplaces: []
+};
+
+let mapMode = 'view'; // 'view' | 'addWorkplace'
+let mapInited = false;
+let tempWorkplacePos = null;
+
+const canvas = document.getElementById('mapCanvas');
+const ctx = canvas.getContext('2d');
+
+function initMapPage() {
+    if (mapInited) return;
+    mapInited = true;
+    
+    loadMap();
+    
+    document.getElementById('setWorkshopBtn').addEventListener('click', function() {
+        openWorkshopModal();
     });
-});
+    
+    document.getElementById('addWorkerPlaceBtn').addEventListener('click', function() {
+        mapMode = 'addWorkplace';
+        document.getElementById('mapMode').textContent = 'Добавление рабочего места';
+        document.getElementById('mapMode').style.color = '#ff6b6b';
+    });
+    
+    document.getElementById('saveMapBtn').addEventListener('click', function() {
+        saveMap();
+    });
+    
+    document.getElementById('saveWorkshopBtn').addEventListener('click', function() {
+        saveWorkshop();
+    });
+    
+    document.getElementById('saveWorkplaceBtn').addEventListener('click', function() {
+        saveWorkplace();
+    });
+    
+    setupCanvasEvents();
+}
+
+function openWorkshopModal() {
+    const modal = document.getElementById('workshopModal');
+    modal.classList.remove('hidden');
+    document.getElementById('workshopNameInput').value = mapData.workshop.name || '';
+    document.getElementById('workshopLengthInput').value = mapData.workshop.length || 30;
+    document.getElementById('workshopWidthInput').value = mapData.workshop.width || 20;
+    document.getElementById('workshopNameInput').focus();
+}
+
+function closeWorkshopModal() {
+    document.getElementById('workshopModal').classList.add('hidden');
+}
+
+function saveWorkshop() {
+    const name = document.getElementById('workshopNameInput').value.trim() || 'Цех';
+    const length = parseInt(document.getElementById('workshopLengthInput').value) || 30;
+    const width = parseInt(document.getElementById('workshopWidthInput').value) || 20;
+    
+    mapData.workshop.name = name;
+    mapData.workshop.length = length;
+    mapData.workshop.width = width;
+    
+    closeWorkshopModal();
+    updateInfo();
+    drawMap();
+    saveMap();
+}
+
+function openWorkplaceModal(x, y) {
+    tempWorkplacePos = { x, y };
+    const modal = document.getElementById('workplaceModal');
+    modal.classList.remove('hidden');
+    document.getElementById('workplaceNameInput').value = '';
+    document.getElementById('workplacePositionInput').value = '';
+    document.getElementById('workplaceNameInput').focus();
+}
+
+function closeWorkplaceModal() {
+    document.getElementById('workplaceModal').classList.add('hidden');
+    tempWorkplacePos = null;
+    mapMode = 'view';
+    document.getElementById('mapMode').textContent = 'Просмотр';
+    document.getElementById('mapMode').style.color = '#00d4ff';
+}
+
+function saveWorkplace() {
+    if (!tempWorkplacePos) return;
+    const name = document.getElementById('workplaceNameInput').value.trim() || 'Рабочее место ' + (mapData.workplaces.length + 1);
+    const position = document.getElementById('workplacePositionInput').value.trim() || '';
+    
+    mapData.workplaces.push({
+        x: tempWorkplacePos.x,
+        y: tempWorkplacePos.y,
+        name: name,
+        position: position,
+        id: Date.now()
+    });
+    
+    closeWorkplaceModal();
+    updateInfo();
+    drawMap();
+    saveMap();
+}
+
+function loadMap() {
+    const saved = localStorage.getItem('mapData');
+    if (saved) {
+        try {
+            mapData = JSON.parse(saved);
+        } catch(e) {
+            mapData = { workshop: { name: '', length: 30, width: 20, x: 50, y: 50, w: 800, h: 500 }, workplaces: [] };
+        }
+    }
+    updateInfo();
+    drawMap();
+}
+
+function saveMap() {
+    localStorage.setItem('mapData', JSON.stringify(mapData));
+    alert('✅ Карта сохранена!');
+}
+
+function clearMap() {
+    if (!confirm('Очистить всю карту?')) return;
+    mapData = { workshop: { name: '', length: 30, width: 20, x: 50, y: 50, w: 800, h: 500 }, workplaces: [] };
+    updateInfo();
+    drawMap();
+}
+
+function updateInfo() {
+    const w = mapData.workshop;
+    document.getElementById('workshopSize').textContent = w.name ? `${w.name} (${w.length}×${w.width} м)` : 'не задан';
+    document.getElementById('workerCount').textContent = mapData.workplaces.length;
+}
+
+function getCanvasCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = 900 / rect.width;
+    const scaleY = 600 / rect.height;
+    const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
+    const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
+    return { x: Math.max(0, Math.min(900, (clientX - rect.left) * scaleX)), y: Math.max(0, Math.min(600, (clientY - rect.top) * scaleY)) };
+}
+
+function drawMap() {
+    ctx.clearRect(0, 0, 900, 600);
+    
+    // Фон
+    const grad = ctx.createRadialGradient(450, 300, 100, 450, 300, 500);
+    grad.addColorStop(0, '#141430');
+    grad.addColorStop(1, '#0a0a1a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 900, 600);
+    
+    // Сетка
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i < 900; i += 50) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, 600);
+        ctx.stroke();
+    }
+    for (let i = 0; i < 600; i += 50) {
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(900, i);
+        ctx.stroke();
+    }
+    
+    const w = mapData.workshop;
+    
+    // Рисуем цех
+    if (w.name) {
+        // Тень
+        ctx.shadowColor = 'rgba(74, 158, 255, 0.15)';
+        ctx.shadowBlur = 30;
+        
+        // Заливка
+        const grad2 = ctx.createLinearGradient(w.x, w.y, w.x + w.w, w.y + w.h);
+        grad2.addColorStop(0, 'rgba(74, 158, 255, 0.08)');
+        grad2.addColorStop(1, 'rgba(74, 158, 255, 0.02)');
+        ctx.fillStyle = grad2;
+        ctx.shadowBlur = 0;
+        ctx.fillRect(w.x, w.y, w.w, w.h);
+        
+        // Рамка
+        ctx.strokeStyle = '#4a9eff';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.strokeRect(w.x, w.y, w.w, w.h);
+        ctx.setLineDash([]);
+        
+        // Название цеха
+        ctx.fillStyle = 'rgba(74, 158, 255, 0.6)';
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`🏭 ${w.name} (${w.length}×${w.width} м)`, w.x + w.w/2, w.y + 30);
+        
+        // Размеры
+        ctx.fillStyle = 'rgba(74, 158, 255, 0.3)';
+        ctx.font = '11px sans-serif';
+        ctx.fillText(`${w.length} м`, w.x + w.w/2, w.y + w.h + 20);
+        ctx.save();
+        ctx.translate(w.x - 20, w.y + w.h/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.fillText(`${w.width} м`, 0, 0);
+        ctx.restore();
+    }
+    
+    // Рисуем рабочие места
+    mapData.workplaces.forEach((wp, index) => {
+        // Круг подсветки
+        const grad3 = ctx.createRadialGradient(wp.x, wp.y, 2, wp.x, wp.y, 25);
+        grad3.addColorStop(0, 'rgba(255, 107, 107, 0.3)');
+        grad3.addColorStop(1, 'rgba(255, 107, 107, 0)');
+        ctx.fillStyle = grad3;
+        ctx.beginPath();
+        ctx.arc(wp.x, wp.y, 25, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Человечек
+        ctx.shadowColor = 'rgba(255, 107, 107, 0.3)';
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = '#ff6b6b';
+        ctx.beginPath();
+        ctx.arc(wp.x, wp.y - 10, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillRect(wp.x - 7, wp.y - 2, 14, 18);
+        ctx.fillRect(wp.x - 12, wp.y + 12, 7, 10);
+        ctx.fillRect(wp.x + 5, wp.y + 12, 7, 10);
+        
+        // Название рабочего места
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(wp.name.substring(0, 14), wp.x, wp.y + 38);
+        
+        // Должность
+        if (wp.position) {
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.font = '8px sans-serif';
+            ctx.fillText(wp.position.substring(0, 16), wp.x, wp.y + 50);
+        }
+        
+        // Номер
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.font = '8px sans-serif';
+        ctx.fillText('#' + (index + 1), wp.x + 25, wp.y - 15);
+    });
+}
+
+function setupCanvasEvents() {
+    canvas.addEventListener('click', function(e) {
+        const coords = getCanvasCoords(e);
+        
+        if (mapMode === 'addWorkplace') {
+            // Проверяем, что клик внутри цеха
+            const w = mapData.workshop;
+            if (coords.x >= w.x && coords.x <= w.x + w.w && coords.y >= w.y && coords.y <= w.y + w.h) {
+                openWorkplaceModal(coords.x, coords.y);
+            } else {
+                alert('Кликните внутри цеха');
+            }
+        }
+    });
+    
+    canvas.addEventListener('dblclick', function(e) {
+        const coords = getCanvasCoords(e);
+        // Проверяем, кликнули ли по рабочему месту
+        let found = -1;
+        mapData.workplaces.forEach((wp, index) => {
+            const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
+            if (dist < 20) found = index;
+        });
+        if (found >= 0) {
+            if (confirm(`Удалить рабочее место "${mapData.workplaces[found].name}"?`)) {
+                mapData.workplaces.splice(found, 1);
+                updateInfo();
+                drawMap();
+                saveMap();
+            }
+        }
+    });
+}
