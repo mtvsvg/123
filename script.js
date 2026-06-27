@@ -272,6 +272,138 @@ function escXml(str) {
 }
 
 // ============================================================
+// ПОЛУЧЕНИЕ СИЗ С САЙТА ОНЛАЙН ИНСПЕКЦИЯ
+// ============================================================
+async function getPPEByProfession(profession) {
+    try {
+        // Кодируем профессию для URL
+        const encodedProfession = encodeURIComponent(profession);
+        
+        // Используем API Онлайн Инспекции
+        const url = `https://xn--80akibicpdbetz7e2g.xn--p1ai/api/ppe/search?q=${encodedProfession}`;
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Ошибка при получении СИЗ:', error);
+        // Если API не доступен, используем локальную базу
+        return getLocalPPE(profession);
+    }
+}
+
+// Локальная база СИЗ (на основе Приказа 767н)
+function getLocalPPE(profession) {
+    const ppeDB = {
+        'токарь': {
+            profession: 'Токарь',
+            ppe: [
+                'Костюм для защиты от общих производственных загрязнений и механических воздействий (3-й класс защиты)',
+                'Очки защитные закрытые',
+                'Щиток защитный лицевой',
+                'Респиратор',
+                'Беруши противошумные',
+                'Рукавицы с полимерным покрытием',
+                'Обувь специальная с жестким подноском'
+            ]
+        },
+        'сварщик': {
+            profession: 'Сварщик',
+            ppe: [
+                'Костюм сварщика',
+                'Щиток сварщика со светофильтром',
+                'Очки защитные со светофильтром',
+                'Беруши противошумные',
+                'Рукавицы сварщика',
+                'Обувь специальная с жестким подноском',
+                'Респиратор для защиты от сварочных аэрозолей'
+            ]
+        },
+        'электрик': {
+            profession: 'Электромонтер',
+            ppe: [
+                'Костюм для защиты от механических воздействий',
+                'Очки защитные закрытые',
+                'Беруши противошумные',
+                'Перчатки диэлектрические',
+                'Обувь диэлектрическая',
+                'Предохранительный пояс',
+                'Каска защитная'
+            ]
+        },
+        'строитель': {
+            profession: 'Строитель',
+            ppe: [
+                'Костюм для защиты от механических воздействий',
+                'Каска защитная',
+                'Обувь с жестким подноском',
+                'Очки защитные открытые',
+                'Перчатки с полимерным покрытием',
+                'Наушники противошумные'
+            ]
+        },
+        'водитель': {
+            profession: 'Водитель',
+            ppe: [
+                'Костюм для защиты от механических воздействий',
+                'Ботинки с жестким подноском',
+                'Перчатки с полимерным покрытием',
+                'Жилет сигнальный 2-го класса'
+            ]
+        },
+        'инженер': {
+            profession: 'Инженер',
+            ppe: [
+                'Костюм для защиты от общих производственных загрязнений',
+                'Обувь защитная',
+                'Перчатки с полимерным покрытием',
+                'Очки защитные'
+            ]
+        },
+        'техник': {
+            profession: 'Техник',
+            ppe: [
+                'Халат хлопчатобумажный',
+                'Обувь защитная',
+                'Перчатки',
+                'Очки защитные'
+            ]
+        }
+    };
+    
+    // Ищем по ключевому слову в профессии
+    const lowerProf = profession.toLowerCase();
+    for (const [key, value] of Object.entries(ppeDB)) {
+        if (lowerProf.includes(key) || key.includes(lowerProf)) {
+            return value;
+        }
+    }
+    
+    // Если не нашли, возвращаем общие рекомендации
+    return {
+        profession: profession,
+        ppe: [
+            'Костюм для защиты от общих производственных загрязнений',
+            'Обувь защитная',
+            'Перчатки',
+            'Очки защитные',
+            'Каска защитная (при необходимости)'
+        ]
+    };
+}
+
+// ============================================================
 // ИНИЦИАЛИЗАЦИЯ СТРАНИЦЫ ОБУЧЕНИЯ
 // ============================================================
 let trainingInited = false;
@@ -482,7 +614,7 @@ function initTrainingPage() {
 }
 
 // ============================================================
-// КАРТА - МАКСИМАЛЬНО БОЛЬШАЯ
+// КАРТА - С ПОДБОРОМ СИЗ ПО ПРОФЕССИИ
 // ============================================================
 let mapData = {
     workshops: [],
@@ -500,13 +632,12 @@ let resizeCorner = '';
 let resizeStartX = 0, resizeStartY = 0;
 let resizeStartW = 0, resizeStartH = 0;
 let resizeStartXpos = 0, resizeStartYpos = 0;
+let selectedWorkplaceIndex = -1; // Для контекстного меню
 
 const canvas = document.getElementById('mapCanvas');
 const ctx = canvas.getContext('2d');
 
 // Устанавливаем ОГРОМНЫЙ логический размер
-// Теперь карта будет занимать 100% ширины контейнера
-// А логический размер - 3000x1500 для максимальной детализации
 canvas.width = 3000;
 canvas.height = 1500;
 
@@ -521,7 +652,6 @@ function initMapPage() {
             if (parsed.workshops && parsed.workshops.length > 0) {
                 mapData = parsed;
                 if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
-                // Увеличиваем размер цеха если он старый
                 const ws = getCurrentWorkshop();
                 if (ws && ws.w < 2000) {
                     ws.x = 50;
@@ -641,7 +771,7 @@ function drawMap() {
     ctx.fillStyle = '#0a0a1a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Сетка (более частая для масштаба)
+    // Сетка
     ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 0.5;
     for (let i = 0; i < canvas.width; i += 50) {
@@ -674,7 +804,7 @@ function drawMap() {
     ctx.textAlign = 'center';
     ctx.fillText(`🏭 ${ws.name} (${ws.length}×${ws.width} м)`, ws.x + ws.w/2, ws.y + 45);
     
-    // Углы для растягивания (увеличены для удобства)
+    // Углы для растягивания
     const cornerSize = 16;
     const corners = [
         { cx: ws.x, cy: ws.y },
@@ -692,14 +822,14 @@ function drawMap() {
     
     // Рабочие места
     if (ws.workplaces) {
-        ws.workplaces.forEach((wp) => {
+        ws.workplaces.forEach((wp, index) => {
             const zoneSize = wp.zone || 50;
             const x = wp.x - zoneSize/2;
             const y = wp.y - zoneSize/2;
             const w = zoneSize;
             const h = zoneSize;
             
-            // Чёрно-жёлтая зона (увеличенная)
+            // Чёрно-жёлтая зона
             ctx.fillStyle = 'rgba(255, 193, 7, 0.25)';
             ctx.fillRect(x, y, w, h);
             
@@ -722,13 +852,19 @@ function drawMap() {
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, w, h);
             
-            // Человечек (увеличенный)
+            // Человечек
             const centerX = wp.x;
             const centerY = wp.y;
             const scale = 1.8;
             
-            ctx.fillStyle = '#ff6b6b';
-            ctx.shadowColor = 'rgba(255, 107, 107, 0.3)';
+            // Определяем цвет в зависимости от наличия СИЗ
+            let color = '#ff6b6b';
+            if (wp.hasPPE) {
+                color = '#4caf50'; // Зелёный - СИЗ подобраны
+            }
+            
+            ctx.fillStyle = color;
+            ctx.shadowColor = `${color}40`;
             ctx.shadowBlur = 25;
             ctx.beginPath();
             ctx.arc(centerX, centerY - 18 * scale, 14 * scale, 0, Math.PI * 2);
@@ -740,7 +876,7 @@ function drawMap() {
             ctx.fillRect(centerX - 20 * scale, centerY + 2 * scale, 7 * scale, 12 * scale);
             ctx.fillRect(centerX + 13 * scale, centerY + 2 * scale, 7 * scale, 12 * scale);
             
-            // Название (увеличенное)
+            // Название
             ctx.fillStyle = 'rgba(255,255,255,0.85)';
             ctx.font = '16px sans-serif';
             ctx.textAlign = 'center';
@@ -750,10 +886,16 @@ function drawMap() {
                 ctx.font = '13px sans-serif';
                 ctx.fillText(wp.position.substring(0, 25), centerX, centerY + 72 * scale);
             }
+            
+            // Иконка СИЗ если есть
+            if (wp.hasPPE) {
+                ctx.font = '18px sans-serif';
+                ctx.fillText('🦺', centerX + 35 * scale, centerY - 25 * scale);
+            }
         });
     }
     
-    // Точки эвакуации (увеличенные)
+    // Точки эвакуации
     if (mapData.evacuationPoints) {
         mapData.evacuationPoints.forEach((ep) => {
             const ew = 100, eh = 50;
@@ -781,6 +923,41 @@ function drawMap() {
 }
 
 function setupCanvasEvents() {
+    // Контекстное меню (ПКМ)
+    canvas.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        const coords = getCanvasCoords(e);
+        const ws = getCurrentWorkshop();
+        if (!ws || !ws.workplaces) return;
+        
+        // Ищем ближайшее рабочее место
+        let found = -1;
+        let minDist = 50;
+        ws.workplaces.forEach((wp, index) => {
+            const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
+            if (dist < minDist) {
+                minDist = dist;
+                found = index;
+            }
+        });
+        
+        if (found >= 0) {
+            selectedWorkplaceIndex = found;
+            const menu = document.getElementById('contextMenu');
+            menu.style.left = e.clientX + 'px';
+            menu.style.top = e.clientY + 'px';
+            menu.classList.remove('hidden');
+        }
+    });
+    
+    // Закрываем контекстное меню при клике вне его
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('contextMenu');
+        if (!menu.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+    
     canvas.addEventListener('click', function(e) {
         const coords = getCanvasCoords(e);
         const ws = getCurrentWorkshop();
@@ -1000,6 +1177,231 @@ function setupCanvasEvents() {
     });
 }
 
+// ============================================================
+// ФУНКЦИИ ДЛЯ РАБОТЫ С КОНТЕКСТНЫМ МЕНЮ
+// ============================================================
+function showWorkplacePPE() {
+    const menu = document.getElementById('contextMenu');
+    menu.classList.add('hidden');
+    
+    const ws = getCurrentWorkshop();
+    if (!ws || !ws.workplaces || selectedWorkplaceIndex < 0 || selectedWorkplaceIndex >= ws.workplaces.length) {
+        alert('Рабочее место не найдено');
+        return;
+    }
+    
+    const wp = ws.workplaces[selectedWorkplaceIndex];
+    if (!wp.position) {
+        alert('Для этого рабочего места не указана должность. Добавьте должность в настройках.');
+        return;
+    }
+    
+    // Открываем модальное окно с СИЗ
+    openPPEModal(wp);
+}
+
+function editWorkplace() {
+    const menu = document.getElementById('contextMenu');
+    menu.classList.add('hidden');
+    
+    const ws = getCurrentWorkshop();
+    if (!ws || !ws.workplaces || selectedWorkplaceIndex < 0 || selectedWorkplaceIndex >= ws.workplaces.length) {
+        alert('Рабочее место не найдено');
+        return;
+    }
+    
+    const wp = ws.workplaces[selectedWorkplaceIndex];
+    // Открываем модалку редактирования
+    tempWorkplacePos = { x: wp.x, y: wp.y };
+    const modal = document.getElementById('workplaceModal');
+    modal.classList.remove('hidden');
+    document.getElementById('workplaceNameInput').value = wp.name || '';
+    document.getElementById('workplacePositionInput').value = wp.position || '';
+    document.getElementById('workplaceZoneInput').value = wp.zone || 50;
+    document.getElementById('workplaceNameInput').focus();
+    
+    // Меняем кнопку на "Сохранить" и сохраняем индекс
+    const saveBtn = document.getElementById('saveWorkplaceBtn');
+    saveBtn.textContent = '💾 Сохранить';
+    saveBtn.dataset.editIndex = selectedWorkplaceIndex;
+}
+
+function deleteWorkplace() {
+    const menu = document.getElementById('contextMenu');
+    menu.classList.add('hidden');
+    
+    const ws = getCurrentWorkshop();
+    if (!ws || !ws.workplaces || selectedWorkplaceIndex < 0 || selectedWorkplaceIndex >= ws.workplaces.length) return;
+    
+    if (confirm(`Удалить рабочее место "${ws.workplaces[selectedWorkplaceIndex].name}"?`)) {
+        ws.workplaces.splice(selectedWorkplaceIndex, 1);
+        selectedWorkplaceIndex = -1;
+        updateInfo();
+        drawMap();
+        saveMap();
+    }
+}
+
+// ============================================================
+// МОДАЛЬНОЕ ОКНО ДЛЯ СИЗ
+// ============================================================
+let currentPPEWorkplace = null;
+
+async function openPPEModal(wp) {
+    currentPPEWorkplace = wp;
+    const modal = document.getElementById('ppeModal');
+    const loading = document.getElementById('ppeLoading');
+    const content = document.getElementById('ppeContent');
+    const error = document.getElementById('ppeError');
+    
+    // Показываем загрузку
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    error.style.display = 'none';
+    modal.classList.remove('hidden');
+    
+    // Заполняем информацию о сотруднике
+    document.getElementById('ppeEmployeeName').textContent = wp.name || 'Сотрудник';
+    document.getElementById('ppePosition').textContent = wp.position || 'Должность не указана';
+    
+    try {
+        // Получаем СИЗ
+        const ppeData = await getPPEByProfession(wp.position);
+        
+        if (ppeData && ppeData.ppe && ppeData.ppe.length > 0) {
+            // Отображаем список СИЗ
+            const list = document.getElementById('ppeList');
+            let html = '';
+            ppeData.ppe.forEach((item, index) => {
+                html += `
+                    <div style="background:rgba(255,255,255,0.03);padding:12px 16px;border-radius:8px;border-left:3px solid #7c3aed;display:flex;align-items:center;gap:12px;">
+                        <span style="color:#7c3aed;font-weight:700;min-width:30px;">${index + 1}</span>
+                        <span style="color:#ccc;flex:1;">${item}</span>
+                        <span style="color:#4caf50;font-size:20px;">✅</span>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+            
+            // Помечаем рабочее место как имеющее СИЗ
+            wp.hasPPE = true;
+            saveMap();
+            drawMap();
+            
+            loading.style.display = 'none';
+            content.style.display = 'block';
+        } else {
+            throw new Error('СИЗ не найдены');
+        }
+    } catch (err) {
+        console.error('Ошибка загрузки СИЗ:', err);
+        loading.style.display = 'none';
+        error.style.display = 'block';
+        error.innerHTML = `
+            ❌ Не удалось загрузить данные по профессии "${wp.position}".<br>
+            <span style="font-size:14px;color:#8888aa;">Проверьте правильность написания профессии или попробуйте позже.</span>
+        `;
+    }
+}
+
+function closePPEModal() {
+    document.getElementById('ppeModal').classList.add('hidden');
+    currentPPEWorkplace = null;
+}
+
+function exportPPE() {
+    if (!currentPPEWorkplace) return;
+    
+    const content = document.getElementById('ppeContent');
+    const html = content.innerHTML;
+    
+    // Создаем окно для печати
+    const win = window.open('', '_blank');
+    win.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>СИЗ для ${currentPPEWorkplace.name}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
+                h1 { color: #1a1a3e; border-bottom: 2px solid #7c3aed; padding-bottom: 10px; }
+                .item { padding: 10px 15px; margin: 8px 0; background: #f5f5f5; border-left: 3px solid #7c3aed; }
+                .footer { margin-top: 30px; font-size: 12px; color: #888; border-top: 1px solid #ddd; padding-top: 15px; }
+            </style>
+        </head>
+        <body>
+            <h1>🦺 Средства индивидуальной защиты</h1>
+            <p><strong>Сотрудник:</strong> ${currentPPEWorkplace.name}</p>
+            <p><strong>Должность:</strong> ${currentPPEWorkplace.position}</p>
+            <hr>
+            <div id="ppeList">
+                ${document.getElementById('ppeList').innerHTML}
+            </div>
+            <div class="footer">
+                <p>Основано на Приказе Минтруда РФ от 29.10.2021 № 767н</p>
+                <p>Сформировано: ${new Date().toLocaleDateString('ru-RU')}</p>
+            </div>
+            <script>
+                window.print();
+            <\/script>
+        </body>
+        </html>
+    `);
+    win.document.close();
+}
+
+// ============================================================
+// РЕДАКТИРОВАНИЕ РАБОЧЕГО МЕСТА (ПЕРЕОПРЕДЕЛЯЕМ saveWorkplace)
+// ============================================================
+// Сохраняем оригинальную функцию
+const originalSaveWorkplace = window.saveWorkplace;
+
+// Переопределяем для поддержки редактирования
+window.saveWorkplace = function() {
+    const saveBtn = document.getElementById('saveWorkplaceBtn');
+    const editIndex = saveBtn.dataset.editIndex;
+    
+    if (editIndex !== undefined && editIndex !== '') {
+        // Режим редактирования
+        const ws = getCurrentWorkshop();
+        if (!ws || !ws.workplaces || editIndex >= ws.workplaces.length) return;
+        
+        const wp = ws.workplaces[editIndex];
+        wp.name = document.getElementById('workplaceNameInput').value.trim() || wp.name;
+        wp.position = document.getElementById('workplacePositionInput').value.trim() || wp.position;
+        wp.zone = parseInt(document.getElementById('workplaceZoneInput').value) || 50;
+        
+        // Сбрасываем флаг СИЗ, так как должность могла измениться
+        wp.hasPPE = false;
+        
+        closeWorkplaceModal();
+        updateInfo();
+        drawMap();
+        saveMap();
+        
+        // Возвращаем кнопку в исходное состояние
+        saveBtn.textContent = 'Добавить';
+        delete saveBtn.dataset.editIndex;
+        
+        alert('✅ Рабочее место обновлено!');
+    } else {
+        // Режим добавления (оригинальная логика)
+        originalSaveWorkplace();
+    }
+};
+
+// Переопределяем closeWorkplaceModal для сброса состояния
+const originalCloseWorkplace = window.closeWorkplaceModal;
+window.closeWorkplaceModal = function() {
+    originalCloseWorkplace();
+    const saveBtn = document.getElementById('saveWorkplaceBtn');
+    saveBtn.textContent = 'Добавить';
+    delete saveBtn.dataset.editIndex;
+};
+
+// ============================================================
+// ОСТАЛЬНЫЕ ФУНКЦИИ КАРТЫ
+// ============================================================
 function openWorkshopModal() {
     const ws = getCurrentWorkshop();
     if (!ws) { alert('Сначала создайте участок'); return; }
@@ -1039,35 +1441,6 @@ function openWorkplaceModal(x, y) {
     document.getElementById('workplacePositionInput').value = '';
     document.getElementById('workplaceZoneInput').value = 50;
     document.getElementById('workplaceNameInput').focus();
-}
-
-function closeWorkplaceModal() {
-    document.getElementById('workplaceModal').classList.add('hidden');
-    tempWorkplacePos = null;
-    mapMode = 'view';
-    document.getElementById('mapMode').textContent = 'Просмотр';
-    document.getElementById('mapMode').style.color = '#00d4ff';
-}
-
-function saveWorkplace() {
-    if (!tempWorkplacePos) return;
-    const ws = getCurrentWorkshop();
-    if (!ws) return;
-    const name = document.getElementById('workplaceNameInput').value.trim() || 'Рабочее место ' + (ws.workplaces.length + 1);
-    const position = document.getElementById('workplacePositionInput').value.trim() || '';
-    const zone = parseInt(document.getElementById('workplaceZoneInput').value) || 50;
-    ws.workplaces.push({ 
-        x: tempWorkplacePos.x, 
-        y: tempWorkplacePos.y, 
-        name: name, 
-        position: position, 
-        zone: zone, 
-        id: Date.now() 
-    });
-    closeWorkplaceModal();
-    updateInfo();
-    drawMap();
-    saveMap();
 }
 
 function addNewWorkshop() {
