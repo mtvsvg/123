@@ -113,8 +113,6 @@ input::placeholder { color: #666; }
 .result-block a:hover { background: #6a2fd4; }
 .result-block .btn-cancel { margin-top: 8px; }
 
-#mapCanvas { background: radial-gradient(ellipse at center, #141430 0%, #0a0a1a 100%); width: 100%; height: auto; aspect-ratio: 900/600; cursor: crosshair; touch-action: none; }
-
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -151,13 +149,16 @@ input::placeholder { color: #666; }
 #workshopSelect { cursor: pointer; }
 #workshopSelect option { background: #1a1a3e; color: #fff; }
 
-/* ===== УВЕЛИЧИВАЕМ РАЗМЕР КАНВАСА ===== */
+/* ===== КАНВАС НА ВСЮ ШИРИНУ ===== */
 #mapCanvas {
     width: 100% !important;
     height: auto !important;
-    aspect-ratio: 1200/600;
-    max-width: 100%;
-    min-height: 500px;
+    min-height: 550px;
+    max-height: 80vh;
+    aspect-ratio: auto;
+    background: radial-gradient(ellipse at center, #141430 0%, #0a0a1a 100%);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.06);
 }
 
 @media (max-width: 768px) { .hero-inner { grid-template-columns: 1fr; text-align: center; } .hero-title { font-size: 32px; } .hero-stats { justify-content: center; } .hero-buttons { justify-content: center; } .features-grid { grid-template-columns: 1fr 1fr; } .nav { gap: 4px; } .nav-link { padding: 6px 12px; font-size: 13px; } }
