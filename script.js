@@ -9,20 +9,24 @@ function showPage(page) {
     // Показываем нужную
     if (page === 'main') {
         document.getElementById('mainPage').style.display = 'block';
-        // Обновляем активную ссылку в навигации
         document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
         document.querySelectorAll('.nav-link').forEach(link => {
             if (link.textContent.trim() === 'Главная') link.classList.add('active');
         });
     } else if (page === 'training') {
         document.getElementById('trainingPage').classList.remove('hidden');
-        // Обновляем активную ссылку
         document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
         document.querySelectorAll('.nav-link').forEach(link => {
             if (link.textContent.trim() === 'Обучение') link.classList.add('active');
         });
-        // Переинициализируем обработчики для страницы обучения
         initTrainingPage();
+    } else if (page === 'map') {
+        document.getElementById('mapPage').classList.remove('hidden');
+        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(link => {
+            if (link.textContent.trim() === 'Карта') link.classList.add('active');
+        });
+        initMapPage();
     } else if (page === 'risks') {
         document.getElementById('risksPage').classList.remove('hidden');
         document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
@@ -76,7 +80,6 @@ function initTrainingPage() {
     renderProtocol();
     fillFamEmployeeSelect();
     
-    // ---- Обработчики для организации ----
     document.getElementById('showOrgFormBtn').addEventListener('click', function() {
         document.getElementById('orgForm').classList.toggle('hidden');
     });
@@ -130,7 +133,6 @@ function initTrainingPage() {
         }
     });
     
-    // ---- Обработчики для штатного расписания ----
     document.getElementById('staffImportBtn').addEventListener('click', function() {
         const input = document.createElement('input');
         input.type = 'file';
@@ -200,7 +202,6 @@ function initTrainingPage() {
         showTab('protocol');
     });
     
-    // ---- Обработчик генерации XML ----
     document.getElementById('generateBtn').addEventListener('click', function() {
         const protocolNumber = document.getElementById('protocolNumber').value.trim();
         const date = document.getElementById('protocolDate').value;
@@ -278,7 +279,6 @@ function initTrainingPage() {
         alert('✅ XML создан! Нажмите "Скачать XML"');
     });
 
-    // ---- Обработчики для ознакомления ----
     document.getElementById('generateFamBtn').addEventListener('click', function() {
         const select = document.getElementById('famEmployeeSelect');
         const index = select.value;
@@ -706,15 +706,140 @@ function escXml(str) {
 }
 
 // ============================================================
-// ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
+// КАРТА РАБОЧИХ МЕСТ
 // ============================================================
-document.addEventListener('DOMContentLoaded', function() {
-    // Показываем главную страницу
-    document.getElementById('mainPage').style.display = 'block';
-    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+let mapData = {
+    walls: [],
+    workers: []
+};
+
+let mapMode = 'view';
+let selectedMap = 'default';
+let mapInited = false;
+
+function initMapPage() {
+    if (mapInited) return;
+    mapInited = true;
     
-    // Подсвечиваем активную ссылку
-    document.querySelectorAll('.nav-link').forEach(link => {
-        if (link.textContent.trim() === 'Главная') link.classList.add('active');
+    document.getElementById('mapSelect').addEventListener('change', function() {
+        selectedMap = this.value;
+        loadMap();
     });
-});
+    
+    document.getElementById('addWallBtn').addEventListener('click', function() {
+        mapMode = 'addWall';
+        document.getElementById('mapMode').textContent = 'Добавление стены';
+        document.getElementById('mapMode').style.color = '#4a9eff';
+    });
+    
+    document.getElementById('addWorkerBtn').addEventListener('click', function() {
+        const staff = getStaff();
+        if (staff.length === 0) {
+            alert('Сначала загрузите штатное расписание на вкладке "Обучение"');
+            return;
+        }
+        mapMode = 'addWorker';
+        document.getElementById('mapMode').textContent = 'Добавление рабочего места';
+        document.getElementById('mapMode').style.color = '#ff6b6b';
+    });
+    
+    document.getElementById('saveMapBtn').addEventListener('click', function() {
+        saveMap();
+    });
+    
+    loadMap();
+    setupCanvasEvents();
+}
+
+function loadMap() {
+    const saved = localStorage.getItem('mapData_' + selectedMap);
+    if (saved) {
+        try {
+            mapData = JSON.parse(saved);
+        } catch(e) {
+            mapData = { walls: [], workers: [] };
+        }
+    } else {
+        mapData = { walls: [], workers: [] };
+    }
+    updateCounters();
+    drawMap();
+}
+
+function saveMap() {
+    localStorage.setItem('mapData_' + selectedMap, JSON.stringify(mapData));
+    alert('✅ Карта сохранена!');
+}
+
+function clearMap() {
+    if (!confirm('Очистить всю карту?')) return;
+    mapData = { walls: [], workers: [] };
+    updateCounters();
+    drawMap();
+}
+
+function updateCounters() {
+    document.getElementById('wallCount').textContent = mapData.walls.length;
+    document.getElementById('workerCount').textContent = mapData.workers.length;
+}
+
+// ===== ХОЛСТ =====
+const canvas = document.getElementById('mapCanvas');
+const ctx = canvas.getContext('2d');
+
+function getCanvasCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = 900 / rect.width;
+    const scaleY = 600 / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    return { x: Math.max(0, Math.min(900, x)), y: Math.max(0, Math.min(600, y)) };
+}
+
+function drawMap() {
+    ctx.clearRect(0, 0, 900, 600);
+    
+    // Сетка
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i < 900; i += 50) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, 600);
+        ctx.stroke();
+    }
+    for (let i = 0; i < 600; i += 50) {
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(900, i);
+        ctx.stroke();
+    }
+    
+    // Стены
+    mapData.walls.forEach((wall, index) => {
+        ctx.fillStyle = 'rgba(74, 158, 255, 0.25)';
+        ctx.strokeStyle = '#4a9eff';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = 'rgba(74, 158, 255, 0.2)';
+        ctx.shadowBlur = 10;
+        ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
+        ctx.shadowBlur = 0;
+        ctx.strokeRect(wall.x, wall.y, wall.w, wall.h);
+        ctx.fillStyle = 'rgba(74, 158, 255, 0.4)';
+        ctx.font = '9px sans-serif';
+        ctx.fillText('🧱 Стена ' + (index + 1), wall.x + 4, wall.y + 14);
+    });
+    
+    // Рабочие места
+    const staff = getStaff();
+    mapData.workers.forEach((worker, index) => {
+        const emp = staff[worker.staffIndex];
+        const name = emp ? `${emp.last_name} ${emp.first_name}` : 'Сотрудник ' + (index + 1);
+        
+        // Подсветка
+        const gradient = ctx.createRadialGradient(worker.x, worker.y, 2, worker.x, worker.y, 22);
+        gradient.addColorStop(0, 'rgba(255, 107, 107, 0.3)');
+        gradient.addColorStop(1, 'rgba(255, 107, 107, 0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.
