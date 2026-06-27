@@ -299,7 +299,7 @@ function initTrainingPage() {
 }
 
 // ============================================================
-// КАРТА (ИСПРАВЛЕННАЯ)
+// КАРТА (РАБОЧАЯ ЗОНА УВЕЛИЧЕНА)
 // ============================================================
 let mapData = {
     workshops: [],
@@ -321,9 +321,28 @@ let resizeStartXpos = 0, resizeStartYpos = 0;
 const canvas = document.getElementById('mapCanvas');
 const ctx = canvas.getContext('2d');
 
-// Устанавливаем ширину канваса больше
-canvas.width = 1200;
-canvas.height = 600;
+// ДИНАМИЧЕСКИЙ РАЗМЕР КАНВАСА
+function resizeCanvas() {
+    const container = canvas.parentElement;
+    const rect = container.getBoundingClientRect();
+    const width = rect.width - 2;
+    const height = Math.min(800, window.innerHeight * 0.7);
+    
+    canvas.width = 1600;
+    canvas.height = 800;
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    
+    // Масштабируем данные при первом запуске
+    if (mapData.workshops.length > 0) {
+        const ws = getCurrentWorkshop();
+        if (ws && ws.w === 900) {
+            ws.w = 1500;
+            ws.h = 700;
+        }
+        drawMap();
+    }
+}
 
 function initMapPage() {
     if (mapInited) return;
@@ -338,6 +357,7 @@ function initMapPage() {
                 if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
                 updateWorkshopSelect();
                 updateInfo();
+                resizeCanvas();
                 drawMap();
             }
         } catch(e) {}
@@ -349,16 +369,19 @@ function initMapPage() {
             name: 'Основной цех',
             length: 30,
             width: 20,
-            x: 0, y: 0, w: 1200, h: 600,
+            x: 50, y: 50, w: 1500, h: 700,
             workplaces: []
         });
         mapData.currentWorkshop = 0;
         mapData.evacuationPoints = [];
         updateWorkshopSelect();
         updateInfo();
+        resizeCanvas();
         drawMap();
     }
     
+    // События
+    window.addEventListener('resize', resizeCanvas);
     document.getElementById('editWorkshopBtn').addEventListener('click', function() {
         openWorkshopModal();
     });
@@ -395,6 +418,7 @@ function initMapPage() {
     setupCanvasEvents();
     updateWorkshopSelect();
     updateInfo();
+    resizeCanvas();
     drawMap();
 }
 
@@ -423,32 +447,34 @@ function updateInfo() {
 
 function getCanvasCoords(e) {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = 1200 / rect.width;
-    const scaleY = 600 / rect.height;
+    const scaleX = 1600 / rect.width;
+    const scaleY = 800 / rect.height;
     const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
     const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
     return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
 }
 
 function drawMap() {
-    ctx.clearRect(0, 0, 1200, 600);
+    ctx.clearRect(0, 0, 1600, 800);
     
     const ws = getCurrentWorkshop();
     if (!ws) return;
     
+    // Фон
     ctx.fillStyle = '#0a0a1a';
-    ctx.fillRect(0, 0, 1200, 600);
+    ctx.fillRect(0, 0, 1600, 800);
     
+    // Сетка
     ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 0.5;
-    for (let i = 0; i < 1200; i += 50) {
-        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 600); ctx.stroke();
+    for (let i = 0; i < 1600; i += 50) {
+        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 800); ctx.stroke();
     }
-    for (let i = 0; i < 600; i += 50) {
-        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(1200, i); ctx.stroke();
+    for (let i = 0; i < 800; i += 50) {
+        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(1600, i); ctx.stroke();
     }
     
-    // Участок (растягивается на весь экран)
+    // Участок (на всю ширину)
     const grad = ctx.createLinearGradient(ws.x, ws.y, ws.x + ws.w, ws.y + ws.h);
     grad.addColorStop(0, 'rgba(74, 158, 255, 0.06)');
     grad.addColorStop(1, 'rgba(74, 158, 255, 0.02)');
@@ -461,9 +487,9 @@ function drawMap() {
     ctx.setLineDash([]);
     
     ctx.fillStyle = 'rgba(74, 158, 255, 0.6)';
-    ctx.font = '14px sans-serif';
+    ctx.font = '16px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`🏭 ${ws.name}`, ws.x + ws.w/2, ws.y + 30);
+    ctx.fillText(`🏭 ${ws.name} (${ws.length}×${ws.width} м)`, ws.x + ws.w/2, ws.y + 30);
     
     // Углы для растягивания
     const corners = [
@@ -480,17 +506,16 @@ function drawMap() {
         ctx.strokeRect(c.cx - 6, c.cy - 6, 12, 12);
     });
     
-    // Рабочие места (человечек ПОЛНОСТЬЮ внутри зоны)
+    // Рабочие места
     if (ws.workplaces) {
         ws.workplaces.forEach((wp) => {
             const zoneSize = wp.zone || 40;
-            // Зона центрируется по человечку
             const x = wp.x - zoneSize/2;
             const y = wp.y - zoneSize/2;
             const w = zoneSize;
             const h = zoneSize;
             
-            // Рисуем чёрно-жёлтую зону
+            // Чёрно-жёлтая зона
             ctx.fillStyle = 'rgba(255, 193, 7, 0.3)';
             ctx.fillRect(x, y, w, h);
             
@@ -513,11 +538,10 @@ function drawMap() {
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, w, h);
             
-            // Человечек ПОЛНОСТЬЮ внутри зоны (смещение относительно центра зоны)
+            // Человечек ПОЛНОСТЬЮ внутри зоны
             const centerX = wp.x;
             const centerY = wp.y;
             
-            // Голова
             ctx.fillStyle = '#ff6b6b';
             ctx.shadowColor = 'rgba(255, 107, 107, 0.3)';
             ctx.shadowBlur = 15;
@@ -525,17 +549,12 @@ function drawMap() {
             ctx.arc(centerX, centerY - 15, 10, 0, Math.PI * 2);
             ctx.fill();
             ctx.shadowBlur = 0;
-            
-            // Тело
             ctx.fillRect(centerX - 7, centerY - 5, 14, 18);
-            // Ноги
             ctx.fillRect(centerX - 12, centerY + 11, 7, 10);
             ctx.fillRect(centerX + 5, centerY + 11, 7, 10);
-            // Руки
             ctx.fillRect(centerX - 14, centerY + 1, 5, 8);
             ctx.fillRect(centerX + 9, centerY + 1, 5, 8);
             
-            // Название рабочего места
             ctx.fillStyle = 'rgba(255,255,255,0.8)';
             ctx.font = '10px sans-serif';
             ctx.textAlign = 'center';
@@ -646,7 +665,6 @@ function setupCanvasEvents() {
         const ws = getCurrentWorkshop();
         if (!ws) return;
         
-        // Проверяем человечков
         if (ws.workplaces) {
             for (let i = ws.workplaces.length - 1; i >= 0; i--) {
                 const wp = ws.workplaces[i];
@@ -662,7 +680,6 @@ function setupCanvasEvents() {
             }
         }
         
-        // Проверяем углы
         const corners = [
             { cx: ws.x, cy: ws.y, corner: 'tl' },
             { cx: ws.x + ws.w, cy: ws.y, corner: 'tr' },
@@ -670,7 +687,7 @@ function setupCanvasEvents() {
             { cx: ws.x + ws.w, cy: ws.y + ws.h, corner: 'br' }
         ];
         for (let c of corners) {
-            if (Math.abs(coords.x - c.cx) < 10 && Math.abs(coords.y - c.cy) < 10) {
+            if (Math.abs(coords.x - c.cx) < 12 && Math.abs(coords.y - c.cy) < 12) {
                 isResizing = true;
                 resizeCorner = c.corner;
                 resizeStartX = coords.x;
@@ -695,8 +712,8 @@ function setupCanvasEvents() {
             if (wp) {
                 let newX = coords.x - dragOffsetX;
                 let newY = coords.y - dragOffsetY;
-                newX = Math.max(ws.x + 10, Math.min(ws.x + ws.w - 10, newX));
-                newY = Math.max(ws.y + 10, Math.min(ws.y + ws.h - 10, newY));
+                newX = Math.max(ws.x + 5, Math.min(ws.x + ws.w - 5, newX));
+                newY = Math.max(ws.y + 5, Math.min(ws.y + ws.h - 5, newY));
                 wp.x = newX;
                 wp.y = newY;
                 drawMap();
@@ -752,7 +769,7 @@ function setupCanvasEvents() {
                 { cx: ws.x + ws.w, cy: ws.y + ws.h, c: 'se-resize' }
             ];
             for (let c of corners) {
-                if (Math.abs(coords.x - c.cx) < 10 && Math.abs(coords.y - c.cy) < 10) {
+                if (Math.abs(coords.x - c.cx) < 12 && Math.abs(coords.y - c.cy) < 12) {
                     cursor = c.c;
                     break;
                 }
@@ -861,13 +878,14 @@ function addNewWorkshop() {
         name: name,
         length: 30,
         width: 20,
-        x: 0, y: 0, w: 1200, h: 600,
+        x: 50, y: 50, w: 1500, h: 700,
         workplaces: []
     });
     mapData.currentWorkshop = mapData.workshops.length - 1;
     if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
     updateWorkshopSelect();
     updateInfo();
+    resizeCanvas();
     drawMap();
     saveMap();
 }
@@ -890,7 +908,6 @@ function deleteWorkshop() {
 
 function saveMap() {
     localStorage.setItem('mapData', JSON.stringify(mapData));
-    // Без всплывающего окна
 }
 
 function clearMap() {
