@@ -232,7 +232,6 @@
             <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
         </div>
 
-        <!-- Панель управления -->
         <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:14px;border:1px solid rgba(255,255,255,0.06);">
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <label style="color:#8888aa;font-size:13px;">Цех:</label>
@@ -250,14 +249,6 @@
                 <button class="btn-add" onclick="clearMap()">🗑 Очистить цех</button>
                 <button class="btn-primary" id="saveMapBtn" style="width:auto;padding:8px 20px;">💾 Сохранить</button>
             </div>
-        </div>
-
-        <!-- Масштаб -->
-        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;padding:8px 16px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid rgba(255,255,255,0.04);align-items:center;">
-            <span style="color:#8888aa;font-size:13px;">🔍 Масштаб:</span>
-            <input type="range" id="zoomSlider" min="0.5" max="2" step="0.1" value="1" style="flex:1;min-width:100px;accent-color:#7c3aed;">
-            <span id="zoomValue" style="color:#fff;font-size:13px;min-width:40px;">1.0</span>
-            <button class="btn-add" onclick="resetZoom()" style="padding:4px 12px;">↺ Сброс</button>
         </div>
 
         <!-- Информация -->
