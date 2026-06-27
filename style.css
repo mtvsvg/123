@@ -113,10 +113,8 @@ input::placeholder { color: #666; }
 .result-block a:hover { background: #6a2fd4; }
 .result-block .btn-cancel { margin-top: 8px; }
 
-/* ===== КАРТА ===== */
 #mapCanvas { background: radial-gradient(ellipse at center, #141430 0%, #0a0a1a 100%); width: 100%; height: auto; aspect-ratio: 900/600; cursor: crosshair; touch-action: none; }
 
-/* ===== МОДАЛЬНЫЕ ОКНА ===== */
 .modal-overlay {
     position: fixed;
     top: 0;
