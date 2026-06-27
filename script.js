@@ -2,11 +2,9 @@
 // ПЕРЕКЛЮЧЕНИЕ СТРАНИЦ
 // ============================================================
 function showPage(page) {
-    // Скрываем все страницы
     document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
     document.getElementById('mainPage').style.display = 'none';
     
-    // Показываем нужную
     if (page === 'main') {
         document.getElementById('mainPage').style.display = 'block';
         document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
@@ -708,14 +706,18 @@ function escXml(str) {
 // ============================================================
 // КАРТА РАБОЧИХ МЕСТ
 // ============================================================
-let mapData = {
-    walls: [],
-    workers: []
-};
-
+let mapData = { walls: [], workers: [] };
 let mapMode = 'view';
 let selectedMap = 'default';
 let mapInited = false;
+let isDrawingWall = false;
+let wallStartX = 0, wallStartY = 0;
+let dragIndex = null;
+let dragOffsetX = 0, dragOffsetY = 0;
+let isDragging = false;
+
+const canvas = document.getElementById('mapCanvas');
+const ctx = canvas.getContext('2d');
 
 function initMapPage() {
     if (mapInited) return;
@@ -783,16 +785,14 @@ function updateCounters() {
     document.getElementById('workerCount').textContent = mapData.workers.length;
 }
 
-// ===== ХОЛСТ =====
-const canvas = document.getElementById('mapCanvas');
-const ctx = canvas.getContext('2d');
-
 function getCanvasCoords(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = 900 / rect.width;
     const scaleY = 600 / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
+    const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
     return { x: Math.max(0, Math.min(900, x)), y: Math.max(0, Math.min(600, y)) };
 }
 
@@ -836,10 +836,5 @@ function drawMap() {
         const emp = staff[worker.staffIndex];
         const name = emp ? `${emp.last_name} ${emp.first_name}` : 'Сотрудник ' + (index + 1);
         
-        // Подсветка
         const gradient = ctx.createRadialGradient(worker.x, worker.y, 2, worker.x, worker.y, 22);
-        gradient.addColorStop(0, 'rgba(255, 107, 107, 0.3)');
-        gradient.addColorStop(1, 'rgba(255, 107, 107, 0)');
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.
+        gradient.addColorStop(
