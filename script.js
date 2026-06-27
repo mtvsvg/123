@@ -9,24 +9,33 @@ function showPage(page) {
     // Показываем нужную
     if (page === 'main') {
         document.getElementById('mainPage').style.display = 'block';
+        // Обновляем активную ссылку в навигации
+        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(link => {
+            if (link.textContent.trim() === 'Главная') link.classList.add('active');
+        });
     } else if (page === 'training') {
         document.getElementById('trainingPage').classList.remove('hidden');
+        // Обновляем активную ссылку
+        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(link => {
+            if (link.textContent.trim() === 'Обучение') link.classList.add('active');
+        });
         // Переинициализируем обработчики для страницы обучения
         initTrainingPage();
     } else if (page === 'risks') {
         document.getElementById('risksPage').classList.remove('hidden');
+        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(link => {
+            if (link.textContent.trim() === 'Оценка рисков') link.classList.add('active');
+        });
     } else if (page === 'analytics') {
         document.getElementById('analyticsPage').classList.remove('hidden');
+        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(link => {
+            if (link.textContent.trim() === 'Аналитика') link.classList.add('active');
+        });
     }
-    
-    // Обновляем активную ссылку в навигации
-    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-    document.querySelectorAll('.nav-link').forEach(link => {
-        if (link.textContent.trim() === 'Главная' && page === 'main') link.classList.add('active');
-        if (link.textContent.trim() === 'Обучение' && page === 'training') link.classList.add('active');
-        if (link.textContent.trim() === 'Оценка рисков' && page === 'risks') link.classList.add('active');
-        if (link.textContent.trim() === 'Аналитика' && page === 'analytics') link.classList.add('active');
-    });
 }
 
 // ============================================================
@@ -65,8 +74,9 @@ function initTrainingPage() {
     renderOrgs();
     renderStaff();
     renderProtocol();
+    fillFamEmployeeSelect();
     
-    // Обработчики для организации
+    // ---- Обработчики для организации ----
     document.getElementById('showOrgFormBtn').addEventListener('click', function() {
         document.getElementById('orgForm').classList.toggle('hidden');
     });
@@ -120,7 +130,7 @@ function initTrainingPage() {
         }
     });
     
-    // Обработчики для штатного расписания
+    // ---- Обработчики для штатного расписания ----
     document.getElementById('staffImportBtn').addEventListener('click', function() {
         const input = document.createElement('input');
         input.type = 'file';
@@ -163,6 +173,7 @@ function initTrainingPage() {
                 });
                 saveStaff(currentStaff);
                 renderStaff();
+                fillFamEmployeeSelect();
                 alert(`✅ Загружено ${employees.length} сотрудников в штатное расписание!`);
                 document.body.removeChild(input);
             };
@@ -189,7 +200,7 @@ function initTrainingPage() {
         showTab('protocol');
     });
     
-    // Обработчик генерации XML
+    // ---- Обработчик генерации XML ----
     document.getElementById('generateBtn').addEventListener('click', function() {
         const protocolNumber = document.getElementById('protocolNumber').value.trim();
         const date = document.getElementById('protocolDate').value;
@@ -266,6 +277,121 @@ function initTrainingPage() {
 
         alert('✅ XML создан! Нажмите "Скачать XML"');
     });
+
+    // ---- Обработчики для ознакомления ----
+    document.getElementById('generateFamBtn').addEventListener('click', function() {
+        const select = document.getElementById('famEmployeeSelect');
+        const index = select.value;
+        if (index === '') {
+            alert('Выберите сотрудника');
+            return;
+        }
+        
+        const staff = getStaff();
+        const emp = staff[parseInt(index)];
+        if (!emp) {
+            alert('Сотрудник не найден');
+            return;
+        }
+        
+        const checkboxes = document.querySelectorAll('.doc-check input[type="checkbox"]:checked');
+        const documents = [];
+        checkboxes.forEach(cb => {
+            documents.push(cb.value);
+        });
+        
+        if (documents.length === 0) {
+            alert('Выберите хотя бы один документ для ознакомления');
+            return;
+        }
+        
+        const orgSelect = document.getElementById('orgSelect');
+        const orgId = orgSelect.value;
+        const orgs = getOrgs();
+        const org = orgs.find(o => o.id == parseInt(orgId));
+        const orgName = org ? org.name : '___________';
+        const orgInn = org ? org.inn : '___________';
+        
+        const date = new Date().toLocaleDateString('ru-RU');
+        const resultDiv = document.getElementById('famResult');
+        const contentDiv = document.getElementById('famContent');
+        
+        let html = `
+            <div style="text-align:center;margin-bottom:16px;">
+                <h3 style="font-size:16px;font-weight:700;color:#fff;">ЛИСТ ОЗНАКОМЛЕНИЯ</h3>
+                <p style="color:#8888aa;font-size:13px;">с локальными нормативными актами и документами по охране труда</p>
+            </div>
+            <table style="width:100%;border-collapse:collapse;margin-top:8px;">
+                <tr>
+                    <td style="padding:4px 8px;font-weight:600;width:200px;color:#ccc;">Организация:</td>
+                    <td style="padding:4px 8px;color:#ccc;">${orgName}</td>
+                </tr>
+                <tr>
+                    <td style="padding:4px 8px;font-weight:600;color:#ccc;">ИНН:</td>
+                    <td style="padding:4px 8px;color:#ccc;">${orgInn}</td>
+                </tr>
+                <tr>
+                    <td style="padding:4px 8px;font-weight:600;color:#ccc;">Дата:</td>
+                    <td style="padding:4px 8px;color:#ccc;">${date}</td>
+                </tr>
+            </table>
+            <hr style="border-color:rgba(255,255,255,0.1);margin:12px 0;">
+            <table style="width:100%;border-collapse:collapse;margin-top:8px;">
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+                    <th style="text-align:left;padding:8px;color:#8888aa;font-weight:500;">ФИО сотрудника</th>
+                    <th style="text-align:left;padding:8px;color:#8888aa;font-weight:500;">Должность</th>
+                </tr>
+                <tr>
+                    <td style="padding:8px;color:#ccc;">${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</td>
+                    <td style="padding:8px;color:#ccc;">${emp.position}</td>
+                </tr>
+            </table>
+            <hr style="border-color:rgba(255,255,255,0.1);margin:12px 0;">
+            <table class="fam-table">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;padding:8px;color:#8888aa;font-weight:500;">№</th>
+                        <th style="text-align:left;padding:8px;color:#8888aa;font-weight:500;">Наименование документа</th>
+                        <th style="text-align:center;padding:8px;color:#8888aa;font-weight:500;">Ознакомлен</th>
+                        <th style="text-align:center;padding:8px;color:#8888aa;font-weight:500;">Дата</th>
+                        <th style="text-align:center;padding:8px;color:#8888aa;font-weight:500;">Подпись</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        documents.forEach((doc, i) => {
+            html += `
+                <tr>
+                    <td style="padding:8px;color:#ccc;">${i + 1}</td>
+                    <td style="padding:8px;color:#ccc;">${doc}</td>
+                    <td style="text-align:center;padding:8px;color:#ccc;">[ ]</td>
+                    <td style="text-align:center;padding:8px;color:#ccc;">___ . ___ . 20___</td>
+                    <td style="text-align:center;padding:8px;color:#ccc;">___________</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                </tbody>
+            </table>
+            <hr style="border-color:rgba(255,255,255,0.1);margin:12px 0;">
+            <div style="font-size:12px;color:#8888aa;text-align:center;">
+                С документами ознакомлен(а), согласен(на) и обязуюсь выполнять требования
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:12px;color:#8888aa;">
+                <div>СОТ: ___________________ / _____________ /</div>
+                <div>Сотрудник: ___________________ / _____________ /</div>
+            </div>
+        `;
+        
+        contentDiv.innerHTML = html;
+        resultDiv.classList.remove('hidden');
+    });
+
+    document.getElementById('printFamBtn').addEventListener('click', function() {
+        window.print();
+    });
 }
 
 // ============================================================
@@ -301,10 +427,15 @@ function showTab(name) {
         document.getElementById('tabStaff').classList.remove('hidden');
         document.querySelector('.tab button:nth-child(1)').classList.add('active');
         renderStaff();
+        fillFamEmployeeSelect();
     } else if (name === 'protocol') {
         document.getElementById('tabProtocol').classList.remove('hidden');
         document.querySelector('.tab button:nth-child(2)').classList.add('active');
         renderProtocol();
+    } else if (name === 'familiarization') {
+        document.getElementById('tabFamiliarization').classList.remove('hidden');
+        document.querySelector('.tab button:nth-child(3)').classList.add('active');
+        fillFamEmployeeSelect();
     }
 }
 
@@ -382,6 +513,7 @@ function clearStaff() {
     if (!confirm('Удалить всех сотрудников из штатного расписания?')) return;
     saveStaff([]);
     renderStaff();
+    fillFamEmployeeSelect();
 }
 
 // ============================================================
@@ -456,6 +588,21 @@ function getSelectedPrograms() {
     const programs = [];
     checkboxes.forEach(cb => programs.push(parseInt(cb.value)));
     return programs;
+}
+
+// ============================================================
+// ЗАПОЛНЕНИЕ ВЫПАДАЮЩЕГО СПИСКА ДЛЯ ОЗНАКОМЛЕНИЯ
+// ============================================================
+function fillFamEmployeeSelect() {
+    const select = document.getElementById('famEmployeeSelect');
+    const staff = getStaff();
+    select.innerHTML = '<option value="">-- Выберите сотрудника --</option>';
+    staff.forEach((emp, index) => {
+        const opt = document.createElement('option');
+        opt.value = index;
+        opt.textContent = `${emp.last_name} ${emp.first_name} ${emp.middle_name || ''} — ${emp.position}`;
+        select.appendChild(opt);
+    });
 }
 
 // ============================================================
@@ -566,6 +713,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('mainPage').style.display = 'block';
     document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
     
-    // Инициализируем страницу обучения при первом переходе
-    // (вызовется в showPage)
+    // Подсвечиваем активную ссылку
+    document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.textContent.trim() === 'Главная') link.classList.add('active');
+    });
 });
