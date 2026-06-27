@@ -299,7 +299,7 @@ function initTrainingPage() {
 }
 
 // ============================================================
-// КАРТА (ФИНАЛЬНАЯ ВЕРСИЯ)
+// КАРТА (ИСПРАВЛЕННАЯ)
 // ============================================================
 let mapData = {
     workshops: [],
@@ -320,6 +320,10 @@ let resizeStartXpos = 0, resizeStartYpos = 0;
 
 const canvas = document.getElementById('mapCanvas');
 const ctx = canvas.getContext('2d');
+
+// Устанавливаем ширину канваса больше
+canvas.width = 1200;
+canvas.height = 600;
 
 function initMapPage() {
     if (mapInited) return;
@@ -345,7 +349,7 @@ function initMapPage() {
             name: 'Основной цех',
             length: 30,
             width: 20,
-            x: 0, y: 0, w: 900, h: 600,
+            x: 0, y: 0, w: 1200, h: 600,
             workplaces: []
         });
         mapData.currentWorkshop = 0;
@@ -419,7 +423,7 @@ function updateInfo() {
 
 function getCanvasCoords(e) {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = 900 / rect.width;
+    const scaleX = 1200 / rect.width;
     const scaleY = 600 / rect.height;
     const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
     const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
@@ -427,24 +431,24 @@ function getCanvasCoords(e) {
 }
 
 function drawMap() {
-    ctx.clearRect(0, 0, 900, 600);
+    ctx.clearRect(0, 0, 1200, 600);
     
     const ws = getCurrentWorkshop();
     if (!ws) return;
     
     ctx.fillStyle = '#0a0a1a';
-    ctx.fillRect(0, 0, 900, 600);
+    ctx.fillRect(0, 0, 1200, 600);
     
     ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 0.5;
-    for (let i = 0; i < 900; i += 50) {
+    for (let i = 0; i < 1200; i += 50) {
         ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 600); ctx.stroke();
     }
     for (let i = 0; i < 600; i += 50) {
-        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(900, i); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(1200, i); ctx.stroke();
     }
     
-    // Участок (без ограничений по размеру)
+    // Участок (растягивается на весь экран)
     const grad = ctx.createLinearGradient(ws.x, ws.y, ws.x + ws.w, ws.y + ws.h);
     grad.addColorStop(0, 'rgba(74, 158, 255, 0.06)');
     grad.addColorStop(1, 'rgba(74, 158, 255, 0.02)');
@@ -476,17 +480,17 @@ function drawMap() {
         ctx.strokeRect(c.cx - 6, c.cy - 6, 12, 12);
     });
     
-    // Рабочие места (человечек строго по центру зоны)
+    // Рабочие места (человечек ПОЛНОСТЬЮ внутри зоны)
     if (ws.workplaces) {
         ws.workplaces.forEach((wp) => {
             const zoneSize = wp.zone || 40;
+            // Зона центрируется по человечку
             const x = wp.x - zoneSize/2;
-            const y = wp.y - zoneSize/2 - 10;
+            const y = wp.y - zoneSize/2;
             const w = zoneSize;
             const h = zoneSize;
-            const centerX = wp.x;
-            const centerY = wp.y - 10;
             
+            // Рисуем чёрно-жёлтую зону
             ctx.fillStyle = 'rgba(255, 193, 7, 0.3)';
             ctx.fillRect(x, y, w, h);
             
@@ -509,25 +513,37 @@ function drawMap() {
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, w, h);
             
+            // Человечек ПОЛНОСТЬЮ внутри зоны (смещение относительно центра зоны)
+            const centerX = wp.x;
+            const centerY = wp.y;
+            
+            // Голова
             ctx.fillStyle = '#ff6b6b';
             ctx.shadowColor = 'rgba(255, 107, 107, 0.3)';
             ctx.shadowBlur = 15;
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY - 15, 10, 0, Math.PI * 2);
             ctx.fill();
             ctx.shadowBlur = 0;
-            ctx.fillRect(centerX - 7, centerY + 8, 14, 18);
-            ctx.fillRect(centerX - 12, centerY + 22, 7, 10);
-            ctx.fillRect(centerX + 5, centerY + 22, 7, 10);
             
+            // Тело
+            ctx.fillRect(centerX - 7, centerY - 5, 14, 18);
+            // Ноги
+            ctx.fillRect(centerX - 12, centerY + 11, 7, 10);
+            ctx.fillRect(centerX + 5, centerY + 11, 7, 10);
+            // Руки
+            ctx.fillRect(centerX - 14, centerY + 1, 5, 8);
+            ctx.fillRect(centerX + 9, centerY + 1, 5, 8);
+            
+            // Название рабочего места
             ctx.fillStyle = 'rgba(255,255,255,0.8)';
             ctx.font = '10px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(wp.name.substring(0, 14), centerX, centerY + 42);
+            ctx.fillText(wp.name.substring(0, 14), centerX, centerY + 36);
             if (wp.position) {
                 ctx.fillStyle = 'rgba(255,255,255,0.4)';
                 ctx.font = '8px sans-serif';
-                ctx.fillText(wp.position.substring(0, 16), centerX, centerY + 54);
+                ctx.fillText(wp.position.substring(0, 16), centerX, centerY + 48);
             }
         });
     }
@@ -679,8 +695,8 @@ function setupCanvasEvents() {
             if (wp) {
                 let newX = coords.x - dragOffsetX;
                 let newY = coords.y - dragOffsetY;
-                newX = Math.max(ws.x + 5, Math.min(ws.x + ws.w - 5, newX));
-                newY = Math.max(ws.y + 5, Math.min(ws.y + ws.h - 5, newY));
+                newX = Math.max(ws.x + 10, Math.min(ws.x + ws.w - 10, newX));
+                newY = Math.max(ws.y + 10, Math.min(ws.y + ws.h - 10, newY));
                 wp.x = newX;
                 wp.y = newY;
                 drawMap();
@@ -845,7 +861,7 @@ function addNewWorkshop() {
         name: name,
         length: 30,
         width: 20,
-        x: 0, y: 0, w: 900, h: 600,
+        x: 0, y: 0, w: 1200, h: 600,
         workplaces: []
     });
     mapData.currentWorkshop = mapData.workshops.length - 1;
@@ -874,7 +890,7 @@ function deleteWorkshop() {
 
 function saveMap() {
     localStorage.setItem('mapData', JSON.stringify(mapData));
-    // Убрали alert, теперь сохранение происходит без всплывающего окна
+    // Без всплывающего окна
 }
 
 function clearMap() {
