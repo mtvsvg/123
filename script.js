@@ -299,33 +299,61 @@ function initTrainingPage() {
 }
 
 // ============================================================
-// КАРТА ЦЕХА
+// КАРТА ЦЕХА (ОБНОВЛЕННАЯ)
 // ============================================================
 let mapData = {
-    workshop: { name: '', length: 30, width: 20, x: 50, y: 50, w: 800, h: 500 },
-    workplaces: []
+    workshops: [],
+    currentWorkshop: 0,
+    evacuationPoints: []
 };
-let mapMode = 'view';
+
+let mapMode = 'view'; // 'view' | 'addWorkplace' | 'addEvacuation'
 let mapInited = false;
 let tempWorkplacePos = null;
 
 const canvas = document.getElementById('mapCanvas');
 const ctx = canvas.getContext('2d');
 
+// ===== ИНИЦИАЛИЗАЦИЯ =====
 function initMapPage() {
     if (mapInited) return;
     mapInited = true;
     
+    // Если нет цехов — создаём дефолтный
+    if (mapData.workshops.length === 0) {
+        mapData.workshops.push({
+            id: Date.now(),
+            name: 'Основной цех',
+            length: 30,
+            width: 20,
+            x: 50, y: 50, w: 800, h: 500,
+            workplaces: []
+        });
+        mapData.currentWorkshop = 0;
+    }
+    
+    // Загружаем сохранённые точки эвакуации
+    if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
+    
     loadMap();
+    updateWorkshopSelect();
     
     document.getElementById('setWorkshopBtn').addEventListener('click', function() {
         openWorkshopModal();
     });
     
     document.getElementById('addWorkerPlaceBtn').addEventListener('click', function() {
+        const ws = getCurrentWorkshop();
+        if (!ws) { alert('Сначала создайте цех'); return; }
         mapMode = 'addWorkplace';
         document.getElementById('mapMode').textContent = 'Добавление рабочего места';
         document.getElementById('mapMode').style.color = '#ff6b6b';
+    });
+    
+    document.getElementById('addEvacuationBtn').addEventListener('click', function() {
+        mapMode = 'addEvacuation';
+        document.getElementById('mapMode').textContent = 'Добавление выхода (эвакуация)';
+        document.getElementById('mapMode').style.color = '#4caf50';
     });
     
     document.getElementById('saveMapBtn').addEventListener('click', function() {
@@ -340,15 +368,41 @@ function initMapPage() {
         saveWorkplace();
     });
     
+    document.getElementById('workshopSelect').addEventListener('change', function() {
+        mapData.currentWorkshop = parseInt(this.value);
+        drawMap();
+        updateInfo();
+    });
+    
     setupCanvasEvents();
 }
 
+// ===== ПОЛУЧЕНИЕ ТЕКУЩЕГО ЦЕХА =====
+function getCurrentWorkshop() {
+    return mapData.workshops[mapData.currentWorkshop] || null;
+}
+
+// ===== ОБНОВЛЕНИЕ ВЫПАДАЮЩЕГО СПИСКА ЦЕХОВ =====
+function updateWorkshopSelect() {
+    const select = document.getElementById('workshopSelect');
+    select.innerHTML = '';
+    mapData.workshops.forEach((ws, index) => {
+        const opt = document.createElement('option');
+        opt.value = index;
+        opt.textContent = ws.name || `Цех ${index + 1}`;
+        if (index === mapData.currentWorkshop) opt.selected = true;
+        select.appendChild(opt);
+    });
+}
+
+// ===== МОДАЛЬНОЕ ОКНО ДЛЯ ЦЕХА =====
 function openWorkshopModal() {
     const modal = document.getElementById('workshopModal');
     modal.classList.remove('hidden');
-    document.getElementById('workshopNameInput').value = mapData.workshop.name || '';
-    document.getElementById('workshopLengthInput').value = mapData.workshop.length || 30;
-    document.getElementById('workshopWidthInput').value = mapData.workshop.width || 20;
+    const ws = getCurrentWorkshop();
+    document.getElementById('workshopNameInput').value = ws ? ws.name : '';
+    document.getElementById('workshopLengthInput').value = ws ? ws.length : 30;
+    document.getElementById('workshopWidthInput').value = ws ? ws.width : 20;
     document.getElementById('workshopNameInput').focus();
 }
 
@@ -361,22 +415,40 @@ function saveWorkshop() {
     const length = parseInt(document.getElementById('workshopLengthInput').value) || 30;
     const width = parseInt(document.getElementById('workshopWidthInput').value) || 20;
     
-    mapData.workshop.name = name;
-    mapData.workshop.length = length;
-    mapData.workshop.width = width;
+    const ws = getCurrentWorkshop();
+    if (ws) {
+        // Обновляем текущий цех
+        ws.name = name;
+        ws.length = length;
+        ws.width = width;
+    } else {
+        // Создаём новый цех
+        mapData.workshops.push({
+            id: Date.now(),
+            name: name,
+            length: length,
+            width: width,
+            x: 50, y: 50, w: 800, h: 500,
+            workplaces: []
+        });
+        mapData.currentWorkshop = mapData.workshops.length - 1;
+    }
     
     closeWorkshopModal();
+    updateWorkshopSelect();
     updateInfo();
     drawMap();
     saveMap();
 }
 
+// ===== МОДАЛЬНОЕ ОКНО ДЛЯ РАБОЧЕГО МЕСТА =====
 function openWorkplaceModal(x, y) {
     tempWorkplacePos = { x, y };
     const modal = document.getElementById('workplaceModal');
     modal.classList.remove('hidden');
     document.getElementById('workplaceNameInput').value = '';
     document.getElementById('workplacePositionInput').value = '';
+    document.getElementById('workplaceZoneInput').value = 30;
     document.getElementById('workplaceNameInput').focus();
 }
 
@@ -390,16 +462,21 @@ function closeWorkplaceModal() {
 
 function saveWorkplace() {
     if (!tempWorkplacePos) return;
-    const name = document.getElementById('workplaceNameInput').value.trim() || 'Рабочее место ' + (mapData.workplaces.length + 1);
+    const name = document.getElementById('workplaceNameInput').value.trim() || 'Рабочее место ' + (getCurrentWorkshop().workplaces.length + 1);
     const position = document.getElementById('workplacePositionInput').value.trim() || '';
+    const zone = parseInt(document.getElementById('workplaceZoneInput').value) || 30;
     
-    mapData.workplaces.push({
-        x: tempWorkplacePos.x,
-        y: tempWorkplacePos.y,
-        name: name,
-        position: position,
-        id: Date.now()
-    });
+    const ws = getCurrentWorkshop();
+    if (ws) {
+        ws.workplaces.push({
+            x: tempWorkplacePos.x,
+            y: tempWorkplacePos.y,
+            name: name,
+            position: position,
+            zone: zone,
+            id: Date.now()
+        });
+    }
     
     closeWorkplaceModal();
     updateInfo();
@@ -407,15 +484,37 @@ function saveWorkplace() {
     saveMap();
 }
 
+// ===== ЗАГРУЗКА / СОХРАНЕНИЕ =====
 function loadMap() {
     const saved = localStorage.getItem('mapData');
     if (saved) {
         try {
-            mapData = JSON.parse(saved);
-        } catch(e) {
-            mapData = { workshop: { name: '', length: 30, width: 20, x: 50, y: 50, w: 800, h: 500 }, workplaces: [] };
-        }
+            const parsed = JSON.parse(saved);
+            if (parsed.workshops && parsed.workshops.length > 0) {
+                mapData.workshops = parsed.workshops;
+                mapData.currentWorkshop = parsed.currentWorkshop || 0;
+                mapData.evacuationPoints = parsed.evacuationPoints || [];
+                updateWorkshopSelect();
+                updateInfo();
+                drawMap();
+                return;
+            }
+        } catch(e) {}
     }
+    // Если нет сохранённых данных — создаём дефолтный цех
+    if (mapData.workshops.length === 0) {
+        mapData.workshops.push({
+            id: Date.now(),
+            name: 'Основной цех',
+            length: 30,
+            width: 20,
+            x: 50, y: 50, w: 800, h: 500,
+            workplaces: []
+        });
+        mapData.currentWorkshop = 0;
+    }
+    if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
+    updateWorkshopSelect();
     updateInfo();
     drawMap();
 }
@@ -426,16 +525,22 @@ function saveMap() {
 }
 
 function clearMap() {
-    if (!confirm('Очистить всю карту?')) return;
-    mapData = { workshop: { name: '', length: 30, width: 20, x: 50, y: 50, w: 800, h: 500 }, workplaces: [] };
+    if (!confirm('Очистить текущий цех?')) return;
+    const ws = getCurrentWorkshop();
+    if (ws) {
+        ws.workplaces = [];
+        mapData.evacuationPoints = [];
+    }
     updateInfo();
     drawMap();
+    saveMap();
 }
 
 function updateInfo() {
-    const w = mapData.workshop;
-    document.getElementById('workshopSize').textContent = w.name ? `${w.name} (${w.length}×${w.width} м)` : 'не задан';
-    document.getElementById('workerCount').textContent = mapData.workplaces.length;
+    const ws = getCurrentWorkshop();
+    document.getElementById('workshopSize').textContent = ws ? `${ws.name} (${ws.length}×${ws.width} м)` : 'не задан';
+    document.getElementById('workerCount').textContent = ws ? ws.workplaces.length : 0;
+    document.getElementById('evacuationCount').textContent = mapData.evacuationPoints.length;
 }
 
 function getCanvasCoords(e) {
@@ -447,6 +552,7 @@ function getCanvasCoords(e) {
     return { x: Math.max(0, Math.min(900, (clientX - rect.left) * scaleX)), y: Math.max(0, Math.min(600, (clientY - rect.top) * scaleY)) };
 }
 
+// ===== РИСОВАНИЕ КАРТЫ =====
 function drawMap() {
     ctx.clearRect(0, 0, 900, 600);
     
@@ -473,7 +579,9 @@ function drawMap() {
         ctx.stroke();
     }
     
-    const w = mapData.workshop;
+    const ws = getCurrentWorkshop();
+    if (!ws) return;
+    const w = ws;
     
     // Рисуем цех
     if (w.name) {
@@ -513,88 +621,164 @@ function drawMap() {
         ctx.restore();
     }
     
-    // Рисуем рабочие места
-    mapData.workplaces.forEach((wp, index) => {
-        // Круг подсветки
-        const grad3 = ctx.createRadialGradient(wp.x, wp.y, 2, wp.x, wp.y, 25);
-        grad3.addColorStop(0, 'rgba(255, 107, 107, 0.3)');
-        grad3.addColorStop(1, 'rgba(255, 107, 107, 0)');
-        ctx.fillStyle = grad3;
-        ctx.beginPath();
-        ctx.arc(wp.x, wp.y, 25, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Человечек
-        ctx.shadowColor = 'rgba(255, 107, 107, 0.3)';
-        ctx.shadowBlur = 15;
-        ctx.fillStyle = '#ff6b6b';
-        ctx.beginPath();
-        ctx.arc(wp.x, wp.y - 10, 10, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.fillRect(wp.x - 7, wp.y - 2, 14, 18);
-        ctx.fillRect(wp.x - 12, wp.y + 12, 7, 10);
-        ctx.fillRect(wp.x + 5, wp.y + 12, 7, 10);
-        
-        // Название рабочего места
-        ctx.fillStyle = 'rgba(255,255,255,0.8)';
-        ctx.font = '10px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(wp.name.substring(0, 14), wp.x, wp.y + 38);
-        
-        // Должность
-        if (wp.position) {
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    // Рисуем рабочие места (с зонами)
+    if (w.workplaces) {
+        w.workplaces.forEach((wp, index) => {
+            // Зона рабочего места (прямоугольник с пунктиром)
+            const zoneSize = wp.zone || 30;
+            ctx.strokeStyle = 'rgba(76, 175, 80, 0.5)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+            ctx.strokeRect(wp.x - zoneSize/2, wp.y - zoneSize/2 - 10, zoneSize, zoneSize);
+            ctx.setLineDash([]);
+            
+            // Подсветка
+            const grad3 = ctx.createRadialGradient(wp.x, wp.y, 2, wp.x, wp.y, 25);
+            grad3.addColorStop(0, 'rgba(255, 107, 107, 0.3)');
+            grad3.addColorStop(1, 'rgba(255, 107, 107, 0)');
+            ctx.fillStyle = grad3;
+            ctx.beginPath();
+            ctx.arc(wp.x, wp.y, 25, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Человечек
+            ctx.shadowColor = 'rgba(255, 107, 107, 0.3)';
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = '#ff6b6b';
+            ctx.beginPath();
+            ctx.arc(wp.x, wp.y - 10, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillRect(wp.x - 7, wp.y - 2, 14, 18);
+            ctx.fillRect(wp.x - 12, wp.y + 12, 7, 10);
+            ctx.fillRect(wp.x + 5, wp.y + 12, 7, 10);
+            
+            // Название рабочего места
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(wp.name.substring(0, 14), wp.x, wp.y + 42);
+            
+            // Должность
+            if (wp.position) {
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.font = '8px sans-serif';
+                ctx.fillText(wp.position.substring(0, 16), wp.x, wp.y + 54);
+            }
+            
+            // Номер
+            ctx.fillStyle = 'rgba(255,255,255,0.15)';
             ctx.font = '8px sans-serif';
-            ctx.fillText(wp.position.substring(0, 16), wp.x, wp.y + 50);
-        }
+            ctx.fillText('#' + (index + 1), wp.x + 25, wp.y - 15);
+        });
+    }
+    
+    // Рисуем точки эвакуации (выходы)
+    mapData.evacuationPoints.forEach((ep, index) => {
+        // Зелёный круг
+        ctx.shadowColor = 'rgba(76, 175, 80, 0.4)';
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = 'rgba(76, 175, 80, 0.2)';
+        ctx.beginPath();
+        ctx.arc(ep.x, ep.y, 20, 0, Math.PI * 2);
+        ctx.fill();
         
-        // Номер
-        ctx.fillStyle = 'rgba(255,255,255,0.15)';
-        ctx.font = '8px sans-serif';
-        ctx.fillText('#' + (index + 1), wp.x + 25, wp.y - 15);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#4caf50';
+        ctx.beginPath();
+        ctx.arc(ep.x, ep.y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Стрелка вверх (символ выхода)
+        ctx.fillStyle = '#fff';
+        ctx.font = '16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⬆', ep.x, ep.y);
+        
+        // Название
+        ctx.fillStyle = 'rgba(76, 175, 80, 0.7)';
+        ctx.font = '9px sans-serif';
+        ctx.textBaseline = 'top';
+        ctx.fillText(ep.name || `Выход ${index + 1}`, ep.x, ep.y + 16);
+        
+        ctx.textBaseline = 'alphabetic';
     });
 }
 
+// ===== СОБЫТИЯ КАНВАСА =====
 function setupCanvasEvents() {
     canvas.addEventListener('click', function(e) {
         const coords = getCanvasCoords(e);
+        const ws = getCurrentWorkshop();
+        if (!ws) return;
         
         if (mapMode === 'addWorkplace') {
-            const w = mapData.workshop;
-            if (w.name && coords.x >= w.x && coords.x <= w.x + w.w && coords.y >= w.y && coords.y <= w.y + w.h) {
+            if (coords.x >= ws.x && coords.x <= ws.x + ws.w && coords.y >= ws.y && coords.y <= ws.y + ws.h) {
                 openWorkplaceModal(coords.x, coords.y);
             } else {
-                alert('Сначала задайте цех и кликните внутри него');
+                alert('Кликните внутри цеха');
+            }
+        } else if (mapMode === 'addEvacuation') {
+            if (coords.x >= ws.x && coords.x <= ws.x + ws.w && coords.y >= ws.y && coords.y <= ws.y + ws.h) {
+                const name = prompt('Введите название выхода (например: "Главный выход", "Запасной выход"):', 'Выход ' + (mapData.evacuationPoints.length + 1));
+                if (name !== null) {
+                    mapData.evacuationPoints.push({
+                        x: coords.x,
+                        y: coords.y,
+                        name: name.trim() || 'Выход ' + (mapData.evacuationPoints.length + 1),
+                        id: Date.now()
+                    });
+                    updateInfo();
+                    drawMap();
+                    saveMap();
+                    mapMode = 'view';
+                    document.getElementById('mapMode').textContent = 'Просмотр';
+                    document.getElementById('mapMode').style.color = '#00d4ff';
+                }
+            } else {
+                alert('Кликните внутри цеха');
             }
         }
     });
     
     canvas.addEventListener('dblclick', function(e) {
         const coords = getCanvasCoords(e);
+        const ws = getCurrentWorkshop();
+        if (!ws) return;
+        
+        // Проверяем рабочие места
         let found = -1;
-        mapData.workplaces.forEach((wp, index) => {
-            const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
-            if (dist < 20) found = index;
+        if (ws.workplaces) {
+            ws.workplaces.forEach((wp, index) => {
+                const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
+                if (dist < 20) found = index;
+            });
+            if (found >= 0) {
+                if (confirm(`Удалить рабочее место "${ws.workplaces[found].name}"?`)) {
+                    ws.workplaces.splice(found, 1);
+                    updateInfo();
+                    drawMap();
+                    saveMap();
+                    return;
+                }
+            }
+        }
+        
+        // Проверяем точки эвакуации
+        let evacFound = -1;
+        mapData.evacuationPoints.forEach((ep, index) => {
+            const dist = Math.sqrt((coords.x - ep.x) ** 2 + (coords.y - ep.y) ** 2);
+            if (dist < 20) evacFound = index;
         });
-        if (found >= 0) {
-            if (confirm(`Удалить рабочее место "${mapData.workplaces[found].name}"?`)) {
-                mapData.workplaces.splice(found, 1);
+        if (evacFound >= 0) {
+            if (confirm(`Удалить выход "${mapData.evacuationPoints[evacFound].name}"?`)) {
+                mapData.evacuationPoints.splice(evacFound, 1);
                 updateInfo();
                 drawMap();
                 saveMap();
+                return;
             }
         }
     });
 }
-
-// ============================================================
-// ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
-// ============================================================
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('mainPage').style.display = 'block';
-    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-    document.querySelectorAll('.nav-link').forEach(link => {
-        if (link.textContent.trim() === 'Главная') link.classList.add('active');
-    });
-});
