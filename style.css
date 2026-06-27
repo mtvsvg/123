@@ -777,116 +777,13 @@ input::placeholder {
 }
 
 /* ============================================================ */
-/* КОНТЕКСТНОЕ МЕНЮ */
-/* ============================================================ */
-.context-menu {
-    position: fixed;
-    background: #1a1a3e;
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 10px;
-    padding: 6px 0;
-    min-width: 200px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-    z-index: 1000;
-    backdrop-filter: blur(10px);
-    display: none;
-}
-
-.context-menu:not(.hidden) {
-    display: block;
-}
-
-.context-menu-item {
-    padding: 10px 20px;
-    color: #ccc;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.context-menu-item:hover {
-    background: rgba(124,58,237,0.15);
-    color: #fff;
-}
-
-.context-menu-item:first-child {
-    border-radius: 10px 10px 0 0;
-}
-
-.context-menu-item:last-child {
-    border-radius: 0 0 10px 10px;
-}
-
-/* ============================================================ */
-/* СТИЛИ ДЛЯ МОДАЛКИ СИЗ */
-/* ============================================================ */
-#ppeModal .modal-content {
-    max-width: 700px;
-    max-height: 80vh;
-    overflow-y: auto;
-}
-
-#ppeModal .modal-content::-webkit-scrollbar {
-    width: 6px;
-}
-
-#ppeModal .modal-content::-webkit-scrollbar-track {
-    background: rgba(255,255,255,0.05);
-    border-radius: 3px;
-}
-
-#ppeModal .modal-content::-webkit-scrollbar-thumb {
-    background: rgba(124,58,237,0.3);
-    border-radius: 3px;
-}
-
-#ppeModal .modal-content::-webkit-scrollbar-thumb:hover {
-    background: rgba(124,58,237,0.5);
-}
-
-#ppeList {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-#ppeList .ppe-item {
-    background: rgba(255,255,255,0.03);
-    padding: 12px 16px;
-    border-radius: 8px;
-    border-left: 3px solid #7c3aed;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-#ppeList .ppe-item .number {
-    color: #7c3aed;
-    font-weight: 700;
-    min-width: 30px;
-}
-
-#ppeList .ppe-item .name {
-    color: #ccc;
-    flex: 1;
-}
-
-#ppeList .ppe-item .status {
-    color: #4caf50;
-    font-size: 20px;
-}
-
-/* ============================================================ */
 /* КАРТА - МАКСИМАЛЬНО БОЛЬШАЯ */
 /* ============================================================ */
 
 #mapCanvas {
     width: 100% !important;
     height: auto !important;
-    min-height: 600px;
+    min-height: 700px !important;
     max-height: 90vh;
     aspect-ratio: auto;
     background: radial-gradient(ellipse at center, #141430 0%, #0a0a1a 100%);
@@ -895,7 +792,7 @@ input::placeholder {
 }
 
 #mapPage .container {
-    max-width: 1400px !important;
+    max-width: 1600px !important;
     padding: 0 15px;
 }
 
@@ -935,6 +832,54 @@ input::placeholder {
 }
 
 /* ============================================================ */
+/* КНОПКА УДАЛЕНИЯ ОБЪЕКТА */
+/* ============================================================ */
+
+#deleteSelectedBtn {
+    background: rgba(255,70,70,0.2) !important;
+    color: #ff6b6b !important;
+    border-color: rgba(255,70,70,0.3) !important;
+}
+
+#deleteSelectedBtn:hover {
+    background: rgba(255,70,70,0.35) !important;
+}
+
+/* ============================================================ */
+/* СТИЛИ ДЛЯ МОДАЛКИ СИЗ */
+/* ============================================================ */
+
+#ppeModal .modal-content {
+    max-width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+#ppeModal .modal-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+#ppeModal .modal-content::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+}
+
+#ppeModal .modal-content::-webkit-scrollbar-thumb {
+    background: rgba(124,58,237,0.3);
+    border-radius: 3px;
+}
+
+#ppeModal .modal-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(124,58,237,0.5);
+}
+
+#ppeList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ============================================================ */
 /* АДАПТИВ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ */
 /* ============================================================ */
 
@@ -970,17 +915,13 @@ input::placeholder {
     }
     
     #mapCanvas {
-        min-height: 400px;
-        max-height: 70vh;
+        min-height: 450px !important;
+        max-height: 75vh !important;
     }
     
-    .context-menu {
-        min-width: 160px;
-    }
-    
-    .context-menu-item {
-        font-size: 13px;
-        padding: 8px 16px;
+    #mapPage .container {
+        max-width: 100% !important;
+        padding: 0 10px;
     }
     
     #ppeModal .modal-content {
@@ -999,8 +940,19 @@ input::placeholder {
     }
     
     #mapCanvas {
-        min-height: 300px;
-        max-height: 60vh;
+        min-height: 350px !important;
+        max-height: 60vh !important;
+    }
+}
+
+/* ============================================================ */
+/* АДАПТАЦИЯ ДЛЯ БОЛЬШИХ ЭКРАНОВ */
+/* ============================================================ */
+
+@media (min-width: 1600px) {
+    #mapPage .container {
+        max-width: 1800px !important;
+        padding: 0 20px;
     }
 }
 
@@ -1048,9 +1000,5 @@ input::placeholder {
     
     #ppeList .ppe-item .name {
         color: #333 !important;
-    }
-    
-    .context-menu {
-        display: none !important;
     }
 }
