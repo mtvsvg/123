@@ -299,7 +299,7 @@ function initTrainingPage() {
 }
 
 // ============================================================
-// КАРТА
+// КАРТА (РАБОЧАЯ ВЕРСИЯ)
 // ============================================================
 let mapData = {
     workshops: [],
@@ -318,13 +318,17 @@ function initMapPage() {
     if (mapInited) return;
     mapInited = true;
     
-    // Загружаем сохранённые данные
+    // Загрузка данных
     const saved = localStorage.getItem('mapData');
     if (saved) {
         try {
             const parsed = JSON.parse(saved);
             if (parsed.workshops && parsed.workshops.length > 0) {
                 mapData = parsed;
+                if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
+                updateWorkshopSelect();
+                updateInfo();
+                drawMap();
             }
         } catch(e) {}
     }
@@ -341,27 +345,25 @@ function initMapPage() {
         });
         mapData.currentWorkshop = 0;
         mapData.evacuationPoints = [];
+        updateWorkshopSelect();
+        updateInfo();
+        drawMap();
     }
-    if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
     
-    updateWorkshopSelect();
-    updateInfo();
-    drawMap();
-    
-    // События кнопок
-    document.getElementById('setWorkshopBtn').addEventListener('click', function() {
+    // События
+    document.getElementById('editWorkshopBtn').addEventListener('click', function() {
         openWorkshopModal();
     });
     document.getElementById('addWorkerPlaceBtn').addEventListener('click', function() {
         const ws = getCurrentWorkshop();
-        if (!ws) { alert('Сначала создайте цех'); return; }
+        if (!ws) { alert('Сначала создайте участок'); return; }
         mapMode = 'addWorkplace';
         document.getElementById('mapMode').textContent = 'Добавление рабочего места';
         document.getElementById('mapMode').style.color = '#ff6b6b';
     });
     document.getElementById('addEvacuationBtn').addEventListener('click', function() {
         const ws = getCurrentWorkshop();
-        if (!ws) { alert('Сначала создайте цех'); return; }
+        if (!ws) { alert('Сначала создайте участок'); return; }
         mapMode = 'addEvacuation';
         document.getElementById('mapMode').textContent = 'Добавление выхода';
         document.getElementById('mapMode').style.color = '#4caf50';
@@ -382,7 +384,17 @@ function initMapPage() {
         saveMap();
     });
     
+    // Масштаб
+    document.getElementById('zoomSlider').addEventListener('input', function() {
+        zoomLevel = parseInt(this.value) / 100;
+        document.getElementById('zoomValue').textContent = this.value + '%';
+        drawMap();
+    });
+    
     setupCanvasEvents();
+    updateWorkshopSelect();
+    updateInfo();
+    drawMap();
 }
 
 function getCurrentWorkshop() {
@@ -395,7 +407,7 @@ function updateWorkshopSelect() {
     mapData.workshops.forEach((ws, index) => {
         const opt = document.createElement('option');
         opt.value = index;
-        opt.textContent = ws.name || `Цех ${index + 1}`;
+        opt.textContent = ws.name || `Участок ${index + 1}`;
         if (index === mapData.currentWorkshop) opt.selected = true;
         select.appendChild(opt);
     });
@@ -406,6 +418,13 @@ function updateInfo() {
     document.getElementById('workshopSize').textContent = ws ? `${ws.name} (${ws.length}×${ws.width} м)` : 'не задан';
     document.getElementById('workerCount').textContent = ws ? ws.workplaces.length : 0;
     document.getElementById('evacuationCount').textContent = mapData.evacuationPoints ? mapData.evacuationPoints.length : 0;
+}
+
+function resetZoom() {
+    document.getElementById('zoomSlider').value = 100;
+    zoomLevel = 1;
+    document.getElementById('zoomValue').textContent = '100%';
+    drawMap();
 }
 
 function getCanvasCoords(e) {
@@ -419,6 +438,17 @@ function getCanvasCoords(e) {
 
 function drawMap() {
     ctx.clearRect(0, 0, 900, 600);
+    
+    const ws = getCurrentWorkshop();
+    if (!ws) return;
+    
+    // Применяем масштаб
+    const cx = ws.x + ws.w/2;
+    const cy = ws.y + ws.h/2;
+    const scaledW = ws.w * zoomLevel;
+    const scaledH = ws.h * zoomLevel;
+    const newX = cx - scaledW/2;
+    const newY = cy - scaledH/2;
     
     // Фон
     ctx.fillStyle = '#0a0a1a';
@@ -434,83 +464,86 @@ function drawMap() {
         ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(900, i); ctx.stroke();
     }
     
-    const ws = getCurrentWorkshop();
-    if (!ws) return;
-    
-    // Рисуем цех
-    const grad = ctx.createLinearGradient(ws.x, ws.y, ws.x + ws.w, ws.y + ws.h);
+    // Рисуем участок
+    const grad = ctx.createLinearGradient(newX, newY, newX + scaledW, newY + scaledH);
     grad.addColorStop(0, 'rgba(74, 158, 255, 0.06)');
     grad.addColorStop(1, 'rgba(74, 158, 255, 0.02)');
     ctx.fillStyle = grad;
-    ctx.fillRect(ws.x, ws.y, ws.w, ws.h);
+    ctx.fillRect(newX, newY, scaledW, scaledH);
     ctx.strokeStyle = '#4a9eff';
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 5]);
-    ctx.strokeRect(ws.x, ws.y, ws.w, ws.h);
+    ctx.strokeRect(newX, newY, scaledW, scaledH);
     ctx.setLineDash([]);
     
-    // Название цеха
+    // Название участка
     ctx.fillStyle = 'rgba(74, 158, 255, 0.6)';
     ctx.font = '14px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`🏭 ${ws.name} (${ws.length}×${ws.width} м)`, ws.x + ws.w/2, ws.y + 30);
+    ctx.fillText(`🏭 ${ws.name} (${ws.length}×${ws.width} м)`, newX + scaledW/2, newY + 30);
     
-    // Рабочие места
+    // Рабочие места с учётом масштаба
     if (ws.workplaces) {
         ws.workplaces.forEach((wp) => {
-            const zoneSize = wp.zone || 40;
+            const wx = newX + (wp.x - ws.x) * zoomLevel;
+            const wy = newY + (wp.y - ws.y) * zoomLevel;
+            const zoneSize = (wp.zone || 40) * zoomLevel;
+            
             ctx.strokeStyle = 'rgba(76, 175, 80, 0.4)';
             ctx.lineWidth = 1.5;
             ctx.setLineDash([4, 4]);
-            ctx.strokeRect(wp.x - zoneSize/2, wp.y - zoneSize/2 - 10, zoneSize, zoneSize);
+            ctx.strokeRect(wx - zoneSize/2, wy - zoneSize/2 - 10*zoomLevel, zoneSize, zoneSize);
             ctx.setLineDash([]);
             
             ctx.fillStyle = '#ff6b6b';
             ctx.shadowColor = 'rgba(255, 107, 107, 0.3)';
             ctx.shadowBlur = 15;
             ctx.beginPath();
-            ctx.arc(wp.x, wp.y - 10, 10, 0, Math.PI * 2);
+            ctx.arc(wx, wy - 10*zoomLevel, 10*zoomLevel, 0, Math.PI * 2);
             ctx.fill();
             ctx.shadowBlur = 0;
-            ctx.fillRect(wp.x - 7, wp.y - 2, 14, 18);
-            ctx.fillRect(wp.x - 12, wp.y + 12, 7, 10);
-            ctx.fillRect(wp.x + 5, wp.y + 12, 7, 10);
+            ctx.fillRect(wx - 7*zoomLevel, wy - 2*zoomLevel, 14*zoomLevel, 18*zoomLevel);
+            ctx.fillRect(wx - 12*zoomLevel, wy + 12*zoomLevel, 7*zoomLevel, 10*zoomLevel);
+            ctx.fillRect(wx + 5*zoomLevel, wy + 12*zoomLevel, 7*zoomLevel, 10*zoomLevel);
             
             ctx.fillStyle = 'rgba(255,255,255,0.8)';
-            ctx.font = '10px sans-serif';
+            ctx.font = (10 * zoomLevel) + 'px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(wp.name.substring(0, 14), wp.x, wp.y + 42);
+            ctx.fillText(wp.name.substring(0, 14), wx, wy + 42*zoomLevel);
             if (wp.position) {
                 ctx.fillStyle = 'rgba(255,255,255,0.4)';
-                ctx.font = '8px sans-serif';
-                ctx.fillText(wp.position.substring(0, 16), wp.x, wp.y + 54);
+                ctx.font = (8 * zoomLevel) + 'px sans-serif';
+                ctx.fillText(wp.position.substring(0, 16), wx, wy + 54*zoomLevel);
             }
         });
     }
     
-    // Точки эвакуации
+    // Точки эвакуации с учётом масштаба
     if (mapData.evacuationPoints) {
         mapData.evacuationPoints.forEach((ep) => {
+            const ex = newX + (ep.x - ws.x) * zoomLevel;
+            const ey = newY + (ep.y - ws.y) * zoomLevel;
+            
             ctx.fillStyle = 'rgba(76, 175, 80, 0.2)';
             ctx.shadowColor = 'rgba(76, 175, 80, 0.4)';
             ctx.shadowBlur = 20;
             ctx.beginPath();
-            ctx.arc(ep.x, ep.y, 20, 0, Math.PI * 2);
+            ctx.arc(ex, ey, 20*zoomLevel, 0, Math.PI * 2);
             ctx.fill();
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#4caf50';
             ctx.beginPath();
-            ctx.arc(ep.x, ep.y, 12, 0, Math.PI * 2);
+            ctx.arc(ex, ey, 12*zoomLevel, 0, Math.PI * 2);
             ctx.fill();
             ctx.fillStyle = '#fff';
-            ctx.font = '16px sans-serif';
+            ctx.font = (16 * zoomLevel) + 'px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('⬆', ep.x, ep.y);
+            ctx.fillText('⬆', ex, ey);
             ctx.fillStyle = 'rgba(76, 175, 80, 0.7)';
-            ctx.font = '9px sans-serif';
+            ctx.font = (9 * zoomLevel) + 'px sans-serif';
             ctx.textBaseline = 'top';
-            ctx.fillText(ep.name || 'Выход', ep.x, ep.y + 16);
+            ctx.fillText(ep.name || 'Выход', ex, ey + 16*zoomLevel);
             ctx.textBaseline = 'alphabetic';
         });
     }
@@ -522,7 +555,7 @@ function setupCanvasEvents() {
         const ws = getCurrentWorkshop();
         if (!ws) return;
         if (coords.x < ws.x || coords.x > ws.x + ws.w || coords.y < ws.y || coords.y > ws.y + ws.h) {
-            alert('Кликните внутри цеха');
+            alert('Кликните внутри участка');
             return;
         }
         if (mapMode === 'addWorkplace') {
@@ -547,7 +580,6 @@ function setupCanvasEvents() {
         const ws = getCurrentWorkshop();
         if (!ws) return;
         
-        // Проверяем рабочие места
         let found = -1;
         if (ws.workplaces) {
             ws.workplaces.forEach((wp, index) => {
@@ -564,7 +596,6 @@ function setupCanvasEvents() {
                 }
             }
         }
-        // Проверяем точки эвакуации
         if (mapData.evacuationPoints) {
             let evacFound = -1;
             mapData.evacuationPoints.forEach((ep, index) => {
@@ -586,7 +617,7 @@ function setupCanvasEvents() {
 
 function openWorkshopModal() {
     const ws = getCurrentWorkshop();
-    if (!ws) { alert('Сначала создайте цех'); return; }
+    if (!ws) { alert('Сначала создайте участок'); return; }
     const modal = document.getElementById('workshopModal');
     modal.classList.remove('hidden');
     document.getElementById('workshopNameInput').value = ws.name || '';
@@ -602,7 +633,7 @@ function closeWorkshopModal() {
 function saveWorkshop() {
     const ws = getCurrentWorkshop();
     if (!ws) return;
-    const name = document.getElementById('workshopNameInput').value.trim() || 'Цех';
+    const name = document.getElementById('workshopNameInput').value.trim() || 'Участок';
     const length = parseInt(document.getElementById('workshopLengthInput').value) || 30;
     const width = parseInt(document.getElementById('workshopWidthInput').value) || 20;
     ws.name = name;
@@ -648,7 +679,7 @@ function saveWorkplace() {
 }
 
 function addNewWorkshop() {
-    const name = prompt('Введите название нового цеха:', 'Цех ' + (mapData.workshops.length + 1));
+    const name = prompt('Введите название нового участка:', 'Участок ' + (mapData.workshops.length + 1));
     if (!name) return;
     mapData.workshops.push({
         id: Date.now(),
@@ -659,6 +690,23 @@ function addNewWorkshop() {
         workplaces: []
     });
     mapData.currentWorkshop = mapData.workshops.length - 1;
+    if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
+    updateWorkshopSelect();
+    updateInfo();
+    drawMap();
+    saveMap();
+}
+
+function deleteWorkshop() {
+    if (mapData.workshops.length <= 1) {
+        alert('Нельзя удалить единственный участок');
+        return;
+    }
+    if (!confirm('Удалить текущий участок со всеми данными?')) return;
+    mapData.workshops.splice(mapData.currentWorkshop, 1);
+    if (mapData.currentWorkshop >= mapData.workshops.length) {
+        mapData.currentWorkshop = mapData.workshops.length - 1;
+    }
     updateWorkshopSelect();
     updateInfo();
     drawMap();
@@ -671,7 +719,7 @@ function saveMap() {
 }
 
 function clearMap() {
-    if (!confirm('Очистить текущий цех?')) return;
+    if (!confirm('Очистить текущий участок?')) return;
     const ws = getCurrentWorkshop();
     if (ws) {
         ws.workplaces = [];
