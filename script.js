@@ -276,10 +276,7 @@ function escXml(str) {
 // ============================================================
 async function getPPEByProfession(profession) {
     try {
-        // Кодируем профессию для URL
         const encodedProfession = encodeURIComponent(profession);
-        
-        // Используем API Онлайн Инспекции
         const url = `https://xn--80akibicpdbetz7e2g.xn--p1ai/api/ppe/search?q=${encodedProfession}`;
         
         const response = await fetch(url, {
@@ -298,7 +295,6 @@ async function getPPEByProfession(profession) {
         return data;
     } catch (error) {
         console.error('Ошибка при получении СИЗ:', error);
-        // Если API не доступен, используем локальную базу
         return getLocalPPE(profession);
     }
 }
@@ -382,7 +378,6 @@ function getLocalPPE(profession) {
         }
     };
     
-    // Ищем по ключевому слову в профессии
     const lowerProf = profession.toLowerCase();
     for (const [key, value] of Object.entries(ppeDB)) {
         if (lowerProf.includes(key) || key.includes(lowerProf)) {
@@ -390,7 +385,6 @@ function getLocalPPE(profession) {
         }
     }
     
-    // Если не нашли, возвращаем общие рекомендации
     return {
         profession: profession,
         ppe: [
@@ -415,7 +409,6 @@ function initTrainingPage() {
     renderProtocol(); 
     fillFamEmployeeSelect();
 
-    // Обработчики событий
     document.getElementById('showOrgFormBtn').addEventListener('click', function() { 
         document.getElementById('orgForm').classList.toggle('hidden'); 
     });
@@ -614,7 +607,7 @@ function initTrainingPage() {
 }
 
 // ============================================================
-// КАРТА - С ПОДБОРОМ СИЗ ПО ПРОФЕССИИ
+// КАРТА - МАКСИМАЛЬНО БОЛЬШАЯ (4000x2000)
 // ============================================================
 let mapData = {
     workshops: [],
@@ -632,14 +625,14 @@ let resizeCorner = '';
 let resizeStartX = 0, resizeStartY = 0;
 let resizeStartW = 0, resizeStartH = 0;
 let resizeStartXpos = 0, resizeStartYpos = 0;
-let selectedWorkplaceIndex = -1; // Для контекстного меню
+let selectedWorkplaceIndex = -1; // Для удаления
 
 const canvas = document.getElementById('mapCanvas');
 const ctx = canvas.getContext('2d');
 
-// Устанавливаем ОГРОМНЫЙ логический размер
-canvas.width = 3000;
-canvas.height = 1500;
+// Устанавливаем ОГРОМНЫЙ логический размер - 4000x2000
+canvas.width = 4000;
+canvas.height = 2000;
 
 function initMapPage() {
     if (mapInited) return;
@@ -653,11 +646,11 @@ function initMapPage() {
                 mapData = parsed;
                 if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
                 const ws = getCurrentWorkshop();
-                if (ws && ws.w < 2000) {
+                if (ws && ws.w < 3000) {
                     ws.x = 50;
                     ws.y = 50;
-                    ws.w = 2900;
-                    ws.h = 1400;
+                    ws.w = 3900;
+                    ws.h = 1900;
                 }
                 updateWorkshopSelect();
                 updateInfo();
@@ -674,8 +667,8 @@ function initMapPage() {
             width: 20,
             x: 50, 
             y: 50, 
-            w: 2900, 
-            h: 1400,
+            w: 3900, 
+            h: 1900,
             workplaces: []
         });
         mapData.currentWorkshop = 0;
@@ -718,6 +711,11 @@ function initMapPage() {
         updateInfo();
         drawMap();
         saveMap();
+    });
+    
+    // Кнопка удаления объекта
+    document.getElementById('deleteSelectedBtn').addEventListener('click', function() {
+        deleteSelectedWorkplace();
     });
     
     setupCanvasEvents();
@@ -771,7 +769,7 @@ function drawMap() {
     ctx.fillStyle = '#0a0a1a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Сетка
+    // Сетка (каждые 50px)
     ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 0.5;
     for (let i = 0; i < canvas.width; i += 50) {
@@ -800,12 +798,12 @@ function drawMap() {
     ctx.setLineDash([]);
     
     ctx.fillStyle = 'rgba(74, 158, 255, 0.6)';
-    ctx.font = '24px sans-serif';
+    ctx.font = '28px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`🏭 ${ws.name} (${ws.length}×${ws.width} м)`, ws.x + ws.w/2, ws.y + 45);
+    ctx.fillText(`🏭 ${ws.name} (${ws.length}×${ws.width} м)`, ws.x + ws.w/2, ws.y + 55);
     
     // Углы для растягивания
-    const cornerSize = 16;
+    const cornerSize = 20;
     const corners = [
         { cx: ws.x, cy: ws.y },
         { cx: ws.x + ws.w, cy: ws.y },
@@ -823,7 +821,7 @@ function drawMap() {
     // Рабочие места
     if (ws.workplaces) {
         ws.workplaces.forEach((wp, index) => {
-            const zoneSize = wp.zone || 50;
+            const zoneSize = wp.zone || 60;
             const x = wp.x - zoneSize/2;
             const y = wp.y - zoneSize/2;
             const w = zoneSize;
@@ -852,45 +850,54 @@ function drawMap() {
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, w, h);
             
-            // Человечек
+            // Человечек (увеличенный)
             const centerX = wp.x;
             const centerY = wp.y;
-            const scale = 1.8;
+            const scale = 2.0;
             
             // Определяем цвет в зависимости от наличия СИЗ
             let color = '#ff6b6b';
             if (wp.hasPPE) {
-                color = '#4caf50'; // Зелёный - СИЗ подобраны
+                color = '#4caf50';
             }
             
             ctx.fillStyle = color;
             ctx.shadowColor = `${color}40`;
-            ctx.shadowBlur = 25;
+            ctx.shadowBlur = 30;
             ctx.beginPath();
-            ctx.arc(centerX, centerY - 18 * scale, 14 * scale, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY - 18 * scale, 15 * scale, 0, Math.PI * 2);
             ctx.fill();
             ctx.shadowBlur = 0;
-            ctx.fillRect(centerX - 10 * scale, centerY - 6 * scale, 20 * scale, 24 * scale);
-            ctx.fillRect(centerX - 16 * scale, centerY + 16 * scale, 9 * scale, 14 * scale);
-            ctx.fillRect(centerX + 7 * scale, centerY + 16 * scale, 9 * scale, 14 * scale);
-            ctx.fillRect(centerX - 20 * scale, centerY + 2 * scale, 7 * scale, 12 * scale);
-            ctx.fillRect(centerX + 13 * scale, centerY + 2 * scale, 7 * scale, 12 * scale);
+            ctx.fillRect(centerX - 11 * scale, centerY - 6 * scale, 22 * scale, 26 * scale);
+            ctx.fillRect(centerX - 18 * scale, centerY + 18 * scale, 10 * scale, 16 * scale);
+            ctx.fillRect(centerX + 8 * scale, centerY + 18 * scale, 10 * scale, 16 * scale);
+            ctx.fillRect(centerX - 22 * scale, centerY + 2 * scale, 8 * scale, 14 * scale);
+            ctx.fillRect(centerX + 14 * scale, centerY + 2 * scale, 8 * scale, 14 * scale);
+            
+            // Рамка выделения (если выбран)
+            if (index === selectedWorkplaceIndex) {
+                ctx.strokeStyle = '#00d4ff';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([8, 4]);
+                ctx.strokeRect(x - 10, y - 10, w + 20, h + 20);
+                ctx.setLineDash([]);
+            }
             
             // Название
             ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.font = '16px sans-serif';
+            ctx.font = '18px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(wp.name.substring(0, 20), centerX, centerY + 55 * scale);
+            ctx.fillText(wp.name.substring(0, 20), centerX, centerY + 60 * scale);
             if (wp.position) {
                 ctx.fillStyle = 'rgba(255,255,255,0.4)';
-                ctx.font = '13px sans-serif';
-                ctx.fillText(wp.position.substring(0, 25), centerX, centerY + 72 * scale);
+                ctx.font = '14px sans-serif';
+                ctx.fillText(wp.position.substring(0, 25), centerX, centerY + 78 * scale);
             }
             
             // Иконка СИЗ если есть
             if (wp.hasPPE) {
-                ctx.font = '18px sans-serif';
-                ctx.fillText('🦺', centerX + 35 * scale, centerY - 25 * scale);
+                ctx.font = '22px sans-serif';
+                ctx.fillText('🦺', centerX + 40 * scale, centerY - 28 * scale);
             }
         });
     }
@@ -898,13 +905,13 @@ function drawMap() {
     // Точки эвакуации
     if (mapData.evacuationPoints) {
         mapData.evacuationPoints.forEach((ep) => {
-            const ew = 100, eh = 50;
+            const ew = 120, eh = 60;
             const ex = ep.x - ew/2;
             const ey = ep.y - eh/2;
             
             ctx.fillStyle = '#2e7d32';
             ctx.shadowColor = 'rgba(46, 125, 50, 0.4)';
-            ctx.shadowBlur = 25;
+            ctx.shadowBlur = 30;
             ctx.fillRect(ex, ey, ew, eh);
             ctx.shadowBlur = 0;
             
@@ -913,7 +920,7 @@ function drawMap() {
             ctx.strokeRect(ex, ey, ew, eh);
             
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 20px sans-serif';
+            ctx.font = 'bold 22px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('🚪 ВЫХОД', ep.x, ep.y);
@@ -922,50 +929,50 @@ function drawMap() {
     }
 }
 
+// ============================================================
+// ОБРАБОТЧИКИ СОБЫТИЙ КАНВАСА
+// ============================================================
 function setupCanvasEvents() {
-    // Контекстное меню (ПКМ)
-    canvas.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
+    // Двойной клик - открыть СИЗ
+    canvas.addEventListener('dblclick', function(e) {
         const coords = getCanvasCoords(e);
         const ws = getCurrentWorkshop();
         if (!ws || !ws.workplaces) return;
         
-        // Ищем ближайшее рабочее место
         let found = -1;
-        let minDist = 50;
         ws.workplaces.forEach((wp, index) => {
             const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
-            if (dist < minDist) {
-                minDist = dist;
-                found = index;
-            }
+            if (dist < 40) found = index;
         });
         
         if (found >= 0) {
+            const wp = ws.workplaces[found];
+            if (!wp.position) {
+                alert('Для этого рабочего места не указана должность. Добавьте должность в настройках.');
+                return;
+            }
+            // Выделяем объект
             selectedWorkplaceIndex = found;
-            const menu = document.getElementById('contextMenu');
-            menu.style.left = e.clientX + 'px';
-            menu.style.top = e.clientY + 'px';
-            menu.classList.remove('hidden');
+            drawMap();
+            // Открываем СИЗ
+            openPPEModal(wp);
         }
     });
     
-    // Закрываем контекстное меню при клике вне его
-    document.addEventListener('click', function(e) {
-        const menu = document.getElementById('contextMenu');
-        if (!menu.contains(e.target)) {
-            menu.classList.add('hidden');
-        }
-    });
-    
+    // Обычный клик - выбор объекта
     canvas.addEventListener('click', function(e) {
         const coords = getCanvasCoords(e);
         const ws = getCurrentWorkshop();
         if (!ws) return;
+        
         if (coords.x < ws.x || coords.x > ws.x + ws.w || coords.y < ws.y || coords.y > ws.y + ws.h) {
-            alert('Кликните внутри участка');
+            if (mapMode !== 'addWorkplace' && mapMode !== 'addEvacuation') {
+                selectedWorkplaceIndex = -1;
+                drawMap();
+            }
             return;
         }
+        
         if (mapMode === 'addWorkplace') {
             openWorkplaceModal(coords.x, coords.y);
         } else if (mapMode === 'addEvacuation') {
@@ -985,45 +992,17 @@ function setupCanvasEvents() {
                 document.getElementById('mapMode').textContent = 'Просмотр';
                 document.getElementById('mapMode').style.color = '#00d4ff';
             }
-        }
-    });
-    
-    canvas.addEventListener('dblclick', function(e) {
-        const coords = getCanvasCoords(e);
-        const ws = getCurrentWorkshop();
-        if (!ws) return;
-        
-        let found = -1;
-        if (ws.workplaces) {
-            ws.workplaces.forEach((wp, index) => {
-                const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
-                if (dist < 35) found = index;
-            });
-            if (found >= 0) {
-                if (confirm(`Удалить рабочее место "${ws.workplaces[found].name}"?`)) {
-                    ws.workplaces.splice(found, 1);
-                    updateInfo();
-                    drawMap();
-                    saveMap();
-                    return;
-                }
+        } else {
+            // Выбор рабочего места
+            let found = -1;
+            if (ws.workplaces) {
+                ws.workplaces.forEach((wp, index) => {
+                    const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
+                    if (dist < 40) found = index;
+                });
             }
-        }
-        if (mapData.evacuationPoints) {
-            let evacFound = -1;
-            mapData.evacuationPoints.forEach((ep, index) => {
-                const dist = Math.sqrt((coords.x - ep.x) ** 2 + (coords.y - ep.y) ** 2);
-                if (dist < 35) evacFound = index;
-            });
-            if (evacFound >= 0) {
-                if (confirm(`Удалить выход "${mapData.evacuationPoints[evacFound].name}"?`)) {
-                    mapData.evacuationPoints.splice(evacFound, 1);
-                    updateInfo();
-                    drawMap();
-                    saveMap();
-                    return;
-                }
-            }
+            selectedWorkplaceIndex = found;
+            drawMap();
         }
     });
     
@@ -1037,7 +1016,7 @@ function setupCanvasEvents() {
             for (let i = ws.workplaces.length - 1; i >= 0; i--) {
                 const wp = ws.workplaces[i];
                 const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
-                if (dist < 35) {
+                if (dist < 40) {
                     isDragging = true;
                     dragTarget = i;
                     dragOffsetX = coords.x - wp.x;
@@ -1048,7 +1027,7 @@ function setupCanvasEvents() {
             }
         }
         
-        const cornerSize = 20;
+        const cornerSize = 25;
         const corners = [
             { cx: ws.x, cy: ws.y, corner: 'tl' },
             { cx: ws.x + ws.w, cy: ws.y, corner: 'tr' },
@@ -1081,8 +1060,8 @@ function setupCanvasEvents() {
             if (wp) {
                 let newX = coords.x - dragOffsetX;
                 let newY = coords.y - dragOffsetY;
-                newX = Math.max(ws.x + 15, Math.min(ws.x + ws.w - 15, newX));
-                newY = Math.max(ws.y + 15, Math.min(ws.y + ws.h - 15, newY));
+                newX = Math.max(ws.x + 20, Math.min(ws.x + ws.w - 20, newX));
+                newY = Math.max(ws.y + 20, Math.min(ws.y + ws.h - 20, newY));
                 wp.x = newX;
                 wp.y = newY;
                 drawMap();
@@ -1098,22 +1077,22 @@ function setupCanvasEvents() {
                 case 'tl':
                     ws.x = Math.max(0, resizeStartXpos + dx);
                     ws.y = Math.max(0, resizeStartYpos + dy);
-                    ws.w = Math.max(100, resizeStartW - dx);
-                    ws.h = Math.max(100, resizeStartH - dy);
+                    ws.w = Math.max(200, resizeStartW - dx);
+                    ws.h = Math.max(200, resizeStartH - dy);
                     break;
                 case 'tr':
                     ws.y = Math.max(0, resizeStartYpos + dy);
-                    ws.w = Math.max(100, resizeStartW + dx);
-                    ws.h = Math.max(100, resizeStartH - dy);
+                    ws.w = Math.max(200, resizeStartW + dx);
+                    ws.h = Math.max(200, resizeStartH - dy);
                     break;
                 case 'bl':
                     ws.x = Math.max(0, resizeStartXpos + dx);
-                    ws.w = Math.max(100, resizeStartW - dx);
-                    ws.h = Math.max(100, resizeStartH + dy);
+                    ws.w = Math.max(200, resizeStartW - dx);
+                    ws.h = Math.max(200, resizeStartH + dy);
                     break;
                 case 'br':
-                    ws.w = Math.max(100, resizeStartW + dx);
-                    ws.h = Math.max(100, resizeStartH + dy);
+                    ws.w = Math.max(200, resizeStartW + dx);
+                    ws.h = Math.max(200, resizeStartH + dy);
                     break;
             }
             drawMap();
@@ -1124,14 +1103,14 @@ function setupCanvasEvents() {
         if (ws.workplaces) {
             for (let wp of ws.workplaces) {
                 const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
-                if (dist < 35) {
+                if (dist < 40) {
                     cursor = 'grab';
                     break;
                 }
             }
         }
         if (cursor === 'default') {
-            const cornerSize = 20;
+            const cornerSize = 25;
             const corners = [
                 { cx: ws.x, cy: ws.y, c: 'nw-resize' },
                 { cx: ws.x + ws.w, cy: ws.y, c: 'ne-resize' },
@@ -1178,67 +1157,28 @@ function setupCanvasEvents() {
 }
 
 // ============================================================
-// ФУНКЦИИ ДЛЯ РАБОТЫ С КОНТЕКСТНЫМ МЕНЮ
+// ФУНКЦИЯ УДАЛЕНИЯ ВЫБРАННОГО ОБЪЕКТА
 // ============================================================
-function showWorkplacePPE() {
-    const menu = document.getElementById('contextMenu');
-    menu.classList.add('hidden');
-    
+function deleteSelectedWorkplace() {
     const ws = getCurrentWorkshop();
-    if (!ws || !ws.workplaces || selectedWorkplaceIndex < 0 || selectedWorkplaceIndex >= ws.workplaces.length) {
-        alert('Рабочее место не найдено');
+    if (!ws || !ws.workplaces) {
+        alert('Нет рабочих мест для удаления');
+        return;
+    }
+    
+    if (selectedWorkplaceIndex < 0 || selectedWorkplaceIndex >= ws.workplaces.length) {
+        alert('Сначала выберите рабочее место (кликните на него)');
         return;
     }
     
     const wp = ws.workplaces[selectedWorkplaceIndex];
-    if (!wp.position) {
-        alert('Для этого рабочего места не указана должность. Добавьте должность в настройках.');
-        return;
-    }
-    
-    // Открываем модальное окно с СИЗ
-    openPPEModal(wp);
-}
-
-function editWorkplace() {
-    const menu = document.getElementById('contextMenu');
-    menu.classList.add('hidden');
-    
-    const ws = getCurrentWorkshop();
-    if (!ws || !ws.workplaces || selectedWorkplaceIndex < 0 || selectedWorkplaceIndex >= ws.workplaces.length) {
-        alert('Рабочее место не найдено');
-        return;
-    }
-    
-    const wp = ws.workplaces[selectedWorkplaceIndex];
-    // Открываем модалку редактирования
-    tempWorkplacePos = { x: wp.x, y: wp.y };
-    const modal = document.getElementById('workplaceModal');
-    modal.classList.remove('hidden');
-    document.getElementById('workplaceNameInput').value = wp.name || '';
-    document.getElementById('workplacePositionInput').value = wp.position || '';
-    document.getElementById('workplaceZoneInput').value = wp.zone || 50;
-    document.getElementById('workplaceNameInput').focus();
-    
-    // Меняем кнопку на "Сохранить" и сохраняем индекс
-    const saveBtn = document.getElementById('saveWorkplaceBtn');
-    saveBtn.textContent = '💾 Сохранить';
-    saveBtn.dataset.editIndex = selectedWorkplaceIndex;
-}
-
-function deleteWorkplace() {
-    const menu = document.getElementById('contextMenu');
-    menu.classList.add('hidden');
-    
-    const ws = getCurrentWorkshop();
-    if (!ws || !ws.workplaces || selectedWorkplaceIndex < 0 || selectedWorkplaceIndex >= ws.workplaces.length) return;
-    
-    if (confirm(`Удалить рабочее место "${ws.workplaces[selectedWorkplaceIndex].name}"?`)) {
+    if (confirm(`Удалить рабочее место "${wp.name}"?`)) {
         ws.workplaces.splice(selectedWorkplaceIndex, 1);
         selectedWorkplaceIndex = -1;
         updateInfo();
         drawMap();
         saveMap();
+        alert('✅ Рабочее место удалено');
     }
 }
 
@@ -1254,22 +1194,18 @@ async function openPPEModal(wp) {
     const content = document.getElementById('ppeContent');
     const error = document.getElementById('ppeError');
     
-    // Показываем загрузку
     loading.style.display = 'block';
     content.style.display = 'none';
     error.style.display = 'none';
     modal.classList.remove('hidden');
     
-    // Заполняем информацию о сотруднике
     document.getElementById('ppeEmployeeName').textContent = wp.name || 'Сотрудник';
     document.getElementById('ppePosition').textContent = wp.position || 'Должность не указана';
     
     try {
-        // Получаем СИЗ
         const ppeData = await getPPEByProfession(wp.position);
         
         if (ppeData && ppeData.ppe && ppeData.ppe.length > 0) {
-            // Отображаем список СИЗ
             const list = document.getElementById('ppeList');
             let html = '';
             ppeData.ppe.forEach((item, index) => {
@@ -1283,7 +1219,6 @@ async function openPPEModal(wp) {
             });
             list.innerHTML = html;
             
-            // Помечаем рабочее место как имеющее СИЗ
             wp.hasPPE = true;
             saveMap();
             drawMap();
@@ -1312,10 +1247,6 @@ function closePPEModal() {
 function exportPPE() {
     if (!currentPPEWorkplace) return;
     
-    const content = document.getElementById('ppeContent');
-    const html = content.innerHTML;
-    
-    // Создаем окно для печати
     const win = window.open('', '_blank');
     win.document.write(`
         <!DOCTYPE html>
@@ -1349,55 +1280,6 @@ function exportPPE() {
     `);
     win.document.close();
 }
-
-// ============================================================
-// РЕДАКТИРОВАНИЕ РАБОЧЕГО МЕСТА (ПЕРЕОПРЕДЕЛЯЕМ saveWorkplace)
-// ============================================================
-// Сохраняем оригинальную функцию
-const originalSaveWorkplace = window.saveWorkplace;
-
-// Переопределяем для поддержки редактирования
-window.saveWorkplace = function() {
-    const saveBtn = document.getElementById('saveWorkplaceBtn');
-    const editIndex = saveBtn.dataset.editIndex;
-    
-    if (editIndex !== undefined && editIndex !== '') {
-        // Режим редактирования
-        const ws = getCurrentWorkshop();
-        if (!ws || !ws.workplaces || editIndex >= ws.workplaces.length) return;
-        
-        const wp = ws.workplaces[editIndex];
-        wp.name = document.getElementById('workplaceNameInput').value.trim() || wp.name;
-        wp.position = document.getElementById('workplacePositionInput').value.trim() || wp.position;
-        wp.zone = parseInt(document.getElementById('workplaceZoneInput').value) || 50;
-        
-        // Сбрасываем флаг СИЗ, так как должность могла измениться
-        wp.hasPPE = false;
-        
-        closeWorkplaceModal();
-        updateInfo();
-        drawMap();
-        saveMap();
-        
-        // Возвращаем кнопку в исходное состояние
-        saveBtn.textContent = 'Добавить';
-        delete saveBtn.dataset.editIndex;
-        
-        alert('✅ Рабочее место обновлено!');
-    } else {
-        // Режим добавления (оригинальная логика)
-        originalSaveWorkplace();
-    }
-};
-
-// Переопределяем closeWorkplaceModal для сброса состояния
-const originalCloseWorkplace = window.closeWorkplaceModal;
-window.closeWorkplaceModal = function() {
-    originalCloseWorkplace();
-    const saveBtn = document.getElementById('saveWorkplaceBtn');
-    saveBtn.textContent = 'Добавить';
-    delete saveBtn.dataset.editIndex;
-};
 
 // ============================================================
 // ОСТАЛЬНЫЕ ФУНКЦИИ КАРТЫ
@@ -1439,8 +1321,38 @@ function openWorkplaceModal(x, y) {
     modal.classList.remove('hidden');
     document.getElementById('workplaceNameInput').value = '';
     document.getElementById('workplacePositionInput').value = '';
-    document.getElementById('workplaceZoneInput').value = 50;
+    document.getElementById('workplaceZoneInput').value = 60;
     document.getElementById('workplaceNameInput').focus();
+}
+
+function closeWorkplaceModal() {
+    document.getElementById('workplaceModal').classList.add('hidden');
+    tempWorkplacePos = null;
+    mapMode = 'view';
+    document.getElementById('mapMode').textContent = 'Просмотр';
+    document.getElementById('mapMode').style.color = '#00d4ff';
+}
+
+function saveWorkplace() {
+    if (!tempWorkplacePos) return;
+    const ws = getCurrentWorkshop();
+    if (!ws) return;
+    const name = document.getElementById('workplaceNameInput').value.trim() || 'Рабочее место ' + (ws.workplaces.length + 1);
+    const position = document.getElementById('workplacePositionInput').value.trim() || '';
+    const zone = parseInt(document.getElementById('workplaceZoneInput').value) || 60;
+    ws.workplaces.push({ 
+        x: tempWorkplacePos.x, 
+        y: tempWorkplacePos.y, 
+        name: name, 
+        position: position, 
+        zone: zone, 
+        id: Date.now(),
+        hasPPE: false
+    });
+    closeWorkplaceModal();
+    updateInfo();
+    drawMap();
+    saveMap();
 }
 
 function addNewWorkshop() {
@@ -1453,8 +1365,8 @@ function addNewWorkshop() {
         width: 20,
         x: 50, 
         y: 50, 
-        w: 2900, 
-        h: 1400,
+        w: 3900, 
+        h: 1900,
         workplaces: []
     });
     mapData.currentWorkshop = mapData.workshops.length - 1;
@@ -1491,6 +1403,7 @@ function clearMap() {
     if (ws) {
         ws.workplaces = [];
         mapData.evacuationPoints = [];
+        selectedWorkplaceIndex = -1;
         updateInfo();
         drawMap();
         saveMap();
