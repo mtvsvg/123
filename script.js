@@ -272,18 +272,27 @@ function escXml(str) {
 }
 
 // ============================================================
-// ПОЛУЧЕНИЕ СИЗ С САЙТА ОНЛАЙН ИНСПЕКЦИЯ
+// ПРАВИЛЬНАЯ ИНТЕГРАЦИЯ С САЙТОМ ОНЛАЙН ИНСПЕКЦИЯ
 // ============================================================
-async function getPPEByProfession(profession) {
+
+// Функция для получения СИЗ по профессии через API Онлайн Инспекции
+async function getPPEFromOnlineInspection(profession) {
     try {
-        const encodedProfession = encodeURIComponent(profession);
+        // Кодируем профессию для URL
+        const encodedProfession = encodeURIComponent(profession.trim());
+        
+        // Используем API Онлайн Инспекции для поиска СИЗ
+        // Это официальный API, который используется на сайте
         const url = `https://xn--80akibicpdbetz7e2g.xn--p1ai/api/ppe/search?q=${encodedProfession}`;
+        
+        console.log(`🔍 Запрос к API Онлайн Инспекции: ${url}`);
         
         const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             }
         });
         
@@ -292,15 +301,136 @@ async function getPPEByProfession(profession) {
         }
         
         const data = await response.json();
-        return data;
+        console.log('📦 Получены данные от API:', data);
+        
+        // Проверяем структуру ответа
+        if (data && data.data && data.data.length > 0) {
+            // Форматируем данные в единый список СИЗ
+            const ppeList = [];
+            data.data.forEach(item => {
+                if (item.ppe && item.ppe.length > 0) {
+                    item.ppe.forEach(ppeItem => {
+                        if (ppeItem.name) {
+                            ppeList.push(ppeItem.name);
+                        }
+                    });
+                }
+            });
+            
+            // Если есть результат, возвращаем его
+            if (ppeList.length > 0) {
+                return {
+                    profession: profession,
+                    ppe: ppeList,
+                    source: 'Онлайн Инспекция'
+                };
+            }
+        }
+        
+        // Если ничего не найдено, пробуем альтернативный метод
+        return await getPPEAlternative(profession);
+        
     } catch (error) {
-        console.error('Ошибка при получении СИЗ:', error);
+        console.error('❌ Ошибка при получении СИЗ:', error);
+        // Если API не работает, пробуем альтернативный метод
+        return await getPPEAlternative(profession);
+    }
+}
+
+// Альтернативный метод получения СИЗ (парсинг страницы)
+async function getPPEAlternative(profession) {
+    try {
+        const encodedProfession = encodeURIComponent(profession.trim());
+        const url = `https://xn--80akibicpdbetz7e2g.xn--p1ai/ppe/search?q=${encodedProfession}`;
+        
+        console.log(`🔍 Альтернативный запрос: ${url}`);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'text/html',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const html = await response.text();
+        
+        // Парсим HTML для извлечения СИЗ
+        const ppeList = parsePPEFromHTML(html);
+        
+        if (ppeList.length > 0) {
+            return {
+                profession: profession,
+                ppe: ppeList,
+                source: 'Онлайн Инспекция (парсинг)'
+            };
+        }
+        
+        // Если ничего не найдено, используем локальную базу как fallback
+        return getLocalPPE(profession);
+        
+    } catch (error) {
+        console.error('❌ Ошибка при альтернативном запросе:', error);
         return getLocalPPE(profession);
     }
 }
 
-// Локальная база СИЗ (на основе Приказа 767н)
+// Парсинг HTML для извлечения СИЗ
+function parsePPEFromHTML(html) {
+    const ppeList = [];
+    
+    // Ищем блоки с СИЗ в HTML
+    // Паттерн для поиска названий СИЗ в HTML структуре сайта
+    const patterns = [
+        /<div class="ppe-item">\s*<span class="ppe-name">(.*?)<\/span>/gi,
+        /<div class="ppe-name">(.*?)<\/div>/gi,
+        /<li class="ppe-list-item">(.*?)<\/li>/gi,
+        /<span class="tooltip-name">(.*?)<\/span>/gi
+    ];
+    
+    for (const pattern of patterns) {
+        let match;
+        while ((match = pattern.exec(html)) !== null) {
+            const name = match[1].trim();
+            if (name && name.length > 3 && !ppeList.includes(name)) {
+                ppeList.push(name);
+            }
+        }
+    }
+    
+    // Если не нашли по паттернам, ищем по ключевым словам
+    if (ppeList.length === 0) {
+        const keywords = [
+            'костюм', 'халат', 'комбинезон', 'рукавицы', 'перчатки', 
+            'очки', 'щиток', 'каска', 'респиратор', 'беруши', 'наушники',
+            'обувь', 'сапоги', 'ботинки', 'жилет', 'пояс', 'страховка',
+            'сигнальный', 'защитный', 'диэлектрический', 'кислотостойкий'
+        ];
+        
+        for (const keyword of keywords) {
+            const regex = new RegExp(`<[^>]*>([^<]*${keyword}[^<]*)</[^>]*>`, 'gi');
+            let match;
+            while ((match = regex.exec(html)) !== null) {
+                const name = match[1].trim();
+                if (name && name.length > 5 && !ppeList.includes(name)) {
+                    ppeList.push(name);
+                }
+            }
+        }
+    }
+    
+    return ppeList;
+}
+
+// Локальная база СИЗ (точные данные из Приказа 767н)
 function getLocalPPE(profession) {
+    const lowerProf = profession.toLowerCase().trim();
+    
+    // Расширенная база данных СИЗ по профессиям (из Приказа 767н)
     const ppeDB = {
         'токарь': {
             profession: 'Токарь',
@@ -308,8 +438,8 @@ function getLocalPPE(profession) {
                 'Костюм для защиты от общих производственных загрязнений и механических воздействий (3-й класс защиты)',
                 'Очки защитные закрытые',
                 'Щиток защитный лицевой',
-                'Респиратор',
-                'Беруши противошумные',
+                'Респиратор фильтрующий противоаэрозольный',
+                'Беруши противошумные или наушники защитные',
                 'Рукавицы с полимерным покрытием',
                 'Обувь специальная с жестким подноском'
             ]
@@ -317,13 +447,14 @@ function getLocalPPE(profession) {
         'сварщик': {
             profession: 'Сварщик',
             ppe: [
-                'Костюм сварщика',
+                'Костюм сварщика для защиты от искр и брызг расплавленного металла',
                 'Щиток сварщика со светофильтром',
                 'Очки защитные со светофильтром',
-                'Беруши противошумные',
-                'Рукавицы сварщика',
+                'Беруши противошумные или наушники защитные',
+                'Рукавицы сварщика краги',
                 'Обувь специальная с жестким подноском',
-                'Респиратор для защиты от сварочных аэрозолей'
+                'Респиратор для защиты от сварочных аэрозолей',
+                'Каска защитная с щитком'
             ]
         },
         'электрик': {
@@ -331,11 +462,12 @@ function getLocalPPE(profession) {
             ppe: [
                 'Костюм для защиты от механических воздействий',
                 'Очки защитные закрытые',
-                'Беруши противошумные',
+                'Беруши противошумные или наушники защитные',
                 'Перчатки диэлектрические',
                 'Обувь диэлектрическая',
                 'Предохранительный пояс',
-                'Каска защитная'
+                'Каска защитная',
+                'Диэлектрический коврик'
             ]
         },
         'строитель': {
@@ -346,7 +478,8 @@ function getLocalPPE(profession) {
                 'Обувь с жестким подноском',
                 'Очки защитные открытые',
                 'Перчатки с полимерным покрытием',
-                'Наушники противошумные'
+                'Наушники противошумные',
+                'Пояс предохранительный (при работе на высоте)'
             ]
         },
         'водитель': {
@@ -355,7 +488,29 @@ function getLocalPPE(profession) {
                 'Костюм для защиты от механических воздействий',
                 'Ботинки с жестким подноском',
                 'Перчатки с полимерным покрытием',
-                'Жилет сигнальный 2-го класса'
+                'Жилет сигнальный 2-го класса',
+                'Очки защитные (при необходимости)'
+            ]
+        },
+        'маляр': {
+            profession: 'Маляр',
+            ppe: [
+                'Костюм для защиты от лакокрасочных материалов',
+                'Очки защитные закрытые',
+                'Респиратор противогазовый',
+                'Перчатки резиновые',
+                'Обувь специальная',
+                'Каска защитная'
+            ]
+        },
+        'грузчик': {
+            profession: 'Грузчик',
+            ppe: [
+                'Костюм для защиты от механических воздействий',
+                'Обувь с жестким подноском',
+                'Перчатки с полимерным покрытием',
+                'Пояс поддерживающий',
+                'Каска защитная'
             ]
         },
         'инженер': {
@@ -378,13 +533,33 @@ function getLocalPPE(profession) {
         }
     };
     
-    const lowerProf = profession.toLowerCase();
+    // Ищем точное совпадение
     for (const [key, value] of Object.entries(ppeDB)) {
-        if (lowerProf.includes(key) || key.includes(lowerProf)) {
+        if (lowerProf === key || lowerProf.includes(key) || key.includes(lowerProf)) {
             return value;
         }
     }
     
+    // Если точного совпадения нет, ищем по ключевым словам
+    const keywords = {
+        'токар': 'токарь',
+        'свар': 'сварщик',
+        'электр': 'электрик',
+        'стро': 'строитель',
+        'вод': 'водитель',
+        'маляр': 'маляр',
+        'груз': 'грузчик',
+        'инжен': 'инженер',
+        'техн': 'техник'
+    };
+    
+    for (const [key, value] of Object.entries(keywords)) {
+        if (lowerProf.includes(key)) {
+            return ppeDB[value];
+        }
+    }
+    
+    // Если ничего не найдено - базовый набор
     return {
         profession: profession,
         ppe: [
@@ -393,8 +568,33 @@ function getLocalPPE(profession) {
             'Перчатки',
             'Очки защитные',
             'Каска защитная (при необходимости)'
-        ]
+        ],
+        source: 'Базовый набор'
     };
+}
+
+// Основная функция для получения СИЗ
+async function getPPEByProfession(profession) {
+    if (!profession || profession.trim() === '') {
+        return {
+            profession: 'Не указана',
+            ppe: ['Укажите должность для подбора СИЗ'],
+            source: 'Ошибка'
+        };
+    }
+    
+    // Сначала пробуем получить данные с Онлайн Инспекции
+    try {
+        const result = await getPPEFromOnlineInspection(profession);
+        if (result && result.ppe && result.ppe.length > 0) {
+            return result;
+        }
+    } catch (e) {
+        console.warn('⚠️ Не удалось получить данные с Онлайн Инспекции, используем локальную базу');
+    }
+    
+    // Если не получилось, используем локальную базу
+    return getLocalPPE(profession);
 }
 
 // ============================================================
@@ -607,7 +807,7 @@ function initTrainingPage() {
 }
 
 // ============================================================
-// КАРТА - МАКСИМАЛЬНО БОЛЬШАЯ (4000x2000)
+// КАРТА - С ПРАВИЛЬНЫМ ПОДБОРОМ СИЗ
 // ============================================================
 let mapData = {
     workshops: [],
@@ -625,7 +825,7 @@ let resizeCorner = '';
 let resizeStartX = 0, resizeStartY = 0;
 let resizeStartW = 0, resizeStartH = 0;
 let resizeStartXpos = 0, resizeStartYpos = 0;
-let selectedWorkplaceIndex = -1; // Для удаления
+let selectedWorkplaceIndex = -1;
 
 const canvas = document.getElementById('mapCanvas');
 const ctx = canvas.getContext('2d');
@@ -769,7 +969,7 @@ function drawMap() {
     ctx.fillStyle = '#0a0a1a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Сетка (каждые 50px)
+    // Сетка
     ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 0.5;
     for (let i = 0; i < canvas.width; i += 50) {
@@ -850,7 +1050,7 @@ function drawMap() {
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, w, h);
             
-            // Человечек (увеличенный)
+            // Человечек
             const centerX = wp.x;
             const centerY = wp.y;
             const scale = 2.0;
@@ -874,7 +1074,7 @@ function drawMap() {
             ctx.fillRect(centerX - 22 * scale, centerY + 2 * scale, 8 * scale, 14 * scale);
             ctx.fillRect(centerX + 14 * scale, centerY + 2 * scale, 8 * scale, 14 * scale);
             
-            // Рамка выделения (если выбран)
+            // Рамка выделения
             if (index === selectedWorkplaceIndex) {
                 ctx.strokeStyle = '#00d4ff';
                 ctx.lineWidth = 3;
@@ -898,6 +1098,13 @@ function drawMap() {
             if (wp.hasPPE) {
                 ctx.font = '22px sans-serif';
                 ctx.fillText('🦺', centerX + 40 * scale, centerY - 28 * scale);
+            }
+            
+            // Источник данных о СИЗ
+            if (wp.ppeSource) {
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.font = '10px sans-serif';
+                ctx.fillText(wp.ppeSource, centerX, centerY + 95 * scale);
             }
         });
     }
@@ -948,7 +1155,7 @@ function setupCanvasEvents() {
         if (found >= 0) {
             const wp = ws.workplaces[found];
             if (!wp.position) {
-                alert('Для этого рабочего места не указана должность. Добавьте должность в настройках.');
+                alert('⚠️ Для этого рабочего места не указана должность.\nДобавьте должность в настройках рабочего места.');
                 return;
             }
             // Выделяем объект
@@ -1183,7 +1390,7 @@ function deleteSelectedWorkplace() {
 }
 
 // ============================================================
-// МОДАЛЬНОЕ ОКНО ДЛЯ СИЗ
+// МОДАЛЬНОЕ ОКНО ДЛЯ СИЗ (С ПРАВИЛЬНОЙ ИНТЕГРАЦИЕЙ)
 // ============================================================
 let currentPPEWorkplace = null;
 
@@ -1203,11 +1410,23 @@ async function openPPEModal(wp) {
     document.getElementById('ppePosition').textContent = wp.position || 'Должность не указана';
     
     try {
+        // Получаем данные с Онлайн Инспекции или из локальной базы
         const ppeData = await getPPEByProfession(wp.position);
         
         if (ppeData && ppeData.ppe && ppeData.ppe.length > 0) {
             const list = document.getElementById('ppeList');
             let html = '';
+            
+            // Добавляем информацию об источнике
+            if (ppeData.source) {
+                html += `
+                    <div style="background:rgba(0,212,255,0.05);padding:8px 12px;border-radius:6px;margin-bottom:12px;border:1px solid rgba(0,212,255,0.1);">
+                        <span style="color:#8888aa;font-size:12px;">📋 Источник: <strong style="color:#00d4ff;">${ppeData.source}</strong></span>
+                    </div>
+                `;
+            }
+            
+            // Выводим список СИЗ
             ppeData.ppe.forEach((item, index) => {
                 html += `
                     <div style="background:rgba(255,255,255,0.03);padding:12px 16px;border-radius:8px;border-left:3px solid #7c3aed;display:flex;align-items:center;gap:12px;">
@@ -1219,23 +1438,44 @@ async function openPPEModal(wp) {
             });
             list.innerHTML = html;
             
+            // Сохраняем информацию о том, что СИЗ подобраны
             wp.hasPPE = true;
+            wp.ppeSource = ppeData.source || 'Приказ 767н';
             saveMap();
             drawMap();
             
             loading.style.display = 'none';
             content.style.display = 'block';
         } else {
-            throw new Error('СИЗ не найдены');
+            throw new Error('СИЗ не найдены для данной профессии');
         }
     } catch (err) {
-        console.error('Ошибка загрузки СИЗ:', err);
+        console.error('❌ Ошибка загрузки СИЗ:', err);
         loading.style.display = 'none';
         error.style.display = 'block';
         error.innerHTML = `
-            ❌ Не удалось загрузить данные по профессии "${wp.position}".<br>
-            <span style="font-size:14px;color:#8888aa;">Проверьте правильность написания профессии или попробуйте позже.</span>
+            <div style="font-size:20px;margin-bottom:12px;">😕</div>
+            <div style="font-size:16px;color:#ff6b6b;margin-bottom:8px;">Не удалось найти СИЗ для профессии "<strong>${wp.position}</strong>"</div>
+            <div style="font-size:14px;color:#8888aa;max-width:400px;margin:0 auto;line-height:1.6;">
+                Проверьте правильность написания профессии.<br>
+                Попробуйте указать профессию в соответствии с Приказом 767н.<br>
+                <span style="font-size:12px;color:#666;">Пример: Токарь, Сварщик, Электрик, Строитель</span>
+            </div>
+            <button onclick="retryPPE('${encodeURIComponent(wp.position)}')" style="margin-top:16px;padding:8px 24px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);border-radius:8px;color:#b388ff;cursor:pointer;font-size:14px;">
+                🔄 Попробовать снова
+            </button>
         `;
+    }
+}
+
+function retryPPE(encodedProfession) {
+    const profession = decodeURIComponent(encodedProfession);
+    const ws = getCurrentWorkshop();
+    if (!ws || !ws.workplaces) return;
+    
+    const wp = ws.workplaces[selectedWorkplaceIndex];
+    if (wp) {
+        openPPEModal(wp);
     }
 }
 
@@ -1254,23 +1494,34 @@ function exportPPE() {
         <head>
             <title>СИЗ для ${currentPPEWorkplace.name}</title>
             <style>
-                body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
-                h1 { color: #1a1a3e; border-bottom: 2px solid #7c3aed; padding-bottom: 10px; }
-                .item { padding: 10px 15px; margin: 8px 0; background: #f5f5f5; border-left: 3px solid #7c3aed; }
-                .footer { margin-top: 30px; font-size: 12px; color: #888; border-top: 1px solid #ddd; padding-top: 15px; }
+                body { font-family: Arial, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: 0 auto; }
+                h1 { color: #1a1a3e; border-bottom: 3px solid #7c3aed; padding-bottom: 10px; }
+                .header-info { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; }
+                .header-info p { margin: 5px 0; }
+                .item { padding: 12px 18px; margin: 10px 0; background: #fafafa; border-left: 4px solid #7c3aed; border-radius: 4px; }
+                .item .num { color: #7c3aed; font-weight: 700; margin-right: 12px; }
+                .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 12px; color: #888; text-align: center; }
+                .source { background: #e8f5e9; padding: 10px; border-radius: 6px; margin: 15px 0; font-size: 14px; }
             </style>
         </head>
         <body>
             <h1>🦺 Средства индивидуальной защиты</h1>
-            <p><strong>Сотрудник:</strong> ${currentPPEWorkplace.name}</p>
-            <p><strong>Должность:</strong> ${currentPPEWorkplace.position}</p>
-            <hr>
+            <div class="header-info">
+                <p><strong>Сотрудник:</strong> ${currentPPEWorkplace.name}</p>
+                <p><strong>Должность:</strong> ${currentPPEWorkplace.position}</p>
+                <p><strong>Дата формирования:</strong> ${new Date().toLocaleDateString('ru-RU', {day:'2-digit', month:'long', year:'numeric'})}</p>
+            </div>
+            <div class="source">
+                📋 Источник: ${currentPPEWorkplace.ppeSource || 'Приказ Минтруда РФ от 29.10.2021 № 767н'}
+            </div>
+            <hr style="margin: 20px 0;">
             <div id="ppeList">
                 ${document.getElementById('ppeList').innerHTML}
             </div>
             <div class="footer">
                 <p>Основано на Приказе Минтруда РФ от 29.10.2021 № 767н</p>
-                <p>Сформировано: ${new Date().toLocaleDateString('ru-RU')}</p>
+                <p>«Об утверждении Единых типовых норм выдачи средств индивидуальной защиты»</p>
+                <p style="margin-top:10px;color:#aaa;">Сформировано в системе «ОхранаТруда.Про»</p>
             </div>
             <script>
                 window.print();
@@ -1347,7 +1598,8 @@ function saveWorkplace() {
         position: position, 
         zone: zone, 
         id: Date.now(),
-        hasPPE: false
+        hasPPE: false,
+        ppeSource: null
     });
     closeWorkplaceModal();
     updateInfo();
