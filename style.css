@@ -846,6 +846,79 @@ input::placeholder {
 }
 
 /* ============================================================ */
+/* ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ МОДАЛКИ СИЗ */
+/* ============================================================ */
+
+#ppeList .ppe-item {
+    background: rgba(255,255,255,0.03);
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-left: 3px solid #7c3aed;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+}
+
+#ppeList .ppe-item:hover {
+    background: rgba(255,255,255,0.06);
+}
+
+#ppeList .ppe-item .number {
+    color: #7c3aed;
+    font-weight: 700;
+    min-width: 30px;
+    font-size: 14px;
+}
+
+#ppeList .ppe-item .name {
+    color: #ccc;
+    flex: 1;
+    font-size: 14px;
+}
+
+#ppeList .ppe-item .status {
+    color: #4caf50;
+    font-size: 20px;
+}
+
+/* Стили для источника данных */
+.ppe-source {
+    background: rgba(0,212,255,0.05);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(0,212,255,0.1);
+}
+
+.ppe-source span {
+    color: #8888aa;
+    font-size: 12px;
+}
+
+.ppe-source strong {
+    color: #00d4ff;
+}
+
+/* Кнопка повторной попытки */
+.retry-btn {
+    margin-top: 16px;
+    padding: 8px 24px;
+    background: rgba(124,58,237,0.2);
+    border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 8px;
+    color: #b388ff;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.retry-btn:hover {
+    background: rgba(124,58,237,0.35);
+}
+
+/* ============================================================ */
 /* СТИЛИ ДЛЯ МОДАЛКИ СИЗ */
 /* ============================================================ */
 
