@@ -1454,3 +1454,48 @@ document.addEventListener('DOMContentLoaded', function() {
         if (link.textContent.trim() === 'Главная') link.classList.add('active');
     });
 });
+// ПОИСК СИЗ ПО ПРОФЕССИИ
+function getPPEByProfession(profession) {
+    if (!profession) return null;
+    const trimmed = profession.trim();
+    
+    // Точное совпадение
+    if (ppeDatabase[trimmed]) {
+        return ppeDatabase[trimmed];
+    }
+    
+    // Частичное совпадение
+    for (const [key, value] of Object.entries(ppeDatabase)) {
+        if (trimmed.toLowerCase().includes(key.toLowerCase()) || 
+            key.toLowerCase().includes(trimmed.toLowerCase())) {
+            return value;
+        }
+    }
+    
+    return null;
+}
+async function openPPEModal(wp) {
+    if (!wp.position) {
+        alert('Укажите должность');
+        return;
+    }
+    
+    // Ищем в базе
+    const data = getPPEByProfession(wp.position);
+    
+    if (data && data.сиз.length > 0) {
+        // Показываем список СИЗ
+        const list = document.getElementById('ppeList');
+        let html = '';
+        data.сиз.forEach((item, index) => {
+            html += `<div>${index + 1}. ${item}</div>`;
+        });
+        list.innerHTML = html;
+        
+        wp.hasPPE = true;
+        saveMap();
+        drawMap();
+    } else {
+        alert('СИЗ не найдены');
+    }
+}
