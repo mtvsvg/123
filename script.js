@@ -293,7 +293,7 @@ function getPPEByProfession(profession) {
         }
     }
     
-    // Поиск по ключевым словам (для случаев, когда название профессии длинное)
+    // Поиск по ключевым словам
     const words = trimmed.split(/\s+/);
     for (const [key, value] of Object.entries(ppeDatabase)) {
         const keyLower = key.toLowerCase();
@@ -312,7 +312,7 @@ function getPPEByProfession(profession) {
 }
 
 // ============================================================
-// ФУНКЦИЯ ДЛЯ МОДАЛЬНОГО ОКНА СИЗ (ОСНОВНАЯ)
+// ФУНКЦИЯ ДЛЯ МОДАЛЬНОГО ОКНА СИЗ
 // ============================================================
 let currentPPEWorkplace = null;
 
@@ -339,7 +339,6 @@ async function openPPEModal(wp) {
     document.getElementById('ppePosition').textContent = wp.position || 'Должность не указана';
     
     try {
-        // Ищем в локальной базе
         const data = getPPEByProfession(wp.position);
         
         if (data && data.сиз && data.сиз.length > 0) {
@@ -350,14 +349,13 @@ async function openPPEModal(wp) {
             `;
             
             data.сиз.forEach((item, index) => {
-                // Разбираем строку СИЗ: "Тип СИЗ | Наименование СИЗ | Норма выдачи"
                 const parts = item.split('|').map(s => s.trim());
                 const type = parts[0] || '';
                 const name = parts[1] || '';
                 const norm = parts[2] || '';
                 
                 html += `
-                    <div style="background:rgba(255,255,255,0.03);padding:12px 16px;border-radius:8px;border-left:3px solid #7c3aed;margin-bottom:8px;">
+                    <div class="ppe-item" style="background:rgba(255,255,255,0.03);padding:12px 16px;border-radius:8px;border-left:3px solid #7c3aed;margin-bottom:8px;">
                         <div style="display:flex;align-items:center;gap:12px;">
                             <span style="color:#7c3aed;font-weight:700;min-width:30px;">${index + 1}</span>
                             <div style="flex:1;">
@@ -373,7 +371,6 @@ async function openPPEModal(wp) {
                 `;
             });
             
-            // Кнопка проверки на сайте
             html += `
                 <div style="margin-top:16px;padding-top:15px;border-top:1px solid rgba(255,255,255,0.1);text-align:center;">
                     <button onclick="openOnlineInspection('${wp.position}')" 
@@ -396,7 +393,6 @@ async function openPPEModal(wp) {
             loading.style.display = 'none';
             content.style.display = 'block';
         } else {
-            // Если в локальной базе не найдено - предлагаем проверить на сайте
             error.style.display = 'block';
             error.innerHTML = `
                 <div style="text-align:center;padding:20px;">
@@ -450,16 +446,15 @@ function exportPPE() {
         return;
     }
     
-    // Собираем данные из списка
     const items = document.querySelectorAll('#ppeList .ppe-item');
     let ppeText = '';
     items.forEach((item, index) => {
-        const name = item.querySelector('.name')?.textContent || '';
-        const status = item.querySelector('.status')?.textContent || '✅';
+        const nameEl = item.querySelector('.name') || item.querySelector('div div:first-child');
+        const name = nameEl ? nameEl.textContent : '';
         ppeText += `<div style="padding:8px 12px;margin:4px 0;background:#f5f5f5;border-radius:4px;border-left:3px solid #7c3aed;">
             <span style="font-weight:700;color:#7c3aed;">${index + 1}.</span> 
             <span>${name}</span> 
-            <span style="color:#4caf50;float:right;">${status}</span>
+            <span style="color:#4caf50;float:right;">✅</span>
         </div>`;
     });
     
@@ -474,8 +469,6 @@ function exportPPE() {
                 h1 { color: #1a1a3e; border-bottom: 3px solid #7c3aed; padding-bottom: 10px; }
                 .header-info { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; }
                 .header-info p { margin: 5px 0; }
-                .item { padding: 12px 18px; margin: 10px 0; background: #fafafa; border-left: 4px solid #7c3aed; border-radius: 4px; }
-                .item .num { color: #7c3aed; font-weight: 700; margin-right: 12px; }
                 .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 12px; color: #888; text-align: center; }
                 .source { background: #e8f5e9; padding: 10px; border-radius: 6px; margin: 15px 0; font-size: 14px; }
             </style>
@@ -495,7 +488,6 @@ function exportPPE() {
             <div class="footer">
                 <p>Основано на Приказе Минтруда РФ от 29.10.2021 № 767н</p>
                 <p>«Об утверждении Единых типовых норм выдачи средств индивидуальной защиты»</p>
-                <p style="margin-top:10px;color:#aaa;">Сформировано в системе «ОхранаТруда.Про»</p>
             </div>
             <script>window.print();</script>
         </body>
@@ -750,16 +742,6 @@ function initMapPage() {
             if (parsed.workshops && parsed.workshops.length > 0) {
                 mapData = parsed;
                 if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
-                const ws = getCurrentWorkshop();
-                if (ws && ws.w < 3000) {
-                    ws.x = 50;
-                    ws.y = 50;
-                    ws.w = 3900;
-                    ws.h = 1900;
-                }
-                updateWorkshopSelect();
-                updateInfo();
-                drawMap();
             }
         } catch(e) {}
     }
@@ -770,28 +752,24 @@ function initMapPage() {
             name: 'Основной цех',
             length: 30,
             width: 20,
-            x: 50, 
-            y: 50, 
-            w: 3900, 
+            x: 50,
+            y: 50,
+            w: 3900,
             h: 1900,
             workplaces: []
         });
         mapData.currentWorkshop = 0;
         mapData.evacuationPoints = [];
-        updateWorkshopSelect();
-        updateInfo();
-        drawMap();
     }
     
-    document.getElementById('editWorkshopBtn').addEventListener('click', function() {
-        openWorkshopModal();
-    });
+    document.getElementById('editWorkshopBtn').addEventListener('click', openWorkshopModal);
     document.getElementById('addWorkerPlaceBtn').addEventListener('click', function() {
         const ws = getCurrentWorkshop();
         if (!ws) { alert('Сначала создайте участок'); return; }
         mapMode = 'addWorkplace';
         document.getElementById('mapMode').textContent = 'Добавление рабочего места (кликните на карту)';
         document.getElementById('mapMode').style.color = '#ff6b6b';
+        canvas.style.cursor = 'crosshair';
     });
     document.getElementById('addEvacuationBtn').addEventListener('click', function() {
         const ws = getCurrentWorkshop();
@@ -799,27 +777,21 @@ function initMapPage() {
         mapMode = 'addEvacuation';
         document.getElementById('mapMode').textContent = 'Добавление выхода (кликните на карту)';
         document.getElementById('mapMode').style.color = '#4caf50';
+        canvas.style.cursor = 'crosshair';
     });
     document.getElementById('saveMapBtn').addEventListener('click', function() {
         saveMap();
         alert('✅ Карта сохранена!');
     });
-    document.getElementById('saveWorkshopBtn').addEventListener('click', function() {
-        saveWorkshop();
-    });
-    document.getElementById('saveWorkplaceBtn').addEventListener('click', function() {
-        saveWorkplace();
-    });
+    document.getElementById('saveWorkshopBtn').addEventListener('click', saveWorkshop);
+    document.getElementById('saveWorkplaceBtn').addEventListener('click', saveWorkplace);
     document.getElementById('workshopSelect').addEventListener('change', function() {
         mapData.currentWorkshop = parseInt(this.value);
         updateInfo();
         drawMap();
         saveMap();
     });
-    
-    document.getElementById('deleteSelectedBtn').addEventListener('click', function() {
-        deleteSelectedWorkplace();
-    });
+    document.getElementById('deleteSelectedBtn').addEventListener('click', deleteSelectedWorkplace);
     
     setupCanvasEvents();
     updateWorkshopSelect();
@@ -856,9 +828,9 @@ function getCanvasCoords(e) {
     const scaleY = canvas.height / rect.height;
     const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
     const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
-    return { 
-        x: (clientX - rect.left) * scaleX, 
-        y: (clientY - rect.top) * scaleY 
+    return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
     };
 }
 
@@ -874,15 +846,15 @@ function drawMap() {
     ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 0.5;
     for (let i = 0; i < canvas.width; i += 50) {
-        ctx.beginPath(); 
-        ctx.moveTo(i, 0); 
-        ctx.lineTo(i, canvas.height); 
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, canvas.height);
         ctx.stroke();
     }
     for (let i = 0; i < canvas.height; i += 50) {
-        ctx.beginPath(); 
-        ctx.moveTo(0, i); 
-        ctx.lineTo(canvas.width, i); 
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(canvas.width, i);
         ctx.stroke();
     }
     
@@ -932,7 +904,6 @@ function drawMap() {
             ctx.beginPath();
             ctx.rect(x, y, w, h);
             ctx.clip();
-            
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
             ctx.lineWidth = 4;
             for (let i = -h; i < w + h; i += 14) {
@@ -1027,7 +998,56 @@ function drawMap() {
 }
 
 function setupCanvasEvents() {
-    // Двойной клик для открытия СИЗ
+    canvas.addEventListener('click', function(e) {
+        const coords = getCanvasCoords(e);
+        const ws = getCurrentWorkshop();
+        if (!ws) return;
+        
+        if (coords.x < ws.x || coords.x > ws.x + ws.w || coords.y < ws.y || coords.y > ws.y + ws.h) {
+            if (mapMode !== 'addWorkplace' && mapMode !== 'addEvacuation') {
+                selectedWorkplaceIndex = -1;
+                drawMap();
+            }
+            return;
+        }
+        
+        if (mapMode === 'addWorkplace') {
+            openWorkplaceModal(coords.x, coords.y);
+            return;
+        }
+        
+        if (mapMode === 'addEvacuation') {
+            const name = prompt('Введите название выхода (опционально):', '');
+            if (name !== null) {
+                if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
+                mapData.evacuationPoints.push({
+                    x: coords.x,
+                    y: coords.y,
+                    name: name.trim() || 'Выход',
+                    id: Date.now()
+                });
+                updateInfo();
+                drawMap();
+                saveMap();
+                mapMode = 'view';
+                document.getElementById('mapMode').textContent = 'Просмотр';
+                document.getElementById('mapMode').style.color = '#00d4ff';
+                canvas.style.cursor = 'default';
+            }
+            return;
+        }
+        
+        let found = -1;
+        if (ws.workplaces) {
+            ws.workplaces.forEach((wp, index) => {
+                const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
+                if (dist < 40) found = index;
+            });
+        }
+        selectedWorkplaceIndex = found;
+        drawMap();
+    });
+    
     canvas.addEventListener('dblclick', function(e) {
         const coords = getCanvasCoords(e);
         const ws = getCurrentWorkshop();
@@ -1041,63 +1061,14 @@ function setupCanvasEvents() {
         
         if (found >= 0) {
             const wp = ws.workplaces[found];
+            if (!wp.position || wp.position.trim() === '') {
+                alert('⚠️ Для этого рабочего места не указана должность.\nДобавьте должность в настройках рабочего места.');
+                return;
+            }
             selectedWorkplaceIndex = found;
             drawMap();
             openPPEModal(wp);
         }
-    });
-    
-    canvas.addEventListener('click', function(e) {
-        const coords = getCanvasCoords(e);
-        const ws = getCurrentWorkshop();
-        if (!ws) return;
-        
-        // Если клик вне цеха
-        if (coords.x < ws.x || coords.x > ws.x + ws.w || coords.y < ws.y || coords.y > ws.y + ws.h) {
-            if (mapMode !== 'addWorkplace' && mapMode !== 'addEvacuation') {
-                selectedWorkplaceIndex = -1;
-                drawMap();
-            }
-            return;
-        }
-        
-        // Режим добавления рабочего места
-        if (mapMode === 'addWorkplace') {
-            openWorkplaceModal(coords.x, coords.y);
-            return;
-        }
-        
-        // Режим добавления выхода
-        if (mapMode === 'addEvacuation') {
-            const name = prompt('Введите название выхода (опционально):', '');
-            if (name !== null) {
-                if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
-                mapData.evacuationPoints.push({ 
-                    x: coords.x, 
-                    y: coords.y, 
-                    name: name.trim() || 'Выход', 
-                    id: Date.now() 
-                });
-                updateInfo();
-                drawMap();
-                saveMap();
-                mapMode = 'view';
-                document.getElementById('mapMode').textContent = 'Просмотр';
-                document.getElementById('mapMode').style.color = '#00d4ff';
-            }
-            return;
-        }
-        
-        // Обычный режим - выбор рабочего места
-        let found = -1;
-        if (ws.workplaces) {
-            ws.workplaces.forEach((wp, index) => {
-                const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
-                if (dist < 40) found = index;
-            });
-        }
-        selectedWorkplaceIndex = found;
-        drawMap();
     });
     
     canvas.addEventListener('mousedown', function(e) {
@@ -1319,29 +1290,41 @@ function closeWorkplaceModal() {
     mapMode = 'view';
     document.getElementById('mapMode').textContent = 'Просмотр';
     document.getElementById('mapMode').style.color = '#00d4ff';
+    canvas.style.cursor = 'default';
 }
 
 function saveWorkplace() {
-    if (!tempWorkplacePos) return;
+    if (!tempWorkplacePos) {
+        alert('Ошибка: позиция не определена');
+        return;
+    }
     const ws = getCurrentWorkshop();
-    if (!ws) return;
+    if (!ws) {
+        alert('Ошибка: участок не найден');
+        return;
+    }
+    
     const name = document.getElementById('workplaceNameInput').value.trim() || 'Рабочее место ' + (ws.workplaces.length + 1);
     const position = document.getElementById('workplacePositionInput').value.trim() || '';
     const zone = parseInt(document.getElementById('workplaceZoneInput').value) || 50;
-    ws.workplaces.push({ 
-        x: tempWorkplacePos.x, 
-        y: tempWorkplacePos.y, 
-        name: name, 
-        position: position, 
-        zone: zone, 
+    
+    ws.workplaces.push({
+        x: tempWorkplacePos.x,
+        y: tempWorkplacePos.y,
+        name: name,
+        position: position,
+        zone: zone,
         id: Date.now(),
         hasPPE: false,
         ppeSource: null
     });
+    
     closeWorkplaceModal();
     updateInfo();
     drawMap();
     saveMap();
+    
+    alert('✅ Рабочее место добавлено! Двойной клик по нему для просмотра СИЗ.');
 }
 
 function addNewWorkshop() {
@@ -1352,9 +1335,9 @@ function addNewWorkshop() {
         name: name,
         length: 30,
         width: 20,
-        x: 50, 
-        y: 50, 
-        w: 3900, 
+        x: 50,
+        y: 50,
+        w: 3900,
         h: 1900,
         workplaces: []
     });
