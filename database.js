@@ -12083,5 +12083,3 @@ const ppeDatabase = {
 }
 };
 
-// Экспорт базы данных
-module.exports = ppeDatabase;
