@@ -28,6 +28,14 @@ function showPage(page) {
             if (link.textContent.trim() === 'Карта') link.classList.add('active'); 
         });
         setTimeout(initMapPage, 50);
+    } else if (page === 'calendar') {
+        const el = document.getElementById('calendarPage');
+        if (el) el.classList.remove('hidden');
+        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(link => { 
+            if (link.textContent.trim() === 'Календарь') link.classList.add('active'); 
+        });
+        renderCalendar();
     } else if (page === 'risks') {
         const el = document.getElementById('risksPage');
         if (el) el.classList.remove('hidden');
@@ -54,6 +62,8 @@ function getStaff() { return JSON.parse(localStorage.getItem('staff') || '[]'); 
 function saveStaff(staff) { localStorage.setItem('staff', JSON.stringify(staff)); }
 function getProtocol() { return JSON.parse(localStorage.getItem('protocol') || '[]'); }
 function saveProtocol(protocol) { localStorage.setItem('protocol', JSON.stringify(protocol)); }
+function getEvents() { return JSON.parse(localStorage.getItem('calendarEvents') || '[]'); }
+function saveEvents(events) { localStorage.setItem('calendarEvents', JSON.stringify(events)); }
 
 // ============================================================
 // ОРГАНИЗАЦИИ
@@ -382,7 +392,6 @@ function generateFamiliarization() {
         result.classList.remove('hidden');
     }
 }
-
 // ============================================================
 // ПАРСЕР ШТАТНОГО РАСПИСАНИЯ
 // ============================================================
@@ -467,6 +476,7 @@ const PPE_TYPES = [
     'Средства защиты кожи',
     'Средства защиты комплексные'
 ];
+
 // ============================================================
 // МОДАЛЬНОЕ ОКНО СИЗ
 // ============================================================
@@ -658,6 +668,250 @@ function exportPPE() {
 }
 
 // ============================================================
+// КАЛЕНДАРЬ
+// ============================================================
+let currentDate = new Date();
+let selectedDate = null;
+
+function renderCalendar() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    
+    const title = document.getElementById('calendarMonthTitle');
+    const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+    title.textContent = `${months[month]} ${year}`;
+    
+    const grid = document.getElementById('calendarGrid');
+    grid.innerHTML = `
+        <div class="weekday">Пн</div>
+        <div class="weekday">Вт</div>
+        <div class="weekday">Ср</div>
+        <div class="weekday">Чт</div>
+        <div class="weekday">Пт</div>
+        <div class="weekday">Сб</div>
+        <div class="weekday">Вс</div>
+    `;
+    
+    const firstDay = new Date(year, month, 1);
+    let startDay = firstDay.getDay();
+    if (startDay === 0) startDay = 7;
+    startDay = startDay - 1;
+    
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+    
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    
+    const events = getEvents();
+    
+    // Прошлый месяц
+    for (let i = startDay - 1; i >= 0; i--) {
+        const day = daysInPrevMonth - i;
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayEvents = events.filter(e => e.date === dateStr);
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'calendar-day other-month';
+        dayDiv.innerHTML = `<span class="day-number">${day}</span>`;
+        if (dayEvents.length > 0) {
+            dayDiv.innerHTML += `<div class="day-events">${dayEvents.slice(0, 2).map(e => 
+                `<span class="event-text ${getEventStatus(e)}">${e.title}</span>`
+            ).join('')}</div>`;
+        }
+        dayDiv.onclick = () => selectDay(dateStr);
+        grid.appendChild(dayDiv);
+    }
+    
+    // Текущий месяц
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayEvents = events.filter(e => e.date === dateStr);
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'calendar-day';
+        if (dateStr === todayStr) dayDiv.classList.add('today');
+        dayDiv.innerHTML = `<span class="day-number">${day}</span>`;
+        if (dayEvents.length > 0) {
+            dayDiv.innerHTML += `<div class="day-events">${dayEvents.slice(0, 2).map(e => 
+                `<span class="event-text ${getEventStatus(e)}">${e.title}</span>`
+            ).join('')}</div>`;
+            if (dayEvents.length > 2) {
+                dayDiv.innerHTML += `<span style="font-size:9px;color:#8888aa;">+${dayEvents.length - 2} еще</span>`;
+            }
+        }
+        dayDiv.onclick = () => selectDay(dateStr);
+        grid.appendChild(dayDiv);
+    }
+    
+    // Следующий месяц
+    const totalDays = startDay + daysInMonth;
+    const remaining = 42 - totalDays;
+    for (let day = 1; day <= remaining; day++) {
+        const dateStr = `${year}-${String(month + 2).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayEvents = events.filter(e => e.date === dateStr);
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'calendar-day other-month';
+        dayDiv.innerHTML = `<span class="day-number">${day}</span>`;
+        if (dayEvents.length > 0) {
+            dayDiv.innerHTML += `<div class="day-events">${dayEvents.slice(0, 2).map(e => 
+                `<span class="event-text ${getEventStatus(e)}">${e.title}</span>`
+            ).join('')}</div>`;
+        }
+        dayDiv.onclick = () => selectDay(dateStr);
+        grid.appendChild(dayDiv);
+    }
+    
+    if (selectedDate) {
+        selectDay(selectedDate);
+    }
+    
+    const newEventDate = document.getElementById('newEventDate');
+    if (newEventDate) {
+        newEventDate.value = todayStr;
+    }
+}
+
+function getEventStatus(event) {
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    if (event.date < todayStr) return 'overdue';
+    if (event.date === todayStr) return 'today-event';
+    if (event.done) return 'done';
+    return 'upcoming';
+}
+
+function selectDay(dateStr) {
+    selectedDate = dateStr;
+    const events = getEvents();
+    const dayEvents = events.filter(e => e.date === dateStr);
+    const sidebar = document.getElementById('selectedDayEvents');
+    
+    if (dayEvents.length === 0) {
+        sidebar.innerHTML = `<p style="color:#666;font-size:13px;">Нет событий на ${dateStr}</p>`;
+        return;
+    }
+    
+    const dateObj = new Date(dateStr);
+    const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    const formattedDate = `${dateObj.getDate()} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+    
+    let html = `<p style="color:#ccc;font-size:13px;margin-bottom:8px;"><strong>${formattedDate}</strong></p>`;
+    dayEvents.forEach((event, index) => {
+        const statusClass = getEventStatus(event);
+        const statusLabel = {
+            'overdue': '🔴 Просрочено',
+            'today-event': '🟡 Сегодня',
+            'upcoming': '🟢 Предстоит',
+            'done': '✅ Выполнено'
+        };
+        html += `
+            <div class="event-item">
+                <div>
+                    <span class="event-title">${event.title}</span>
+                    <span class="event-type">${event.type || 'Событие'}</span>
+                    <span style="font-size:10px;color:#8888aa;margin-left:8px;">${statusLabel[statusClass] || ''}</span>
+                </div>
+                <button class="event-delete" onclick="deleteEvent(${index}, '${dateStr}')">✖</button>
+            </div>
+        `;
+    });
+    sidebar.innerHTML = html;
+}
+
+function changeMonth(delta) {
+    currentDate.setMonth(currentDate.getMonth() + delta);
+    renderCalendar();
+}
+
+function addEvent() {
+    const titleInput = document.getElementById('newEventTitle');
+    const typeSelect = document.getElementById('newEventType');
+    const dateInput = document.getElementById('newEventDate');
+    
+    const title = titleInput.value.trim();
+    const type = typeSelect.value;
+    const date = dateInput.value;
+    
+    if (!title) {
+        alert('❌ Введите название события!');
+        titleInput.focus();
+        return;
+    }
+    if (!date) {
+        alert('❌ Выберите дату!');
+        dateInput.focus();
+        return;
+    }
+    
+    const events = getEvents();
+    events.push({
+        id: Date.now(),
+        title: title,
+        type: type,
+        date: date,
+        done: false,
+        createdAt: new Date().toISOString()
+    });
+    saveEvents(events);
+    
+    titleInput.value = '';
+    renderCalendar();
+    selectDay(date);
+    alert('✅ Событие добавлено!');
+}
+
+function deleteEvent(index, dateStr) {
+    if (!confirm('Удалить это событие?')) return;
+    const events = getEvents();
+    const filtered = events.filter((e, i) => {
+        if (i === index && e.date === dateStr) return false;
+        return true;
+    });
+    saveEvents(filtered);
+    renderCalendar();
+    selectDay(dateStr);
+}
+
+function markTrainingFromProtocol() {
+    const protocol = getProtocol();
+    if (protocol.length === 0) {
+        alert('❌ В протоколе нет сотрудников!');
+        return;
+    }
+    
+    if (!confirm(`📅 Отметить в календаре обучение для ${protocol.length} сотрудников?`)) return;
+    
+    const staff = getStaff();
+    const today = new Date().toISOString().split('T')[0];
+    let updated = 0;
+    
+    protocol.forEach(empFromProtocol => {
+        const found = staff.find(e => e.snils === empFromProtocol.snils);
+        if (found) {
+            found.trainingDate = today;
+            updated++;
+        }
+    });
+    
+    saveStaff(staff);
+    renderStaff();
+    
+    const events = getEvents();
+    const existing = events.filter(e => e.date === today && e.title.includes('Обучение'));
+    if (existing.length === 0) {
+        events.push({
+            id: Date.now(),
+            title: `Обучение ${updated} сотрудников`,
+            type: 'Обучение',
+            date: today,
+            done: false,
+            createdAt: new Date().toISOString()
+        });
+        saveEvents(events);
+    }
+    
+    alert(`✅ Обновлено ${updated} сотрудников! Дата обучения: ${today}`);
+}
+// ============================================================
 // ИМПОРТ И ПРОТОКОЛ
 // ============================================================
 function importStaffFile() {
@@ -747,7 +1001,7 @@ function generateXML() {
 }
 
 // ============================================================
-// КАРТА
+// КАРТА (ВСЯ ЛОГИКА КАРТЫ)
 // ============================================================
 let mapData = {
     workshops: [],
@@ -776,7 +1030,6 @@ let tempRoutePoints = [];
 function initMapPage() {
     console.log('🗺️ Карта инициализируется');
     if (mapInited) return;
-    
     const canvas = document.getElementById('mapCanvas');
     if (!canvas) { console.error('Canvas не найден!'); return; }
     canvas.width = 4000;
@@ -889,9 +1142,7 @@ function setupMapButtons() {
     const saveFeBtn = document.getElementById('saveFireExtinguisherBtn');
     if (saveFeBtn) saveFeBtn.onclick = saveFireExtinguisher;
     
-    // ============================================================
-    // ИСПРАВЛЕННАЯ ДАТА ПЕРЕЗАРЯДКИ ОГНЕТУШИТЕЛЕЙ (ПО ГОСТ)
-    // ============================================================
+    // Дата перезарядки огнетушителей (по ГОСТ)
     const feDateInput = document.getElementById('feDateInput');
     if (feDateInput) {
         feDateInput.onchange = function() {
@@ -900,11 +1151,11 @@ function setupMapButtons() {
             if (nextDateInput && this.value && typeSelect) {
                 const date = new Date(this.value);
                 const type = typeSelect.value;
-                let years = 5; // по умолчанию для порошковых
-                if (type === 'ОУ') years = 10;      // углекислотные
-                else if (type === 'ОВ') years = 1;  // водные
-                else if (type === 'ОХ') years = 10; // хладоновые
-                else if (type === 'ОПУ') years = 5; // порошковые универсальные
+                let years = 5;
+                if (type === 'ОУ') years = 10;
+                else if (type === 'ОВ') years = 1;
+                else if (type === 'ОХ') years = 10;
+                else if (type === 'ОПУ') years = 5;
                 date.setFullYear(date.getFullYear() + years);
                 nextDateInput.value = date.toISOString().split('T')[0];
                 document.getElementById('feNextLabel').textContent = `✅ Перезарядка через ${years} лет (${date.toISOString().split('T')[0]})`;
@@ -912,7 +1163,6 @@ function setupMapButtons() {
         };
     }
     
-    // Обновляем при смене типа
     const feTypeSelect = document.getElementById('feTypeSelect');
     if (feTypeSelect) {
         feTypeSelect.onchange = function() {
@@ -1139,6 +1389,7 @@ function drawMap() {
         });
     }
 }
+
 // ============================================================
 // СОБЫТИЯ CANVAS
 // ============================================================
@@ -1182,7 +1433,6 @@ function setupCanvasEvents() {
             document.getElementById('fireExtinguisherModal').classList.remove('hidden');
             const now = new Date();
             document.getElementById('feDateInput').value = now.toISOString().split('T')[0];
-            // Рассчитываем дату перезарядки по типу
             const typeSelect = document.getElementById('feTypeSelect');
             const type = typeSelect ? typeSelect.value : 'ОП';
             let years = 5;
@@ -1696,35 +1946,6 @@ function openPPEModalForEmployee() {
 }
 
 // ============================================================
-// АВТООТМЕТКА В КАЛЕНДАРЕ ПОСЛЕ ЗАГРУЗКИ ПРОТОКОЛА
-// ============================================================
-function markTrainingFromProtocol() {
-    const protocol = getProtocol();
-    if (protocol.length === 0) {
-        alert('❌ В протоколе нет сотрудников!');
-        return;
-    }
-    
-    if (!confirm(`📅 Отметить в календаре обучение для ${protocol.length} сотрудников?`)) return;
-    
-    const staff = getStaff();
-    const today = new Date().toISOString().split('T')[0];
-    let updated = 0;
-    
-    protocol.forEach(empFromProtocol => {
-        const found = staff.find(e => e.snils === empFromProtocol.snils);
-        if (found) {
-            found.trainingDate = today;
-            updated++;
-        }
-    });
-    
-    saveStaff(staff);
-    renderStaff();
-    alert(`✅ Обновлено ${updated} сотрудников! Дата обучения: ${today}`);
-}
-
-// ============================================================
 // ИНИЦИАЛИЗАЦИЯ
 // ============================================================
 function initTrainingPage() {
@@ -1775,6 +1996,8 @@ function initTrainingPage() {
         </head><body>${content.innerHTML}<script>window.print();window.close();<\/script></body></html>`);
         win.document.close();
     };
+    
+    renderCalendar();
 }
 
 // ============================================================
