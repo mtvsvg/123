@@ -320,11 +320,6 @@ function generateFamiliarization() {
                         <div style="font-size:14px;color:#555;text-align:left;">
                             ${orgName ? `<strong>${orgName}</strong>` : ''}
                         </div>
-                        <div style="font-size:14px;color:#555;text-align:right;">
-                            УТВЕРЖДАЮ<br>
-                            <span style="border-bottom:1px solid #333;padding:0 20px;display:inline-block;min-width:150px;"></span>
-                        </div>
-                    </div>
                     <h2 style="font-size:22px;color:#1a1a3e;margin:12px 0 4px 0;letter-spacing:1px;">ЛИСТ ОЗНАКОМЛЕНИЯ</h2>
                     <p style="font-size:14px;color:#666;margin:0;">с нормативными актами по охране труда</p>
                 </div>
