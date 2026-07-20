@@ -6,6 +6,9 @@
     <title>Охрана труда — Цифровой помощник</title>
     <link rel="stylesheet" href="style.css">
     <style>
+        /* ============================================================ */
+        /* ОБЩИЕ СТИЛИ */
+        /* ============================================================ */
         #ppeModal .modal-content { max-width: 950px !important; width: 95% !important; }
         #ppeTypeSelect { min-width: 180px !important; font-size: 13px !important; padding: 10px 12px !important; background: #1a1a3e !important; border: 1px solid rgba(255,255,255,0.15) !important; border-radius: 6px !important; color: #fff !important; cursor: pointer !important; }
         #ppeTypeSelect option { background: #1a1a3e !important; color: #fff !important; padding: 8px !important; font-size: 13px !important; }
@@ -29,41 +32,264 @@
         .protocol-table .btn-remove { background: rgba(255,70,70,0.15) !important; border: none !important; color: #ff6b6b !important; padding: 4px 10px !important; border-radius: 4px !important; cursor: pointer !important; }
         .protocol-table .btn-remove:hover { background: rgba(255,70,70,0.3) !important; }
         #soutCardNumber { width: 70px !important; padding: 4px 8px !important; background: rgba(255,255,255,0.06) !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 4px !important; color: #fff !important; font-size: 12px !important; }
+        
         /* ============================================================ */
-/* ОРГАНИЗАЦИИ - УБИРАЕМ ПРОЗРАЧНОСТЬ */
-/* ============================================================ */
-.org-select {
-    background: #1a1a3e !important;
-    color: #fff !important;
-    border: 1px solid rgba(255,255,255,0.12) !important;
-    padding: 10px !important;
-    border-radius: 8px !important;
-    font-size: 14px !important;
-    cursor: pointer !important;
-}
-.org-select option {
-    background: #1a1a3e !important;
-    color: #fff !important;
-    padding: 8px 12px !important;
-    font-size: 14px !important;
-}
-.org-select option:hover {
-    background: #2a2a5e !important;
-}
-#famOrgSelect {
-    background: #1a1a3e !important;
-    color: #fff !important;
-    border: 1px solid rgba(255,255,255,0.12) !important;
-    padding: 10px !important;
-    border-radius: 8px !important;
-    font-size: 14px !important;
-    cursor: pointer !important;
-}
-#famOrgSelect option {
-    background: #1a1a3e !important;
-    color: #fff !important;
-    padding: 8px 12px !important;
-}
+        /* ОРГАНИЗАЦИИ - УБИРАЕМ ПРОЗРАЧНОСТЬ */
+        /* ============================================================ */
+        .org-select {
+            background: #1a1a3e !important;
+            color: #fff !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
+            padding: 10px !important;
+            border-radius: 8px !important;
+            font-size: 14px !important;
+            cursor: pointer !important;
+        }
+        .org-select option {
+            background: #1a1a3e !important;
+            color: #fff !important;
+            padding: 8px 12px !important;
+            font-size: 14px !important;
+        }
+        .org-select option:hover {
+            background: #2a2a5e !important;
+        }
+        #famOrgSelect {
+            background: #1a1a3e !important;
+            color: #fff !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
+            padding: 10px !important;
+            border-radius: 8px !important;
+            font-size: 14px !important;
+            cursor: pointer !important;
+        }
+        #famOrgSelect option {
+            background: #1a1a3e !important;
+            color: #fff !important;
+            padding: 8px 12px !important;
+        }
+        
+        /* ============================================================ */
+        /* КАЛЕНДАРЬ */
+        /* ============================================================ */
+        .calendar-container {
+            background: rgba(255,255,255,0.03);
+            border-radius: 14px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .calendar-header h2 {
+            color: #fff;
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0;
+        }
+        .calendar-nav-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #ccc;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .calendar-nav-btn:hover {
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .calendar-grid .weekday {
+            text-align: center;
+            color: #8888aa;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .calendar-day {
+            background: rgba(255,255,255,0.04);
+            border-radius: 8px;
+            padding: 6px;
+            min-height: 70px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            position: relative;
+        }
+        .calendar-day:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(124,58,237,0.3);
+        }
+        .calendar-day.other-month {
+            opacity: 0.3;
+        }
+        .calendar-day.today {
+            border-color: #7c3aed;
+            background: rgba(124,58,237,0.1);
+        }
+        .calendar-day .day-number {
+            color: #ccc;
+            font-size: 14px;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .calendar-day .day-events {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .calendar-day .event-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+        .calendar-day .event-text {
+            font-size: 10px;
+            color: #ccc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+        .event-text.overdue { background: rgba(255,70,70,0.2); color: #ff6b6b; }
+        .event-text.today-event { background: rgba(255,193,7,0.2); color: #ffc107; }
+        .event-text.upcoming { background: rgba(76,175,80,0.2); color: #4caf50; }
+        .event-text.done { background: rgba(76,175,80,0.1); color: #4caf50; text-decoration: line-through; }
+        
+        .calendar-legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            padding: 10px 0;
+        }
+        .calendar-legend span {
+            font-size: 12px;
+            color: #8888aa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .calendar-legend .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot.overdue { background: #ff6b6b; }
+        .dot.today-event { background: #ffc107; }
+        .dot.upcoming { background: #4caf50; }
+        .dot.done { background: #4caf50; opacity: 0.5; }
+        
+        .calendar-events-sidebar {
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 16px;
+            border: 1px solid rgba(255,255,255,0.06);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .calendar-events-sidebar h4 {
+            color: #ccc;
+            font-size: 14px;
+            margin: 0 0 10px 0;
+        }
+        .calendar-events-sidebar .event-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+        .calendar-events-sidebar .event-item .event-title {
+            color: #fff;
+        }
+        .calendar-events-sidebar .event-item .event-type {
+            font-size: 11px;
+            color: #8888aa;
+        }
+        .calendar-events-sidebar .event-item .event-delete {
+            background: rgba(255,70,70,0.15);
+            border: none;
+            color: #ff6b6b;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .calendar-events-sidebar .event-item .event-delete:hover {
+            background: rgba(255,70,70,0.3);
+        }
+        
+        .calendar-add-event {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .calendar-add-event input {
+            flex: 2;
+            min-width: 150px;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+        }
+        .calendar-add-event input:focus {
+            border-color: #7c3aed;
+            outline: none;
+        }
+        .calendar-add-event select {
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .calendar-add-event select option {
+            background: #1a1a3e;
+            color: #fff;
+        }
+        .calendar-add-event button {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #7c3aed, #00d4ff);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .calendar-add-event button:hover {
+            transform: scale(1.02);
+        }
     </style>
 </head>
 <body>
@@ -82,6 +308,7 @@
                 <a href="#" class="nav-link active" onclick="showPage('main')">Главная</a>
                 <a href="#" class="nav-link" onclick="showPage('training')">Обучение</a>
                 <a href="#" class="nav-link" onclick="showPage('map')">Карта</a>
+                <a href="#" class="nav-link" onclick="showPage('calendar')">📅 Календарь</a>
                 <a href="#" class="nav-link" onclick="showPage('risks')">Оценка рисков</a>
                 <a href="#" class="nav-link" onclick="showPage('analytics')">Аналитика</a>
             </nav>
@@ -134,9 +361,9 @@
                     <p>Визуализируйте рабочие места, расставляйте сотрудников и оценивайте риски.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🔄</div>
-                    <h3>Автоматизация</h3>
-                    <p>Система сама напомнит о сроках обучения и обновит данные по сотрудникам.</p>
+                    <div class="feature-icon">📅</div>
+                    <h3>Календарь событий</h3>
+                    <p>Отслеживайте обучение, инструктажи и перезарядку СИЗ в едином календаре.</p>
                 </div>
             </div>
         </div>
@@ -152,6 +379,7 @@
                 <a href="#" onclick="showPage('main')">Главная</a>
                 <a href="#" onclick="showPage('training')">Обучение</a>
                 <a href="#" onclick="showPage('map')">Карта</a>
+                <a href="#" onclick="showPage('calendar')">Календарь</a>
                 <a href="#" onclick="showPage('risks')">Оценка рисков</a>
                 <a href="#" onclick="showPage('analytics')">Аналитика</a>
             </div>
@@ -182,9 +410,9 @@
                 <button class="btn-cancel" id="cancelOrgBtn">Отмена</button>
             </div>
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-               <select id="orgSelect" class="org-select" style="flex:1;min-width:200px;background:#1a1a3e;color:#fff;border:1px solid rgba(255,255,255,0.12);padding:10px;border-radius:8px;font-size:14px;cursor:pointer;">
-    <option value="">-- Выберите организацию --</option>
-</select>
+                <select id="orgSelect" class="org-select" style="flex:1;min-width:200px;">
+                    <option value="">-- Выберите организацию --</option>
+                </select>
                 <button class="btn-delete" id="deleteOrgBtn" title="Удалить">🗑</button>
             </div>
         </div>
@@ -241,10 +469,7 @@
 
                 <div id="protocolContainer"><p style="color:#6a6a8a;text-align:center;padding:20px;">В протоколе пока нет сотрудников.</p></div>
                 <button class="btn-generate" id="generateBtn" style="margin-top:16px;">⚡ Создать XML</button>
-                
-                <!-- КНОПКА АВТООТМЕТКИ В КАЛЕНДАРЕ (ВСЕГДА ВИДНА) -->
                 <button class="btn-add" onclick="markTrainingFromProtocol()" style="margin-top:12px;width:100%;padding:12px;background:rgba(76,175,80,0.15);border:1px solid rgba(76,175,80,0.3);border-radius:8px;color:#4caf50;cursor:pointer;font-size:14px;font-weight:500;">📅 Отметить обучение в календаре</button>
-                
                 <div id="resultBlock" class="result-block hidden">
                     <h3>✅ XML готов!</h3>
                     <a id="downloadLink" href="#" download>📥 Скачать XML</a>
@@ -267,9 +492,9 @@
                 <div style="margin-bottom:12px;padding:12px 14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
                     <p style="color:#8888aa;font-size:13px;margin-bottom:8px;">👤 Выберите сотрудника из штатного расписания:</p>
                     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-                       <select id="famEmployeeSelect" style="flex:2;min-width:200px;padding:10px;background:#1a1a3e;color:#fff;border:1px solid rgba(255,255,255,0.12);border-radius:8px;font-size:14px;cursor:pointer;">
-    <option value="">-- Выберите сотрудника --</option>
-</select>
+                        <select id="famEmployeeSelect" style="flex:2;min-width:200px;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                            <option value="">-- Выберите сотрудника --</option>
+                        </select>
                         <span style="color:#666;font-size:13px;">— или —</span>
                     </div>
                 </div>
@@ -336,6 +561,63 @@
                     <div id="famContent" style="font-size:14px;line-height:1.8;color:#fff;"></div>
                     <button class="btn-primary" id="printFamBtn" style="margin-top:12px;width:auto;padding:10px 24px;">🖨️ Печать / PDF</button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- СТРАНИЦА "КАЛЕНДАРЬ" -->
+<!-- ============================================================ -->
+<div id="calendarPage" class="page hidden">
+    <div class="container">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+            <h1 style="font-size:28px;font-weight:700;background:linear-gradient(135deg,#00d4ff,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">📅 Календарь событий</h1>
+            <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
+        </div>
+
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <button class="calendar-nav-btn" onclick="changeMonth(-1)">◀ Предыдущий</button>
+                <h2 id="calendarMonthTitle">Январь 2026</h2>
+                <button class="calendar-nav-btn" onclick="changeMonth(1)">Следующий ▶</button>
+            </div>
+            
+            <div class="calendar-grid" id="calendarGrid">
+                <div class="weekday">Пн</div>
+                <div class="weekday">Вт</div>
+                <div class="weekday">Ср</div>
+                <div class="weekday">Чт</div>
+                <div class="weekday">Пт</div>
+                <div class="weekday">Сб</div>
+                <div class="weekday">Вс</div>
+            </div>
+            
+            <div class="calendar-legend">
+                <span><span class="dot overdue"></span> Просрочено</span>
+                <span><span class="dot today-event"></span> Сегодня</span>
+                <span><span class="dot upcoming"></span> Предстоит</span>
+                <span><span class="dot done"></span> Выполнено</span>
+            </div>
+            
+            <div class="calendar-events-sidebar" id="calendarEventsSidebar">
+                <h4>📋 События на выбранный день</h4>
+                <div id="selectedDayEvents">
+                    <p style="color:#666;font-size:13px;">Выберите день в календаре</p>
+                </div>
+            </div>
+            
+            <div class="calendar-add-event">
+                <input type="text" id="newEventTitle" placeholder="Название события (например: Инструктаж Иванова)">
+                <select id="newEventType">
+                    <option value="Инструктаж">Инструктаж</option>
+                    <option value="Обучение">Обучение</option>
+                    <option value="Перезарядка СИЗ">Перезарядка СИЗ</option>
+                    <option value="Проверка">Проверка</option>
+                    <option value="Другое">Другое</option>
+                </select>
+                <input type="date" id="newEventDate">
+                <button onclick="addEvent()">➕ Добавить</button>
             </div>
         </div>
     </div>
