@@ -129,6 +129,7 @@ function renderStaff() {
     let html = `<table class="staff-table"><thead><tr><th style="width:40px;"><input type="checkbox" id="selectAllStaff" onchange="toggleAllStaff()"></th><th>Фамилия</th><th>Имя</th><th>Отчество</th><th>Должность</th><th>СНИЛС</th></tr></thead><tbody>`;
     staff.forEach((emp, index) => {
         html += `<tr><td><input type="checkbox" class="staff-check" data-index="${index}"></td><td class="staff-name" onclick="openEmployeeCard(${index})">${emp.last_name}</td><td>${emp.first_name}</td><td>${emp.middle_name || ''}</td><td>${emp.position}</td><td>${emp.snils}</td></tr>`;
+    });
     html += '</tbody></table>';
     container.innerHTML = html;
 }
@@ -319,6 +320,7 @@ function generateFamiliarization() {
                         <div style="font-size:14px;color:#555;text-align:left;">
                             ${orgName ? `<strong>${orgName}</strong>` : ''}
                         </div>
+                    </div>
                     <h2 style="font-size:22px;color:#1a1a3e;margin:12px 0 4px 0;letter-spacing:1px;">ЛИСТ ОЗНАКОМЛЕНИЯ</h2>
                     <p style="font-size:14px;color:#666;margin:0;">с нормативными актами по охране труда</p>
                 </div>
@@ -887,15 +889,39 @@ function setupMapButtons() {
     const saveFeBtn = document.getElementById('saveFireExtinguisherBtn');
     if (saveFeBtn) saveFeBtn.onclick = saveFireExtinguisher;
     
+    // ============================================================
+    // ИСПРАВЛЕННАЯ ДАТА ПЕРЕЗАРЯДКИ ОГНЕТУШИТЕЛЕЙ (ПО ГОСТ)
+    // ============================================================
     const feDateInput = document.getElementById('feDateInput');
-    if (feDateInput) feDateInput.onchange = function() {
-        const nextDateInput = document.getElementById('feNextDateInput');
-        if (nextDateInput && this.value) {
-            const date = new Date(this.value);
-            date.setFullYear(date.getFullYear() + 1);
-            nextDateInput.value = date.toISOString().split('T')[0];
-        }
-    };
+    if (feDateInput) {
+        feDateInput.onchange = function() {
+            const nextDateInput = document.getElementById('feNextDateInput');
+            const typeSelect = document.getElementById('feTypeSelect');
+            if (nextDateInput && this.value && typeSelect) {
+                const date = new Date(this.value);
+                const type = typeSelect.value;
+                let years = 5; // по умолчанию для порошковых
+                if (type === 'ОУ') years = 10;      // углекислотные
+                else if (type === 'ОВ') years = 1;  // водные
+                else if (type === 'ОХ') years = 10; // хладоновые
+                else if (type === 'ОПУ') years = 5; // порошковые универсальные
+                date.setFullYear(date.getFullYear() + years);
+                nextDateInput.value = date.toISOString().split('T')[0];
+                document.getElementById('feNextLabel').textContent = `✅ Перезарядка через ${years} лет (${date.toISOString().split('T')[0]})`;
+            }
+        };
+    }
+    
+    // Обновляем при смене типа
+    const feTypeSelect = document.getElementById('feTypeSelect');
+    if (feTypeSelect) {
+        feTypeSelect.onchange = function() {
+            const dateInput = document.getElementById('feDateInput');
+            if (dateInput && dateInput.value) {
+                dateInput.dispatchEvent(new Event('change'));
+            }
+        };
+    }
 }
 
 function getCurrentWorkshop() {
@@ -1156,8 +1182,17 @@ function setupCanvasEvents() {
             document.getElementById('fireExtinguisherModal').classList.remove('hidden');
             const now = new Date();
             document.getElementById('feDateInput').value = now.toISOString().split('T')[0];
-            now.setFullYear(now.getFullYear() + 1);
+            // Рассчитываем дату перезарядки по типу
+            const typeSelect = document.getElementById('feTypeSelect');
+            const type = typeSelect ? typeSelect.value : 'ОП';
+            let years = 5;
+            if (type === 'ОУ') years = 10;
+            else if (type === 'ОВ') years = 1;
+            else if (type === 'ОХ') years = 10;
+            else if (type === 'ОПУ') years = 5;
+            now.setFullYear(now.getFullYear() + years);
             document.getElementById('feNextDateInput').value = now.toISOString().split('T')[0];
+            document.getElementById('feNextLabel').textContent = `✅ Перезарядка через ${years} лет (${now.toISOString().split('T')[0]})`;
             return;
         }
         if (mapMode === 'addEvacuationRoute') {
@@ -1556,182 +1591,6 @@ function clearMap() {
 }
 
 // ============================================================
-// ИНИЦИАЛИЗАЦИЯ
-// ============================================================
-function initTrainingPage() {
-    renderOrgs();
-    renderStaff();
-    renderProtocol();
-    fillFamEmployeeSelect();
-    
-    document.getElementById('showOrgFormBtn').onclick = function() {
-        document.getElementById('orgForm').classList.remove('hidden');
-    };
-    document.getElementById('saveOrgBtn').onclick = function() {
-        const name = document.getElementById('orgNameInput').value.trim();
-        const inn = document.getElementById('orgInnInput').value.trim();
-        if (!name || !inn) { alert('Заполните все поля'); return; }
-        const orgs = getOrgs();
-        orgs.push({ id: Date.now(), name, inn });
-        saveOrgs(orgs);
-        renderOrgs();
-        document.getElementById('orgForm').classList.add('hidden');
-        document.getElementById('orgNameInput').value = '';
-        document.getElementById('orgInnInput').value = '';
-        alert('✅ Организация добавлена');
-    };
-    document.getElementById('cancelOrgBtn').onclick = function() {
-        document.getElementById('orgForm').classList.add('hidden');
-    };
-    document.getElementById('deleteOrgBtn').onclick = function() {
-        const id = parseInt(document.getElementById('orgSelect').value);
-        if (!id) { alert('Выберите организацию'); return; }
-        if (!confirm('Удалить?')) return;
-        let orgs = getOrgs();
-        orgs = orgs.filter(o => o.id !== id);
-        saveOrgs(orgs);
-        renderOrgs();
-        alert('✅ Удалено');
-    };
-    document.getElementById('generateBtn').onclick = generateXML;
-    document.getElementById('addSelectedBtn').onclick = addSelectedToProtocol;
-    document.getElementById('staffImportBtn').onclick = importStaffFile;
-    document.getElementById('generateFamBtn').onclick = generateFamiliarization;
-    document.getElementById('printFamBtn').onclick = function() {
-        const content = document.getElementById('famContent');
-        if (!content.innerHTML) { alert('Сначала сформируйте лист'); return; }
-        const win = window.open('', '_blank');
-        win.document.write(`<!DOCTYPE html><html><head><title>Лист ознакомления</title>
-            <style>body{font-family:Arial;padding:40px;color:#222;max-width:1000px;margin:0 auto;}*{print-color-adjust:exact;}@media print{body{padding:20px;}}</style>
-        </head><body>${content.innerHTML}<script>window.print();window.close();<\/script></body></html>`);
-        win.document.close();
-    };
-}
-
-// ============================================================
-// DOM READY
-// ============================================================
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Загрузка...');
-    document.getElementById('mainPage').style.display = 'block';
-    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-    document.querySelectorAll('.nav-link').forEach(link => {
-        if (link.textContent.trim() === 'Главная') link.classList.add('active');
-    });
-    initTrainingPage();
-    console.log('✅ Готово!');
-});
-// ============================================================
-// ДАТА ИНСТРУКТАЖА ПРИ КЛИКЕ НА СОТРУДНИКА
-// ============================================================
-function openEmployeeCard(index) {
-    const staff = getStaff();
-    const emp = staff[index];
-    if (!emp) return;
-    
-    // Сохраняем выбранного сотрудника
-    currentEmployeeIndex = index;
-    
-    // Создаем модалку для сотрудника
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.id = 'employeeModal';
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width:500px;">
-            <div class="modal-header">
-                <h3>👤 ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</h3>
-                <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label style="color:#ccc;">Должность</label>
-                    <input type="text" value="${emp.position}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;" readonly>
-                </div>
-                <div class="form-group">
-                    <label style="color:#ccc;">Дата последнего инструктажа</label>
-                    <input type="date" id="empInstructionDate" value="${emp.instructionDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
-                </div>
-                <div class="form-group">
-                    <label style="color:#ccc;">Дата обучения</label>
-                    <input type="date" id="empTrainingDate" value="${emp.trainingDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
-                </div>
-                <div class="form-group">
-                    <label style="color:#ccc;">СИЗ (можно добавить)</label>
-                    <div style="max-height:150px;overflow-y:auto;">
-                        ${emp.ppeItems && emp.ppeItems.length > 0 ? emp.ppeItems.map((item, i) => 
-                            `<div style="padding:6px 10px;background:rgba(76,175,80,0.1);border-radius:4px;margin-bottom:4px;color:#ccc;font-size:13px;">✅ ${item.name} (${item.type})</div>`
-                        ).join('') : '<div style="color:#666;font-size:13px;">Нет добавленных СИЗ</div>'}
-                    </div>
-                    <button onclick="openPPEModalForEmployee()" style="margin-top:8px;padding:6px 16px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);border-radius:6px;color:#b388ff;cursor:pointer;font-size:13px;">➕ Добавить СИЗ</button>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-cancel" onclick="this.closest('.modal-overlay').remove()">Закрыть</button>
-                <button class="btn-primary" onclick="saveEmployeeData()" style="width:auto;padding:10px 24px;">💾 Сохранить</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-let currentEmployeeIndex = -1;
-
-function saveEmployeeData() {
-    const staff = getStaff();
-    const emp = staff[currentEmployeeIndex];
-    if (!emp) return;
-    
-    const instructionDate = document.getElementById('empInstructionDate')?.value || '';
-    const trainingDate = document.getElementById('empTrainingDate')?.value || '';
-    
-    emp.instructionDate = instructionDate;
-    emp.trainingDate = trainingDate;
-    saveStaff(staff);
-    
-    // Обновляем таблицу
-    renderStaff();
-    document.getElementById('employeeModal')?.remove();
-    alert('✅ Данные сохранены!');
-}
-
-function openPPEModalForEmployee() {
-    const staff = getStaff();
-    const emp = staff[currentEmployeeIndex];
-    if (!emp) return;
-    
-    // Создаем временное рабочее место для сотрудника
-    const tempWorkplace = {
-        name: `${emp.last_name} ${emp.first_name}`,
-        position: emp.position,
-        ppeItems: emp.ppeItems || []
-    };
-    
-    // Открываем модалку СИЗ
-    currentPPEWorkplace = tempWorkplace;
-    ppeItems = tempWorkplace.ppeItems || [];
-    openPPEModal(tempWorkplace);
-    
-    // Переопределяем savePPEItems для сохранения в сотрудника
-    const originalSave = savePPEItems;
-    savePPEItems = function() {
-        if (!currentPPEWorkplace) return;
-        if (ppeItems.length === 0) { alert('⚠️ Добавьте хотя бы одно СИЗ!'); return; }
-        
-        const staff = getStaff();
-        const emp = staff[currentEmployeeIndex];
-        if (emp) {
-            emp.ppeItems = ppeItems;
-            saveStaff(staff);
-        }
-        currentPPEWorkplace.ppeItems = ppeItems;
-        currentPPEWorkplace.hasPPE = true;
-        alert(`✅ Сохранено ${ppeItems.length} СИЗ!`);
-        closePPEModal();
-        savePPEItems = originalSave;
-        renderStaff();
-    };
-}
-// ============================================================
 // ПЕРСОНАЛЬНАЯ КАРТОЧКА СОТРУДНИКА
 // ============================================================
 let currentEmployeeIndex = -1;
@@ -1835,6 +1694,7 @@ function openPPEModalForEmployee() {
         renderStaff();
     };
 }
+
 // ============================================================
 // АВТООТМЕТКА В КАЛЕНДАРЕ ПОСЛЕ ЗАГРУЗКИ ПРОТОКОЛА
 // ============================================================
@@ -1863,3 +1723,70 @@ function markTrainingFromProtocol() {
     renderStaff();
     alert(`✅ Обновлено ${updated} сотрудников! Дата обучения: ${today}`);
 }
+
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================================
+function initTrainingPage() {
+    renderOrgs();
+    renderStaff();
+    renderProtocol();
+    fillFamEmployeeSelect();
+    
+    document.getElementById('showOrgFormBtn').onclick = function() {
+        document.getElementById('orgForm').classList.remove('hidden');
+    };
+    document.getElementById('saveOrgBtn').onclick = function() {
+        const name = document.getElementById('orgNameInput').value.trim();
+        const inn = document.getElementById('orgInnInput').value.trim();
+        if (!name || !inn) { alert('Заполните все поля'); return; }
+        const orgs = getOrgs();
+        orgs.push({ id: Date.now(), name, inn });
+        saveOrgs(orgs);
+        renderOrgs();
+        document.getElementById('orgForm').classList.add('hidden');
+        document.getElementById('orgNameInput').value = '';
+        document.getElementById('orgInnInput').value = '';
+        alert('✅ Организация добавлена');
+    };
+    document.getElementById('cancelOrgBtn').onclick = function() {
+        document.getElementById('orgForm').classList.add('hidden');
+    };
+    document.getElementById('deleteOrgBtn').onclick = function() {
+        const id = parseInt(document.getElementById('orgSelect').value);
+        if (!id) { alert('Выберите организацию'); return; }
+        if (!confirm('Удалить?')) return;
+        let orgs = getOrgs();
+        orgs = orgs.filter(o => o.id !== id);
+        saveOrgs(orgs);
+        renderOrgs();
+        alert('✅ Удалено');
+    };
+    document.getElementById('generateBtn').onclick = generateXML;
+    document.getElementById('addSelectedBtn').onclick = addSelectedToProtocol;
+    document.getElementById('staffImportBtn').onclick = importStaffFile;
+    document.getElementById('generateFamBtn').onclick = generateFamiliarization;
+    document.getElementById('printFamBtn').onclick = function() {
+        const content = document.getElementById('famContent');
+        if (!content.innerHTML) { alert('Сначала сформируйте лист'); return; }
+        const win = window.open('', '_blank');
+        win.document.write(`<!DOCTYPE html><html><head><title>Лист ознакомления</title>
+            <style>body{font-family:Arial;padding:40px;color:#222;max-width:1000px;margin:0 auto;}*{print-color-adjust:exact;}@media print{body{padding:20px;}}</style>
+        </head><body>${content.innerHTML}<script>window.print();window.close();<\/script></body></html>`);
+        win.document.close();
+    };
+}
+
+// ============================================================
+// DOM READY
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Загрузка...');
+    document.getElementById('mainPage').style.display = 'block';
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.textContent.trim() === 'Главная') link.classList.add('active');
+    });
+    initTrainingPage();
+    console.log('✅ Готово!');
+});
