@@ -198,7 +198,7 @@ function getSelectedPrograms() {
 }
 
 // ============================================================
-// ОЗНАКОМЛЕНИЕ
+// ОЗНАКОМЛЕНИЕ (С РУЧНЫМ ВВОДОМ)
 // ============================================================
 function fillFamEmployeeSelect() {
     const select = document.getElementById('famEmployeeSelect');
@@ -211,6 +211,121 @@ function fillFamEmployeeSelect() {
         opt.textContent = `${emp.last_name} ${emp.first_name} ${emp.middle_name || ''} — ${emp.position}`;
         select.appendChild(opt);
     });
+}
+
+function getFamEmployeeData() {
+    const select = document.getElementById('famEmployeeSelect');
+    const index = select ? parseInt(select.value) : -1;
+    
+    // Проверяем ручной ввод
+    const manualLastName = document.getElementById('famManualLastName')?.value.trim() || '';
+    const manualFirstName = document.getElementById('famManualFirstName')?.value.trim() || '';
+    const manualMiddleName = document.getElementById('famManualMiddleName')?.value.trim() || '';
+    const manualPosition = document.getElementById('famManualPosition')?.value.trim() || '';
+    const manualSnils = document.getElementById('famManualSnils')?.value.trim() || '';
+    
+    // Если заполнены поля ручного ввода - используем их
+    if (manualLastName && manualFirstName) {
+        return {
+            last_name: manualLastName,
+            first_name: manualFirstName,
+            middle_name: manualMiddleName,
+            position: manualPosition || 'Должность не указана',
+            snils: manualSnils || ''
+        };
+    }
+    
+    // Иначе берем из штатного расписания
+    if (isNaN(index) || index < 0) {
+        return null;
+    }
+    const staff = getStaff();
+    return staff[index] || null;
+}
+
+function generateFamiliarization() {
+    const emp = getFamEmployeeData();
+    
+    if (!emp) {
+        alert('❌ Выберите сотрудника из списка или заполните поля для нового сотрудника!');
+        return;
+    }
+    
+    const docCheckboxes = document.querySelectorAll('.doc-check input[type="checkbox"]:checked');
+    const docs = [];
+    docCheckboxes.forEach(cb => {
+        docs.push(cb.value);
+    });
+    
+    const customInput = document.getElementById('famCustomDoc');
+    const customDocs = customInput ? customInput.value.split('\n').filter(d => d.trim().length > 0) : [];
+    
+    const allDocs = [...docs, ...customDocs];
+    
+    if (allDocs.length === 0) {
+        alert('❌ Выберите хотя бы один документ для ознакомления или добавьте свой!');
+        return;
+    }
+    
+    const result = document.getElementById('famResult');
+    const content = document.getElementById('famContent');
+    
+    if (result && content) {
+        let html = `
+            <div style="padding:24px;background:#fff;color:#222;border-radius:10px;max-width:900px;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+                <div style="text-align:center;border-bottom:3px solid #7c3aed;padding-bottom:12px;margin-bottom:16px;">
+                    <h2 style="font-size:20px;color:#1a1a3e;margin:0;">ЛИСТ ОЗНАКОМЛЕНИЯ</h2>
+                    <p style="font-size:13px;color:#666;margin:4px 0 0 0;">с документами по охране труда</p>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;background:#f8f8f8;padding:14px;border-radius:8px;">
+                    <div>
+                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">ФИО:</strong> ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</p>
+                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">Должность:</strong> ${emp.position}</p>
+                    </div>
+                    <div>
+                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">СНИЛС:</strong> ${emp.snils || '—'}</p>
+                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">Дата:</strong> ${new Date().toLocaleDateString('ru-RU', {day:'2-digit', month:'long', year:'numeric'})}</p>
+                    </div>
+                </div>
+                
+                <div style="border-top:1px solid #ddd;padding-top:12px;">
+                    <p style="font-weight:600;color:#333;margin-bottom:8px;font-size:14px;">📋 Ознакомлен(а) со следующими документами:</p>
+                    <ol style="padding-left:24px;margin:0;line-height:1.8;">
+        `;
+        
+        allDocs.forEach(doc => {
+            html += `<li style="font-size:14px;color:#333;">${doc}</li>`;
+        });
+        
+        html += `
+                    </ol>
+                </div>
+                
+                <div style="margin-top:20px;padding-top:16px;border-top:2px solid #eee;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;">
+                    <div>
+                        <div style="border-bottom:1px solid #333;height:36px;"></div>
+                        <p style="font-size:12px;color:#666;margin:4px 0 0 0;">Подпись сотрудника</p>
+                    </div>
+                    <div>
+                        <div style="border-bottom:1px solid #333;height:36px;"></div>
+                        <p style="font-size:12px;color:#666;margin:4px 0 0 0;">Дата</p>
+                    </div>
+                    <div>
+                        <div style="border-bottom:1px solid #333;height:36px;"></div>
+                        <p style="font-size:12px;color:#666;margin:4px 0 0 0;">Расшифровка подписи</p>
+                    </div>
+                </div>
+                
+                <div style="margin-top:12px;padding-top:10px;border-top:1px solid #eee;text-align:center;">
+                    <p style="font-size:11px;color:#999;margin:0;">Документ сформирован автоматически в системе «ОхранаТруда.Про»</p>
+                </div>
+            </div>
+        `;
+        
+        content.innerHTML = html;
+        result.classList.remove('hidden');
+    }
 }
 
 // ============================================================
@@ -281,9 +396,8 @@ function escXml(str) {
     if (!str) return ''; 
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); 
 }
-
 // ============================================================
-// СПИСОК ТИПОВ СИЗ (ВСЕ ВИДНЫ, НИКАКОЙ ПРОЗРАЧНОСТИ)
+// СПИСОК ТИПОВ СИЗ (ВСЕ ВИДНЫ, БЕЗ ПРОЗРАЧНОСТИ)
 // ============================================================
 const PPE_TYPES = [
     'Одежда специальная защитная',
@@ -343,7 +457,7 @@ function renderPPEList() {
     
     // Опции для выпадающего списка - ВСЕ ВИДНЫ, БЕЗ ПРОЗРАЧНОСТИ
     const typeOptions = PPE_TYPES.map(t => {
-        return `<option value="${t}" style="color:#fff;background:#1a1a3e;padding:6px;">${t}</option>`;
+        return `<option value="${t}" style="color:#fff;background:#1a1a3e;padding:8px;">${t}</option>`;
     }).join('');
     
     let html = `
@@ -359,7 +473,7 @@ function renderPPEList() {
                 
                 <div>
                     <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Тип СИЗ</label>
-                    <select id="ppeTypeSelect" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#fff;font-size:13px;cursor:pointer;appearance:auto;min-width:180px;">
+                    <select id="ppeTypeSelect" style="width:100%;padding:10px 12px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#fff;font-size:13px;cursor:pointer;appearance:auto;min-width:180px;">
                         <option value="" selected disabled style="color:#888;background:#1a1a3e;">▼ Выберите тип...</option>
                         ${typeOptions}
                     </select>
@@ -623,103 +737,6 @@ function exportPPE() {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ ЛИСТА ОЗНАКОМЛЕНИЯ
-// ============================================================
-
-function generateFamiliarization() {
-    const select = document.getElementById('famEmployeeSelect');
-    const index = select ? parseInt(select.value) : -1;
-    
-    if (isNaN(index) || index < 0) {
-        alert('❌ Выберите сотрудника!');
-        return;
-    }
-    
-    const staff = getStaff();
-    const emp = staff[index];
-    if (!emp) {
-        alert('❌ Сотрудник не найден!');
-        return;
-    }
-    
-    const docCheckboxes = document.querySelectorAll('.doc-check input[type="checkbox"]:checked');
-    const docs = [];
-    docCheckboxes.forEach(cb => {
-        docs.push(cb.value);
-    });
-    
-    const customInput = document.getElementById('famCustomDoc');
-    const customDocs = customInput ? customInput.value.split('\n').filter(d => d.trim().length > 0) : [];
-    
-    const allDocs = [...docs, ...customDocs];
-    
-    if (allDocs.length === 0) {
-        alert('❌ Выберите хотя бы один документ для ознакомления или добавьте свой!');
-        return;
-    }
-    
-    const result = document.getElementById('famResult');
-    const content = document.getElementById('famContent');
-    
-    if (result && content) {
-        let html = `
-            <div style="padding:24px;background:#fff;color:#222;border-radius:10px;max-width:900px;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
-                <div style="text-align:center;border-bottom:3px solid #7c3aed;padding-bottom:12px;margin-bottom:16px;">
-                    <h2 style="font-size:20px;color:#1a1a3e;margin:0;">ЛИСТ ОЗНАКОМЛЕНИЯ</h2>
-                    <p style="font-size:13px;color:#666;margin:4px 0 0 0;">с документами по охране труда</p>
-                </div>
-                
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;background:#f8f8f8;padding:14px;border-radius:8px;">
-                    <div>
-                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">ФИО:</strong> ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</p>
-                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">Должность:</strong> ${emp.position}</p>
-                    </div>
-                    <div>
-                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">СНИЛС:</strong> ${formatSnils(emp.snils)}</p>
-                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">Дата:</strong> ${new Date().toLocaleDateString('ru-RU', {day:'2-digit', month:'long', year:'numeric'})}</p>
-                    </div>
-                </div>
-                
-                <div style="border-top:1px solid #ddd;padding-top:12px;">
-                    <p style="font-weight:600;color:#333;margin-bottom:8px;font-size:14px;">📋 Ознакомлен(а) со следующими документами:</p>
-                    <ol style="padding-left:24px;margin:0;line-height:1.8;">
-        `;
-        
-        allDocs.forEach(doc => {
-            html += `<li style="font-size:14px;color:#333;">${doc}</li>`;
-        });
-        
-        html += `
-                    </ol>
-                </div>
-                
-                <div style="margin-top:20px;padding-top:16px;border-top:2px solid #eee;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;">
-                    <div>
-                        <div style="border-bottom:1px solid #333;height:36px;"></div>
-                        <p style="font-size:12px;color:#666;margin:4px 0 0 0;">Подпись сотрудника</p>
-                    </div>
-                    <div>
-                        <div style="border-bottom:1px solid #333;height:36px;"></div>
-                        <p style="font-size:12px;color:#666;margin:4px 0 0 0;">Дата</p>
-                    </div>
-                    <div>
-                        <div style="border-bottom:1px solid #333;height:36px;"></div>
-                        <p style="font-size:12px;color:#666;margin:4px 0 0 0;">Расшифровка подписи</p>
-                    </div>
-                </div>
-                
-                <div style="margin-top:12px;padding-top:10px;border-top:1px solid #eee;text-align:center;">
-                    <p style="font-size:11px;color:#999;margin:0;">Документ сформирован автоматически в системе «ОхранаТруда.Про»</p>
-                </div>
-            </div>
-        `;
-        
-        content.innerHTML = html;
-        result.classList.remove('hidden');
-    }
-}
-
-// ============================================================
 // ИМПОРТ ШТАТНОГО РАСПИСАНИЯ
 // ============================================================
 
@@ -937,6 +954,7 @@ let resizeStartW = 0, resizeStartH = 0;
 let resizeStartXpos = 0, resizeStartYpos = 0;
 let selectedObjectIndex = -1;
 let selectedObjectType = null;
+let tempRoutePoints = [];
 
 function initMapPage() {
     console.log('🗺️ initMapPage вызвана');
@@ -1058,15 +1076,14 @@ function initMapPage() {
             if (!ws) { alert('Сначала создайте участок'); return; }
             mapMode = 'addEvacuationRoute';
             tempObjectType = 'route';
+            tempRoutePoints = [];
             const modeEl = document.getElementById('mapMode');
             if (modeEl) {
-                modeEl.textContent = 'Добавление пути эвакуации (кликните начальную и конечную точку)';
+                modeEl.textContent = 'Добавление пути эвакуации (кликните точки маршрута)';
                 modeEl.style.color = '#ffc107';
             }
             const canvasEl = document.getElementById('mapCanvas');
             if (canvasEl) canvasEl.style.cursor = 'crosshair';
-            // Инициализируем временный маршрут
-            tempRoutePoints = [];
         });
     }
     
@@ -1100,6 +1117,19 @@ function initMapPage() {
     const deleteBtn = document.getElementById('deleteSelectedBtn');
     if (deleteBtn) deleteBtn.addEventListener('click', deleteSelectedObject);
     
+    // Автоматический расчет даты перезарядки
+    const feDateInput = document.getElementById('feDateInput');
+    if (feDateInput) {
+        feDateInput.addEventListener('change', function() {
+            const nextDateInput = document.getElementById('feNextDateInput');
+            if (nextDateInput && this.value) {
+                const date = new Date(this.value);
+                date.setFullYear(date.getFullYear() + 1);
+                nextDateInput.value = date.toISOString().split('T')[0];
+            }
+        });
+    }
+    
     setupCanvasEvents();
     
     updateWorkshopSelect();
@@ -1108,8 +1138,6 @@ function initMapPage() {
     
     console.log('✅ Карта инициализирована успешно!');
 }
-
-let tempRoutePoints = [];
 
 function getCurrentWorkshop() {
     return mapData.workshops[mapData.currentWorkshop] || null;
@@ -1153,6 +1181,9 @@ function getCanvasCoords(e) {
         y: (clientY - rect.top) * scaleY
     };
 }
+// ============================================================
+// ОТРИСОВКА КАРТЫ
+// ============================================================
 
 function drawMap() {
     const canvas = document.getElementById('mapCanvas');
@@ -1165,9 +1196,11 @@ function drawMap() {
     const ws = getCurrentWorkshop();
     if (!ws) return;
     
+    // Фон
     ctx.fillStyle = '#0a0a1a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // Сетка
     ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 0.5;
     for (let i = 0; i < canvas.width; i += 50) {
@@ -1183,6 +1216,7 @@ function drawMap() {
         ctx.stroke();
     }
     
+    // Участок
     const grad = ctx.createLinearGradient(ws.x, ws.y, ws.x + ws.w, ws.y + ws.h);
     grad.addColorStop(0, 'rgba(74, 158, 255, 0.08)');
     grad.addColorStop(1, 'rgba(74, 158, 255, 0.02)');
@@ -1194,11 +1228,13 @@ function drawMap() {
     ctx.strokeRect(ws.x, ws.y, ws.w, ws.h);
     ctx.setLineDash([]);
     
+    // Название участка
     ctx.fillStyle = 'rgba(74, 158, 255, 0.6)';
     ctx.font = '28px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(`🏭 ${ws.name} (${ws.length}×${ws.width} м)`, ws.x + ws.w/2, ws.y + 55);
     
+    // Уголки участка
     const cornerSize = 20;
     const corners = [
         { cx: ws.x, cy: ws.y },
@@ -1214,19 +1250,25 @@ function drawMap() {
         ctx.strokeRect(c.cx - cornerSize/2, c.cy - cornerSize/2, cornerSize, cornerSize);
     });
     
-    // Рисуем пути эвакуации
+    // ============================================================
+    // ПУТИ ЭВАКУАЦИИ (РИСУЕМ ПЕРВЫМИ, ЧТОБЫ БЫЛИ ПОД ОБЪЕКТАМИ)
+    // ============================================================
     if (mapData.evacuationRoutes) {
         mapData.evacuationRoutes.forEach((route, index) => {
             if (route.points && route.points.length >= 2) {
+                // Рисуем линию
                 ctx.beginPath();
                 ctx.moveTo(route.points[0].x, route.points[0].y);
                 for (let i = 1; i < route.points.length; i++) {
                     ctx.lineTo(route.points[i].x, route.points[i].y);
                 }
-                ctx.strokeStyle = route.color || '#4caf50';
-                ctx.lineWidth = 3;
-                ctx.setLineDash([8, 6]);
+                ctx.strokeStyle = '#4caf50';
+                ctx.lineWidth = 4;
+                ctx.setLineDash([10, 6]);
+                ctx.shadowColor = 'rgba(76, 175, 80, 0.3)';
+                ctx.shadowBlur = 10;
                 ctx.stroke();
+                ctx.shadowBlur = 0;
                 ctx.setLineDash([]);
                 
                 // Рисуем стрелку в конце
@@ -1234,8 +1276,8 @@ function drawMap() {
                     const last = route.points[route.points.length - 1];
                     const prev = route.points[route.points.length - 2];
                     const angle = Math.atan2(last.y - prev.y, last.x - prev.x);
-                    const arrowSize = 15;
-                    ctx.fillStyle = route.color || '#4caf50';
+                    const arrowSize = 18;
+                    ctx.fillStyle = '#4caf50';
                     ctx.beginPath();
                     ctx.moveTo(last.x, last.y);
                     ctx.lineTo(last.x - arrowSize * Math.cos(angle - 0.5), last.y - arrowSize * Math.sin(angle - 0.5));
@@ -1244,48 +1286,92 @@ function drawMap() {
                     ctx.fill();
                 }
                 
-                // Подпись
+                // Подпись пути (жирный шрифт, четкий)
                 if (route.name) {
                     const midX = (route.points[0].x + route.points[route.points.length - 1].x) / 2;
-                    const midY = (route.points[0].y + route.points[route.points.length - 1].y) / 2;
-                    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-                    ctx.font = '14px sans-serif';
+                    const midY = (route.points[0].y + route.points[route.points.length - 1].y) / 2 - 20;
+                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                    ctx.fillRect(midX - 80, midY - 14, 160, 28);
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 15px sans-serif';
                     ctx.textAlign = 'center';
-                    ctx.fillText(route.name, midX, midY - 10);
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(route.name, midX, midY);
+                    ctx.textBaseline = 'alphabetic';
+                }
+                
+                // Выделение выбранного пути
+                if (selectedObjectType === 'route' && selectedObjectIndex === index) {
+                    ctx.strokeStyle = '#00d4ff';
+                    ctx.lineWidth = 6;
+                    ctx.setLineDash([8, 4]);
+                    ctx.shadowColor = 'rgba(0, 212, 255, 0.5)';
+                    ctx.shadowBlur = 20;
+                    ctx.beginPath();
+                    ctx.moveTo(route.points[0].x, route.points[0].y);
+                    for (let i = 1; i < route.points.length; i++) {
+                        ctx.lineTo(route.points[i].x, route.points[i].y);
+                    }
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                    ctx.setLineDash([]);
                 }
             }
         });
     }
     
-    // Рисуем огнетушители
+    // ============================================================
+    // ОГНЕТУШИТЕЛИ (БЕЗ ПРОЗРАЧНОСТИ, ЧЕТКИЙ ШРИФТ)
+    // ============================================================
     if (mapData.fireExtinguishers) {
         mapData.fireExtinguishers.forEach((fe, index) => {
-            const x = fe.x - 20;
-            const y = fe.y - 30;
+            const x = fe.x - 22;
+            const y = fe.y - 32;
             
-            ctx.fillStyle = '#ff1744';
-            ctx.shadowColor = 'rgba(255,23,68,0.5)';
-            ctx.shadowBlur = 20;
+            // Тень
+            ctx.shadowColor = 'rgba(255,23,68,0.4)';
+            ctx.shadowBlur = 25;
             
             // Корпус
-            ctx.fillRect(x + 5, y + 5, 30, 40);
-            ctx.fillRect(x + 10, y, 20, 10);
+            ctx.fillStyle = '#ff1744';
+            ctx.fillRect(x + 4, y + 6, 36, 44);
+            ctx.fillRect(x + 10, y, 24, 12);
             
-            // Надпись
+            // Горловина
+            ctx.fillStyle = '#b71c1c';
+            ctx.fillRect(x + 16, y - 6, 12, 10);
+            
+            // Надпись "ОГНЕТУШИТЕЛЬ" (четкий жирный шрифт)
             ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 9px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('ОГНЕТ', x + 22, y + 26);
+            ctx.fillText('УШИТЕЛЬ', x + 22, y + 38);
+            ctx.textBaseline = 'alphabetic';
+            
+            // Марка (четкий шрифт)
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 10px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('ОГН', x + 20, y + 30);
-            ctx.fillText('ЕТ', x + 20, y + 42);
+            ctx.fillText(fe.model || 'ОП-5', x + 22, y + 58);
             
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
-            ctx.font = '9px sans-serif';
-            ctx.fillText(fe.model || 'ОП-5', x + 20, y + 55);
+            // Выделение выбранного
+            if (selectedObjectType === 'fireExtinguisher' && selectedObjectIndex === index) {
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = '#00d4ff';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([6, 4]);
+                ctx.strokeRect(x - 4, y - 8, 52, 74);
+                ctx.setLineDash([]);
+            }
         });
     }
     
-    // Рисуем выходы
+    // ============================================================
+    // ВЫХОДЫ
+    // ============================================================
     if (mapData.evacuationPoints) {
         mapData.evacuationPoints.forEach((ep, index) => {
             const ew = 120, eh = 60;
@@ -1310,15 +1396,25 @@ function drawMap() {
             ctx.textBaseline = 'alphabetic';
             
             if (ep.name) {
-                ctx.fillStyle = 'rgba(255,255,255,0.4)';
-                ctx.font = '12px sans-serif';
+                ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                ctx.font = 'bold 13px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.fillText(ep.name, ep.x, ep.y + 35);
+            }
+            
+            if (selectedObjectType === 'evacuation' && selectedObjectIndex === index) {
+                ctx.strokeStyle = '#00d4ff';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([6, 4]);
+                ctx.strokeRect(ex - 8, ey - 8, ew + 16, eh + 16);
+                ctx.setLineDash([]);
             }
         });
     }
     
-    // Рисуем рабочие места
+    // ============================================================
+    // РАБОЧИЕ МЕСТА
+    // ============================================================
     if (ws.workplaces) {
         ws.workplaces.forEach((wp, index) => {
             const zoneSize = wp.zone || 60;
@@ -1370,7 +1466,7 @@ function drawMap() {
             ctx.fillRect(centerX - 22 * scale, centerY + 2 * scale, 8 * scale, 14 * scale);
             ctx.fillRect(centerX + 14 * scale, centerY + 2 * scale, 8 * scale, 14 * scale);
             
-            if (index === selectedObjectIndex && selectedObjectType === 'workplace') {
+            if (selectedObjectType === 'workplace' && selectedObjectIndex === index) {
                 ctx.strokeStyle = '#00d4ff';
                 ctx.lineWidth = 3;
                 ctx.setLineDash([8, 4]);
@@ -1379,11 +1475,11 @@ function drawMap() {
             }
             
             ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.font = '18px sans-serif';
+            ctx.font = 'bold 18px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(wp.name.substring(0, 20), centerX, centerY + 60 * scale);
             if (wp.position) {
-                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.fillStyle = 'rgba(255,255,255,0.5)';
                 ctx.font = '14px sans-serif';
                 ctx.fillText(wp.position.substring(0, 25), centerX, centerY + 78 * scale);
             }
@@ -1402,6 +1498,10 @@ function drawMap() {
     }
 }
 
+// ============================================================
+// СОБЫТИЯ CANVAS
+// ============================================================
+
 function setupCanvasEvents() {
     const canvas = document.getElementById('mapCanvas');
     if (!canvas) {
@@ -1411,12 +1511,13 @@ function setupCanvasEvents() {
     
     console.log('✅ setupCanvasEvents вызвана, canvas найден');
     
+    // ============================================================
+    // КЛИК
+    // ============================================================
     canvas.addEventListener('click', function(e) {
         const coords = getCanvasCoords(e);
         const ws = getCurrentWorkshop();
         if (!ws) return;
-        
-        console.log('🖱️ Клик по карте:', coords.x, coords.y, 'Режим:', mapMode);
         
         if (coords.x < ws.x || coords.x > ws.x + ws.w || coords.y < ws.y || coords.y > ws.y + ws.h) {
             if (mapMode === 'view') {
@@ -1427,11 +1528,13 @@ function setupCanvasEvents() {
             return;
         }
         
+        // Режим добавления рабочего места
         if (mapMode === 'addWorkplace') {
             openWorkplaceModal(coords.x, coords.y);
             return;
         }
         
+        // Режим добавления выхода
         if (mapMode === 'addEvacuation') {
             const name = prompt('Введите название выхода (опционально):', 'Выход ' + ((mapData.evacuationPoints?.length || 0) + 1));
             if (name !== null) {
@@ -1457,15 +1560,32 @@ function setupCanvasEvents() {
             return;
         }
         
+        // Режим добавления огнетушителя
         if (mapMode === 'addFireExtinguisher') {
             tempObjectPos = { x: coords.x, y: coords.y };
             openFireExtinguisherModal();
             return;
         }
         
+        // Режим добавления пути эвакуации
         if (mapMode === 'addEvacuationRoute') {
-            if (!tempRoutePoints) tempRoutePoints = [];
             tempRoutePoints.push({ x: coords.x, y: coords.y });
+            
+            // Рисуем временные точки
+            drawMap();
+            const ctx = canvas.getContext('2d');
+            tempRoutePoints.forEach((p, i) => {
+                ctx.fillStyle = i === 0 ? '#4caf50' : '#ffc107';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(i + 1, p.x, p.y);
+                ctx.textBaseline = 'alphabetic';
+            });
             
             if (tempRoutePoints.length >= 2) {
                 const name = prompt('Введите название пути эвакуации:', 'Путь эвакуации ' + ((mapData.evacuationRoutes?.length || 0) + 1));
@@ -1477,11 +1597,14 @@ function setupCanvasEvents() {
                         color: '#4caf50',
                         id: Date.now()
                     });
+                    tempRoutePoints = [];
                     updateInfo();
                     drawMap();
                     saveMap();
+                } else {
+                    tempRoutePoints = [];
+                    drawMap();
                 }
-                tempRoutePoints = [];
                 mapMode = 'view';
                 tempObjectType = null;
                 const modeEl = document.getElementById('mapMode');
@@ -1502,7 +1625,7 @@ function setupCanvasEvents() {
             
             // Проверяем рабочие места
             if (ws.workplaces) {
-                for (let i = 0; i < ws.workplaces.length; i++) {
+                for (let i = ws.workplaces.length - 1; i >= 0; i--) {
                     const wp = ws.workplaces[i];
                     const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
                     if (dist < 40) {
@@ -1516,10 +1639,10 @@ function setupCanvasEvents() {
             
             // Проверяем выходы
             if (!found && mapData.evacuationPoints) {
-                for (let i = 0; i < mapData.evacuationPoints.length; i++) {
+                for (let i = mapData.evacuationPoints.length - 1; i >= 0; i--) {
                     const ep = mapData.evacuationPoints[i];
                     const dist = Math.sqrt((coords.x - ep.x) ** 2 + (coords.y - ep.y) ** 2);
-                    if (dist < 40) {
+                    if (dist < 50) {
                         selectedObjectIndex = i;
                         selectedObjectType = 'evacuation';
                         found = true;
@@ -1530,15 +1653,37 @@ function setupCanvasEvents() {
             
             // Проверяем огнетушители
             if (!found && mapData.fireExtinguishers) {
-                for (let i = 0; i < mapData.fireExtinguishers.length; i++) {
+                for (let i = mapData.fireExtinguishers.length - 1; i >= 0; i--) {
                     const fe = mapData.fireExtinguishers[i];
                     const dist = Math.sqrt((coords.x - fe.x) ** 2 + (coords.y - fe.y) ** 2);
-                    if (dist < 30) {
+                    if (dist < 35) {
                         selectedObjectIndex = i;
                         selectedObjectType = 'fireExtinguisher';
                         found = true;
                         break;
                     }
+                }
+            }
+            
+            // Проверяем пути эвакуации
+            if (!found && mapData.evacuationRoutes) {
+                for (let i = mapData.evacuationRoutes.length - 1; i >= 0; i--) {
+                    const route = mapData.evacuationRoutes[i];
+                    if (route.points && route.points.length >= 2) {
+                        // Проверяем близость к линии
+                        for (let j = 0; j < route.points.length - 1; j++) {
+                            const p1 = route.points[j];
+                            const p2 = route.points[j + 1];
+                            const dist = distanceToSegment(coords.x, coords.y, p1.x, p1.y, p2.x, p2.y);
+                            if (dist < 15) {
+                                selectedObjectIndex = i;
+                                selectedObjectType = 'route';
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (found) break;
                 }
             }
             
@@ -1550,12 +1695,13 @@ function setupCanvasEvents() {
         }
     });
     
+    // ============================================================
+    // ДВОЙНОЙ КЛИК - ОТКРЫТИЕ СИЗ
+    // ============================================================
     canvas.addEventListener('dblclick', function(e) {
         const coords = getCanvasCoords(e);
         const ws = getCurrentWorkshop();
-        if (!ws || !ws.workplaces) return;
-        
-        if (mapMode !== 'view') return;
+        if (!ws || !ws.workplaces || mapMode !== 'view') return;
         
         let found = -1;
         ws.workplaces.forEach((wp, index) => {
@@ -1576,6 +1722,9 @@ function setupCanvasEvents() {
         }
     });
     
+    // ============================================================
+    // НАЖАТИЕ КНОПКИ МЫШИ - ПЕРЕТАСКИВАНИЕ
+    // ============================================================
     canvas.addEventListener('mousedown', function(e) {
         const coords = getCanvasCoords(e);
         const ws = getCurrentWorkshop();
@@ -1603,7 +1752,7 @@ function setupCanvasEvents() {
             for (let i = mapData.evacuationPoints.length - 1; i >= 0; i--) {
                 const ep = mapData.evacuationPoints[i];
                 const dist = Math.sqrt((coords.x - ep.x) ** 2 + (coords.y - ep.y) ** 2);
-                if (dist < 40) {
+                if (dist < 50) {
                     isDragging = true;
                     dragTarget = i;
                     dragTargetType = 'evacuation';
@@ -1620,7 +1769,7 @@ function setupCanvasEvents() {
             for (let i = mapData.fireExtinguishers.length - 1; i >= 0; i--) {
                 const fe = mapData.fireExtinguishers[i];
                 const dist = Math.sqrt((coords.x - fe.x) ** 2 + (coords.y - fe.y) ** 2);
-                if (dist < 30) {
+                if (dist < 35) {
                     isDragging = true;
                     dragTarget = i;
                     dragTargetType = 'fireExtinguisher';
@@ -1656,6 +1805,9 @@ function setupCanvasEvents() {
         }
     });
     
+    // ============================================================
+    // ДВИЖЕНИЕ МЫШИ - ПЕРЕТАСКИВАНИЕ
+    // ============================================================
     canvas.addEventListener('mousemove', function(e) {
         const coords = getCanvasCoords(e);
         const ws = getCurrentWorkshop();
@@ -1729,40 +1881,35 @@ function setupCanvasEvents() {
         
         // Курсор
         let cursor = 'default';
-        if (ws.workplaces) {
-            for (let wp of ws.workplaces) {
+        const wsObj = getCurrentWorkshop();
+        if (!wsObj) return;
+        
+        // Проверяем все объекты
+        if (wsObj.workplaces) {
+            for (let wp of wsObj.workplaces) {
                 const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
-                if (dist < 40) {
-                    cursor = 'grab';
-                    break;
-                }
+                if (dist < 40) { cursor = 'grab'; break; }
             }
         }
         if (cursor === 'default' && mapData.evacuationPoints) {
             for (let ep of mapData.evacuationPoints) {
                 const dist = Math.sqrt((coords.x - ep.x) ** 2 + (coords.y - ep.y) ** 2);
-                if (dist < 40) {
-                    cursor = 'grab';
-                    break;
-                }
+                if (dist < 50) { cursor = 'grab'; break; }
             }
         }
         if (cursor === 'default' && mapData.fireExtinguishers) {
             for (let fe of mapData.fireExtinguishers) {
                 const dist = Math.sqrt((coords.x - fe.x) ** 2 + (coords.y - fe.y) ** 2);
-                if (dist < 30) {
-                    cursor = 'grab';
-                    break;
-                }
+                if (dist < 35) { cursor = 'grab'; break; }
             }
         }
         if (cursor === 'default') {
             const cornerSize = 25;
             const corners = [
-                { cx: ws.x, cy: ws.y, c: 'nw-resize' },
-                { cx: ws.x + ws.w, cy: ws.y, c: 'ne-resize' },
-                { cx: ws.x, cy: ws.y + ws.h, c: 'sw-resize' },
-                { cx: ws.x + ws.w, cy: ws.y + ws.h, c: 'se-resize' }
+                { cx: wsObj.x, cy: wsObj.y, c: 'nw-resize' },
+                { cx: wsObj.x + wsObj.w, cy: wsObj.y, c: 'ne-resize' },
+                { cx: wsObj.x, cy: wsObj.y + wsObj.h, c: 'sw-resize' },
+                { cx: wsObj.x + wsObj.w, cy: wsObj.y + wsObj.h, c: 'se-resize' }
             ];
             for (let c of corners) {
                 if (Math.abs(coords.x - c.cx) < cornerSize && Math.abs(coords.y - c.cy) < cornerSize) {
@@ -1774,6 +1921,9 @@ function setupCanvasEvents() {
         canvas.style.cursor = cursor;
     });
     
+    // ============================================================
+    // ОТПУСКАНИЕ КНОПКИ
+    // ============================================================
     canvas.addEventListener('mouseup', function(e) {
         if (isDragging) {
             isDragging = false;
@@ -1805,6 +1955,24 @@ function setupCanvasEvents() {
     });
 }
 
+// ============================================================
+// ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ: РАССТОЯНИЕ ДО ОТРЕЗКА
+// ============================================================
+function distanceToSegment(px, py, x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq === 0) return Math.sqrt((px - x1) ** 2 + (py - y1) ** 2);
+    let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    const projX = x1 + t * dx;
+    const projY = y1 + t * dy;
+    return Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
+}
+
+// ============================================================
+// УДАЛЕНИЕ ВЫБРАННОГО ОБЪЕКТА
+// ============================================================
 function deleteSelectedObject() {
     const ws = getCurrentWorkshop();
     if (!ws) {
@@ -1839,6 +2007,13 @@ function deleteSelectedObject() {
         }
         const fe = mapData.fireExtinguishers[selectedObjectIndex];
         confirmMsg = `Удалить огнетушитель "${fe.model || 'ОП-5'}"?`;
+    } else if (selectedObjectType === 'route') {
+        if (!mapData.evacuationRoutes || selectedObjectIndex >= mapData.evacuationRoutes.length) {
+            alert('Объект не найден');
+            return;
+        }
+        const route = mapData.evacuationRoutes[selectedObjectIndex];
+        confirmMsg = `Удалить путь эвакуации "${route.name || 'Путь'}"?`;
     } else {
         alert('Неизвестный тип объекта');
         return;
@@ -1852,6 +2027,8 @@ function deleteSelectedObject() {
         mapData.evacuationPoints.splice(selectedObjectIndex, 1);
     } else if (selectedObjectType === 'fireExtinguisher') {
         mapData.fireExtinguishers.splice(selectedObjectIndex, 1);
+    } else if (selectedObjectType === 'route') {
+        mapData.evacuationRoutes.splice(selectedObjectIndex, 1);
     }
     
     selectedObjectIndex = -1;
@@ -1862,12 +2039,14 @@ function deleteSelectedObject() {
     alert('✅ Объект удален');
 }
 
+// ============================================================
+// ОГНЕТУШИТЕЛИ
+// ============================================================
 function openFireExtinguisherModal() {
     const modal = document.getElementById('fireExtinguisherModal');
     if (!modal) return;
     modal.classList.remove('hidden');
     
-    // Заполняем даты по умолчанию
     const dateInput = document.getElementById('feDateInput');
     const nextDateInput = document.getElementById('feNextDateInput');
     if (dateInput) {
@@ -1934,7 +2113,7 @@ function saveFireExtinguisher() {
 }
 
 // ============================================================
-// УЧАСТКИ (РАБОТА С УЧАСТКАМИ)
+// УЧАСТКИ
 // ============================================================
 function openWorkshopModal() {
     const ws = getCurrentWorkshop();
@@ -2097,6 +2276,7 @@ function clearMap() {
         mapData.evacuationRoutes = [];
         selectedObjectIndex = -1;
         selectedObjectType = null;
+        tempRoutePoints = [];
         updateInfo();
         drawMap();
         saveMap();
@@ -2104,7 +2284,7 @@ function clearMap() {
 }
 
 // ============================================================
-// ИНИЦИАЛИЗАЦИЯ
+// ИНИЦИАЛИЗАЦИЯ СТРАНИЦЫ ОБУЧЕНИЯ
 // ============================================================
 
 function initTrainingPage() {
@@ -2121,6 +2301,7 @@ function initTrainingPage() {
     const addSelectedBtn = document.getElementById('addSelectedBtn');
     const importBtn = document.getElementById('staffImportBtn');
     const generateFamBtn = document.getElementById('generateFamBtn');
+    const printFamBtn = document.getElementById('printFamBtn');
     
     if (showOrgBtn) {
         showOrgBtn.addEventListener('click', function() {
@@ -2181,27 +2362,7 @@ function initTrainingPage() {
     if (generateFamBtn) {
         generateFamBtn.addEventListener('click', generateFamiliarization);
     }
-}
-
-// ============================================================
-// DOM READY
-// ============================================================
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 DOM загружен');
     
-    const mainPage = document.getElementById('mainPage');
-    if (mainPage) mainPage.style.display = 'block';
-    
-    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-    
-    document.querySelectorAll('.nav-link').forEach(link => {
-        if (link.textContent.trim() === 'Главная') link.classList.add('active');
-    });
-    
-    initTrainingPage();
-    
-    const printFamBtn = document.getElementById('printFamBtn');
     if (printFamBtn) {
         printFamBtn.addEventListener('click', function() {
             const content = document.getElementById('famContent');
@@ -2234,6 +2395,25 @@ document.addEventListener('DOMContentLoaded', function() {
             win.document.close();
         });
     }
+}
+
+// ============================================================
+// DOM READY
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 DOM загружен');
+    
+    const mainPage = document.getElementById('mainPage');
+    if (mainPage) mainPage.style.display = 'block';
+    
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    
+    document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.textContent.trim() === 'Главная') link.classList.add('active');
+    });
+    
+    initTrainingPage();
     
     console.log('✅ Все инициализировано!');
 });
