@@ -6,224 +6,29 @@
     <title>Охрана труда — Цифровой помощник</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ============================================================ */
-        /* МОДАЛЬНОЕ ОКНО СИЗ - ШИРОКОЕ, БЕЗ ПРОЗРАЧНОСТИ */
-        /* ============================================================ */
-        #ppeModal .modal-content {
-            max-width: 950px !important;
-            width: 95% !important;
-        }
-        #ppeTypeSelect {
-            min-width: 180px !important;
-            font-size: 13px !important;
-            padding: 10px 12px !important;
-            background: #1a1a3e !important;
-            border: 1px solid rgba(255,255,255,0.15) !important;
-            border-radius: 6px !important;
-            color: #fff !important;
-            cursor: pointer !important;
-        }
-        #ppeTypeSelect option {
-            background: #1a1a3e !important;
-            color: #fff !important;
-            padding: 8px !important;
-            font-size: 13px !important;
-        }
-        #ppeTypeSelect option:hover {
-            background: #2a2a5e !important;
-        }
-        
-        /* ============================================================ */
-        /* ОЗНАКОМЛЕНИЕ - БЕЗ ПРОЗРАЧНОСТИ, НОВЫЙ ДИЗАЙН */
-        /* ============================================================ */
-        .doc-check {
-            background: rgba(255,255,255,0.08) !important;
-            border: 1px solid rgba(255,255,255,0.12) !important;
-            padding: 8px 16px !important;
-            border-radius: 8px !important;
-            color: #fff !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            cursor: pointer !important;
-            font-size: 14px !important;
-        }
-        .doc-check:hover {
-            background: rgba(255,255,255,0.15) !important;
-        }
-        .doc-check input[type="checkbox"] {
-            width: 18px !important;
-            height: 18px !important;
-            accent-color: #7c3aed !important;
-            cursor: pointer !important;
-        }
-        #famCustomDoc {
-            background: rgba(255,255,255,0.08) !important;
-            border: 1px solid rgba(255,255,255,0.12) !important;
-            border-radius: 8px !important;
-            color: #fff !important;
-            padding: 12px !important;
-            font-size: 14px !important;
-            width: 100% !important;
-        }
-        #famCustomDoc:focus {
-            border-color: #7c3aed !important;
-            outline: none !important;
-        }
-        #famResult {
-            background: rgba(0,212,255,0.08) !important;
-            border: 1px solid rgba(0,212,255,0.2) !important;
-            border-radius: 12px !important;
-            padding: 20px !important;
-        }
-        #famContent {
-            color: #fff !important;
-            font-size: 14px !important;
-            line-height: 1.8 !important;
-        }
-        #famContent strong {
-            color: #fff !important;
-        }
-        
-        /* Ручной ввод для ознакомления */
-        .manual-fam-input {
-            background: rgba(255,255,255,0.08) !important;
-            border: 1px solid rgba(255,255,255,0.12) !important;
-            border-radius: 8px !important;
-            color: #fff !important;
-            padding: 10px 14px !important;
-            font-size: 14px !important;
-            width: 100% !important;
-        }
-        .manual-fam-input:focus {
-            border-color: #7c3aed !important;
-            outline: none !important;
-        }
-        .manual-fam-input::placeholder {
-            color: #8888aa !important;
-        }
-        
-        /* ============================================================ */
-        /* КАРТА - ЧЕТКИЕ ШРИФТЫ */
-        /* ============================================================ */
-        .map-label {
-            font-weight: 700 !important;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8) !important;
-            color: #fff !important;
-            font-size: 14px !important;
-        }
-        .map-label-fire {
-            font-weight: 900 !important;
-            text-shadow: 0 0 15px rgba(255,23,68,0.6) !important;
-            color: #fff !important;
-            font-size: 11px !important;
-        }
-        .map-label-route {
-            font-weight: 700 !important;
-            text-shadow: 0 0 10px rgba(0,0,0,0.9) !important;
-            color: #fff !important;
-            font-size: 16px !important;
-            background: rgba(0,0,0,0.6) !important;
-            padding: 2px 12px !important;
-            border-radius: 4px !important;
-        }
-        
-        /* ============================================================ */
-        /* СПИСОК СОТРУДНИКОВ - БЕЗ ПРОЗРАЧНОСТИ */
-        /* ============================================================ */
-        .staff-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        .staff-table th {
-            background: rgba(255,255,255,0.06) !important;
-            color: #8888aa !important;
-            padding: 10px 12px !important;
-            text-align: left;
-            border-bottom: 2px solid rgba(124,58,237,0.3) !important;
-            font-weight: 600;
-        }
-        .staff-table td {
-            padding: 8px 12px !important;
-            border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-            color: #ccc !important;
-        }
-        .staff-table tr:hover td {
-            background: rgba(255,255,255,0.04) !important;
-        }
-        .staff-table input[type="checkbox"] {
-            width: 18px !important;
-            height: 18px !important;
-            accent-color: #7c3aed !important;
-            cursor: pointer !important;
-        }
-        
-        /* Протокол таблица */
-        .protocol-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        .protocol-table th {
-            background: rgba(255,255,255,0.06) !important;
-            color: #8888aa !important;
-            padding: 10px 12px !important;
-            text-align: left;
-            border-bottom: 2px solid rgba(124,58,237,0.3) !important;
-            font-weight: 600;
-        }
-        .protocol-table td {
-            padding: 8px 12px !important;
-            border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-            color: #ccc !important;
-        }
-        .protocol-table .btn-remove {
-            background: rgba(255,70,70,0.15) !important;
-            border: none !important;
-            color: #ff6b6b !important;
-            padding: 4px 10px !important;
-            border-radius: 4px !important;
-            cursor: pointer !important;
-        }
-        .protocol-table .btn-remove:hover {
-            background: rgba(255,70,70,0.3) !important;
-        }
-        
-        /* ============================================================ */
-        /* КАРТА - ТОЧКИ ПУТЕЙ ЭВАКУАЦИИ */
-        /* ============================================================ */
-        .route-point {
-            fill: #4caf50;
-            stroke: #fff;
-            stroke-width: 2;
-        }
-        .route-point-active {
-            fill: #ffc107;
-            stroke: #fff;
-            stroke-width: 2;
-        }
-        
-        /* ============================================================ */
-        /* РЕДАКТИРУЕМЫЕ НАЗВАНИЯ ДОКУМЕНТОВ В ОЗНАКОМЛЕНИИ */
-        /* ============================================================ */
-        .doc-name-edit {
-            background: rgba(255,255,255,0.06) !important;
-            border: 1px solid rgba(255,255,255,0.1) !important;
-            border-radius: 6px !important;
-            color: #fff !important;
-            padding: 4px 10px !important;
-            font-size: 13px !important;
-            width: 100% !important;
-            min-width: 120px !important;
-        }
-        .doc-name-edit:focus {
-            border-color: #7c3aed !important;
-            outline: none !important;
-        }
-        .doc-name-edit::placeholder {
-            color: #666 !important;
-        }
+        #ppeModal .modal-content { max-width: 950px !important; width: 95% !important; }
+        #ppeTypeSelect { min-width: 180px !important; font-size: 13px !important; padding: 10px 12px !important; background: #1a1a3e !important; border: 1px solid rgba(255,255,255,0.15) !important; border-radius: 6px !important; color: #fff !important; cursor: pointer !important; }
+        #ppeTypeSelect option { background: #1a1a3e !important; color: #fff !important; padding: 8px !important; font-size: 13px !important; }
+        .doc-check { background: rgba(255,255,255,0.08) !important; border: 1px solid rgba(255,255,255,0.12) !important; padding: 8px 16px !important; border-radius: 8px !important; color: #fff !important; display: inline-flex !important; align-items: center !important; gap: 8px !important; cursor: pointer !important; font-size: 14px !important; }
+        .doc-check:hover { background: rgba(255,255,255,0.15) !important; }
+        .doc-check input[type="checkbox"] { width: 18px !important; height: 18px !important; accent-color: #7c3aed !important; cursor: pointer !important; }
+        #famCustomDoc { background: rgba(255,255,255,0.08) !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 8px !important; color: #fff !important; padding: 12px !important; font-size: 14px !important; width: 100% !important; }
+        .manual-fam-input { background: rgba(255,255,255,0.08) !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 8px !important; color: #fff !important; padding: 10px 14px !important; font-size: 14px !important; width: 100% !important; }
+        .manual-fam-input:focus { border-color: #7c3aed !important; outline: none !important; }
+        .manual-fam-input::placeholder { color: #8888aa !important; }
+        .doc-name-edit { background: rgba(255,255,255,0.06) !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 6px !important; color: #fff !important; padding: 4px 10px !important; font-size: 13px !important; width: 100% !important; min-width: 120px !important; }
+        .doc-name-edit:focus { border-color: #7c3aed !important; outline: none !important; }
+        .staff-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .staff-table th { background: rgba(255,255,255,0.06) !important; color: #8888aa !important; padding: 10px 12px !important; text-align: left; border-bottom: 2px solid rgba(124,58,237,0.3) !important; font-weight: 600; }
+        .staff-table td { padding: 8px 12px !important; border-bottom: 1px solid rgba(255,255,255,0.05) !important; color: #ccc !important; }
+        .staff-table tr:hover td { background: rgba(255,255,255,0.04) !important; }
+        .staff-table input[type="checkbox"] { width: 18px !important; height: 18px !important; accent-color: #7c3aed !important; cursor: pointer !important; }
+        .protocol-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .protocol-table th { background: rgba(255,255,255,0.06) !important; color: #8888aa !important; padding: 10px 12px !important; text-align: left; border-bottom: 2px solid rgba(124,58,237,0.3) !important; font-weight: 600; }
+        .protocol-table td { padding: 8px 12px !important; border-bottom: 1px solid rgba(255,255,255,0.05) !important; color: #ccc !important; }
+        .protocol-table .btn-remove { background: rgba(255,70,70,0.15) !important; border: none !important; color: #ff6b6b !important; padding: 4px 10px !important; border-radius: 4px !important; cursor: pointer !important; }
+        .protocol-table .btn-remove:hover { background: rgba(255,70,70,0.3) !important; }
+        #soutCardNumber { width: 70px !important; padding: 4px 8px !important; background: rgba(255,255,255,0.06) !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 4px !important; color: #fff !important; font-size: 12px !important; }
     </style>
 </head>
 <body>
@@ -399,7 +204,7 @@
                     <button class="btn-add" onclick="clearAllPrograms()">✖ Снять</button>
                 </div>
 
-                <div id="protocolContainer"><p style="color:#6a6a8a;text-align:center;padding:20px;">В протоколе пока нет сотрудников. Добавьте их из штатного расписания.</p></div>
+                <div id="protocolContainer"><p style="color:#6a6a8a;text-align:center;padding:20px;">В протоколе пока нет сотрудников.</p></div>
                 <button class="btn-generate" id="generateBtn" style="margin-top:16px;">⚡ Создать XML</button>
                 <div id="resultBlock" class="result-block hidden">
                     <h3>✅ XML готов!</h3>
@@ -413,7 +218,6 @@
             <div class="block">
                 <h2>📋 Лист ознакомления с нормативными актами</h2>
                 
-                <!-- Организация -->
                 <div style="margin-bottom:12px;padding:12px 14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
                     <label style="color:#8888aa;font-size:13px;display:block;margin-bottom:4px;">🏢 Организация</label>
                     <select id="famOrgSelect" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
@@ -421,7 +225,6 @@
                     </select>
                 </div>
                 
-                <!-- Выбор сотрудника из штатного расписания -->
                 <div style="margin-bottom:12px;padding:12px 14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
                     <p style="color:#8888aa;font-size:13px;margin-bottom:8px;">👤 Выберите сотрудника из штатного расписания:</p>
                     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
@@ -432,7 +235,6 @@
                     </div>
                 </div>
                 
-                <!-- Ручной ввод для новых сотрудников -->
                 <div style="margin-bottom:12px;padding:12px 14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
                     <p style="color:#8888aa;font-size:13px;margin-bottom:8px;">✏️ Или введите данные нового сотрудника вручную:</p>
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
@@ -447,7 +249,6 @@
                 
                 <button class="btn-primary" id="generateFamBtn" style="width:auto;padding:10px 24px;margin-bottom:16px;">📄 Составить лист</button>
                 
-                <!-- Документы для ознакомления с возможностью редактирования названий -->
                 <div style="margin-top:12px;">
                     <h4 style="color:#ccc;margin-bottom:8px;">📋 Нормативные акты для ознакомления:</h4>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -559,8 +360,9 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- МОДАЛЬНОЕ ОКНО ДЛЯ СИЗ -->
+<!-- МОДАЛЬНЫЕ ОКНА -->
 <!-- ============================================================ -->
+
 <div id="ppeModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width:950px;width:95%;max-height:85vh;overflow-y:auto;">
         <div class="modal-header">
@@ -568,9 +370,7 @@
             <button class="modal-close" onclick="closePPEModal()">✖</button>
         </div>
         <div class="modal-body">
-            <div id="ppeLoading" style="text-align:center;padding:20px;color:#8888aa;">
-                ⏳ Загрузка данных...
-            </div>
+            <div id="ppeLoading" style="text-align:center;padding:20px;color:#8888aa;">⏳ Загрузка...</div>
             <div id="ppeContent" style="display:none;">
                 <div style="background:rgba(124,58,237,0.1);padding:12px;border-radius:8px;margin-bottom:16px;border:1px solid rgba(124,58,237,0.2);">
                     <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
@@ -578,23 +378,17 @@
                         <span style="color:#ccc;">💼 <strong id="ppePosition" style="color:#fff;">Должность</strong></span>
                     </div>
                 </div>
-                <div id="ppeList" style="display:flex;flex-direction:column;gap:8px;">
-                </div>
+                <div id="ppeList"></div>
             </div>
-            <div id="ppeError" style="display:none;text-align:center;padding:20px;color:#ff6b6b;">
-                ❌ Не удалось загрузить данные. Попробуйте позже.
-            </div>
+            <div id="ppeError" style="display:none;text-align:center;padding:20px;color:#ff6b6b;">❌ Ошибка</div>
         </div>
         <div class="modal-footer">
             <button class="btn-cancel" onclick="closePPEModal()">Закрыть</button>
-            <button class="btn-primary" onclick="exportPPE()" style="width:auto;padding:10px 24px;">📥 Экспорт в PDF</button>
+            <button class="btn-primary" onclick="exportPPE()" style="width:auto;padding:10px 24px;">📥 Экспорт PDF</button>
         </div>
     </div>
 </div>
 
-<!-- ============================================================ -->
-<!-- МОДАЛЬНОЕ ОКНО ДЛЯ ОГНЕТУШИТЕЛЯ -->
-<!-- ============================================================ -->
 <div id="fireExtinguisherModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width:500px;">
         <div class="modal-header">
@@ -633,7 +427,7 @@
             <div class="form-group">
                 <label style="color:#ccc;">Дата перезарядки (автоматически)</label>
                 <input type="date" id="feNextDateInput" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;" readonly>
-                <div style="font-size:12px;color:#4caf50;margin-top:4px;">✅ Рассчитывается автоматически (+1 год от даты изготовления)</div>
+                <div style="font-size:12px;color:#4caf50;margin-top:4px;">✅ Рассчитывается автоматически (+1 год)</div>
             </div>
         </div>
         <div class="modal-footer">
@@ -642,10 +436,6 @@
         </div>
     </div>
 </div>
-
-<!-- ============================================================ -->
-<!-- МОДАЛЬНЫЕ ОКНА (УЧАСТОК, РАБОЧЕЕ МЕСТО) -->
-<!-- ============================================================ -->
 
 <div id="workshopModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width:400px;">
@@ -686,7 +476,7 @@
                 <input type="text" id="workplaceNameInput" placeholder="Токарный станок №3" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
             </div>
             <div class="form-group">
-                <label style="color:#ccc;">Должность/Профессия сотрудника</label>
+                <label style="color:#ccc;">Должность/Профессия</label>
                 <input type="text" id="workplacePositionInput" placeholder="Токарь" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
                 <div style="font-size:12px;color:#8888aa;margin-top:4px;">💡 Введите должность для подбора СИЗ</div>
             </div>
@@ -703,7 +493,7 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- СТРАНИЦА "ОЦЕНКА РИСКОВ" -->
+<!-- СТРАНИЦЫ В РАЗРАБОТКЕ -->
 <!-- ============================================================ -->
 <div id="risksPage" class="page hidden">
     <div class="container" style="text-align:center;padding:60px 20px;">
@@ -714,9 +504,6 @@
     </div>
 </div>
 
-<!-- ============================================================ -->
-<!-- СТРАНИЦА "АНАЛИТИКА" -->
-<!-- ============================================================ -->
 <div id="analyticsPage" class="page hidden">
     <div class="container" style="text-align:center;padding:60px 20px;">
         <div style="font-size:80px;margin-bottom:20px;">📊</div>
