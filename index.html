@@ -6,16 +6,18 @@
     <title>Охрана труда — Цифровой помощник</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Дополнительные стили для модального окна СИЗ */
+        /* ============================================================ */
+        /* МОДАЛЬНОЕ ОКНО СИЗ - ШИРОКОЕ, БЕЗ ПРОЗРАЧНОСТИ */
+        /* ============================================================ */
         #ppeModal .modal-content {
-            max-width: 900px !important;
+            max-width: 950px !important;
             width: 95% !important;
         }
         #ppeTypeSelect {
             min-width: 180px !important;
             font-size: 13px !important;
-            padding: 8px 12px !important;
-            background: rgba(255,255,255,0.08) !important;
+            padding: 10px 12px !important;
+            background: #1a1a3e !important;
             border: 1px solid rgba(255,255,255,0.15) !important;
             border-radius: 6px !important;
             color: #fff !important;
@@ -24,32 +26,109 @@
         #ppeTypeSelect option {
             background: #1a1a3e !important;
             color: #fff !important;
-            padding: 6px !important;
+            padding: 8px !important;
+            font-size: 13px !important;
         }
         #ppeTypeSelect option:hover {
             background: #2a2a5e !important;
         }
         .ppe-table-cell {
-            max-width: 140px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            word-wrap: break-word !important;
+            max-width: 160px !important;
         }
-        .ppe-table-cell:hover {
-            overflow: visible;
-            white-space: normal;
-            word-wrap: break-word;
+        
+        /* ============================================================ */
+        /* ОЗНАКОМЛЕНИЕ - БЕЗ ПРОЗРАЧНОСТИ */
+        /* ============================================================ */
+        .doc-check {
+            background: rgba(255,255,255,0.06) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            padding: 8px 14px !important;
+            border-radius: 8px !important;
+            color: #fff !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            cursor: pointer !important;
+            font-size: 14px !important;
         }
-        /* Стили для огнетушителей на карте */
-        .fire-extinguisher {
-            color: #ff1744;
-            font-size: 28px;
-            text-shadow: 0 0 20px rgba(255,23,68,0.5);
+        .doc-check:hover {
+            background: rgba(255,255,255,0.12) !important;
         }
-        .evacuation-route {
-            stroke: #4caf50;
-            stroke-width: 3;
-            stroke-dasharray: 8,4;
+        .doc-check input[type="checkbox"] {
+            width: 18px !important;
+            height: 18px !important;
+            accent-color: #7c3aed !important;
+            cursor: pointer !important;
+        }
+        #famCustomDoc {
+            background: rgba(255,255,255,0.06) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            border-radius: 8px !important;
+            color: #fff !important;
+            padding: 12px !important;
+            font-size: 14px !important;
+            width: 100% !important;
+        }
+        #famCustomDoc:focus {
+            border-color: #7c3aed !important;
+            outline: none !important;
+        }
+        #famResult {
+            background: rgba(0,212,255,0.08) !important;
+            border: 1px solid rgba(0,212,255,0.2) !important;
+            border-radius: 12px !important;
+            padding: 16px !important;
+        }
+        #famContent {
+            color: #fff !important;
+            font-size: 14px !important;
+            line-height: 1.8 !important;
+        }
+        #famContent strong {
+            color: #fff !important;
+        }
+        
+        /* ============================================================ */
+        /* КАРТА - ЧЕТКИЕ ШРИФТЫ */
+        /* ============================================================ */
+        .map-label {
+            font-weight: 700 !important;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8) !important;
+            color: #fff !important;
+            font-size: 14px !important;
+        }
+        .map-label-fire {
+            font-weight: 900 !important;
+            text-shadow: 0 0 15px rgba(255,23,68,0.6) !important;
+            color: #fff !important;
+            font-size: 11px !important;
+        }
+        .map-label-route {
+            font-weight: 700 !important;
+            text-shadow: 0 0 10px rgba(0,0,0,0.9) !important;
+            color: #fff !important;
+            font-size: 16px !important;
+            background: rgba(0,0,0,0.5) !important;
+            padding: 2px 10px !important;
+            border-radius: 4px !important;
+        }
+        
+        /* ============================================================ */
+        /* РУЧНОЙ ВВОД ДЛЯ ОЗНАКОМЛЕНИЯ */
+        /* ============================================================ */
+        .manual-fam-input {
+            background: rgba(255,255,255,0.06) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            border-radius: 8px !important;
+            color: #fff !important;
+            padding: 10px 14px !important;
+            font-size: 14px !important;
+            width: 100% !important;
+        }
+        .manual-fam-input:focus {
+            border-color: #7c3aed !important;
+            outline: none !important;
         }
     </style>
 </head>
@@ -239,14 +318,34 @@
         <div id="tabFamiliarization" class="hidden">
             <div class="block">
                 <h2>📋 Лист ознакомления</h2>
-                <p style="color:#8888aa;font-size:14px;margin-bottom:12px;">Выберите сотрудника и сформируйте лист ознакомления.</p>
-                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;align-items:end;">
-                    <div class="form-group" style="flex:2;min-width:200px;margin-bottom:0;">
-                        <label>Выберите сотрудника:</label>
-                        <select id="famEmployeeSelect" style="width:100%;"><option value="">-- Выберите сотрудника --</option></select>
+                
+                <!-- Выбор сотрудника из штатного расписания -->
+                <div style="margin-bottom:16px;padding:14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
+                    <p style="color:#8888aa;font-size:13px;margin-bottom:10px;">👤 Выберите сотрудника из штатного расписания:</p>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                        <select id="famEmployeeSelect" style="flex:2;min-width:200px;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                            <option value="">-- Выберите сотрудника --</option>
+                        </select>
+                        <span style="color:#666;font-size:13px;">— или —</span>
                     </div>
-                    <button class="btn-primary" id="generateFamBtn" style="width:auto;padding:10px 24px;">📄 Составить лист</button>
                 </div>
+                
+                <!-- Ручной ввод для новых сотрудников -->
+                <div style="margin-bottom:16px;padding:14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
+                    <p style="color:#8888aa;font-size:13px;margin-bottom:10px;">✏️ Или введите данные нового сотрудника вручную:</p>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                        <input type="text" id="famManualLastName" placeholder="Фамилия" class="manual-fam-input">
+                        <input type="text" id="famManualFirstName" placeholder="Имя" class="manual-fam-input">
+                        <input type="text" id="famManualMiddleName" placeholder="Отчество" class="manual-fam-input">
+                    </div>
+                    <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:10px;">
+                        <input type="text" id="famManualPosition" placeholder="Должность" class="manual-fam-input">
+                        <input type="text" id="famManualSnils" placeholder="СНИЛС" class="manual-fam-input">
+                    </div>
+                </div>
+                
+                <button class="btn-primary" id="generateFamBtn" style="width:auto;padding:10px 24px;margin-bottom:16px;">📄 Составить лист</button>
+                
                 <div style="margin-top:12px;">
                     <h4 style="color:#ccc;margin-bottom:8px;">Документы для ознакомления:</h4>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;">
@@ -263,9 +362,9 @@
                     <label style="color:#ccc;display:block;margin-bottom:4px;">➕ Добавить свой документ (каждый с новой строки):</label>
                     <textarea id="famCustomDoc" rows="2" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;" placeholder="Свои документы..."></textarea>
                 </div>
-                <div id="famResult" class="hidden" style="margin-top:16px;padding:16px;background:rgba(0,212,255,0.05);border-radius:12px;border:1px solid rgba(0,212,255,0.15);">
+                <div id="famResult" class="hidden" style="margin-top:16px;padding:16px;background:rgba(0,212,255,0.08);border-radius:12px;border:1px solid rgba(0,212,255,0.2);">
                     <h3 style="color:#00d4ff;margin-bottom:8px;">✅ Лист ознакомления сформирован</h3>
-                    <div id="famContent" style="font-size:14px;line-height:1.6;color:#ccc;"></div>
+                    <div id="famContent" style="font-size:14px;line-height:1.8;color:#fff;"></div>
                     <button class="btn-primary" id="printFamBtn" style="margin-top:12px;width:auto;padding:10px 24px;">🖨️ Печать / PDF</button>
                 </div>
             </div>
@@ -331,10 +430,10 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- МОДАЛЬНОЕ ОКНО ДЛЯ СИЗ (РАСШИРЕННОЕ) -->
+<!-- МОДАЛЬНОЕ ОКНО ДЛЯ СИЗ -->
 <!-- ============================================================ -->
 <div id="ppeModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width:900px;width:95%;max-height:85vh;overflow-y:auto;">
+    <div class="modal-content" style="max-width:950px;width:95%;max-height:85vh;overflow-y:auto;">
         <div class="modal-header">
             <h3>🦺 Средства индивидуальной защиты</h3>
             <button class="modal-close" onclick="closePPEModal()">✖</button>
@@ -375,36 +474,37 @@
         </div>
         <div class="modal-body">
             <div class="form-group">
-                <label>Тип огнетушителя</label>
+                <label style="color:#ccc;">Тип огнетушителя</label>
                 <select id="feTypeSelect" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
-                    <option value="ОП">ОП (порошковый)</option>
-                    <option value="ОУ">ОУ (углекислотный)</option>
-                    <option value="ОВ">ОВ (водный)</option>
-                    <option value="ОХ">ОХ (хладоновый)</option>
-                    <option value="ОПУ">ОПУ (порошковый универсальный)</option>
+                    <option value="ОП" style="background:#1a1a3e;color:#fff;">ОП (порошковый)</option>
+                    <option value="ОУ" style="background:#1a1a3e;color:#fff;">ОУ (углекислотный)</option>
+                    <option value="ОВ" style="background:#1a1a3e;color:#fff;">ОВ (водный)</option>
+                    <option value="ОХ" style="background:#1a1a3e;color:#fff;">ОХ (хладоновый)</option>
+                    <option value="ОПУ" style="background:#1a1a3e;color:#fff;">ОПУ (порошковый универсальный)</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Объем (кг/л)</label>
+                <label style="color:#ccc;">Объем (кг/л)</label>
                 <select id="feVolumeSelect" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
-                    <option value="2">2</option>
-                    <option value="5" selected>5</option>
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
+                    <option value="2" style="background:#1a1a3e;color:#fff;">2</option>
+                    <option value="5" selected style="background:#1a1a3e;color:#fff;">5</option>
+                    <option value="10" style="background:#1a1a3e;color:#fff;">10</option>
+                    <option value="20" style="background:#1a1a3e;color:#fff;">20</option>
+                    <option value="50" style="background:#1a1a3e;color:#fff;">50</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Марка</label>
+                <label style="color:#ccc;">Марка</label>
                 <input type="text" id="feModelInput" placeholder="Например: ОП-5" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
             </div>
             <div class="form-group">
-                <label>Дата изготовления</label>
+                <label style="color:#ccc;">Дата изготовления</label>
                 <input type="date" id="feDateInput" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
             </div>
             <div class="form-group">
-                <label>Дата следующей перезарядки</label>
-                <input type="date" id="feNextDateInput" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                <label style="color:#ccc;">Дата перезарядки (автоматически)</label>
+                <input type="date" id="feNextDateInput" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;" readonly>
+                <div style="font-size:12px;color:#4caf50;margin-top:4px;">✅ Рассчитывается автоматически (+1 год от даты изготовления)</div>
             </div>
         </div>
         <div class="modal-footer">
@@ -426,16 +526,16 @@
         </div>
         <div class="modal-body">
             <div class="form-group">
-                <label>Название участка</label>
-                <input type="text" id="workshopNameInput" placeholder="Цех №1">
+                <label style="color:#ccc;">Название участка</label>
+                <input type="text" id="workshopNameInput" placeholder="Цех №1" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
             </div>
             <div class="form-group">
-                <label>Длина (м)</label>
-                <input type="number" id="workshopLengthInput" placeholder="30" min="1" value="30">
+                <label style="color:#ccc;">Длина (м)</label>
+                <input type="number" id="workshopLengthInput" placeholder="30" min="1" value="30" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
             </div>
             <div class="form-group">
-                <label>Ширина (м)</label>
-                <input type="number" id="workshopWidthInput" placeholder="20" min="1" value="20">
+                <label style="color:#ccc;">Ширина (м)</label>
+                <input type="number" id="workshopWidthInput" placeholder="20" min="1" value="20" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
             </div>
         </div>
         <div class="modal-footer">
@@ -453,19 +553,17 @@
         </div>
         <div class="modal-body">
             <div class="form-group">
-                <label>Название рабочего места</label>
-                <input type="text" id="workplaceNameInput" placeholder="Токарный станок №3">
+                <label style="color:#ccc;">Название рабочего места</label>
+                <input type="text" id="workplaceNameInput" placeholder="Токарный станок №3" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
             </div>
             <div class="form-group">
-                <label>Должность/Профессия сотрудника</label>
-                <input type="text" id="workplacePositionInput" placeholder="Токарь">
-                <div style="font-size:12px;color:#8888aa;margin-top:4px;">
-                    💡 Введите должность для подбора СИЗ по Приказу 767н
-                </div>
+                <label style="color:#ccc;">Должность/Профессия сотрудника</label>
+                <input type="text" id="workplacePositionInput" placeholder="Токарь" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                <div style="font-size:12px;color:#8888aa;margin-top:4px;">💡 Введите должность для подбора СИЗ</div>
             </div>
             <div class="form-group">
-                <label>Размер зоны (px)</label>
-                <input type="number" id="workplaceZoneInput" value="50" min="10" max="100">
+                <label style="color:#ccc;">Размер зоны (px)</label>
+                <input type="number" id="workplaceZoneInput" value="50" min="10" max="100" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
             </div>
         </div>
         <div class="modal-footer">
