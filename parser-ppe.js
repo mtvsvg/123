@@ -1,82 +1,136 @@
 // ============================================================
-// СУПЕР-ПАРСЕР ПРИКАЗА 767н (СИЗ)
-// Версия 2.0 - работает с любыми форматами
+// СУПЕР-ПАРСЕР .DOCX + .TXT (СИЗ из приказа 767н)
+// Работает с файлами Word напрямую!
 // ============================================================
 
 let ppeDatabase = {};
 let ppeLoaded = false;
 
 // ============================================================
-// ГЛАВНАЯ ФУНКЦИЯ ЗАГРУЗКИ
+// ГЛАВНАЯ ФУНКЦИЯ ЗАГРУЗКИ (работает с .docx и .txt)
 // ============================================================
 
 function loadPPEFromFile(file) {
     return new Promise((resolve, reject) => {
-        const reader = new FileReader();
+        const extension = file.name.split('.').pop().toLowerCase();
+        console.log('📄 Загружаем файл:', file.name, 'формат:', extension);
         
-        reader.onload = function(event) {
-            try {
-                const content = event.target.result;
-                console.log('📄 Файл загружен, размер:', content.length, 'символов');
-                console.log('📄 Первые 300 символов:', content.substring(0, 300));
-                
-                // Очищаем от мусора
-                const cleaned = cleanContent(content);
-                console.log('🧹 После очистки:', cleaned.length, 'символов');
-                
-                // Парсим
-                const parsed = parsePPEUniversal(cleaned);
-                const count = Object.keys(parsed).length;
-                
-                console.log(`📊 Распаршено профессий: ${count}`);
-                
-                if (count === 0) {
-                    reject(new Error('❌ Не найдено ни одной профессии. Проверьте файл.'));
-                    return;
+        if (extension === 'docx') {
+            // Читаем .docx через библиотеку mammoth
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const arrayBuffer = event.target.result;
+                    mammoth.extractRawText({ arrayBuffer: arrayBuffer })
+                        .then(function(result) {
+                            const text = result.value;
+                            console.log('📄 .docx распаршен, длина:', text.length);
+                            processText(text, resolve, reject);
+                        })
+                        .catch(function(err) {
+                            reject(new Error('Ошибка чтения .docx: ' + err.message));
+                        });
+                } catch (err) {
+                    reject(err);
                 }
-                
-                // Сохраняем
-                localStorage.setItem('ppeDatabase', JSON.stringify(parsed));
-                ppeDatabase = parsed;
-                ppeLoaded = true;
-                
-                // Выводим пример
-                const firstKey = Object.keys(parsed)[0];
-                console.log('✅ Пример:', firstKey, '→', parsed[firstKey].сиз.length, 'СИЗ');
-                
-                resolve(parsed);
-                
-            } catch (err) {
-                console.error('❌ Ошибка:', err);
-                reject(err);
-            }
-        };
-        
-        reader.onerror = function() {
-            reject(new Error('Ошибка чтения файла'));
-        };
-        
-        reader.readAsText(file, 'UTF-8');
+            };
+            reader.onerror = function() {
+                reject(new Error('Ошибка чтения файла'));
+            };
+            reader.readAsArrayBuffer(file);
+            
+        } else if (extension === 'txt' || extension === 'csv') {
+            // Читаем .txt обычным способом
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const text = event.target.result;
+                    console.log('📄 .txt загружен, длина:', text.length);
+                    processText(text, resolve, reject);
+                } catch (err) {
+                    reject(err);
+                }
+            };
+            reader.onerror = function() {
+                reject(new Error('Ошибка чтения файла'));
+            };
+            reader.readAsText(file, 'UTF-8');
+            
+        } else {
+            reject(new Error('❌ Неподдерживаемый формат. Используйте .docx или .txt'));
+        }
     });
 }
 
 // ============================================================
-// ОЧИСТКА ОТ МУСОРА
+// ОБРАБОТКА ТЕКСТА (общая для .docx и .txt)
+// ============================================================
+
+function processText(text, resolve, reject) {
+    try {
+        console.log('📄 Первые 500 символов:', text.substring(0, 500));
+        
+        // Очищаем от мусора
+        const cleaned = cleanContent(text);
+        console.log('🧹 После очистки:', cleaned.length, 'символов');
+        
+        // Парсим
+        const parsed = parsePPEUniversal(cleaned);
+        const count = Object.keys(parsed).length;
+        
+        console.log(`📊 Распаршено профессий: ${count}`);
+        
+        if (count === 0) {
+            reject(new Error('❌ Не найдено ни одной профессии. Проверьте файл.'));
+            return;
+        }
+        
+        // Сохраняем
+        localStorage.setItem('ppeDatabase', JSON.stringify(parsed));
+        ppeDatabase = parsed;
+        ppeLoaded = true;
+        
+        // Выводим пример
+        const firstKey = Object.keys(parsed)[0];
+        console.log('✅ Пример:', firstKey, '→', parsed[firstKey].сиз.length, 'СИЗ');
+        
+        resolve(parsed);
+        
+    } catch (err) {
+        console.error('❌ Ошибка:', err);
+        reject(err);
+    }
+}
+
+// ============================================================
+// ОЧИСТКА ОТ МУСОРА (улучшенная)
 // ============================================================
 
 function cleanContent(content) {
     const lines = content.split(/\r?\n/);
     const cleaned = [];
-    let skipNext = false;
+    let startCollecting = false;
+    let foundTable = false;
     
     for (let i = 0; i < lines.length; i++) {
         let line = lines[i].trim();
-        
-        // Пропускаем пустые
         if (!line) continue;
         
+        // Ищем начало таблицы (Приложение N 1 или слово "Профессия")
+        if (line.match(/приложение\s*№?\s*1/i) || 
+            line.match(/нормы выдачи/i) ||
+            line.match(/профессия|должность/i)) {
+            startCollecting = true;
+            foundTable = true;
+            console.log('🔍 Найдено начало таблицы на строке', i);
+            continue;
+        }
+        
+        // Если еще не дошли до таблицы - пропускаем
+        if (!startCollecting) continue;
+        
         // Удаляем колонтитулы
-        if (line.match(/приказ|минтруда|страница|№\s*\d+|утвержден|приложение|министерство|регистрация/i)) {
+        if (line.match(/приказ|минтруда|страница|№\s*\d+|утвержден|министерство/i)) {
             continue;
         }
         
@@ -106,7 +160,20 @@ function cleanContent(content) {
         }
     }
     
-    console.log(`🧹 Удалено ${lines.length - cleaned.length} строк мусора`);
+    if (!foundTable) {
+        // Если не нашли "Приложение N 1" - пробуем найти любую профессию
+        console.log('⚠️ Не найдено "Приложение N 1", пробуем искать профессии...');
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+            if (trimmed.match(/токарь|слесарь|электрик|сварщик|инженер|техник|механик|мастер|водитель|грузчик/i)) {
+                cleaned.push(trimmed);
+                console.log('🔍 Найдена профессия в строке:', trimmed.substring(0, 50));
+            }
+        }
+    }
+    
+    console.log(`🧹 Обработано строк: ${cleaned.length}`);
     return cleaned.join('\n');
 }
 
@@ -136,7 +203,11 @@ function parsePPEUniversal(content) {
         'арматурщик', 'монтажник', 'отделочник', 'маляр',
         'штукатур', 'плиточник', 'стекольщик', 'кровельщик',
         'работник', 'рабочий', 'укладчик', 'сборщик',
-        'настройщик', 'контролер', 'комплектовщик', 'упаковщик'
+        'настройщик', 'контролер', 'комплектовщик', 'упаковщик',
+        // Дополнительные для приказа 767н
+        'авиационный', 'механик', 'техник', 'электронщик',
+        'радиотехник', 'приборист', 'метролог', 'химик',
+        'биолог', 'геолог', 'маркшейдер', 'топограф'
     ];
     
     // Расширенный список СИЗ
@@ -146,7 +217,7 @@ function parsePPEUniversal(content) {
         'маска', 'щиток', 'пояс', 'страховка', 'канат',
         'фартук', 'рукавицы', 'сапоги', 'ботинки', 'галоши',
         'куртка', 'брюки', 'плащ', 'накидка', 'жилет',
-        'шлем', 'каска', 'очки', 'щиток', 'маска'
+        'шлем', 'очки', 'щиток', 'маска'
     ];
     
     for (let i = 0; i < lines.length; i++) {
@@ -217,33 +288,27 @@ function parsePPEUniversal(content) {
 }
 
 // ============================================================
-// ПАРСИНГ СТРОКИ С СИЗ (УНИВЕРСАЛЬНЫЙ)
+// ПАРСИНГ СТРОКИ С СИЗ
 // ============================================================
 
 function parsePPELineUniversal(line) {
-    // Удаляем мусор в начале
     line = line.replace(/^[\d\s\-\.\(\)]+/, '').trim();
     
-    // Пробуем разделить по |
     let parts = line.split('|').map(s => s.trim()).filter(s => s.length > 0);
     
-    // Если нет | - пробуем по табуляции
     if (parts.length < 2) {
         parts = line.split('\t').map(s => s.trim()).filter(s => s.length > 0);
     }
     
-    // Если нет - пробуем по 3+ пробелам
     if (parts.length < 2) {
         parts = line.split(/\s{3,}/).map(s => s.trim()).filter(s => s.length > 0);
     }
     
     if (parts.length >= 2) {
-        // Определяем тип
         let type = 'СИЗ';
         let name = parts[0];
         let norm = parts.length > 2 ? parts[2] : 'до износа';
         
-        // Проверяем, может первый элемент - это тип?
         const typeKeywords = ['СИЗОД', 'СИЗ рук', 'СИЗ ног', 'СИЗ глаз', 'СИЗ головы', 
                              'СИЗ слуха', 'СИЗ дыхания', 'СИЗ падения', 'СИЗ лица',
                              'одежда', 'обувь', 'перчатки', 'каска'];
@@ -267,12 +332,9 @@ function parsePPELineUniversal(line) {
 // ============================================================
 
 function extractPPEFromTextUniversal(text) {
-    // Удаляем номера в начале
     text = text.replace(/^[\d\s\-\.]+/, '').trim();
-    
     if (text.length < 3) return null;
     
-    // Ищем тип
     const typeKeywords = ['СИЗОД', 'СИЗ рук', 'СИЗ ног', 'СИЗ глаз', 'СИЗ головы', 
                          'СИЗ слуха', 'СИЗ дыхания', 'СИЗ падения', 'СИЗ лица'];
     
@@ -280,7 +342,6 @@ function extractPPEFromTextUniversal(text) {
     let name = text;
     let norm = 'до износа';
     
-    // Пробуем найти тип
     for (const t of typeKeywords) {
         if (text.toLowerCase().includes(t.toLowerCase())) {
             type = t;
@@ -289,14 +350,12 @@ function extractPPEFromTextUniversal(text) {
         }
     }
     
-    // Ищем срок носки
     const normMatch = text.match(/(\d+)\s*(мес|месяц|месяца|месяцев|год|года|лет|шт|пара)/i);
     if (normMatch) {
         norm = normMatch[0];
         name = name.replace(normMatch[0], '').trim();
     }
     
-    // Ищем название СИЗ по ключевым словам
     const ppeNames = ['костюм', 'перчатки', 'очки', 'респиратор', 'каска',
                      'обувь', 'щетки', 'наушники', 'беруши', 'маска', 'щиток',
                      'пояс', 'фартук', 'рукавицы', 'сапоги', 'ботинки', 'галоши',
@@ -305,10 +364,8 @@ function extractPPEFromTextUniversal(text) {
     let foundName = '';
     for (const ppe of ppeNames) {
         if (name.toLowerCase().includes(ppe)) {
-            // Берем часть строки от найденного слова
             const index = name.toLowerCase().indexOf(ppe);
             foundName = name.substring(index).trim();
-            // Обрезаем до 50 символов
             if (foundName.length > 50) {
                 foundName = foundName.substring(0, 50);
             }
@@ -367,7 +424,6 @@ function getPPEByProfession(profession) {
     const trimmed = profession.trim().toLowerCase();
     console.log(`🔍 Ищем СИЗ для: "${trimmed}"`);
     
-    // 1. Точное совпадение
     for (const [key, value] of Object.entries(ppeDatabase)) {
         if (key.toLowerCase() === trimmed) {
             console.log(`✅ Точное совпадение: "${key}"`);
@@ -375,7 +431,6 @@ function getPPEByProfession(profession) {
         }
     }
     
-    // 2. Частичное совпадение
     for (const [key, value] of Object.entries(ppeDatabase)) {
         const keyLower = key.toLowerCase();
         if (trimmed.includes(keyLower) || keyLower.includes(trimmed)) {
@@ -384,7 +439,6 @@ function getPPEByProfession(profession) {
         }
     }
     
-    // 3. По словам
     const words = trimmed.split(/\s+/);
     for (const [key, value] of Object.entries(ppeDatabase)) {
         const keyLower = key.toLowerCase();
@@ -442,6 +496,6 @@ window.ppeDatabase = ppeDatabase;
 window.debugPPE = debugPPE;
 window.testPPE = testPPE;
 
-console.log('✅ Супер-парсер загружен!');
+console.log('✅ Супер-парсер загружен! Поддерживает .docx и .txt');
 console.log('📖 Используй debugPPE() для отладки');
 console.log('🔍 Используй testPPE("Токарь") для теста');
