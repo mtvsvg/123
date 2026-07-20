@@ -283,11 +283,10 @@ function escXml(str) {
 }
 
 // ============================================================
-// МОДАЛЬНОЕ ОКНО СИЗ (РУЧНОЙ ВВОД)
+// СПИСОК ТИПОВ СИЗ
 // ============================================================
-
-// Список типов СИЗ для выпадающего списка
 const PPE_TYPES = [
+    'Выберите тип СИЗ...',
     'Одежда специальная защитная',
     'Средства защиты ног',
     'Средства защиты рук',
@@ -300,6 +299,9 @@ const PPE_TYPES = [
     'Средства защиты комплексные'
 ];
 
+// ============================================================
+// МОДАЛЬНОЕ ОКНО СИЗ (РУЧНОЙ ВВОД)
+// ============================================================
 let currentPPEWorkplace = null;
 let ppeItems = [];
 
@@ -340,67 +342,120 @@ function renderPPEList() {
     const list = document.getElementById('ppeList');
     if (!list) return;
     
+    const typeOptions = PPE_TYPES.map(t => {
+        const isPlaceholder = t === 'Выберите тип СИЗ...';
+        return `<option value="${t}" ${isPlaceholder ? 'selected disabled style="color:#666;"' : ''}>${t}</option>`;
+    }).join('');
+    
     let html = `
-        <div style="background:rgba(0,212,255,0.05);padding:8px 12px;border-radius:6px;margin-bottom:12px;border:1px solid rgba(0,212,255,0.1);">
-            <span style="color:#8888aa;font-size:12px;">
+        <div style="background:rgba(0,212,255,0.08);padding:10px 14px;border-radius:8px;margin-bottom:14px;border:1px solid rgba(0,212,255,0.15);">
+            <span style="color:#8888aa;font-size:13px;">
                 📋 Добавьте средства индивидуальной защиты для профессии <strong style="color:#00d4ff;">"${currentPPEWorkplace.position}"</strong>
             </span>
+            <span style="color:#4caf50;font-size:12px;margin-left:12px;">● ${ppeItems.length} добавлено</span>
         </div>
         
-        <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);">
-            <select id="ppeTypeSelect" style="flex:2;min-width:150px;padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
-                <option value="">-- Тип СИЗ --</option>
-                ${PPE_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}
-            </select>
-            <input type="text" id="ppeNameInput" placeholder="Наименование СИЗ (например: Костюм х/б)" style="flex:3;min-width:150px;padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
-            <input type="text" id="ppeNormInput" placeholder="Срок/Кол-во (например: 1 шт. или 12 мес)" style="flex:1;min-width:100px;padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
-            <input type="text" id="ppeModelInput" placeholder="Модель/Артикул" style="flex:2;min-width:120px;padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
-            <button onclick="addPPEItem()" style="padding:8px 16px;background:linear-gradient(135deg,#7c3aed,#00d4ff);border:none;border-radius:6px;color:#fff;font-weight:600;cursor:pointer;white-space:nowrap;">
-                ➕ Добавить
-            </button>
+        <div style="margin-bottom:14px;background:rgba(255,255,255,0.03);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
+            <div style="display:grid;grid-template-columns:1fr 1.5fr 0.8fr 0.8fr 0.8fr auto;gap:8px;align-items:end;">
+                
+                <div>
+                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Тип СИЗ</label>
+                    <select id="ppeTypeSelect" style="width:100%;padding:8px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#fff;font-size:13px;cursor:pointer;appearance:auto;">
+                        ${typeOptions}
+                    </select>
+                </div>
+                
+                <div>
+                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Наименование СИЗ</label>
+                    <input type="text" id="ppeNameInput" placeholder="Костюм х/б" style="width:100%;padding:8px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+                </div>
+                
+                <div>
+                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Количество</label>
+                    <input type="text" id="ppeCountInput" placeholder="1 шт." style="width:100%;padding:8px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+                </div>
+                
+                <div>
+                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Срок (мес)</label>
+                    <input type="text" id="ppeTermInput" placeholder="12" style="width:100%;padding:8px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+                </div>
+                
+                <div>
+                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Модель</label>
+                    <input type="text" id="ppeModelInput" placeholder="Артикул" style="width:100%;padding:8px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+                </div>
+                
+                <div>
+                    <button onclick="addPPEItem()" style="padding:8px 16px;background:linear-gradient(135deg,#7c3aed,#00d4ff);border:none;border-radius:6px;color:#fff;font-weight:600;cursor:pointer;white-space:nowrap;width:100%;">
+                        ➕ Добавить
+                    </button>
+                </div>
+            </div>
         </div>
     `;
     
-    // Список добавленных СИЗ
     if (ppeItems.length === 0) {
-        html += `<div style="text-align:center;padding:20px;color:#666;font-size:14px;">Нет добавленных СИЗ. Добавьте первый выше.</div>`;
+        html += `<div style="text-align:center;padding:20px;color:#666;font-size:14px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px dashed rgba(255,255,255,0.06);">Нет добавленных СИЗ. Добавьте первый выше.</div>`;
     } else {
-        html += `<div style="max-height:300px;overflow-y:auto;">`;
-        html += `<table style="width:100%;border-collapse:collapse;font-size:13px;">`;
-        html += `<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
-            <th style="text-align:left;padding:6px 8px;color:#8888aa;">№</th>
-            <th style="text-align:left;padding:6px 8px;color:#8888aa;">Тип</th>
-            <th style="text-align:left;padding:6px 8px;color:#8888aa;">Наименование</th>
-            <th style="text-align:left;padding:6px 8px;color:#8888aa;">Срок/Кол-во</th>
-            <th style="text-align:left;padding:6px 8px;color:#8888aa;">Модель</th>
-            <th style="width:40px;color:#8888aa;">✖</th>
-        </tr></thead><tbody>`;
+        html += `
+            <div style="max-height:280px;overflow-y:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">
+                <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead style="position:sticky;top:0;background:#1a1a3e;z-index:2;">
+                        <tr style="border-bottom:2px solid rgba(124,58,237,0.3);">
+                            <th style="text-align:left;padding:8px 10px;color:#8888aa;font-weight:500;">№</th>
+                            <th style="text-align:left;padding:8px 10px;color:#8888aa;font-weight:500;">Тип</th>
+                            <th style="text-align:left;padding:8px 10px;color:#8888aa;font-weight:500;">Наименование</th>
+                            <th style="text-align:left;padding:8px 10px;color:#8888aa;font-weight:500;">Кол-во</th>
+                            <th style="text-align:left;padding:8px 10px;color:#8888aa;font-weight:500;">Срок</th>
+                            <th style="text-align:left;padding:8px 10px;color:#8888aa;font-weight:500;">Модель</th>
+                            <th style="width:40px;text-align:center;color:#8888aa;font-weight:500;">✖</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
         
         ppeItems.forEach((item, index) => {
-            html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                <td style="padding:6px 8px;color:#7c3aed;font-weight:600;">${index + 1}</td>
-                <td style="padding:6px 8px;color:#ccc;">${item.type || ''}</td>
-                <td style="padding:6px 8px;color:#fff;">${item.name || ''}</td>
-                <td style="padding:6px 8px;color:#4caf50;">${item.norm || ''}</td>
-                <td style="padding:6px 8px;color:#b388ff;">${item.model || ''}</td>
-                <td style="padding:6px 8px;text-align:center;">
-                    <button onclick="removePPEItem(${index})" style="background:rgba(255,70,70,0.15);border:none;border-radius:4px;color:#ff6b6b;cursor:pointer;padding:2px 8px;font-size:12px;">✖</button>
-                </td>
-            </tr>`;
+            const typeColor = item.type && item.type !== 'Выберите тип СИЗ...' ? '#7c3aed' : '#666';
+            html += `
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                    <td style="padding:8px 10px;color:#7c3aed;font-weight:600;font-size:12px;">${index + 1}</td>
+                    <td style="padding:8px 10px;color:${typeColor};font-size:12px;">${item.type && item.type !== 'Выберите тип СИЗ...' ? item.type : '—'}</td>
+                    <td style="padding:8px 10px;color:#fff;">${item.name || ''}</td>
+                    <td style="padding:8px 10px;color:#4caf50;font-weight:500;">${item.count || '—'}</td>
+                    <td style="padding:8px 10px;color:#ffc107;">${item.term || '—'}</td>
+                    <td style="padding:8px 10px;color:#b388ff;font-size:12px;">${item.model || '—'}</td>
+                    <td style="padding:8px 10px;text-align:center;">
+                        <button onclick="removePPEItem(${index})" style="background:rgba(255,70,70,0.15);border:none;border-radius:4px;color:#ff6b6b;cursor:pointer;padding:2px 10px;font-size:13px;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,70,70,0.3)'" onmouseout="this.style.background='rgba(255,70,70,0.15)'">✖</button>
+                    </td>
+                </tr>
+            `;
         });
         
-        html += `</tbody></table></div>`;
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
     }
     
-    // Кнопки действий
     html += `
-        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;border-top:1px solid rgba(255,255,255,0.06);padding-top:14px;">
             <button onclick="savePPEItems()" 
-                    style="padding:10px 24px;background:linear-gradient(135deg,#4caf50,#2e7d32);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">
+                    style="padding:10px 28px;background:linear-gradient(135deg,#4caf50,#2e7d32);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:transform 0.2s;"
+                    onmouseover="this.style.transform='scale(1.03)'" 
+                    onmouseout="this.style.transform='scale(1)'">
                 💾 Сохранить СИЗ
             </button>
+            <button onclick="exportPPE()" 
+                    style="padding:10px 28px;background:linear-gradient(135deg,#7c3aed,#00d4ff);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:transform 0.2s;"
+                    onmouseover="this.style.transform='scale(1.03)'" 
+                    onmouseout="this.style.transform='scale(1)'">
+                📥 Экспорт PDF
+            </button>
             <button onclick="closePPEModal()" 
-                    style="padding:10px 24px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#aaa;cursor:pointer;font-size:14px;">
+                    style="padding:10px 28px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#aaa;cursor:pointer;font-size:14px;transition:all 0.2s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.12)'" 
+                    onmouseout="this.style.background='rgba(255,255,255,0.06)'">
                 ✖ Закрыть
             </button>
         </div>
@@ -412,27 +467,37 @@ function renderPPEList() {
 function addPPEItem() {
     const typeSelect = document.getElementById('ppeTypeSelect');
     const nameInput = document.getElementById('ppeNameInput');
-    const normInput = document.getElementById('ppeNormInput');
+    const countInput = document.getElementById('ppeCountInput');
+    const termInput = document.getElementById('ppeTermInput');
     const modelInput = document.getElementById('ppeModelInput');
     
     const type = typeSelect ? typeSelect.value : '';
     const name = nameInput ? nameInput.value.trim() : '';
-    const norm = normInput ? normInput.value.trim() : '';
+    const count = countInput ? countInput.value.trim() : '';
+    const term = termInput ? termInput.value.trim() : '';
     const model = modelInput ? modelInput.value.trim() : '';
     
     if (!name) {
         alert('❌ Введите наименование СИЗ!');
+        nameInput.focus();
         return;
     }
     
-    ppeItems.push({ type, name, norm, model });
+    if (type === 'Выберите тип СИЗ...' || !type) {
+        alert('❌ Выберите тип СИЗ из списка!');
+        typeSelect.focus();
+        return;
+    }
     
-    // Очищаем поля
+    ppeItems.push({ type, name, count, term, model });
+    
     if (nameInput) nameInput.value = '';
-    if (normInput) normInput.value = '';
+    if (countInput) countInput.value = '';
+    if (termInput) termInput.value = '';
     if (modelInput) modelInput.value = '';
-    if (typeSelect) typeSelect.value = '';
+    if (typeSelect) typeSelect.value = 'Выберите тип СИЗ...';
     
+    nameInput.focus();
     renderPPEList();
 }
 
@@ -473,14 +538,23 @@ function exportPPE() {
     }
     
     let ppeText = '';
-    ppeItems.forEach((item, index) => {
-        ppeText += `<div style="padding:8px 12px;margin:4px 0;background:#f5f5f5;border-radius:4px;border-left:3px solid #7c3aed;">
-            <span style="font-weight:700;color:#7c3aed;">${index + 1}.</span> 
-            <span><strong>${item.type || 'СИЗ'}:</strong> ${item.name}</span>
-            <span style="color:#4caf50;float:right;">${item.norm || ''}</span>
-            ${item.model ? `<br><span style="color:#888;font-size:12px;margin-left:28px;">Модель: ${item.model}</span>` : ''}
-        </div>`;
-    });
+    if (ppeItems.length === 0) {
+        ppeText = '<p style="color:#888;text-align:center;">Нет добавленных СИЗ</p>';
+    } else {
+        ppeItems.forEach((item, index) => {
+            ppeText += `
+                <div style="padding:10px 14px;margin:6px 0;background:#f8f8f8;border-radius:6px;border-left:4px solid #7c3aed;">
+                    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+                        <span style="font-weight:700;color:#7c3aed;min-width:30px;">${index + 1}.</span>
+                        <span style="color:#333;flex:1;"><strong>${item.type || 'СИЗ'}:</strong> ${item.name}</span>
+                        <span style="color:#4caf50;font-weight:500;">${item.count || ''}</span>
+                        <span style="color:#ff8f00;">${item.term ? item.term + ' мес' : ''}</span>
+                        ${item.model ? `<span style="color:#7c3aed;font-size:13px;">📦 ${item.model}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+    }
     
     const win = window.open('', '_blank');
     win.document.write(`
@@ -489,12 +563,16 @@ function exportPPE() {
         <head>
             <title>СИЗ для ${currentPPEWorkplace.name}</title>
             <style>
-                body { font-family: Arial, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: 0 auto; }
+                body { font-family: Arial, sans-serif; padding: 40px; color: #333; max-width: 900px; margin: 0 auto; }
                 h1 { color: #1a1a3e; border-bottom: 3px solid #7c3aed; padding-bottom: 10px; }
                 .header-info { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; }
                 .header-info p { margin: 5px 0; }
                 .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 12px; color: #888; text-align: center; }
                 .source { background: #e8f5e9; padding: 10px; border-radius: 6px; margin: 15px 0; font-size: 14px; }
+                table { width:100%; border-collapse:collapse; margin-top:15px; }
+                th { text-align:left; padding:10px 12px; background:#f0f0f0; border-bottom:2px solid #7c3aed; }
+                td { padding:8px 12px; border-bottom:1px solid #eee; }
+                .model-cell { color:#7c3aed; font-size:13px; }
             </style>
         </head>
         <body>
@@ -508,11 +586,36 @@ function exportPPE() {
                 📋 Источник: ${currentPPEWorkplace.ppeSource || 'Введено вручную'}
             </div>
             <hr style="margin: 20px 0;">
-            ${ppeText || '<p style="color:#888;">Нет данных о СИЗ</p>'}
+            ${ppeItems.length > 0 ? `
+            <table>
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Тип СИЗ</th>
+                        <th>Наименование</th>
+                        <th>Кол-во</th>
+                        <th>Срок (мес)</th>
+                        <th>Модель</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${ppeItems.map((item, i) => `
+                        <tr>
+                            <td>${i+1}</td>
+                            <td>${item.type || '—'}</td>
+                            <td><strong>${item.name}</strong></td>
+                            <td>${item.count || '—'}</td>
+                            <td>${item.term || '—'}</td>
+                            <td class="model-cell">${item.model || '—'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            ` : '<p style="color:#888;">Нет данных о СИЗ</p>'}
             <div class="footer">
                 <p>Данные введены специалистом по охране труда</p>
             </div>
-            <script>window.print();</script>
+            <script>window.print();<\/script>
         </body>
         </html>
     `);
