@@ -128,8 +128,7 @@ function renderStaff() {
     }
     let html = `<table class="staff-table"><thead><tr><th style="width:40px;"><input type="checkbox" id="selectAllStaff" onchange="toggleAllStaff()"></th><th>Фамилия</th><th>Имя</th><th>Отчество</th><th>Должность</th><th>СНИЛС</th></tr></thead><tbody>`;
     staff.forEach((emp, index) => {
-        html += `<tr><td><input type="checkbox" class="staff-check" data-index="${index}"></td><td>${emp.last_name}</td><td>${emp.first_name}</td><td>${emp.middle_name || ''}</td><td>${emp.position}</td><td>${emp.snils}</td></tr>`;
-    });
+        html += `<tr><td><input type="checkbox" class="staff-check" data-index="${index}"></td><td class="staff-name" onclick="openEmployeeCard(${index})">${emp.last_name}</td><td>${emp.first_name}</td><td>${emp.middle_name || ''}</td><td>${emp.position}</td><td>${emp.snils}</td></tr>`;
     html += '</tbody></table>';
     container.innerHTML = html;
 }
@@ -1731,4 +1730,136 @@ function openPPEModalForEmployee() {
         savePPEItems = originalSave;
         renderStaff();
     };
+}
+// ============================================================
+// ПЕРСОНАЛЬНАЯ КАРТОЧКА СОТРУДНИКА
+// ============================================================
+let currentEmployeeIndex = -1;
+
+function openEmployeeCard(index) {
+    const staff = getStaff();
+    const emp = staff[index];
+    if (!emp) return;
+    
+    currentEmployeeIndex = index;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'employeeModal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:550px;">
+            <div class="modal-header">
+                <h3>👤 ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</h3>
+                <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label style="color:#ccc;">Должность</label>
+                    <input type="text" value="${emp.position}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;" readonly>
+                </div>
+                <div class="form-group">
+                    <label style="color:#ccc;">📅 Дата последнего инструктажа</label>
+                    <input type="date" id="empInstructionDate" value="${emp.instructionDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                </div>
+                <div class="form-group">
+                    <label style="color:#ccc;">📅 Дата обучения</label>
+                    <input type="date" id="empTrainingDate" value="${emp.trainingDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                </div>
+                <div class="form-group">
+                    <label style="color:#ccc;">🦺 СИЗ</label>
+                    <div style="max-height:150px;overflow-y:auto;background:rgba(255,255,255,0.03);border-radius:6px;padding:8px;">
+                        ${emp.ppeItems && emp.ppeItems.length > 0 ? emp.ppeItems.map((item, i) => 
+                            `<div style="padding:6px 10px;background:rgba(76,175,80,0.1);border-radius:4px;margin-bottom:4px;color:#ccc;font-size:13px;">✅ ${item.name} (${item.type})</div>`
+                        ).join('') : '<div style="color:#666;font-size:13px;">Нет добавленных СИЗ</div>'}
+                    </div>
+                    <button onclick="openPPEModalForEmployee()" style="margin-top:8px;padding:6px 16px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);border-radius:6px;color:#b388ff;cursor:pointer;font-size:13px;">➕ Добавить СИЗ</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="this.closest('.modal-overlay').remove()">Закрыть</button>
+                <button class="btn-primary" onclick="saveEmployeeData()" style="width:auto;padding:10px 24px;">💾 Сохранить</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function saveEmployeeData() {
+    const staff = getStaff();
+    const emp = staff[currentEmployeeIndex];
+    if (!emp) return;
+    
+    const instructionDate = document.getElementById('empInstructionDate')?.value || '';
+    const trainingDate = document.getElementById('empTrainingDate')?.value || '';
+    
+    emp.instructionDate = instructionDate;
+    emp.trainingDate = trainingDate;
+    saveStaff(staff);
+    
+    renderStaff();
+    document.getElementById('employeeModal')?.remove();
+    alert('✅ Данные сохранены!');
+}
+
+function openPPEModalForEmployee() {
+    const staff = getStaff();
+    const emp = staff[currentEmployeeIndex];
+    if (!emp) return;
+    
+    const tempWorkplace = {
+        name: `${emp.last_name} ${emp.first_name}`,
+        position: emp.position,
+        ppeItems: emp.ppeItems || []
+    };
+    
+    currentPPEWorkplace = tempWorkplace;
+    ppeItems = tempWorkplace.ppeItems || [];
+    openPPEModal(tempWorkplace);
+    
+    const originalSave = savePPEItems;
+    savePPEItems = function() {
+        if (!currentPPEWorkplace) return;
+        if (ppeItems.length === 0) { alert('⚠️ Добавьте хотя бы одно СИЗ!'); return; }
+        
+        const staff = getStaff();
+        const emp = staff[currentEmployeeIndex];
+        if (emp) {
+            emp.ppeItems = ppeItems;
+            saveStaff(staff);
+        }
+        currentPPEWorkplace.ppeItems = ppeItems;
+        currentPPEWorkplace.hasPPE = true;
+        alert(`✅ Сохранено ${ppeItems.length} СИЗ!`);
+        closePPEModal();
+        savePPEItems = originalSave;
+        renderStaff();
+    };
+}
+// ============================================================
+// АВТООТМЕТКА В КАЛЕНДАРЕ ПОСЛЕ ЗАГРУЗКИ ПРОТОКОЛА
+// ============================================================
+function markTrainingFromProtocol() {
+    const protocol = getProtocol();
+    if (protocol.length === 0) {
+        alert('❌ В протоколе нет сотрудников!');
+        return;
+    }
+    
+    if (!confirm(`📅 Отметить в календаре обучение для ${protocol.length} сотрудников?`)) return;
+    
+    const staff = getStaff();
+    const today = new Date().toISOString().split('T')[0];
+    let updated = 0;
+    
+    protocol.forEach(empFromProtocol => {
+        const found = staff.find(e => e.snils === empFromProtocol.snils);
+        if (found) {
+            found.trainingDate = today;
+            updated++;
+        }
+    });
+    
+    saveStaff(staff);
+    renderStaff();
+    alert(`✅ Обновлено ${updated} сотрудников! Дата обучения: ${today}`);
 }
