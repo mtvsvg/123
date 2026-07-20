@@ -5,6 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Охрана труда — Цифровой помощник</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Дополнительные стили для модального окна СИЗ */
+        #ppeModal .modal-content {
+            max-width: 900px !important;
+            width: 95% !important;
+        }
+        #ppeTypeSelect {
+            min-width: 180px !important;
+            font-size: 13px !important;
+            padding: 8px 12px !important;
+            background: rgba(255,255,255,0.08) !important;
+            border: 1px solid rgba(255,255,255,0.15) !important;
+            border-radius: 6px !important;
+            color: #fff !important;
+            cursor: pointer !important;
+        }
+        #ppeTypeSelect option {
+            background: #1a1a3e !important;
+            color: #fff !important;
+            padding: 6px !important;
+        }
+        #ppeTypeSelect option:hover {
+            background: #2a2a5e !important;
+        }
+        .ppe-table-cell {
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .ppe-table-cell:hover {
+            overflow: visible;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        /* Стили для огнетушителей на карте */
+        .fire-extinguisher {
+            color: #ff1744;
+            font-size: 28px;
+            text-shadow: 0 0 20px rgba(255,23,68,0.5);
+        }
+        .evacuation-route {
+            stroke: #4caf50;
+            stroke-width: 3;
+            stroke-dasharray: 8,4;
+        }
+    </style>
 </head>
 <body>
 
@@ -212,6 +259,10 @@
                         <label class="doc-check"><input type="checkbox" value="Инструкция по электробезопасности" checked> ⚡ Электробезопасность</label>
                     </div>
                 </div>
+                <div style="margin-top:12px;">
+                    <label style="color:#ccc;display:block;margin-bottom:4px;">➕ Добавить свой документ (каждый с новой строки):</label>
+                    <textarea id="famCustomDoc" rows="2" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;" placeholder="Свои документы..."></textarea>
+                </div>
                 <div id="famResult" class="hidden" style="margin-top:16px;padding:16px;background:rgba(0,212,255,0.05);border-radius:12px;border:1px solid rgba(0,212,255,0.15);">
                     <h3 style="color:#00d4ff;margin-bottom:8px;">✅ Лист ознакомления сформирован</h3>
                     <div id="famContent" style="font-size:14px;line-height:1.6;color:#ccc;"></div>
@@ -246,6 +297,8 @@
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <button class="btn-add" id="addWorkerPlaceBtn">👤 Рабочее место</button>
                 <button class="btn-add" id="addEvacuationBtn">🚪 Выход</button>
+                <button class="btn-add" id="addFireExtinguisherBtn">🧯 Огнетушитель</button>
+                <button class="btn-add" id="addEvacuationRouteBtn">➡️ Путь эвакуации</button>
                 <button class="btn-add" id="deleteSelectedBtn" style="background:rgba(255,70,70,0.2);color:#ff6b6b;border-color:rgba(255,70,70,0.3);">🗑 Удалить объект</button>
                 <button class="btn-add" onclick="clearMap()">🗑 Очистить участок</button>
                 <button class="btn-primary" id="saveMapBtn" style="width:auto;padding:8px 20px;">💾 Сохранить</button>
@@ -256,6 +309,7 @@
             <span style="color:#8888aa;font-size:13px;">📐 Участок: <strong id="workshopSize" style="color:#fff;">не задан</strong></span>
             <span style="color:#8888aa;font-size:13px;">👤 Рабочие места: <strong id="workerCount" style="color:#fff;">0</strong></span>
             <span style="color:#8888aa;font-size:13px;">🚪 Выходы: <strong id="evacuationCount" style="color:#4caf50;">0</strong></span>
+            <span style="color:#8888aa;font-size:13px;">🧯 Огнетушители: <strong id="fireExtinguisherCount" style="color:#ff1744;">0</strong></span>
             <span style="color:#8888aa;font-size:13px;">💡 Режим: <strong id="mapMode" style="color:#00d4ff;">Просмотр</strong></span>
             <span style="color:#8888aa;font-size:13px;">🖱️ Двойной клик ЛКМ - <strong style="color:#7c3aed;">СИЗ</strong></span>
         </div>
@@ -268,19 +322,19 @@
             <span style="color:#8888aa;font-size:12px;">🟦 <span style="color:#4a9eff;">Участок</span></span>
             <span style="color:#8888aa;font-size:12px;">👤 <span style="color:#ff6b6b;">Рабочее место</span></span>
             <span style="color:#8888aa;font-size:12px;">✅ <span style="color:#4caf50;">СИЗ подобраны</span></span>
-            <span style="color:#8888aa;font-size:12px;">⚠️ <span style="color:#ff8f00;">Зона рабочего места</span></span>
             <span style="color:#8888aa;font-size:12px;">🚪 <span style="color:#4caf50;">Выход</span></span>
+            <span style="color:#8888aa;font-size:12px;">🧯 <span style="color:#ff1744;">Огнетушитель</span></span>
+            <span style="color:#8888aa;font-size:12px;">➡️ <span style="color:#4caf50;">Путь эвакуации</span></span>
             <span style="color:#8888aa;font-size:12px;">🔄 <span style="color:#8888aa;">Перетащите объект</span></span>
-            <span style="color:#8888aa;font-size:12px;">🖱️ <span style="color:#7c3aed;">Двойной клик — СИЗ</span></span>
         </div>
     </div>
 </div>
 
 <!-- ============================================================ -->
-<!-- МОДАЛЬНОЕ ОКНО ДЛЯ СИЗ -->
+<!-- МОДАЛЬНОЕ ОКНО ДЛЯ СИЗ (РАСШИРЕННОЕ) -->
 <!-- ============================================================ -->
 <div id="ppeModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width:700px;max-height:80vh;overflow-y:auto;">
+    <div class="modal-content" style="max-width:900px;width:95%;max-height:85vh;overflow-y:auto;">
         <div class="modal-header">
             <h3>🦺 Средства индивидуальной защиты</h3>
             <button class="modal-close" onclick="closePPEModal()">✖</button>
@@ -298,15 +352,6 @@
                 </div>
                 <div id="ppeList" style="display:flex;flex-direction:column;gap:8px;">
                 </div>
-                <div style="margin-top:16px;padding:12px;background:rgba(0,212,255,0.05);border-radius:8px;border:1px solid rgba(0,212,255,0.1);">
-                    <p style="color:#8888aa;font-size:12px;margin:0;">
-                        📋 Данные основаны на <strong>Приказе Минтруда РФ от 29.10.2021 № 767н</strong> 
-                        и актуальны на текущую дату.
-                    </p>
-                    <p style="color:#8888aa;font-size:12px;margin:4px 0 0 0;">
-                        🔗 Источник: <a href="https://xn--80akibicpdbetz7e2g.xn--p1ai/ppe" target="_blank" style="color:#7c3aed;text-decoration:none;">Онлайн Инспекция</a>
-                    </p>
-                </div>
             </div>
             <div id="ppeError" style="display:none;text-align:center;padding:20px;color:#ff6b6b;">
                 ❌ Не удалось загрузить данные. Попробуйте позже.
@@ -320,7 +365,57 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- МОДАЛЬНЫЕ ОКНА -->
+<!-- МОДАЛЬНОЕ ОКНО ДЛЯ ОГНЕТУШИТЕЛЯ -->
+<!-- ============================================================ -->
+<div id="fireExtinguisherModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width:500px;">
+        <div class="modal-header">
+            <h3>🧯 Добавление огнетушителя</h3>
+            <button class="modal-close" onclick="closeFireExtinguisherModal()">✖</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Тип огнетушителя</label>
+                <select id="feTypeSelect" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                    <option value="ОП">ОП (порошковый)</option>
+                    <option value="ОУ">ОУ (углекислотный)</option>
+                    <option value="ОВ">ОВ (водный)</option>
+                    <option value="ОХ">ОХ (хладоновый)</option>
+                    <option value="ОПУ">ОПУ (порошковый универсальный)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Объем (кг/л)</label>
+                <select id="feVolumeSelect" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                    <option value="2">2</option>
+                    <option value="5" selected>5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Марка</label>
+                <input type="text" id="feModelInput" placeholder="Например: ОП-5" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+            </div>
+            <div class="form-group">
+                <label>Дата изготовления</label>
+                <input type="date" id="feDateInput" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+            </div>
+            <div class="form-group">
+                <label>Дата следующей перезарядки</label>
+                <input type="date" id="feNextDateInput" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeFireExtinguisherModal()">Отмена</button>
+            <button class="btn-primary" id="saveFireExtinguisherBtn" style="width:auto;padding:10px 24px;">➕ Добавить</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- МОДАЛЬНЫЕ ОКНА (УЧАСТОК, РАБОЧЕЕ МЕСТО) -->
 <!-- ============================================================ -->
 
 <div id="workshopModal" class="modal-overlay hidden">
@@ -404,32 +499,6 @@
     </div>
 </div>
 
-<!-- ============================================================ -->
-<!-- ЗАГРУЗЧИК СИЗ ИЗ ПРИКАЗА (плавающая кнопка) -->
-<!-- ============================================================ -->
-<div id="ppeLoader" style="position:fixed;bottom:20px;right:20px;z-index:9999;background:rgba(26,26,62,0.95);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:16px 20px;backdrop-filter:blur(10px);max-width:320px;box-shadow:0 10px 40px rgba(0,0,0,0.5);">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-        <span style="font-size:24px;">📄</span>
-        <span style="color:#fff;font-weight:600;font-size:14px;">База СИЗ</span>
-        <span id="ppeStatus" style="font-size:12px;color:#8888aa;margin-left:auto;">❌ Не загружена</span>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button id="loadPPEBtn" style="background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);color:#b388ff;padding:6px 16px;border-radius:8px;cursor:pointer;font-size:13px;transition:all 0.2s;">
-            📤 Загрузить приказ
-        </button>
-        <button id="clearPPEBtn" style="background:rgba(255,70,70,0.15);border:1px solid rgba(255,70,70,0.2);color:#ff6b6b;padding:6px 16px;border-radius:8px;cursor:pointer;font-size:13px;transition:all 0.2s;">
-            🗑 Очистить
-        </button>
-    </div>
-    <div id="ppeLoadStatus" style="font-size:12px;color:#8888aa;margin-top:6px;"></div>
-</div>
-
-    <!-- Библиотека для чтения .docx файлов -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-
-<script src="parser-ppe.js"></script>
-<script src="script.js"></script>
-<script src="parser-ppe.js"></script>
 <script src="script.js"></script>
 
 </body>
