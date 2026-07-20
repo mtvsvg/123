@@ -283,9 +283,25 @@ function escXml(str) {
 }
 
 // ============================================================
-// МОДАЛЬНОЕ ОКНО СИЗ (ОТКРЫТИЕ САЙТА В НОВОЙ ВКЛАДКЕ)
+// МОДАЛЬНОЕ ОКНО СИЗ (РУЧНОЙ ВВОД)
 // ============================================================
+
+// Список типов СИЗ для выпадающего списка
+const PPE_TYPES = [
+    'Одежда специальная защитная',
+    'Средства защиты ног',
+    'Средства защиты рук',
+    'Средства защиты головы',
+    'Средства защиты глаз и лица',
+    'Средства защиты слуха',
+    'Средства защиты органов дыхания',
+    'Средства защиты от падения с высоты',
+    'Средства защиты кожи',
+    'Средства защиты комплексные'
+];
+
 let currentPPEWorkplace = null;
+let ppeItems = [];
 
 function openPPEModal(wp) {
     if (!wp || !wp.position || wp.position.trim() === '') {
@@ -294,6 +310,7 @@ function openPPEModal(wp) {
     }
     
     currentPPEWorkplace = wp;
+    ppeItems = wp.ppeItems || [];
     
     const modal = document.getElementById('ppeModal');
     const loading = document.getElementById('ppeLoading');
@@ -306,75 +323,84 @@ function openPPEModal(wp) {
         return;
     }
     
-    // Скрываем загрузку, показываем контент
     loading.style.display = 'none';
     content.style.display = 'block';
     error.style.display = 'none';
     modal.classList.remove('hidden');
     
-    // Заполняем информацию о сотруднике
     const nameEl = document.getElementById('ppeEmployeeName');
     const posEl = document.getElementById('ppePosition');
     if (nameEl) nameEl.textContent = wp.name || 'Сотрудник';
     if (posEl) posEl.textContent = wp.position || 'Должность не указана';
     
-    // Формируем URL для поиска на Онлайн-Инспекции
-    const searchQuery = wp.position.trim();
-    const encodedQuery = encodeURIComponent(searchQuery);
-    const url = `https://xn--80akibcicpdbetz7e2g.xn--p1ai/ppe?q=${encodedQuery}`;
+    renderPPEList();
+}
+
+function renderPPEList() {
+    const list = document.getElementById('ppeList');
+    if (!list) return;
     
-    // Создаем HTML с информацией и кнопкой
     let html = `
-        <div style="background:rgba(0,212,255,0.05);padding:12px 16px;border-radius:8px;margin-bottom:16px;border:1px solid rgba(0,212,255,0.1);">
-            <div style="display:flex;align-items:center;gap:12px;">
-                <span style="font-size:32px;">🔍</span>
-                <div>
-                    <div style="color:#00d4ff;font-weight:600;font-size:16px;">
-                        Поиск СИЗ для профессии
-                    </div>
-                    <div style="color:#8888aa;font-size:13px;margin-top:4px;">
-                        Должность: <strong style="color:#fff;">${wp.position}</strong>
-                    </div>
-                </div>
-            </div>
+        <div style="background:rgba(0,212,255,0.05);padding:8px 12px;border-radius:6px;margin-bottom:12px;border:1px solid rgba(0,212,255,0.1);">
+            <span style="color:#8888aa;font-size:12px;">
+                📋 Добавьте средства индивидуальной защиты для профессии <strong style="color:#00d4ff;">"${currentPPEWorkplace.position}"</strong>
+            </span>
         </div>
         
-        <div style="background:rgba(255,255,255,0.03);padding:24px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);text-align:center;">
-            <div style="font-size:56px;margin-bottom:12px;">🦺</div>
-            <div style="color:#ccc;font-size:18px;margin-bottom:8px;">
-                Перейти к средствам индивидуальной защиты
-            </div>
-            <div style="color:#8888aa;font-size:14px;margin-bottom:20px;">
-                Сайт Онлайн-Инспекции откроется в новой вкладке с результатами поиска
-            </div>
-            <button onclick="openOnlineInspection('${wp.position}')" 
-                    style="padding:16px 40px;background:linear-gradient(135deg,#7c3aed,#00d4ff);border:none;border-radius:12px;color:#fff;font-size:20px;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(124,58,237,0.3);"
-                    onmouseover="this.style.transform='scale(1.05)'" 
-                    onmouseout="this.style.transform='scale(1)'">
-                🔍 Открыть СИЗ на Онлайн-Инспекции
+        <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);">
+            <select id="ppeTypeSelect" style="flex:2;min-width:150px;padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+                <option value="">-- Тип СИЗ --</option>
+                ${PPE_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}
+            </select>
+            <input type="text" id="ppeNameInput" placeholder="Наименование СИЗ (например: Костюм х/б)" style="flex:3;min-width:150px;padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+            <input type="text" id="ppeNormInput" placeholder="Срок/Кол-во (например: 1 шт. или 12 мес)" style="flex:1;min-width:100px;padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+            <input type="text" id="ppeModelInput" placeholder="Модель/Артикул" style="flex:2;min-width:120px;padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+            <button onclick="addPPEItem()" style="padding:8px 16px;background:linear-gradient(135deg,#7c3aed,#00d4ff);border:none;border-radius:6px;color:#fff;font-weight:600;cursor:pointer;white-space:nowrap;">
+                ➕ Добавить
             </button>
         </div>
+    `;
+    
+    // Список добавленных СИЗ
+    if (ppeItems.length === 0) {
+        html += `<div style="text-align:center;padding:20px;color:#666;font-size:14px;">Нет добавленных СИЗ. Добавьте первый выше.</div>`;
+    } else {
+        html += `<div style="max-height:300px;overflow-y:auto;">`;
+        html += `<table style="width:100%;border-collapse:collapse;font-size:13px;">`;
+        html += `<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+            <th style="text-align:left;padding:6px 8px;color:#8888aa;">№</th>
+            <th style="text-align:left;padding:6px 8px;color:#8888aa;">Тип</th>
+            <th style="text-align:left;padding:6px 8px;color:#8888aa;">Наименование</th>
+            <th style="text-align:left;padding:6px 8px;color:#8888aa;">Срок/Кол-во</th>
+            <th style="text-align:left;padding:6px 8px;color:#8888aa;">Модель</th>
+            <th style="width:40px;color:#8888aa;">✖</th>
+        </tr></thead><tbody>`;
         
-        <div style="margin-top:16px;padding:12px;background:rgba(255,193,7,0.05);border-radius:8px;border:1px solid rgba(255,193,7,0.1);">
-            <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:18px;">💡</span>
-                <span style="color:#8888aa;font-size:13px;">
-                    После просмотра СИЗ на сайте вернитесь и отметьте их как подобранные
-                </span>
-            </div>
-        </div>
+        ppeItems.forEach((item, index) => {
+            html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                <td style="padding:6px 8px;color:#7c3aed;font-weight:600;">${index + 1}</td>
+                <td style="padding:6px 8px;color:#ccc;">${item.type || ''}</td>
+                <td style="padding:6px 8px;color:#fff;">${item.name || ''}</td>
+                <td style="padding:6px 8px;color:#4caf50;">${item.norm || ''}</td>
+                <td style="padding:6px 8px;color:#b388ff;">${item.model || ''}</td>
+                <td style="padding:6px 8px;text-align:center;">
+                    <button onclick="removePPEItem(${index})" style="background:rgba(255,70,70,0.15);border:none;border-radius:4px;color:#ff6b6b;cursor:pointer;padding:2px 8px;font-size:12px;">✖</button>
+                </td>
+            </tr>`;
+        });
         
-        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
-            <button onclick="markPPEAsFound()" 
-                    style="padding:10px 24px;background:rgba(76,175,80,0.15);border:1px solid rgba(76,175,80,0.3);border-radius:8px;color:#4caf50;cursor:pointer;font-size:14px;font-weight:500;transition:all 0.2s;"
-                    onmouseover="this.style.background='rgba(76,175,80,0.25)'" 
-                    onmouseout="this.style.background='rgba(76,175,80,0.15)'">
-                ✅ Отметить СИЗ как подобранные
+        html += `</tbody></table></div>`;
+    }
+    
+    // Кнопки действий
+    html += `
+        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
+            <button onclick="savePPEItems()" 
+                    style="padding:10px 24px;background:linear-gradient(135deg,#4caf50,#2e7d32);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">
+                💾 Сохранить СИЗ
             </button>
             <button onclick="closePPEModal()" 
-                    style="padding:10px 24px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#aaa;cursor:pointer;font-size:14px;transition:all 0.2s;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.12)'" 
-                    onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+                    style="padding:10px 24px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#aaa;cursor:pointer;font-size:14px;">
                 ✖ Закрыть
             </button>
         </div>
@@ -383,21 +409,53 @@ function openPPEModal(wp) {
     list.innerHTML = html;
 }
 
-function openOnlineInspection(profession) {
-    const encoded = encodeURIComponent(profession.trim());
-    const url = `https://xn--80akibcicpdbetz7e2g.xn--p1ai/ppe?q=${encoded}`;
-    window.open(url, '_blank');
+function addPPEItem() {
+    const typeSelect = document.getElementById('ppeTypeSelect');
+    const nameInput = document.getElementById('ppeNameInput');
+    const normInput = document.getElementById('ppeNormInput');
+    const modelInput = document.getElementById('ppeModelInput');
+    
+    const type = typeSelect ? typeSelect.value : '';
+    const name = nameInput ? nameInput.value.trim() : '';
+    const norm = normInput ? normInput.value.trim() : '';
+    const model = modelInput ? modelInput.value.trim() : '';
+    
+    if (!name) {
+        alert('❌ Введите наименование СИЗ!');
+        return;
+    }
+    
+    ppeItems.push({ type, name, norm, model });
+    
+    // Очищаем поля
+    if (nameInput) nameInput.value = '';
+    if (normInput) normInput.value = '';
+    if (modelInput) modelInput.value = '';
+    if (typeSelect) typeSelect.value = '';
+    
+    renderPPEList();
 }
 
-function markPPEAsFound() {
+function removePPEItem(index) {
+    ppeItems.splice(index, 1);
+    renderPPEList();
+}
+
+function savePPEItems() {
     if (!currentPPEWorkplace) return;
     
+    if (ppeItems.length === 0) {
+        alert('⚠️ Добавьте хотя бы одно СИЗ перед сохранением!');
+        return;
+    }
+    
+    currentPPEWorkplace.ppeItems = ppeItems;
     currentPPEWorkplace.hasPPE = true;
-    currentPPEWorkplace.ppeSource = 'Онлайн-Инспекция';
+    currentPPEWorkplace.ppeSource = 'Введено вручную';
     saveMap();
     drawMap();
     
-    alert('✅ Рабочее место отмечено как обеспеченное СИЗ!\n\n🟢 Теперь на карте оно будет зеленым.');
+    alert(`✅ Сохранено ${ppeItems.length} СИЗ для "${currentPPEWorkplace.name}"!\n\n🟢 Теперь на карте оно будет зеленым.`);
     closePPEModal();
 }
 
@@ -405,6 +463,7 @@ function closePPEModal() {
     const modal = document.getElementById('ppeModal');
     if (modal) modal.classList.add('hidden');
     currentPPEWorkplace = null;
+    ppeItems = [];
 }
 
 function exportPPE() {
@@ -413,15 +472,13 @@ function exportPPE() {
         return;
     }
     
-    const items = document.querySelectorAll('#ppeList .ppe-item');
     let ppeText = '';
-    items.forEach((item, index) => {
-        const nameEl = item.querySelector('div div:first-child');
-        const name = nameEl ? nameEl.textContent : '';
+    ppeItems.forEach((item, index) => {
         ppeText += `<div style="padding:8px 12px;margin:4px 0;background:#f5f5f5;border-radius:4px;border-left:3px solid #7c3aed;">
             <span style="font-weight:700;color:#7c3aed;">${index + 1}.</span> 
-            <span>${name}</span> 
-            <span style="color:#4caf50;float:right;">✅</span>
+            <span><strong>${item.type || 'СИЗ'}:</strong> ${item.name}</span>
+            <span style="color:#4caf50;float:right;">${item.norm || ''}</span>
+            ${item.model ? `<br><span style="color:#888;font-size:12px;margin-left:28px;">Модель: ${item.model}</span>` : ''}
         </div>`;
     });
     
@@ -448,12 +505,12 @@ function exportPPE() {
                 <p><strong>Дата формирования:</strong> ${new Date().toLocaleDateString('ru-RU', {day:'2-digit', month:'long', year:'numeric'})}</p>
             </div>
             <div class="source">
-                📋 Источник: ${currentPPEWorkplace.ppeSource || 'Онлайн-Инспекция'}
+                📋 Источник: ${currentPPEWorkplace.ppeSource || 'Введено вручную'}
             </div>
             <hr style="margin: 20px 0;">
             ${ppeText || '<p style="color:#888;">Нет данных о СИЗ</p>'}
             <div class="footer">
-                <p>Данные получены с сайта Онлайн-Инспекция</p>
+                <p>Данные введены специалистом по охране труда</p>
             </div>
             <script>window.print();</script>
         </body>
@@ -1171,6 +1228,7 @@ function saveWorkplace() {
         zone: zone,
         id: Date.now(),
         hasPPE: false,
+        ppeItems: [],
         ppeSource: null
     });
     
@@ -1179,7 +1237,7 @@ function saveWorkplace() {
     drawMap();
     saveMap();
     
-    alert('✅ Рабочее место добавлено! Двойной клик по нему для просмотра СИЗ.');
+    alert('✅ Рабочее место добавлено! Двойной клик по нему для добавления СИЗ.');
 }
 
 function addNewWorkshop() {
