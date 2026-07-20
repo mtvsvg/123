@@ -283,52 +283,7 @@ function escXml(str) {
 }
 
 // ============================================================
-// ПОИСК СИЗ ПО ПРОФЕССИИ (использует parser-ppe.js)
-// ============================================================
-function getPPEByProfession(profession) {
-    if (!profession) return null;
-    
-    // Если есть глобальная функция из parser-ppe.js - используем её
-    if (typeof window.getPPEByProfession === 'function') {
-        return window.getPPEByProfession(profession);
-    }
-    
-    // Fallback: проверяем локальную базу
-    if (typeof ppeDatabase !== 'undefined' && ppeDatabase) {
-        const trimmed = profession.trim().toLowerCase();
-        
-        for (const [key, value] of Object.entries(ppeDatabase)) {
-            if (key.toLowerCase() === trimmed) {
-                return value;
-            }
-        }
-        
-        for (const [key, value] of Object.entries(ppeDatabase)) {
-            if (trimmed.includes(key.toLowerCase()) || key.toLowerCase().includes(trimmed)) {
-                return value;
-            }
-        }
-        
-        const words = trimmed.split(/\s+/);
-        for (const [key, value] of Object.entries(ppeDatabase)) {
-            const keyLower = key.toLowerCase();
-            let matchCount = 0;
-            for (const word of words) {
-                if (word.length > 3 && keyLower.includes(word)) {
-                    matchCount++;
-                }
-            }
-            if (matchCount >= 2) {
-                return value;
-            }
-        }
-    }
-    
-    return null;
-}
-
-// ============================================================
-// ФУНКЦИЯ ДЛЯ МОДАЛЬНОГО ОКНА СИЗ
+// ФУНКЦИЯ ДЛЯ МОДАЛЬНОГО ОКНА СИЗ (ОНЛАЙН-ИНСПЕКЦИЯ)
 // ============================================================
 let currentPPEWorkplace = null;
 
@@ -362,81 +317,70 @@ function openPPEModal(wp) {
     if (posEl) posEl.textContent = wp.position || 'Должность не указана';
     
     try {
-        const data = getPPEByProfession(wp.position);
+        const searchQuery = wp.position.trim();
+        const encodedQuery = encodeURIComponent(searchQuery);
+        const url = `https://xn--80akibicpdbetz7e2g.xn--p1ai/ppe/search?q=${encodedQuery}`;
         
-        if (data && data.сиз && data.сиз.length > 0) {
-            let html = `
-                <div style="background:rgba(0,212,255,0.05);padding:8px 12px;border-radius:6px;margin-bottom:12px;border:1px solid rgba(0,212,255,0.1);">
-                    <span style="color:#8888aa;font-size:12px;">📋 Источник: <strong style="color:#00d4ff;">Приказ Минтруда РФ от 29.10.2021 № 767н</strong></span>
-                </div>
-            `;
-            
-            data.сиз.forEach((item, index) => {
-                const parts = item.split('|').map(s => s.trim());
-                const type = parts[0] || '';
-                const name = parts[1] || '';
-                const norm = parts[2] || '';
-                
-                html += `
-                    <div style="background:rgba(255,255,255,0.03);padding:12px 16px;border-radius:8px;border-left:3px solid #7c3aed;margin-bottom:8px;">
-                        <div style="display:flex;align-items:center;gap:12px;">
-                            <span style="color:#7c3aed;font-weight:700;min-width:30px;">${index + 1}</span>
-                            <div style="flex:1;">
-                                <div style="color:#ccc;font-size:14px;font-weight:500;">${name}</div>
-                                <div style="display:flex;gap:12px;font-size:12px;margin-top:4px;">
-                                    <span style="color:#8888aa;">${type}</span>
-                                    <span style="color:#4caf50;">${norm}</span>
-                                </div>
-                            </div>
-                            <span style="color:#4caf50;font-size:20px;">✅</span>
+        let html = `
+            <div style="background:rgba(0,212,255,0.05);padding:12px 16px;border-radius:8px;margin-bottom:16px;border:1px solid rgba(0,212,255,0.1);">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span style="font-size:32px;">🔍</span>
+                    <div>
+                        <div style="color:#00d4ff;font-weight:600;font-size:16px;">
+                            Поиск СИЗ на Онлайн-Инспекции
+                        </div>
+                        <div style="color:#8888aa;font-size:13px;margin-top:4px;">
+                            Должность: <strong style="color:#fff;">${wp.position}</strong>
                         </div>
                     </div>
-                `;
-            });
-            
-            html += `
-                <div style="margin-top:16px;padding-top:15px;border-top:1px solid rgba(255,255,255,0.1);text-align:center;">
-                    <button onclick="openOnlineInspection('${wp.position}')" 
-                            style="padding:10px 20px;background:rgba(124,58,237,0.2);border:1px solid #7c3aed;color:#b388ff;border-radius:8px;cursor:pointer;font-size:14px;transition:all 0.2s;">
-                        🔍 Проверить на сайте Онлайн Инспекция
-                    </button>
-                    <p style="color:#666;font-size:11px;margin-top:6px;">
-                        Откроется страница с актуальными СИЗ
-                    </p>
                 </div>
-            `;
+            </div>
             
-            list.innerHTML = html;
-            
-            wp.hasPPE = true;
-            wp.ppeSource = 'Приказ 767н';
-            saveMap();
-            drawMap();
-            
-            loading.style.display = 'none';
-            content.style.display = 'block';
-        } else {
-            error.style.display = 'block';
-            error.innerHTML = `
-                <div style="text-align:center;padding:20px;">
-                    <div style="font-size:48px;margin-bottom:12px;">🔍</div>
-                    <div style="font-size:18px;color:#ff6b6b;margin-bottom:8px;">
-                        СИЗ не найдены для "${wp.position}"
-                    </div>
-                    <div style="color:#8888aa;font-size:14px;margin-bottom:16px;">
-                        Проверьте правильность написания должности<br>
-                        или найдите СИЗ на сайте Онлайн Инспекции
-                    </div>
-                    <button onclick="openOnlineInspection('${wp.position}')" 
-                            style="padding:12px 24px;background:linear-gradient(135deg,#7c3aed,#00d4ff);border:none;border-radius:8px;color:#fff;font-size:16px;font-weight:600;cursor:pointer;">
-                        🔍 Проверить на сайте
-                    </button>
+            <div style="background:rgba(255,255,255,0.03);padding:16px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);text-align:center;">
+                <div style="font-size:48px;margin-bottom:12px;">🌐</div>
+                <div style="color:#ccc;font-size:16px;margin-bottom:8px;">
+                    Сайт Онлайн-Инспекции откроется в новой вкладке
                 </div>
-            `;
-            loading.style.display = 'none';
-        }
+                <div style="color:#8888aa;font-size:13px;margin-bottom:16px;">
+                    Там вы найдете актуальные СИЗ для профессии<br>
+                    <span style="color:#7c3aed;font-weight:500;">"${wp.position}"</span>
+                </div>
+                <button onclick="openOnlineInspection('${wp.position}')" 
+                        style="padding:14px 32px;background:linear-gradient(135deg,#7c3aed,#00d4ff);border:none;border-radius:12px;color:#fff;font-size:18px;font-weight:600;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(124,58,237,0.3);"
+                        onmouseover="this.style.transform='scale(1.05)'" 
+                        onmouseout="this.style.transform='scale(1)'">
+                    🔍 Открыть Онлайн-Инспекцию
+                </button>
+            </div>
+            
+            <div style="margin-top:16px;padding:12px;background:rgba(255,193,7,0.05);border-radius:8px;border:1px solid rgba(255,193,7,0.1);">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:18px;">💡</span>
+                    <span style="color:#8888aa;font-size:12px;">
+                        Выберите СИЗ на сайте и вернитесь, чтобы отметить их как подобранные
+                    </span>
+                </div>
+            </div>
+            
+            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+                <button onclick="markPPEAsFound()" 
+                        style="padding:8px 20px;background:rgba(76,175,80,0.15);border:1px solid rgba(76,175,80,0.3);border-radius:8px;color:#4caf50;cursor:pointer;font-size:14px;">
+                    ✅ Отметить СИЗ как подобранные
+                </button>
+                <button onclick="closePPEModal()" 
+                        style="padding:8px 20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#aaa;cursor:pointer;font-size:14px;">
+                    ✖ Закрыть
+                </button>
+            </div>
+        `;
+        
+        list.innerHTML = html;
+        
+        loading.style.display = 'none';
+        content.style.display = 'block';
+        
     } catch (err) {
-        console.error('Ошибка при загрузке СИЗ:', err);
+        console.error('Ошибка:', err);
         loading.style.display = 'none';
         error.style.display = 'block';
         error.innerHTML = `
@@ -455,7 +399,20 @@ function openPPEModal(wp) {
 
 function openOnlineInspection(profession) {
     const encoded = encodeURIComponent(profession.trim());
-    window.open(`https://онлайнинспекция.рф/ppe/search?q=${encoded}`, '_blank');
+    const url = `https://xn--80akibicpdbetz7e2g.xn--p1ai/ppe/search?q=${encoded}`;
+    window.open(url, '_blank');
+}
+
+function markPPEAsFound() {
+    if (!currentPPEWorkplace) return;
+    
+    currentPPEWorkplace.hasPPE = true;
+    currentPPEWorkplace.ppeSource = 'Онлайн-Инспекция';
+    saveMap();
+    drawMap();
+    
+    alert('✅ Рабочее место отмечено как обеспеченное СИЗ!\n\n🟢 Теперь на карте оно будет зеленым.');
+    closePPEModal();
 }
 
 function closePPEModal() {
@@ -505,13 +462,12 @@ function exportPPE() {
                 <p><strong>Дата формирования:</strong> ${new Date().toLocaleDateString('ru-RU', {day:'2-digit', month:'long', year:'numeric'})}</p>
             </div>
             <div class="source">
-                📋 Источник: ${currentPPEWorkplace.ppeSource || 'Приказ Минтруда РФ от 29.10.2021 № 767н'}
+                📋 Источник: ${currentPPEWorkplace.ppeSource || 'Онлайн-Инспекция'}
             </div>
             <hr style="margin: 20px 0;">
             ${ppeText || '<p style="color:#888;">Нет данных о СИЗ</p>'}
             <div class="footer">
-                <p>Основано на Приказе Минтруда РФ от 29.10.2021 № 767н</p>
-                <p>«Об утверждении Единых типовых норм выдачи средств индивидуальной защиты»</p>
+                <p>Данные получены с сайта Онлайн-Инспекция</p>
             </div>
             <script>window.print();</script>
         </body>
@@ -1565,101 +1521,6 @@ function addSelectedToProtocol() {
 }
 
 // ============================================================
-// ЗАГРУЗЧИК СИЗ ИЗ ПРИКАЗА
-// ============================================================
-
-function initPPELoader() {
-    const loadBtn = document.getElementById('loadPPEBtn');
-    const clearBtn = document.getElementById('clearPPEBtn');
-    const statusEl = document.getElementById('ppeStatus');
-    
-    if (loadBtn) {
-        loadBtn.addEventListener('click', function() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.txt,.csv,.doc,.docx';
-            
-            input.onchange = async function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                
-                const statusDiv = document.getElementById('ppeLoadStatus');
-                if (statusDiv) {
-                    statusDiv.textContent = '⏳ Загрузка и парсинг...';
-                    statusDiv.style.color = '#ffc107';
-                }
-                
-                try {
-                    const result = await window.loadPPEFromFile(file);
-                    const count = Object.keys(result).length;
-                    
-                    if (statusDiv) {
-                        statusDiv.textContent = `✅ Загружено ${count} профессий!`;
-                        statusDiv.style.color = '#4caf50';
-                    }
-                    
-                    if (statusEl) {
-                        statusEl.textContent = '✅ Загружена';
-                        statusEl.style.color = '#4caf50';
-                    }
-                    
-                    if (typeof drawMap === 'function') {
-                        drawMap();
-                    }
-                    
-                    alert(`✅ База СИЗ загружена!\nНайдено ${count} профессий с СИЗ.\nТеперь при двойном клике по рабочему месту будут показываться СИЗ.`);
-                    
-                } catch (err) {
-                    if (statusDiv) {
-                        statusDiv.textContent = `❌ Ошибка: ${err.message}`;
-                        statusDiv.style.color = '#ff6b6b';
-                    }
-                    alert('❌ Ошибка при загрузке файла:\n' + err.message);
-                }
-            };
-            
-            input.click();
-        });
-    }
-    
-    if (clearBtn) {
-        clearBtn.addEventListener('click', function() {
-            if (confirm('Удалить загруженную базу СИЗ?')) {
-                localStorage.removeItem('ppeDatabase');
-                window.ppeDatabase = {};
-                window.ppeLoaded = false;
-                
-                if (statusEl) {
-                    statusEl.textContent = '❌ Не загружена';
-                    statusEl.style.color = '#ff6b6b';
-                }
-                
-                const statusDiv = document.getElementById('ppeLoadStatus');
-                if (statusDiv) {
-                    statusDiv.textContent = '🗑 База очищена';
-                    statusDiv.style.color = '#8888aa';
-                }
-                
-                alert('✅ База СИЗ очищена');
-            }
-        });
-    }
-    
-    const saved = localStorage.getItem('ppeDatabase');
-    if (saved && statusEl) {
-        try {
-            const data = JSON.parse(saved);
-            if (Object.keys(data).length > 0) {
-                statusEl.textContent = '✅ Загружена';
-                statusEl.style.color = '#4caf50';
-                window.ppeDatabase = data;
-                window.ppeLoaded = true;
-            }
-        } catch(e) {}
-    }
-}
-
-// ============================================================
 // ИНИЦИАЛИЗАЦИЯ
 // ============================================================
 
@@ -1669,7 +1530,6 @@ function initTrainingPage() {
     renderProtocol();
     fillFamEmployeeSelect();
     
-    // Обработчики кнопок
     const showOrgBtn = document.getElementById('showOrgFormBtn');
     const saveOrgBtn = document.getElementById('saveOrgBtn');
     const cancelOrgBtn = document.getElementById('cancelOrgBtn');
@@ -1757,9 +1617,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     initTrainingPage();
-    initPPELoader();
     
-    // Обработчик печати листа ознакомления
     const printFamBtn = document.getElementById('printFamBtn');
     if (printFamBtn) {
         printFamBtn.addEventListener('click', function() {
