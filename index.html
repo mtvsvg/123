@@ -21,11 +21,6 @@
         .manual-fam-input::placeholder { color: #8888aa !important; }
         .doc-name-edit { background: rgba(255,255,255,0.06) !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 6px !important; color: #fff !important; padding: 4px 10px !important; font-size: 13px !important; width: 100% !important; min-width: 120px !important; }
         .doc-name-edit:focus { border-color: #7c3aed !important; outline: none !important; }
-        .staff-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        .staff-table th { background: rgba(255,255,255,0.06) !important; color: #8888aa !important; padding: 10px 12px !important; text-align: left; border-bottom: 2px solid rgba(124,58,237,0.3) !important; font-weight: 600; }
-        .staff-table td { padding: 8px 12px !important; border-bottom: 1px solid rgba(255,255,255,0.05) !important; color: #ccc !important; }
-        .staff-table tr:hover td { background: rgba(255,255,255,0.04) !important; }
-        .staff-table input[type="checkbox"] { width: 18px !important; height: 18px !important; accent-color: #7c3aed !important; cursor: pointer !important; }
         .protocol-table { width: 100%; border-collapse: collapse; font-size: 14px; }
         .protocol-table th { background: rgba(255,255,255,0.06) !important; color: #8888aa !important; padding: 10px 12px !important; text-align: left; border-bottom: 2px solid rgba(124,58,237,0.3) !important; font-weight: 600; }
         .protocol-table td { padding: 8px 12px !important; border-bottom: 1px solid rgba(255,255,255,0.05) !important; color: #ccc !important; }
@@ -67,6 +62,117 @@
             background: #1a1a3e !important;
             color: #fff !important;
             padding: 8px 12px !important;
+        }
+        
+        /* ============================================================ */
+        /* ШТАТНОЕ РАСПИСАНИЕ С ОТДЕЛАМИ */
+        /* ============================================================ */
+        .department-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: rgba(124,58,237,0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid rgba(124,58,237,0.1);
+        }
+        .department-header:hover {
+            background: rgba(124,58,237,0.15);
+        }
+        .department-header .dept-name {
+            color: #b388ff;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .department-header .dept-count {
+            color: #8888aa;
+            font-size: 13px;
+        }
+        .department-body {
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.02);
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+        .employee-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .employee-row:last-child {
+            border-bottom: none;
+        }
+        .employee-row .emp-name {
+            color: #00d4ff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .employee-row .emp-name:hover {
+            text-decoration: underline;
+        }
+        .employee-row .emp-position {
+            color: #8888aa;
+            font-size: 13px;
+        }
+        .employee-row .emp-snils {
+            color: #666;
+            font-size: 12px;
+        }
+        .employee-row .emp-remove {
+            margin-left: auto;
+            background: rgba(255,70,70,0.1);
+            border: none;
+            color: #ff6b6b;
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .employee-row .emp-remove:hover {
+            background: rgba(255,70,70,0.25);
+        }
+        .employee-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #7c3aed;
+            cursor: pointer;
+        }
+        .dept-empty {
+            color: #666;
+            font-size: 13px;
+            padding: 8px 0;
+            text-align: center;
+            font-style: italic;
+        }
+        .staff-toolbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .staff-toolbar .btn-add {
+            padding: 8px 16px;
+        }
+        .unassigned-section {
+            background: rgba(255,255,255,0.02);
+            border-radius: 10px;
+            border: 1px dashed rgba(255,255,255,0.1);
+            padding: 10px 14px;
+            margin-top: 8px;
+        }
+        .unassigned-section .unassigned-title {
+            color: #8888aa;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
         }
         
         /* ============================================================ */
@@ -429,13 +535,21 @@
                     <h2>📋 Штатное расписание</h2>
                     <button class="btn-add" id="staffImportBtn">📤 Загрузить файл</button>
                 </div>
-                <p style="color:#8888aa;font-size:14px;margin-bottom:12px;">Загрузите файл со штатным расписанием. Выберите сотрудников для добавления в протокол.</p>
+                <p style="color:#8888aa;font-size:14px;margin-bottom:12px;">Загрузите файл со штатным расписанием. Выберите сотрудников и создайте службы.</p>
+                
+                <!-- Панель инструментов -->
+                <div class="staff-toolbar">
+                    <button class="btn-add" onclick="createDepartmentFromSelected()">📁 Создать службу</button>
+                    <button class="btn-add" onclick="selectAllStaffInCurrentView()">✅ Выбрать всех</button>
+                    <button class="btn-add" onclick="deselectAllStaff()">✖ Снять всех</button>
+                    <button class="btn-add" onclick="clearAllStaff()" style="background:rgba(255,70,70,0.15);color:#ff6b6b;border-color:rgba(255,70,70,0.2);">🗑 Очистить всё</button>
+                    <span style="color:#8888aa;font-size:13px;margin-left:auto;" id="staffTotalCount">Всего: 0</span>
+                </div>
+                
                 <div id="staffContainer"><p style="color:#6a6a8a;text-align:center;padding:20px;">Нет загруженных сотрудников. Нажмите "Загрузить файл".</p></div>
                 <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
                     <button class="btn-primary" id="addSelectedBtn" style="width:auto;padding:10px 24px;">➕ Добавить выбранных в протокол</button>
-                    <button class="btn-secondary" onclick="selectAllStaff()">✅ Выбрать всех</button>
-                    <button class="btn-secondary" onclick="deselectAllStaff()">✖ Снять всех</button>
-                    <button class="btn-secondary" onclick="clearStaff()">🗑 Очистить</button>
+                    <button class="btn-primary" id="exportStaffBtn" style="width:auto;padding:10px 24px;background:linear-gradient(135deg,#00d4ff,#7c3aed);">📥 Экспорт штатки</button>
                 </div>
             </div>
         </div>
@@ -492,7 +606,7 @@
                 <div style="margin-bottom:12px;padding:12px 14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
                     <p style="color:#8888aa;font-size:13px;margin-bottom:8px;">👤 Выберите сотрудника из штатного расписания:</p>
                     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-                        <select id="famEmployeeSelect" style="flex:2;min-width:200px;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                        <select id="famEmployeeSelect" style="flex:2;min-width:200px;padding:10px;background:#1a1a3e;color:#fff;border:1px solid rgba(255,255,255,0.12);border-radius:8px;font-size:14px;cursor:pointer;">
                             <option value="">-- Выберите сотрудника --</option>
                         </select>
                         <span style="color:#666;font-size:13px;">— или —</span>
