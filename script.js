@@ -71,6 +71,18 @@ function renderOrgs() {
     });
     const currentOrgId = localStorage.getItem('currentOrgId');
     if (currentOrgId) select.value = currentOrgId;
+    
+    const famOrgSelect = document.getElementById('famOrgSelect');
+    if (famOrgSelect) {
+        famOrgSelect.innerHTML = '<option value="">-- Выберите организацию --</option>';
+        orgs.forEach(org => {
+            const opt = document.createElement('option');
+            opt.value = org.id;
+            opt.textContent = org.name;
+            famOrgSelect.appendChild(opt);
+        });
+        if (currentOrgId) famOrgSelect.value = currentOrgId;
+    }
 }
 function selectOrg(id) { 
     localStorage.setItem('currentOrgId', id); 
@@ -99,6 +111,7 @@ function showTab(name) {
         if (el) el.classList.remove('hidden');
         document.querySelector('.tab button:nth-child(3)')?.classList.add('active');
         fillFamEmployeeSelect();
+        renderOrgs();
     }
 }
 
@@ -198,7 +211,7 @@ function getSelectedPrograms() {
 }
 
 // ============================================================
-// ОЗНАКОМЛЕНИЕ (С РУЧНЫМ ВВОДОМ)
+// ОЗНАКОМЛЕНИЕ
 // ============================================================
 function fillFamEmployeeSelect() {
     const select = document.getElementById('famEmployeeSelect');
@@ -217,107 +230,154 @@ function getFamEmployeeData() {
     const select = document.getElementById('famEmployeeSelect');
     const index = select ? parseInt(select.value) : -1;
     
-    // Проверяем ручной ввод
     const manualLastName = document.getElementById('famManualLastName')?.value.trim() || '';
     const manualFirstName = document.getElementById('famManualFirstName')?.value.trim() || '';
     const manualMiddleName = document.getElementById('famManualMiddleName')?.value.trim() || '';
     const manualPosition = document.getElementById('famManualPosition')?.value.trim() || '';
-    const manualSnils = document.getElementById('famManualSnils')?.value.trim() || '';
     
-    // Если заполнены поля ручного ввода - используем их
     if (manualLastName && manualFirstName) {
         return {
             last_name: manualLastName,
             first_name: manualFirstName,
             middle_name: manualMiddleName,
-            position: manualPosition || 'Должность не указана',
-            snils: manualSnils || ''
+            position: manualPosition || 'Должность не указана'
         };
     }
     
-    // Иначе берем из штатного расписания
-    if (isNaN(index) || index < 0) {
-        return null;
-    }
+    if (isNaN(index) || index < 0) return null;
     const staff = getStaff();
     return staff[index] || null;
 }
 
+function getOrgName() {
+    const select = document.getElementById('famOrgSelect');
+    if (!select) return '';
+    const orgs = getOrgs();
+    const org = orgs.find(o => o.id === parseInt(select.value));
+    return org ? org.name : '';
+}
+
 function generateFamiliarization() {
     const emp = getFamEmployeeData();
-    
     if (!emp) {
         alert('❌ Выберите сотрудника из списка или заполните поля для нового сотрудника!');
         return;
     }
     
-    const docCheckboxes = document.querySelectorAll('.doc-check input[type="checkbox"]:checked');
+    const docLabels = document.querySelectorAll('.doc-check');
     const docs = [];
-    docCheckboxes.forEach(cb => {
-        docs.push(cb.value);
+    let soutNumber = '';
+    let riskPosition = '';
+    
+    docLabels.forEach(label => {
+        const checkbox = label.querySelector('input[type="checkbox"]');
+        const nameInput = label.querySelector('.doc-name-edit');
+        const soutInput = label.querySelector('#soutCardNumber');
+        
+        if (checkbox && checkbox.checked) {
+            let docName = nameInput ? nameInput.value.trim() : checkbox.value;
+            if (soutInput && docName === 'Специальная оценка условий труда') {
+                soutNumber = soutInput.value.trim();
+            }
+            if (docName === 'Оценка профессиональных рисков') {
+                riskPosition = emp.position;
+            }
+            docs.push(docName);
+        }
     });
     
     const customInput = document.getElementById('famCustomDoc');
     const customDocs = customInput ? customInput.value.split('\n').filter(d => d.trim().length > 0) : [];
+    docs.push(...customDocs);
     
-    const allDocs = [...docs, ...customDocs];
-    
-    if (allDocs.length === 0) {
-        alert('❌ Выберите хотя бы один документ для ознакомления или добавьте свой!');
+    if (docs.length === 0) {
+        alert('❌ Выберите хотя бы один документ для ознакомления!');
         return;
     }
     
+    const orgName = getOrgName();
     const result = document.getElementById('famResult');
     const content = document.getElementById('famContent');
     
     if (result && content) {
+        const now = new Date();
+        const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+        const dateStr = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} г.`;
+        
+        // Простое склонение должности
+        let positionGenitive = emp.position;
+        const lastChar = emp.position.slice(-1);
+        if (['а', 'я'].includes(lastChar)) {
+            positionGenitive = emp.position.slice(0, -1) + 'ы';
+        } else if (['й', 'ь'].includes(lastChar)) {
+            positionGenitive = emp.position.slice(0, -1) + 'я';
+        }
+        
         let html = `
-            <div style="padding:24px;background:#fff;color:#222;border-radius:10px;max-width:900px;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
-                <div style="text-align:center;border-bottom:3px solid #7c3aed;padding-bottom:12px;margin-bottom:16px;">
-                    <h2 style="font-size:20px;color:#1a1a3e;margin:0;">ЛИСТ ОЗНАКОМЛЕНИЯ</h2>
-                    <p style="font-size:13px;color:#666;margin:4px 0 0 0;">с документами по охране труда</p>
+            <div style="padding:30px;background:linear-gradient(145deg, #ffffff 0%, #f5f5ff 100%);color:#1a1a3e;border-radius:12px;max-width:1000px;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,0.15);border:1px solid rgba(124,58,237,0.15);">
+                
+                <div style="text-align:center;border-bottom:3px solid #7c3aed;padding-bottom:16px;margin-bottom:20px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                        <div style="font-size:14px;color:#555;text-align:left;">
+                            ${orgName ? `<strong>${orgName}</strong>` : ''}
+                        </div>
+                        <div style="font-size:14px;color:#555;text-align:right;">
+                            УТВЕРЖДАЮ<br>
+                            <span style="border-bottom:1px solid #333;padding:0 20px;display:inline-block;min-width:150px;"></span>
+                        </div>
+                    </div>
+                    <h2 style="font-size:22px;color:#1a1a3e;margin:12px 0 4px 0;letter-spacing:1px;">ЛИСТ ОЗНАКОМЛЕНИЯ</h2>
+                    <p style="font-size:14px;color:#666;margin:0;">с нормативными актами по охране труда</p>
                 </div>
                 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;background:#f8f8f8;padding:14px;border-radius:8px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;background:#f0f0f8;padding:16px 20px;border-radius:8px;">
                     <div>
-                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">ФИО:</strong> ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</p>
-                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">Должность:</strong> ${emp.position}</p>
+                        <p style="margin:4px 0;font-size:15px;color:#333;"><strong style="color:#555;">Фамилия:</strong> ${emp.last_name}</p>
+                        <p style="margin:4px 0;font-size:15px;color:#333;"><strong style="color:#555;">Имя:</strong> ${emp.first_name}</p>
+                        <p style="margin:4px 0;font-size:15px;color:#333;"><strong style="color:#555;">Отчество:</strong> ${emp.middle_name || '—'}</p>
                     </div>
                     <div>
-                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">СНИЛС:</strong> ${emp.snils || '—'}</p>
-                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">Дата:</strong> ${new Date().toLocaleDateString('ru-RU', {day:'2-digit', month:'long', year:'numeric'})}</p>
+                        <p style="margin:4px 0;font-size:15px;color:#333;"><strong style="color:#555;">Должность:</strong> ${emp.position}</p>
+                        <p style="margin:4px 0;font-size:15px;color:#333;"><strong style="color:#555;">Дата:</strong> ${dateStr}</p>
                     </div>
                 </div>
                 
-                <div style="border-top:1px solid #ddd;padding-top:12px;">
-                    <p style="font-weight:600;color:#333;margin-bottom:8px;font-size:14px;">📋 Ознакомлен(а) со следующими документами:</p>
-                    <ol style="padding-left:24px;margin:0;line-height:1.8;">
+                <div style="border-top:2px solid #7c3aed;padding-top:16px;">
+                    <p style="font-weight:700;color:#1a1a3e;margin-bottom:10px;font-size:16px;">📋 Ознакомлен(а) со следующими нормативными актами:</p>
+                    <ol style="padding-left:24px;margin:0;line-height:2.2;font-size:15px;color:#333;">
         `;
         
-        allDocs.forEach(doc => {
-            html += `<li style="font-size:14px;color:#333;">${doc}</li>`;
+        docs.forEach(doc => {
+            let displayDoc = doc;
+            if (doc === 'Специальная оценка условий труда' && soutNumber) {
+                displayDoc = `Специальная оценка условий труда (карта № ${soutNumber})`;
+            }
+            if (doc === 'Оценка профессиональных рисков') {
+                displayDoc = `Карта оценки профессиональных рисков для <u>${positionGenitive}</u>`;
+            }
+            html += `<li style="font-size:15px;color:#333;">${displayDoc}</li>`;
         });
         
         html += `
                     </ol>
                 </div>
                 
-                <div style="margin-top:20px;padding-top:16px;border-top:2px solid #eee;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;">
+                <div style="margin-top:24px;padding-top:18px;border-top:2px solid #eee;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;text-align:center;">
                     <div>
-                        <div style="border-bottom:1px solid #333;height:36px;"></div>
+                        <div style="border-bottom:1px solid #333;height:40px;"></div>
                         <p style="font-size:12px;color:#666;margin:4px 0 0 0;">Подпись сотрудника</p>
                     </div>
                     <div>
-                        <div style="border-bottom:1px solid #333;height:36px;"></div>
+                        <div style="border-bottom:1px solid #333;height:40px;"></div>
                         <p style="font-size:12px;color:#666;margin:4px 0 0 0;">Дата</p>
                     </div>
                     <div>
-                        <div style="border-bottom:1px solid #333;height:36px;"></div>
+                        <div style="border-bottom:1px solid #333;height:40px;"></div>
                         <p style="font-size:12px;color:#666;margin:4px 0 0 0;">Расшифровка подписи</p>
                     </div>
                 </div>
                 
-                <div style="margin-top:12px;padding-top:10px;border-top:1px solid #eee;text-align:center;">
+                <div style="margin-top:16px;padding-top:12px;border-top:1px solid #eee;text-align:center;">
                     <p style="font-size:11px;color:#999;margin:0;">Документ сформирован автоматически в системе «ОхранаТруда.Про»</p>
                 </div>
             </div>
@@ -396,8 +456,9 @@ function escXml(str) {
     if (!str) return ''; 
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); 
 }
+
 // ============================================================
-// СПИСОК ТИПОВ СИЗ (ВСЕ ВИДНЫ, БЕЗ ПРОЗРАЧНОСТИ)
+// СПИСОК ТИПОВ СИЗ
 // ============================================================
 const PPE_TYPES = [
     'Одежда специальная защитная',
@@ -413,17 +474,16 @@ const PPE_TYPES = [
 ];
 
 // ============================================================
-// МОДАЛЬНОЕ ОКНО СИЗ (РУЧНОЙ ВВОД) - РАСШИРЕННАЯ ВЕРСИЯ
+// МОДАЛЬНОЕ ОКНО СИЗ
 // ============================================================
 let currentPPEWorkplace = null;
 let ppeItems = [];
 
 function openPPEModal(wp) {
     if (!wp || !wp.position || wp.position.trim() === '') {
-        alert('⚠️ Для этого рабочего места не указана должность.\nДобавьте должность в настройках рабочего места.');
+        alert('⚠️ Для этого рабочего места не указана должность.');
         return;
     }
-    
     currentPPEWorkplace = wp;
     ppeItems = wp.ppeItems || [];
     
@@ -433,20 +493,15 @@ function openPPEModal(wp) {
     const error = document.getElementById('ppeError');
     const list = document.getElementById('ppeList');
     
-    if (!modal) {
-        console.error('❌ Модальное окно не найдено!');
-        return;
-    }
+    if (!modal) return;
     
     loading.style.display = 'none';
     content.style.display = 'block';
     error.style.display = 'none';
     modal.classList.remove('hidden');
     
-    const nameEl = document.getElementById('ppeEmployeeName');
-    const posEl = document.getElementById('ppePosition');
-    if (nameEl) nameEl.textContent = wp.name || 'Сотрудник';
-    if (posEl) posEl.textContent = wp.position || 'Должность не указана';
+    document.getElementById('ppeEmployeeName').textContent = wp.name || 'Сотрудник';
+    document.getElementById('ppePosition').textContent = wp.position || 'Должность не указана';
     
     renderPPEList();
 }
@@ -455,7 +510,6 @@ function renderPPEList() {
     const list = document.getElementById('ppeList');
     if (!list) return;
     
-    // Опции для выпадающего списка - ВСЕ ВИДНЫ, БЕЗ ПРОЗРАЧНОСТИ
     const typeOptions = PPE_TYPES.map(t => {
         return `<option value="${t}" style="color:#fff;background:#1a1a3e;padding:8px;">${t}</option>`;
     }).join('');
@@ -463,155 +517,106 @@ function renderPPEList() {
     let html = `
         <div style="background:rgba(0,212,255,0.08);padding:10px 14px;border-radius:8px;margin-bottom:14px;border:1px solid rgba(0,212,255,0.15);">
             <span style="color:#8888aa;font-size:13px;">
-                📋 Добавьте средства индивидуальной защиты для профессии <strong style="color:#00d4ff;">"${currentPPEWorkplace.position}"</strong>
+                📋 Добавьте СИЗ для <strong style="color:#00d4ff;">"${currentPPEWorkplace.position}"</strong>
             </span>
             <span style="color:#4caf50;font-size:12px;margin-left:12px;">● ${ppeItems.length} добавлено</span>
         </div>
         
         <div style="margin-bottom:14px;background:rgba(255,255,255,0.03);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
             <div style="display:grid;grid-template-columns:1.4fr 2fr 0.8fr 0.8fr 1fr auto;gap:10px;align-items:end;">
-                
                 <div>
                     <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Тип СИЗ</label>
-                    <select id="ppeTypeSelect" style="width:100%;padding:10px 12px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#fff;font-size:13px;cursor:pointer;appearance:auto;min-width:180px;">
+                    <select id="ppeTypeSelect" style="width:100%;padding:10px 12px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#fff;font-size:13px;cursor:pointer;min-width:180px;">
                         <option value="" selected disabled style="color:#888;background:#1a1a3e;">▼ Выберите тип...</option>
                         ${typeOptions}
                     </select>
                 </div>
-                
                 <div>
-                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Наименование СИЗ</label>
+                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Наименование</label>
                     <input type="text" id="ppeNameInput" placeholder="Костюм х/б" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
                 </div>
-                
                 <div>
                     <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Кол-во</label>
                     <input type="text" id="ppeCountInput" placeholder="1 шт." style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
                 </div>
-                
                 <div>
-                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Срок (мес)</label>
-                    <input type="text" id="ppeTermInput" placeholder="12" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Срок</label>
+                    <input type="text" id="ppeTermInput" placeholder="12 мес" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
                 </div>
-                
                 <div>
-                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Модель/Артикул</label>
+                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Модель</label>
                     <input type="text" id="ppeModelInput" placeholder="Артикул" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
                 </div>
-                
                 <div>
-                    <button onclick="addPPEItem()" style="padding:10px 20px;background:linear-gradient(135deg,#7c3aed,#00d4ff);border:none;border-radius:6px;color:#fff;font-weight:600;cursor:pointer;white-space:nowrap;width:100%;font-size:14px;">
-                        ➕ Добавить
-                    </button>
+                    <button onclick="addPPEItem()" style="padding:10px 20px;background:linear-gradient(135deg,#7c3aed,#00d4ff);border:none;border-radius:6px;color:#fff;font-weight:600;cursor:pointer;width:100%;font-size:14px;">➕ Добавить</button>
                 </div>
             </div>
         </div>
     `;
     
     if (ppeItems.length === 0) {
-        html += `<div style="text-align:center;padding:20px;color:#666;font-size:14px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px dashed rgba(255,255,255,0.06);">Нет добавленных СИЗ. Добавьте первый выше.</div>`;
+        html += `<div style="text-align:center;padding:20px;color:#666;font-size:14px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px dashed rgba(255,255,255,0.06);">Нет добавленных СИЗ.</div>`;
     } else {
         html += `
             <div style="max-height:300px;overflow-y:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">
                 <table style="width:100%;border-collapse:collapse;font-size:13px;">
                     <thead style="position:sticky;top:0;background:#1a1a3e;z-index:2;">
                         <tr style="border-bottom:2px solid rgba(124,58,237,0.3);">
-                            <th style="text-align:left;padding:8px 10px;color:#8888aa;font-weight:500;min-width:30px;">№</th>
-                            <th style="text-align:left;padding:8px 10px;color:#8888aa;font-weight:500;min-width:160px;">Тип</th>
-                            <th style="text-align:left;padding:8px 10px;color:#8888aa;font-weight:500;min-width:160px;">Наименование</th>
-                            <th style="text-align:left;padding:8px 10px;color:#8888aa;font-weight:500;min-width:60px;">Кол-во</th>
-                            <th style="text-align:left;padding:8px 10px;color:#8888aa;font-weight:500;min-width:60px;">Срок</th>
-                            <th style="text-align:left;padding:8px 10px;color:#8888aa;font-weight:500;min-width:120px;">Модель</th>
-                            <th style="width:40px;text-align:center;color:#8888aa;font-weight:500;">✖</th>
+                            <th style="padding:8px 10px;color:#8888aa;text-align:left;">№</th>
+                            <th style="padding:8px 10px;color:#8888aa;text-align:left;">Тип</th>
+                            <th style="padding:8px 10px;color:#8888aa;text-align:left;">Наименование</th>
+                            <th style="padding:8px 10px;color:#8888aa;text-align:left;">Кол-во</th>
+                            <th style="padding:8px 10px;color:#8888aa;text-align:left;">Срок</th>
+                            <th style="padding:8px 10px;color:#8888aa;text-align:left;">Модель</th>
+                            <th style="width:40px;text-align:center;color:#8888aa;">✖</th>
                         </tr>
                     </thead>
                     <tbody>
         `;
-        
         ppeItems.forEach((item, index) => {
-            const typeColor = item.type && item.type !== 'Выберите тип...' ? '#7c3aed' : '#666';
             html += `
                 <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                    <td style="padding:8px 10px;color:#7c3aed;font-weight:600;font-size:12px;">${index + 1}</td>
-                    <td style="padding:8px 10px;color:${typeColor};font-size:12px;max-width:160px;word-wrap:break-word;">${item.type && item.type !== 'Выберите тип...' ? item.type : '—'}</td>
-                    <td style="padding:8px 10px;color:#fff;max-width:160px;word-wrap:break-word;">${item.name || ''}</td>
-                    <td style="padding:8px 10px;color:#4caf50;font-weight:500;">${item.count || '—'}</td>
+                    <td style="padding:8px 10px;color:#7c3aed;font-weight:600;">${index+1}</td>
+                    <td style="padding:8px 10px;color:#7c3aed;">${item.type || '—'}</td>
+                    <td style="padding:8px 10px;color:#fff;">${item.name || ''}</td>
+                    <td style="padding:8px 10px;color:#4caf50;">${item.count || '—'}</td>
                     <td style="padding:8px 10px;color:#ffc107;">${item.term || '—'}</td>
-                    <td style="padding:8px 10px;color:#b388ff;font-size:12px;max-width:120px;word-wrap:break-word;">${item.model || '—'}</td>
+                    <td style="padding:8px 10px;color:#b388ff;">${item.model || '—'}</td>
                     <td style="padding:8px 10px;text-align:center;">
-                        <button onclick="removePPEItem(${index})" style="background:rgba(255,70,70,0.15);border:none;border-radius:4px;color:#ff6b6b;cursor:pointer;padding:2px 10px;font-size:13px;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,70,70,0.3)'" onmouseout="this.style.background='rgba(255,70,70,0.15)'">✖</button>
+                        <button onclick="removePPEItem(${index})" style="background:rgba(255,70,70,0.15);border:none;border-radius:4px;color:#ff6b6b;cursor:pointer;padding:2px 10px;">✖</button>
                     </td>
                 </tr>
             `;
         });
-        
-        html += `
-                    </tbody>
-                </table>
-            </div>
-        `;
+        html += `</tbody></table></div>`;
     }
     
     html += `
         <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;border-top:1px solid rgba(255,255,255,0.06);padding-top:14px;">
-            <button onclick="savePPEItems()" 
-                    style="padding:10px 28px;background:linear-gradient(135deg,#4caf50,#2e7d32);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:transform 0.2s;"
-                    onmouseover="this.style.transform='scale(1.03)'" 
-                    onmouseout="this.style.transform='scale(1)'">
-                💾 Сохранить СИЗ
-            </button>
-            <button onclick="exportPPE()" 
-                    style="padding:10px 28px;background:linear-gradient(135deg,#7c3aed,#00d4ff);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:transform 0.2s;"
-                    onmouseover="this.style.transform='scale(1.03)'" 
-                    onmouseout="this.style.transform='scale(1)'">
-                📥 Экспорт PDF
-            </button>
-            <button onclick="closePPEModal()" 
-                    style="padding:10px 28px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#aaa;cursor:pointer;font-size:14px;transition:all 0.2s;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.12)'" 
-                    onmouseout="this.style.background='rgba(255,255,255,0.06)'">
-                ✖ Закрыть
-            </button>
+            <button onclick="savePPEItems()" style="padding:10px 28px;background:linear-gradient(135deg,#4caf50,#2e7d32);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">💾 Сохранить</button>
+            <button onclick="exportPPE()" style="padding:10px 28px;background:linear-gradient(135deg,#7c3aed,#00d4ff);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">📥 Экспорт PDF</button>
+            <button onclick="closePPEModal()" style="padding:10px 28px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#aaa;cursor:pointer;">✖ Закрыть</button>
         </div>
     `;
-    
     list.innerHTML = html;
 }
 
 function addPPEItem() {
-    const typeSelect = document.getElementById('ppeTypeSelect');
-    const nameInput = document.getElementById('ppeNameInput');
-    const countInput = document.getElementById('ppeCountInput');
-    const termInput = document.getElementById('ppeTermInput');
-    const modelInput = document.getElementById('ppeModelInput');
+    const type = document.getElementById('ppeTypeSelect').value;
+    const name = document.getElementById('ppeNameInput').value.trim();
+    const count = document.getElementById('ppeCountInput').value.trim();
+    const term = document.getElementById('ppeTermInput').value.trim();
+    const model = document.getElementById('ppeModelInput').value.trim();
     
-    const type = typeSelect ? typeSelect.value : '';
-    const name = nameInput ? nameInput.value.trim() : '';
-    const count = countInput ? countInput.value.trim() : '';
-    const term = termInput ? termInput.value.trim() : '';
-    const model = modelInput ? modelInput.value.trim() : '';
-    
-    if (!name) {
-        alert('❌ Введите наименование СИЗ!');
-        nameInput.focus();
-        return;
-    }
-    
-    if (!type || type === 'Выберите тип...') {
-        alert('❌ Выберите тип СИЗ из списка!');
-        typeSelect.focus();
-        return;
-    }
+    if (!name) { alert('❌ Введите наименование СИЗ!'); return; }
+    if (!type || type === 'Выберите тип...') { alert('❌ Выберите тип СИЗ!'); return; }
     
     ppeItems.push({ type, name, count, term, model });
-    
-    if (nameInput) nameInput.value = '';
-    if (countInput) countInput.value = '';
-    if (termInput) termInput.value = '';
-    if (modelInput) modelInput.value = '';
-    if (typeSelect) typeSelect.value = '';
-    
-    nameInput.focus();
+    document.getElementById('ppeNameInput').value = '';
+    document.getElementById('ppeCountInput').value = '';
+    document.getElementById('ppeTermInput').value = '';
+    document.getElementById('ppeModelInput').value = '';
+    document.getElementById('ppeTypeSelect').value = '';
     renderPPEList();
 }
 
@@ -622,315 +627,186 @@ function removePPEItem(index) {
 
 function savePPEItems() {
     if (!currentPPEWorkplace) return;
-    
-    if (ppeItems.length === 0) {
-        alert('⚠️ Добавьте хотя бы одно СИЗ перед сохранением!');
-        return;
-    }
-    
+    if (ppeItems.length === 0) { alert('⚠️ Добавьте хотя бы одно СИЗ!'); return; }
     currentPPEWorkplace.ppeItems = ppeItems;
     currentPPEWorkplace.hasPPE = true;
     currentPPEWorkplace.ppeSource = 'Введено вручную';
     saveMap();
     drawMap();
-    
-    alert(`✅ Сохранено ${ppeItems.length} СИЗ для "${currentPPEWorkplace.name}"!\n\n🟢 Теперь на карте оно будет зеленым.`);
+    alert(`✅ Сохранено ${ppeItems.length} СИЗ!`);
     closePPEModal();
 }
 
 function closePPEModal() {
-    const modal = document.getElementById('ppeModal');
-    if (modal) modal.classList.add('hidden');
+    document.getElementById('ppeModal').classList.add('hidden');
     currentPPEWorkplace = null;
     ppeItems = [];
 }
 
 function exportPPE() {
-    if (!currentPPEWorkplace) {
-        alert('Нет данных для экспорта');
-        return;
-    }
-    
+    if (!currentPPEWorkplace) { alert('Нет данных'); return; }
     let ppeText = '';
-    if (ppeItems.length === 0) {
-        ppeText = '<p style="color:#888;text-align:center;">Нет добавленных СИЗ</p>';
-    } else {
-        ppeItems.forEach((item, index) => {
-            ppeText += `
-                <div style="padding:10px 14px;margin:6px 0;background:#f8f8f8;border-radius:6px;border-left:4px solid #7c3aed;">
-                    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;">
-                        <span style="font-weight:700;color:#7c3aed;min-width:30px;">${index + 1}.</span>
-                        <span style="color:#333;flex:1;"><strong>${item.type || 'СИЗ'}:</strong> ${item.name}</span>
-                        <span style="color:#4caf50;font-weight:500;">${item.count || ''}</span>
-                        <span style="color:#ff8f00;">${item.term ? item.term + ' мес' : ''}</span>
-                        ${item.model ? `<span style="color:#7c3aed;font-size:13px;">📦 ${item.model}</span>` : ''}
-                    </div>
-                </div>
-            `;
-        });
-    }
-    
+    ppeItems.forEach((item, i) => {
+        ppeText += `<div style="padding:8px 12px;margin:4px 0;background:#f5f5f5;border-radius:4px;border-left:3px solid #7c3aed;">
+            <span style="font-weight:700;color:#7c3aed;">${i+1}.</span>
+            <span><strong>${item.type}:</strong> ${item.name}</span>
+            <span style="color:#4caf50;float:right;">${item.count || ''} ${item.term || ''}</span>
+            ${item.model ? `<br><span style="color:#888;font-size:12px;margin-left:28px;">📦 ${item.model}</span>` : ''}
+        </div>`;
+    });
     const win = window.open('', '_blank');
-    win.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>СИЗ для ${currentPPEWorkplace.name}</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 40px; color: #333; max-width: 900px; margin: 0 auto; }
-                h1 { color: #1a1a3e; border-bottom: 3px solid #7c3aed; padding-bottom: 10px; }
-                .header-info { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; }
-                .header-info p { margin: 5px 0; }
-                .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 12px; color: #888; text-align: center; }
-                .source { background: #e8f5e9; padding: 10px; border-radius: 6px; margin: 15px 0; font-size: 14px; }
-                table { width:100%; border-collapse:collapse; margin-top:15px; }
-                th { text-align:left; padding:10px 12px; background:#f0f0f0; border-bottom:2px solid #7c3aed; }
-                td { padding:8px 12px; border-bottom:1px solid #eee; }
-                .model-cell { color:#7c3aed; font-size:13px; }
-            </style>
-        </head>
-        <body>
-            <h1>🦺 Средства индивидуальной защиты</h1>
-            <div class="header-info">
-                <p><strong>Сотрудник:</strong> ${currentPPEWorkplace.name}</p>
-                <p><strong>Должность:</strong> ${currentPPEWorkplace.position}</p>
-                <p><strong>Дата формирования:</strong> ${new Date().toLocaleDateString('ru-RU', {day:'2-digit', month:'long', year:'numeric'})}</p>
-            </div>
-            <div class="source">
-                📋 Источник: ${currentPPEWorkplace.ppeSource || 'Введено вручную'}
-            </div>
-            <hr style="margin: 20px 0;">
-            ${ppeItems.length > 0 ? `
-            <table>
-                <thead>
-                    <tr>
-                        <th>№</th>
-                        <th>Тип СИЗ</th>
-                        <th>Наименование</th>
-                        <th>Кол-во</th>
-                        <th>Срок (мес)</th>
-                        <th>Модель</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${ppeItems.map((item, i) => `
-                        <tr>
-                            <td>${i+1}</td>
-                            <td>${item.type || '—'}</td>
-                            <td><strong>${item.name}</strong></td>
-                            <td>${item.count || '—'}</td>
-                            <td>${item.term || '—'}</td>
-                            <td class="model-cell">${item.model || '—'}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-            ` : '<p style="color:#888;">Нет данных о СИЗ</p>'}
-            <div class="footer">
-                <p>Данные введены специалистом по охране труда</p>
-            </div>
-            <script>window.print();<\/script>
-        </body>
-        </html>
-    `);
+    win.document.write(`<!DOCTYPE html><html><head><title>СИЗ</title><style>body{font-family:Arial;padding:40px;color:#333;max-width:900px;margin:0 auto;}h1{color:#1a1a3e;border-bottom:3px solid #7c3aed;padding-bottom:10px;}.header-info{background:#f5f5f5;padding:15px;border-radius:8px;margin:20px 0;}.footer{margin-top:30px;padding-top:15px;border-top:1px solid #ddd;font-size:12px;color:#888;text-align:center;}</style></head><body>
+        <h1>🦺 Средства индивидуальной защиты</h1>
+        <div class="header-info"><p><strong>Сотрудник:</strong> ${currentPPEWorkplace.name}</p><p><strong>Должность:</strong> ${currentPPEWorkplace.position}</p><p><strong>Дата:</strong> ${new Date().toLocaleDateString('ru-RU')}</p></div>
+        <hr>${ppeText}<div class="footer"><p>Данные введены специалистом по ОТ</p></div>
+        <script>window.print();<\/script></body></html>`);
     win.document.close();
 }
 
 // ============================================================
-// ИМПОРТ ШТАТНОГО РАСПИСАНИЯ
+// ИМПОРТ И ПРОТОКОЛ
 // ============================================================
-
 function importStaffFile() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.txt,.csv,.doc,.docx';
-    
     input.onchange = function(e) {
         const file = e.target.files[0];
         if (!file) return;
-        
         const reader = new FileReader();
         reader.onload = function(event) {
             try {
-                const content = event.target.result;
-                const employees = smartParse(content);
-                
-                if (employees.length === 0) {
-                    alert('❌ Не удалось распознать сотрудников. Проверьте формат файла.');
-                    return;
-                }
-                
-                const existing = getStaff();
-                const merged = [...existing, ...employees];
+                const employees = smartParse(event.target.result);
+                if (employees.length === 0) { alert('❌ Не удалось распознать сотрудников.'); return; }
+                const merged = [...getStaff(), ...employees];
                 saveStaff(merged);
-                
                 renderStaff();
                 fillFamEmployeeSelect();
-                
-                alert(`✅ Загружено ${employees.length} сотрудников! Всего: ${merged.length}`);
-            } catch (err) {
-                alert('❌ Ошибка при загрузке: ' + err.message);
-                console.error(err);
-            }
+                alert(`✅ Загружено ${employees.length} сотрудников!`);
+            } catch (err) { alert('❌ Ошибка: ' + err.message); }
         };
-        
         reader.readAsText(file, 'UTF-8');
     };
-    
     input.click();
 }
 
 function addSelectedToProtocol() {
     const selected = getSelectedStaff();
-    if (selected.length === 0) {
-        alert('❌ Выберите хотя бы одного сотрудника в штатном расписании');
-        return;
-    }
-    
+    if (selected.length === 0) { alert('❌ Выберите сотрудников!'); return; }
     const protocol = getProtocol();
-    const existingSnils = new Set(protocol.map(e => e.snils));
-    
+    const existing = new Set(protocol.map(e => e.snils));
     let added = 0;
     selected.forEach(emp => {
-        if (!existingSnils.has(emp.snils)) {
-            protocol.push({ ...emp });
-            existingSnils.add(emp.snils);
-            added++;
-        }
+        if (!existing.has(emp.snils)) { protocol.push({...emp}); existing.add(emp.snils); added++; }
     });
-    
     saveProtocol(protocol);
     renderProtocol();
-    
     document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
-    const selectAll = document.getElementById('selectAllStaff');
-    if (selectAll) selectAll.checked = false;
-    
-    alert(`✅ Добавлено ${added} сотрудников в протокол!`);
+    document.getElementById('selectAllStaff').checked = false;
+    alert(`✅ Добавлено ${added} сотрудников!`);
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ XML ПРОТОКОЛА
+// ГЕНЕРАЦИЯ XML
 // ============================================================
-
 function generateXML() {
-    console.log('🚀 generateXML вызвана');
-    
     const orgSelect = document.getElementById('orgSelect');
-    const orgId = orgSelect ? orgSelect.value : '';
     const orgs = getOrgs();
-    const org = orgs.find(o => o.id === parseInt(orgId));
-    
-    if (!org) {
-        alert('❌ Выберите организацию!');
-        return;
-    }
-    
+    const org = orgs.find(o => o.id === parseInt(orgSelect.value));
+    if (!org) { alert('❌ Выберите организацию!'); return; }
     const protocol = getProtocol();
-    if (protocol.length === 0) {
-        alert('❌ В протоколе нет сотрудников! Добавьте их из штатного расписания.');
-        return;
-    }
+    if (protocol.length === 0) { alert('❌ Нет сотрудников в протоколе!'); return; }
     
-    const numberInput = document.getElementById('protocolNumber');
-    const dateInput = document.getElementById('protocolDate');
+    const number = document.getElementById('protocolNumber').value.trim() || '01/26';
+    const date = document.getElementById('protocolDate').value || new Date().toISOString().split('T')[0];
     
-    const number = numberInput ? numberInput.value.trim() || '01/26' : '01/26';
-    const date = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
-    
-    const programCheckboxes = document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked');
     const programs = [];
-    programCheckboxes.forEach(cb => {
+    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked').forEach(cb => {
         const label = cb.closest('.program-check');
-        if (label) {
-            programs.push(label.textContent.trim());
-        }
+        if (label) programs.push(label.textContent.trim());
     });
+    if (programs.length === 0) { alert('❌ Выберите программы!'); return; }
     
-    if (programs.length === 0) {
-        alert('❌ Выберите хотя бы одну программу обучения!');
-        return;
-    }
-    
-    const xml = buildXML(org, protocol, number, date, programs);
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<Протокол>\n';
+    xml += `  <Номер>${escXml(number)}</Номер>\n  <Дата>${escXml(date)}</Дата>\n  <Организация>${escXml(org.name)}</Организация>\n`;
+    xml += '  <Программы>\n';
+    programs.forEach(p => xml += `    <Программа>${escXml(p)}</Программа>\n`);
+    xml += '  </Программы>\n  <Сотрудники>\n';
+    protocol.forEach((emp, i) => {
+        xml += `    <Сотрудник>\n      <Номер>${i+1}</Номер>\n      <Фамилия>${escXml(emp.last_name)}</Фамилия>\n      <Имя>${escXml(emp.first_name)}</Имя>\n`;
+        xml += `      <Отчество>${escXml(emp.middle_name || '')}</Отчество>\n      <Должность>${escXml(emp.position)}</Должность>\n`;
+        xml += `      <СНИЛС>${escXml(formatSnils(emp.snils))}</СНИЛС>\n      <Результат>Пройдено</Результат>\n    </Сотрудник>\n`;
+    });
+    xml += '  </Сотрудники>\n</Протокол>';
     
     const resultBlock = document.getElementById('resultBlock');
     const downloadLink = document.getElementById('downloadLink');
-    
-    if (resultBlock && downloadLink) {
-        resultBlock.classList.remove('hidden');
-        
-        const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        downloadLink.href = url;
-        downloadLink.download = `Протокол_${number}_${date}.xml`;
-        
-        const preview = document.createElement('pre');
-        preview.style.cssText = 'max-height:300px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;text-align:left;margin-top:12px;';
-        preview.textContent = xml.substring(0, 500) + '...';
-        
-        const oldPreview = resultBlock.querySelector('pre');
-        if (oldPreview) oldPreview.remove();
-        
-        resultBlock.appendChild(preview);
-        
-        console.log('✅ XML сгенерирован успешно!');
-    }
-}
-
-function buildXML(org, employees, number, date, programs) {
-    const dateFormatted = formatDate(date);
-    const currentDate = new Date().toISOString().split('T')[0];
-    
-    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-    xml += '<Протокол xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
-    
-    xml += '  <ОбщиеСведения>\n';
-    xml += `    <НомерПротокола>${escXml(number)}</НомерПротокола>\n`;
-    xml += `    <ДатаПроведения>${escXml(dateFormatted)}</ДатаПроведения>\n`;
-    xml += `    <ДатаФормирования>${escXml(currentDate)}</ДатаФормирования>\n`;
-    xml += `    <Организация>\n`;
-    xml += `      <Наименование>${escXml(org.name)}</Наименование>\n`;
-    xml += `      <ИНН>${escXml(org.inn)}</ИНН>\n`;
-    xml += `    </Организация>\n`;
-    xml += '  </ОбщиеСведения>\n\n';
-    
-    xml += '  <ПрограммыОбучения>\n';
-    programs.forEach((prog, index) => {
-        xml += `    <Программа Номер="${index + 1}">${escXml(prog)}</Программа>\n`;
-    });
-    xml += '  </ПрограммыОбучения>\n\n';
-    
-    xml += '  <СписокСотрудников>\n';
-    employees.forEach((emp, index) => {
-        xml += '    <Сотрудник>\n';
-        xml += `      <Номер>${index + 1}</Номер>\n`;
-        xml += `      <Фамилия>${escXml(emp.last_name)}</Фамилия>\n`;
-        xml += `      <Имя>${escXml(emp.first_name)}</Имя>\n`;
-        xml += `      <Отчество>${escXml(emp.middle_name || '')}</Отчество>\n`;
-        xml += `      <Должность>${escXml(emp.position)}</Должность>\n`;
-        xml += `      <СНИЛС>${escXml(formatSnils(emp.snils))}</СНИЛС>\n`;
-        xml += `      <Результат>Пройдено</Результат>\n`;
-        xml += '    </Сотрудник>\n';
-    });
-    xml += '  </СписокСотрудников>\n';
-    
-    xml += '</Протокол>';
-    
-    return xml;
-}
-
-function formatDate(dateStr) {
-    if (!dateStr) return '';
-    const parts = dateStr.split('-');
-    if (parts.length === 3) {
-        return `${parts[2]}.${parts[1]}.${parts[0]}`;
-    }
-    return dateStr;
+    resultBlock.classList.remove('hidden');
+    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = `Протокол_${number}_${date}.xml`;
+    const preview = document.createElement('pre');
+    preview.style.cssText = 'max-height:200px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;margin-top:12px;';
+    preview.textContent = xml.substring(0, 500) + '...';
+    resultBlock.querySelector('pre')?.remove();
+    resultBlock.appendChild(preview);
 }
 
 // ============================================================
-// КАРТА (ПОЛНАЯ ВЕРСИЯ С ВЫХОДАМИ, ОГНЕТУШИТЕЛЯМИ, ПУТЯМИ)
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================================
+function initTrainingPage() {
+    renderOrgs();
+    renderStaff();
+    renderProtocol();
+    fillFamEmployeeSelect();
+    
+    document.getElementById('showOrgFormBtn').addEventListener('click', () => {
+        document.getElementById('orgForm').classList.remove('hidden');
+    });
+    document.getElementById('saveOrgBtn').addEventListener('click', () => {
+        const name = document.getElementById('orgNameInput').value.trim();
+        const inn = document.getElementById('orgInnInput').value.trim();
+        if (!name || !inn) { alert('Заполните все поля!'); return; }
+        const orgs = getOrgs();
+        orgs.push({ id: Date.now(), name, inn });
+        saveOrgs(orgs);
+        renderOrgs();
+        document.getElementById('orgForm').classList.add('hidden');
+        document.getElementById('orgNameInput').value = '';
+        document.getElementById('orgInnInput').value = '';
+        alert('✅ Организация добавлена!');
+    });
+    document.getElementById('cancelOrgBtn').addEventListener('click', () => {
+        document.getElementById('orgForm').classList.add('hidden');
+    });
+    document.getElementById('deleteOrgBtn').addEventListener('click', () => {
+        const id = parseInt(document.getElementById('orgSelect').value);
+        if (!id) { alert('Выберите организацию!'); return; }
+        if (!confirm('Удалить?')) return;
+        let orgs = getOrgs();
+        orgs = orgs.filter(o => o.id !== id);
+        saveOrgs(orgs);
+        renderOrgs();
+        alert('✅ Удалено');
+    });
+    document.getElementById('generateBtn').addEventListener('click', generateXML);
+    document.getElementById('addSelectedBtn').addEventListener('click', addSelectedToProtocol);
+    document.getElementById('staffImportBtn').addEventListener('click', importStaffFile);
+    document.getElementById('generateFamBtn').addEventListener('click', generateFamiliarization);
+    document.getElementById('printFamBtn').addEventListener('click', function() {
+        const content = document.getElementById('famContent');
+        if (!content.innerHTML) return;
+        const win = window.open('', '_blank');
+        win.document.write(`<!DOCTYPE html><html><head><title>Лист ознакомления</title>
+            <style>body{font-family:Arial;padding:40px;color:#222;max-width:1000px;margin:0 auto;}*{print-color-adjust:exact;}@media print{body{padding:20px;}}</style>
+        </head><body>${content.innerHTML}<script>window.print();window.close();<\/script></body></html>`);
+        win.document.close();
+    });
+}
+
+// ============================================================
+// КАРТА (ПОЛНАЯ ВЕРСИЯ)
 // ============================================================
 let mapData = {
     workshops: [],
@@ -978,7 +854,6 @@ function initMapPage() {
     
     canvas.width = 4000;
     canvas.height = 2000;
-    
     mapInited = true;
     
     const saved = localStorage.getItem('mapData');
@@ -1015,127 +890,73 @@ function initMapPage() {
     }
     
     // Назначаем обработчики кнопок
-    const editBtn = document.getElementById('editWorkshopBtn');
-    if (editBtn) editBtn.addEventListener('click', openWorkshopModal);
-    
-    const addWorkerBtn = document.getElementById('addWorkerPlaceBtn');
-    if (addWorkerBtn) {
-        addWorkerBtn.addEventListener('click', function() {
-            const ws = getCurrentWorkshop();
-            if (!ws) { alert('Сначала создайте участок'); return; }
-            mapMode = 'addWorkplace';
-            tempObjectType = 'workplace';
-            const modeEl = document.getElementById('mapMode');
-            if (modeEl) {
-                modeEl.textContent = 'Добавление рабочего места (кликните на карту)';
-                modeEl.style.color = '#ff6b6b';
-            }
-            const canvasEl = document.getElementById('mapCanvas');
-            if (canvasEl) canvasEl.style.cursor = 'crosshair';
-        });
-    }
-    
-    const addEvacBtn = document.getElementById('addEvacuationBtn');
-    if (addEvacBtn) {
-        addEvacBtn.addEventListener('click', function() {
-            const ws = getCurrentWorkshop();
-            if (!ws) { alert('Сначала создайте участок'); return; }
-            mapMode = 'addEvacuation';
-            tempObjectType = 'evacuation';
-            const modeEl = document.getElementById('mapMode');
-            if (modeEl) {
-                modeEl.textContent = 'Добавление выхода (кликните на карту)';
-                modeEl.style.color = '#4caf50';
-            }
-            const canvasEl = document.getElementById('mapCanvas');
-            if (canvasEl) canvasEl.style.cursor = 'crosshair';
-        });
-    }
-    
-    const addFeBtn = document.getElementById('addFireExtinguisherBtn');
-    if (addFeBtn) {
-        addFeBtn.addEventListener('click', function() {
-            const ws = getCurrentWorkshop();
-            if (!ws) { alert('Сначала создайте участок'); return; }
-            mapMode = 'addFireExtinguisher';
-            tempObjectType = 'fireExtinguisher';
-            const modeEl = document.getElementById('mapMode');
-            if (modeEl) {
-                modeEl.textContent = 'Добавление огнетушителя (кликните на карту)';
-                modeEl.style.color = '#ff1744';
-            }
-            const canvasEl = document.getElementById('mapCanvas');
-            if (canvasEl) canvasEl.style.cursor = 'crosshair';
-        });
-    }
-    
-    const addRouteBtn = document.getElementById('addEvacuationRouteBtn');
-    if (addRouteBtn) {
-        addRouteBtn.addEventListener('click', function() {
-            const ws = getCurrentWorkshop();
-            if (!ws) { alert('Сначала создайте участок'); return; }
-            mapMode = 'addEvacuationRoute';
-            tempObjectType = 'route';
-            tempRoutePoints = [];
-            const modeEl = document.getElementById('mapMode');
-            if (modeEl) {
-                modeEl.textContent = 'Добавление пути эвакуации (кликните точки маршрута)';
-                modeEl.style.color = '#ffc107';
-            }
-            const canvasEl = document.getElementById('mapCanvas');
-            if (canvasEl) canvasEl.style.cursor = 'crosshair';
-        });
-    }
-    
-    const saveBtn = document.getElementById('saveMapBtn');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', function() {
-            saveMap();
-            alert('✅ Карта сохранена!');
-        });
-    }
-    
-    const saveWorkshopBtn = document.getElementById('saveWorkshopBtn');
-    if (saveWorkshopBtn) saveWorkshopBtn.addEventListener('click', saveWorkshop);
-    
-    const saveWorkplaceBtn = document.getElementById('saveWorkplaceBtn');
-    if (saveWorkplaceBtn) saveWorkplaceBtn.addEventListener('click', saveWorkplace);
-    
-    const saveFeBtn = document.getElementById('saveFireExtinguisherBtn');
-    if (saveFeBtn) saveFeBtn.addEventListener('click', saveFireExtinguisher);
-    
-    const workshopSelect = document.getElementById('workshopSelect');
-    if (workshopSelect) {
-        workshopSelect.addEventListener('change', function() {
-            mapData.currentWorkshop = parseInt(this.value);
-            updateInfo();
-            drawMap();
-            saveMap();
-        });
-    }
-    
-    const deleteBtn = document.getElementById('deleteSelectedBtn');
-    if (deleteBtn) deleteBtn.addEventListener('click', deleteSelectedObject);
+    document.getElementById('editWorkshopBtn').addEventListener('click', openWorkshopModal);
+    document.getElementById('addWorkerPlaceBtn').addEventListener('click', function() {
+        const ws = getCurrentWorkshop();
+        if (!ws) { alert('Сначала создайте участок'); return; }
+        mapMode = 'addWorkplace';
+        tempObjectType = 'workplace';
+        document.getElementById('mapMode').textContent = 'Добавление рабочего места (кликните на карту)';
+        document.getElementById('mapMode').style.color = '#ff6b6b';
+        document.getElementById('mapCanvas').style.cursor = 'crosshair';
+    });
+    document.getElementById('addEvacuationBtn').addEventListener('click', function() {
+        const ws = getCurrentWorkshop();
+        if (!ws) { alert('Сначала создайте участок'); return; }
+        mapMode = 'addEvacuation';
+        tempObjectType = 'evacuation';
+        document.getElementById('mapMode').textContent = 'Добавление выхода (кликните на карту)';
+        document.getElementById('mapMode').style.color = '#4caf50';
+        document.getElementById('mapCanvas').style.cursor = 'crosshair';
+    });
+    document.getElementById('addFireExtinguisherBtn').addEventListener('click', function() {
+        const ws = getCurrentWorkshop();
+        if (!ws) { alert('Сначала создайте участок'); return; }
+        mapMode = 'addFireExtinguisher';
+        tempObjectType = 'fireExtinguisher';
+        document.getElementById('mapMode').textContent = 'Добавление огнетушителя (кликните на карту)';
+        document.getElementById('mapMode').style.color = '#ff1744';
+        document.getElementById('mapCanvas').style.cursor = 'crosshair';
+    });
+    document.getElementById('addEvacuationRouteBtn').addEventListener('click', function() {
+        const ws = getCurrentWorkshop();
+        if (!ws) { alert('Сначала создайте участок'); return; }
+        mapMode = 'addEvacuationRoute';
+        tempObjectType = 'route';
+        tempRoutePoints = [];
+        document.getElementById('mapMode').textContent = 'Добавление пути эвакуации (кликните точки маршрута)';
+        document.getElementById('mapMode').style.color = '#ffc107';
+        document.getElementById('mapCanvas').style.cursor = 'crosshair';
+    });
+    document.getElementById('saveMapBtn').addEventListener('click', function() {
+        saveMap();
+        alert('✅ Карта сохранена!');
+    });
+    document.getElementById('saveWorkshopBtn').addEventListener('click', saveWorkshop);
+    document.getElementById('saveWorkplaceBtn').addEventListener('click', saveWorkplace);
+    document.getElementById('saveFireExtinguisherBtn').addEventListener('click', saveFireExtinguisher);
+    document.getElementById('workshopSelect').addEventListener('change', function() {
+        mapData.currentWorkshop = parseInt(this.value);
+        updateInfo();
+        drawMap();
+        saveMap();
+    });
+    document.getElementById('deleteSelectedBtn').addEventListener('click', deleteSelectedObject);
     
     // Автоматический расчет даты перезарядки
-    const feDateInput = document.getElementById('feDateInput');
-    if (feDateInput) {
-        feDateInput.addEventListener('change', function() {
-            const nextDateInput = document.getElementById('feNextDateInput');
-            if (nextDateInput && this.value) {
-                const date = new Date(this.value);
-                date.setFullYear(date.getFullYear() + 1);
-                nextDateInput.value = date.toISOString().split('T')[0];
-            }
-        });
-    }
+    document.getElementById('feDateInput').addEventListener('change', function() {
+        const nextDateInput = document.getElementById('feNextDateInput');
+        if (nextDateInput && this.value) {
+            const date = new Date(this.value);
+            date.setFullYear(date.getFullYear() + 1);
+            nextDateInput.value = date.toISOString().split('T')[0];
+        }
+    });
     
     setupCanvasEvents();
-    
     updateWorkshopSelect();
     updateInfo();
     drawMap();
-    
     console.log('✅ Карта инициализирована успешно!');
 }
 
@@ -1158,14 +979,10 @@ function updateWorkshopSelect() {
 
 function updateInfo() {
     const ws = getCurrentWorkshop();
-    const sizeEl = document.getElementById('workshopSize');
-    const countEl = document.getElementById('workerCount');
-    const evacEl = document.getElementById('evacuationCount');
-    const feEl = document.getElementById('fireExtinguisherCount');
-    if (sizeEl) sizeEl.textContent = ws ? `${ws.name}` : 'не задан';
-    if (countEl) countEl.textContent = ws ? ws.workplaces.length : 0;
-    if (evacEl) evacEl.textContent = mapData.evacuationPoints ? mapData.evacuationPoints.length : 0;
-    if (feEl) feEl.textContent = mapData.fireExtinguishers ? mapData.fireExtinguishers.length : 0;
+    document.getElementById('workshopSize').textContent = ws ? `${ws.name}` : 'не задан';
+    document.getElementById('workerCount').textContent = ws ? ws.workplaces.length : 0;
+    document.getElementById('evacuationCount').textContent = mapData.evacuationPoints ? mapData.evacuationPoints.length : 0;
+    document.getElementById('fireExtinguisherCount').textContent = mapData.fireExtinguishers ? mapData.fireExtinguishers.length : 0;
 }
 
 function getCanvasCoords(e) {
@@ -1181,9 +998,6 @@ function getCanvasCoords(e) {
         y: (clientY - rect.top) * scaleY
     };
 }
-// ============================================================
-// ОТРИСОВКА КАРТЫ
-// ============================================================
 
 function drawMap() {
     const canvas = document.getElementById('mapCanvas');
@@ -1196,11 +1010,9 @@ function drawMap() {
     const ws = getCurrentWorkshop();
     if (!ws) return;
     
-    // Фон
     ctx.fillStyle = '#0a0a1a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Сетка
     ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 0.5;
     for (let i = 0; i < canvas.width; i += 50) {
@@ -1216,7 +1028,6 @@ function drawMap() {
         ctx.stroke();
     }
     
-    // Участок
     const grad = ctx.createLinearGradient(ws.x, ws.y, ws.x + ws.w, ws.y + ws.h);
     grad.addColorStop(0, 'rgba(74, 158, 255, 0.08)');
     grad.addColorStop(1, 'rgba(74, 158, 255, 0.02)');
@@ -1228,13 +1039,11 @@ function drawMap() {
     ctx.strokeRect(ws.x, ws.y, ws.w, ws.h);
     ctx.setLineDash([]);
     
-    // Название участка
     ctx.fillStyle = 'rgba(74, 158, 255, 0.6)';
     ctx.font = '28px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(`🏭 ${ws.name} (${ws.length}×${ws.width} м)`, ws.x + ws.w/2, ws.y + 55);
     
-    // Уголки участка
     const cornerSize = 20;
     const corners = [
         { cx: ws.x, cy: ws.y },
@@ -1250,13 +1059,10 @@ function drawMap() {
         ctx.strokeRect(c.cx - cornerSize/2, c.cy - cornerSize/2, cornerSize, cornerSize);
     });
     
-    // ============================================================
-    // ПУТИ ЭВАКУАЦИИ (РИСУЕМ ПЕРВЫМИ, ЧТОБЫ БЫЛИ ПОД ОБЪЕКТАМИ)
-    // ============================================================
+    // Пути эвакуации
     if (mapData.evacuationRoutes) {
         mapData.evacuationRoutes.forEach((route, index) => {
             if (route.points && route.points.length >= 2) {
-                // Рисуем линию
                 ctx.beginPath();
                 ctx.moveTo(route.points[0].x, route.points[0].y);
                 for (let i = 1; i < route.points.length; i++) {
@@ -1271,7 +1077,6 @@ function drawMap() {
                 ctx.shadowBlur = 0;
                 ctx.setLineDash([]);
                 
-                // Рисуем стрелку в конце
                 if (route.points.length >= 2) {
                     const last = route.points[route.points.length - 1];
                     const prev = route.points[route.points.length - 2];
@@ -1286,7 +1091,6 @@ function drawMap() {
                     ctx.fill();
                 }
                 
-                // Подпись пути (жирный шрифт, четкий)
                 if (route.name) {
                     const midX = (route.points[0].x + route.points[route.points.length - 1].x) / 2;
                     const midY = (route.points[0].y + route.points[route.points.length - 1].y) / 2 - 20;
@@ -1300,7 +1104,6 @@ function drawMap() {
                     ctx.textBaseline = 'alphabetic';
                 }
                 
-                // Выделение выбранного пути
                 if (selectedObjectType === 'route' && selectedObjectIndex === index) {
                     ctx.strokeStyle = '#00d4ff';
                     ctx.lineWidth = 6;
@@ -1320,28 +1123,19 @@ function drawMap() {
         });
     }
     
-    // ============================================================
-    // ОГНЕТУШИТЕЛИ (БЕЗ ПРОЗРАЧНОСТИ, ЧЕТКИЙ ШРИФТ)
-    // ============================================================
+    // Огнетушители
     if (mapData.fireExtinguishers) {
         mapData.fireExtinguishers.forEach((fe, index) => {
             const x = fe.x - 22;
             const y = fe.y - 32;
             
-            // Тень
             ctx.shadowColor = 'rgba(255,23,68,0.4)';
             ctx.shadowBlur = 25;
-            
-            // Корпус
             ctx.fillStyle = '#ff1744';
             ctx.fillRect(x + 4, y + 6, 36, 44);
             ctx.fillRect(x + 10, y, 24, 12);
-            
-            // Горловина
             ctx.fillStyle = '#b71c1c';
             ctx.fillRect(x + 16, y - 6, 12, 10);
-            
-            // Надпись "ОГНЕТУШИТЕЛЬ" (четкий жирный шрифт)
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 9px sans-serif';
@@ -1350,14 +1144,11 @@ function drawMap() {
             ctx.fillText('ОГНЕТ', x + 22, y + 26);
             ctx.fillText('УШИТЕЛЬ', x + 22, y + 38);
             ctx.textBaseline = 'alphabetic';
-            
-            // Марка (четкий шрифт)
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 10px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(fe.model || 'ОП-5', x + 22, y + 58);
             
-            // Выделение выбранного
             if (selectedObjectType === 'fireExtinguisher' && selectedObjectIndex === index) {
                 ctx.shadowBlur = 0;
                 ctx.strokeStyle = '#00d4ff';
@@ -1369,9 +1160,7 @@ function drawMap() {
         });
     }
     
-    // ============================================================
-    // ВЫХОДЫ
-    // ============================================================
+    // Выходы
     if (mapData.evacuationPoints) {
         mapData.evacuationPoints.forEach((ep, index) => {
             const ew = 120, eh = 60;
@@ -1383,25 +1172,21 @@ function drawMap() {
             ctx.shadowBlur = 30;
             ctx.fillRect(ex, ey, ew, eh);
             ctx.shadowBlur = 0;
-            
             ctx.strokeStyle = '#4caf50';
             ctx.lineWidth = 2;
             ctx.strokeRect(ex, ey, ew, eh);
-            
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 22px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('🚪 ВЫХОД', ep.x, ep.y);
             ctx.textBaseline = 'alphabetic';
-            
             if (ep.name) {
                 ctx.fillStyle = 'rgba(255,255,255,0.6)';
                 ctx.font = 'bold 13px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.fillText(ep.name, ep.x, ep.y + 35);
             }
-            
             if (selectedObjectType === 'evacuation' && selectedObjectIndex === index) {
                 ctx.strokeStyle = '#00d4ff';
                 ctx.lineWidth = 3;
@@ -1412,9 +1197,7 @@ function drawMap() {
         });
     }
     
-    // ============================================================
-    // РАБОЧИЕ МЕСТА
-    // ============================================================
+    // Рабочие места
     if (ws.workplaces) {
         ws.workplaces.forEach((wp, index) => {
             const zoneSize = wp.zone || 60;
@@ -1425,7 +1208,6 @@ function drawMap() {
             
             ctx.fillStyle = 'rgba(255, 193, 7, 0.25)';
             ctx.fillRect(x, y, w, h);
-            
             ctx.save();
             ctx.beginPath();
             ctx.rect(x, y, w, h);
@@ -1439,7 +1221,6 @@ function drawMap() {
                 ctx.stroke();
             }
             ctx.restore();
-            
             ctx.strokeStyle = 'rgba(255, 193, 7, 0.7)';
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, w, h);
@@ -1447,11 +1228,7 @@ function drawMap() {
             const centerX = wp.x;
             const centerY = wp.y;
             const scale = 2.0;
-            
-            let color = '#ff6b6b';
-            if (wp.hasPPE) {
-                color = '#4caf50';
-            }
+            let color = wp.hasPPE ? '#4caf50' : '#ff6b6b';
             
             ctx.fillStyle = color;
             ctx.shadowColor = `${color}40`;
@@ -1483,12 +1260,10 @@ function drawMap() {
                 ctx.font = '14px sans-serif';
                 ctx.fillText(wp.position.substring(0, 25), centerX, centerY + 78 * scale);
             }
-            
             if (wp.hasPPE) {
                 ctx.font = '22px sans-serif';
                 ctx.fillText('🦺', centerX + 40 * scale, centerY - 28 * scale);
             }
-            
             if (wp.ppeSource) {
                 ctx.fillStyle = 'rgba(255,255,255,0.2)';
                 ctx.font = '10px sans-serif';
@@ -1498,22 +1273,10 @@ function drawMap() {
     }
 }
 
-// ============================================================
-// СОБЫТИЯ CANVAS
-// ============================================================
-
 function setupCanvasEvents() {
     const canvas = document.getElementById('mapCanvas');
-    if (!canvas) {
-        console.error('❌ Canvas не найден в setupCanvasEvents!');
-        return;
-    }
+    if (!canvas) return;
     
-    console.log('✅ setupCanvasEvents вызвана, canvas найден');
-    
-    // ============================================================
-    // КЛИК
-    // ============================================================
     canvas.addEventListener('click', function(e) {
         const coords = getCanvasCoords(e);
         const ws = getCurrentWorkshop();
@@ -1528,50 +1291,32 @@ function setupCanvasEvents() {
             return;
         }
         
-        // Режим добавления рабочего места
         if (mapMode === 'addWorkplace') {
             openWorkplaceModal(coords.x, coords.y);
             return;
         }
-        
-        // Режим добавления выхода
         if (mapMode === 'addEvacuation') {
-            const name = prompt('Введите название выхода (опционально):', 'Выход ' + ((mapData.evacuationPoints?.length || 0) + 1));
+            const name = prompt('Введите название выхода:', 'Выход ' + ((mapData.evacuationPoints?.length || 0) + 1));
             if (name !== null) {
                 if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
-                mapData.evacuationPoints.push({
-                    x: coords.x,
-                    y: coords.y,
-                    name: name.trim() || 'Выход',
-                    id: Date.now()
-                });
+                mapData.evacuationPoints.push({ x: coords.x, y: coords.y, name: name.trim() || 'Выход', id: Date.now() });
                 updateInfo();
                 drawMap();
                 saveMap();
                 mapMode = 'view';
-                tempObjectType = null;
-                const modeEl = document.getElementById('mapMode');
-                if (modeEl) {
-                    modeEl.textContent = 'Просмотр';
-                    modeEl.style.color = '#00d4ff';
-                }
+                document.getElementById('mapMode').textContent = 'Просмотр';
+                document.getElementById('mapMode').style.color = '#00d4ff';
                 canvas.style.cursor = 'default';
             }
             return;
         }
-        
-        // Режим добавления огнетушителя
         if (mapMode === 'addFireExtinguisher') {
             tempObjectPos = { x: coords.x, y: coords.y };
             openFireExtinguisherModal();
             return;
         }
-        
-        // Режим добавления пути эвакуации
         if (mapMode === 'addEvacuationRoute') {
             tempRoutePoints.push({ x: coords.x, y: coords.y });
-            
-            // Рисуем временные точки
             drawMap();
             const ctx = canvas.getContext('2d');
             tempRoutePoints.forEach((p, i) => {
@@ -1586,17 +1331,11 @@ function setupCanvasEvents() {
                 ctx.fillText(i + 1, p.x, p.y);
                 ctx.textBaseline = 'alphabetic';
             });
-            
             if (tempRoutePoints.length >= 2) {
                 const name = prompt('Введите название пути эвакуации:', 'Путь эвакуации ' + ((mapData.evacuationRoutes?.length || 0) + 1));
                 if (name !== null && name.trim() !== '') {
                     if (!mapData.evacuationRoutes) mapData.evacuationRoutes = [];
-                    mapData.evacuationRoutes.push({
-                        points: [...tempRoutePoints],
-                        name: name.trim(),
-                        color: '#4caf50',
-                        id: Date.now()
-                    });
+                    mapData.evacuationRoutes.push({ points: [...tempRoutePoints], name: name.trim(), color: '#4caf50', id: Date.now() });
                     tempRoutePoints = [];
                     updateInfo();
                     drawMap();
@@ -1606,29 +1345,21 @@ function setupCanvasEvents() {
                     drawMap();
                 }
                 mapMode = 'view';
-                tempObjectType = null;
-                const modeEl = document.getElementById('mapMode');
-                if (modeEl) {
-                    modeEl.textContent = 'Просмотр';
-                    modeEl.style.color = '#00d4ff';
-                }
+                document.getElementById('mapMode').textContent = 'Просмотр';
+                document.getElementById('mapMode').style.color = '#00d4ff';
                 canvas.style.cursor = 'default';
             } else {
-                alert('🔄 Кликните вторую точку для завершения пути эвакуации');
+                alert('🔄 Кликните вторую точку для завершения пути');
             }
             return;
         }
         
-        // Режим просмотра - выбор объекта
         if (mapMode === 'view') {
             let found = false;
-            
-            // Проверяем рабочие места
             if (ws.workplaces) {
                 for (let i = ws.workplaces.length - 1; i >= 0; i--) {
                     const wp = ws.workplaces[i];
-                    const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
-                    if (dist < 40) {
+                    if (Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2) < 40) {
                         selectedObjectIndex = i;
                         selectedObjectType = 'workplace';
                         found = true;
@@ -1636,13 +1367,10 @@ function setupCanvasEvents() {
                     }
                 }
             }
-            
-            // Проверяем выходы
             if (!found && mapData.evacuationPoints) {
                 for (let i = mapData.evacuationPoints.length - 1; i >= 0; i--) {
                     const ep = mapData.evacuationPoints[i];
-                    const dist = Math.sqrt((coords.x - ep.x) ** 2 + (coords.y - ep.y) ** 2);
-                    if (dist < 50) {
+                    if (Math.sqrt((coords.x - ep.x) ** 2 + (coords.y - ep.y) ** 2) < 50) {
                         selectedObjectIndex = i;
                         selectedObjectType = 'evacuation';
                         found = true;
@@ -1650,13 +1378,10 @@ function setupCanvasEvents() {
                     }
                 }
             }
-            
-            // Проверяем огнетушители
             if (!found && mapData.fireExtinguishers) {
                 for (let i = mapData.fireExtinguishers.length - 1; i >= 0; i--) {
                     const fe = mapData.fireExtinguishers[i];
-                    const dist = Math.sqrt((coords.x - fe.x) ** 2 + (coords.y - fe.y) ** 2);
-                    if (dist < 35) {
+                    if (Math.sqrt((coords.x - fe.x) ** 2 + (coords.y - fe.y) ** 2) < 35) {
                         selectedObjectIndex = i;
                         selectedObjectType = 'fireExtinguisher';
                         found = true;
@@ -1664,13 +1389,10 @@ function setupCanvasEvents() {
                     }
                 }
             }
-            
-            // Проверяем пути эвакуации
             if (!found && mapData.evacuationRoutes) {
                 for (let i = mapData.evacuationRoutes.length - 1; i >= 0; i--) {
                     const route = mapData.evacuationRoutes[i];
-                    if (route.points && route.points.length >= 2) {
-                        // Проверяем близость к линии
+                    if (route.points) {
                         for (let j = 0; j < route.points.length - 1; j++) {
                             const p1 = route.points[j];
                             const p2 = route.points[j + 1];
@@ -1686,7 +1408,6 @@ function setupCanvasEvents() {
                     if (found) break;
                 }
             }
-            
             if (!found) {
                 selectedObjectIndex = -1;
                 selectedObjectType = null;
@@ -1695,9 +1416,6 @@ function setupCanvasEvents() {
         }
     });
     
-    // ============================================================
-    // ДВОЙНОЙ КЛИК - ОТКРЫТИЕ СИЗ
-    // ============================================================
     canvas.addEventListener('dblclick', function(e) {
         const coords = getCanvasCoords(e);
         const ws = getCurrentWorkshop();
@@ -1705,14 +1423,12 @@ function setupCanvasEvents() {
         
         let found = -1;
         ws.workplaces.forEach((wp, index) => {
-            const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
-            if (dist < 40) found = index;
+            if (Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2) < 40) found = index;
         });
-        
         if (found >= 0) {
             const wp = ws.workplaces[found];
             if (!wp.position || wp.position.trim() === '') {
-                alert('⚠️ Для этого рабочего места не указана должность.\nДобавьте должность в настройках рабочего места.');
+                alert('⚠️ Для этого рабочего места не указана должность.');
                 return;
             }
             selectedObjectIndex = found;
@@ -1722,20 +1438,15 @@ function setupCanvasEvents() {
         }
     });
     
-    // ============================================================
-    // НАЖАТИЕ КНОПКИ МЫШИ - ПЕРЕТАСКИВАНИЕ
-    // ============================================================
     canvas.addEventListener('mousedown', function(e) {
         const coords = getCanvasCoords(e);
         const ws = getCurrentWorkshop();
         if (!ws || mapMode !== 'view') return;
         
-        // Проверяем рабочие места
         if (ws.workplaces) {
             for (let i = ws.workplaces.length - 1; i >= 0; i--) {
                 const wp = ws.workplaces[i];
-                const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
-                if (dist < 40) {
+                if (Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2) < 40) {
                     isDragging = true;
                     dragTarget = i;
                     dragTargetType = 'workplace';
@@ -1746,13 +1457,10 @@ function setupCanvasEvents() {
                 }
             }
         }
-        
-        // Проверяем выходы
         if (mapData.evacuationPoints) {
             for (let i = mapData.evacuationPoints.length - 1; i >= 0; i--) {
                 const ep = mapData.evacuationPoints[i];
-                const dist = Math.sqrt((coords.x - ep.x) ** 2 + (coords.y - ep.y) ** 2);
-                if (dist < 50) {
+                if (Math.sqrt((coords.x - ep.x) ** 2 + (coords.y - ep.y) ** 2) < 50) {
                     isDragging = true;
                     dragTarget = i;
                     dragTargetType = 'evacuation';
@@ -1763,13 +1471,10 @@ function setupCanvasEvents() {
                 }
             }
         }
-        
-        // Проверяем огнетушители
         if (mapData.fireExtinguishers) {
             for (let i = mapData.fireExtinguishers.length - 1; i >= 0; i--) {
                 const fe = mapData.fireExtinguishers[i];
-                const dist = Math.sqrt((coords.x - fe.x) ** 2 + (coords.y - fe.y) ** 2);
-                if (dist < 35) {
+                if (Math.sqrt((coords.x - fe.x) ** 2 + (coords.y - fe.y) ** 2) < 35) {
                     isDragging = true;
                     dragTarget = i;
                     dragTargetType = 'fireExtinguisher';
@@ -1781,7 +1486,6 @@ function setupCanvasEvents() {
             }
         }
         
-        // Ресайз участка
         const cornerSize = 25;
         const corners = [
             { cx: ws.x, cy: ws.y, corner: 'tl' },
@@ -1805,9 +1509,6 @@ function setupCanvasEvents() {
         }
     });
     
-    // ============================================================
-    // ДВИЖЕНИЕ МЫШИ - ПЕРЕТАСКИВАНИЕ
-    // ============================================================
     canvas.addEventListener('mousemove', function(e) {
         const coords = getCanvasCoords(e);
         const ws = getCurrentWorkshop();
@@ -1816,34 +1517,22 @@ function setupCanvasEvents() {
         if (isDragging && dragTarget !== null && dragTargetType) {
             if (dragTargetType === 'workplace' && ws.workplaces && ws.workplaces[dragTarget]) {
                 const wp = ws.workplaces[dragTarget];
-                let newX = coords.x - dragOffsetX;
-                let newY = coords.y - dragOffsetY;
-                newX = Math.max(ws.x + 20, Math.min(ws.x + ws.w - 20, newX));
-                newY = Math.max(ws.y + 20, Math.min(ws.y + ws.h - 20, newY));
-                wp.x = newX;
-                wp.y = newY;
+                wp.x = Math.max(ws.x + 20, Math.min(ws.x + ws.w - 20, coords.x - dragOffsetX));
+                wp.y = Math.max(ws.y + 20, Math.min(ws.y + ws.h - 20, coords.y - dragOffsetY));
                 drawMap();
                 return;
             }
             if (dragTargetType === 'evacuation' && mapData.evacuationPoints && mapData.evacuationPoints[dragTarget]) {
                 const ep = mapData.evacuationPoints[dragTarget];
-                let newX = coords.x - dragOffsetX;
-                let newY = coords.y - dragOffsetY;
-                newX = Math.max(ws.x + 20, Math.min(ws.x + ws.w - 20, newX));
-                newY = Math.max(ws.y + 20, Math.min(ws.y + ws.h - 20, newY));
-                ep.x = newX;
-                ep.y = newY;
+                ep.x = Math.max(ws.x + 20, Math.min(ws.x + ws.w - 20, coords.x - dragOffsetX));
+                ep.y = Math.max(ws.y + 20, Math.min(ws.y + ws.h - 20, coords.y - dragOffsetY));
                 drawMap();
                 return;
             }
             if (dragTargetType === 'fireExtinguisher' && mapData.fireExtinguishers && mapData.fireExtinguishers[dragTarget]) {
                 const fe = mapData.fireExtinguishers[dragTarget];
-                let newX = coords.x - dragOffsetX;
-                let newY = coords.y - dragOffsetY;
-                newX = Math.max(ws.x + 20, Math.min(ws.x + ws.w - 20, newX));
-                newY = Math.max(ws.y + 20, Math.min(ws.y + ws.h - 20, newY));
-                fe.x = newX;
-                fe.y = newY;
+                fe.x = Math.max(ws.x + 20, Math.min(ws.x + ws.w - 20, coords.x - dragOffsetX));
+                fe.y = Math.max(ws.y + 20, Math.min(ws.y + ws.h - 20, coords.y - dragOffsetY));
                 drawMap();
                 return;
             }
@@ -1852,7 +1541,6 @@ function setupCanvasEvents() {
         if (isResizing) {
             const dx = coords.x - resizeStartX;
             const dy = coords.y - resizeStartY;
-            
             switch(resizeCorner) {
                 case 'tl':
                     ws.x = Math.max(0, resizeStartXpos + dx);
@@ -1879,37 +1567,29 @@ function setupCanvasEvents() {
             return;
         }
         
-        // Курсор
         let cursor = 'default';
-        const wsObj = getCurrentWorkshop();
-        if (!wsObj) return;
-        
-        // Проверяем все объекты
-        if (wsObj.workplaces) {
-            for (let wp of wsObj.workplaces) {
-                const dist = Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2);
-                if (dist < 40) { cursor = 'grab'; break; }
+        if (ws.workplaces) {
+            for (let wp of ws.workplaces) {
+                if (Math.sqrt((coords.x - wp.x) ** 2 + (coords.y - wp.y) ** 2) < 40) { cursor = 'grab'; break; }
             }
         }
         if (cursor === 'default' && mapData.evacuationPoints) {
             for (let ep of mapData.evacuationPoints) {
-                const dist = Math.sqrt((coords.x - ep.x) ** 2 + (coords.y - ep.y) ** 2);
-                if (dist < 50) { cursor = 'grab'; break; }
+                if (Math.sqrt((coords.x - ep.x) ** 2 + (coords.y - ep.y) ** 2) < 50) { cursor = 'grab'; break; }
             }
         }
         if (cursor === 'default' && mapData.fireExtinguishers) {
             for (let fe of mapData.fireExtinguishers) {
-                const dist = Math.sqrt((coords.x - fe.x) ** 2 + (coords.y - fe.y) ** 2);
-                if (dist < 35) { cursor = 'grab'; break; }
+                if (Math.sqrt((coords.x - fe.x) ** 2 + (coords.y - fe.y) ** 2) < 35) { cursor = 'grab'; break; }
             }
         }
         if (cursor === 'default') {
             const cornerSize = 25;
             const corners = [
-                { cx: wsObj.x, cy: wsObj.y, c: 'nw-resize' },
-                { cx: wsObj.x + wsObj.w, cy: wsObj.y, c: 'ne-resize' },
-                { cx: wsObj.x, cy: wsObj.y + wsObj.h, c: 'sw-resize' },
-                { cx: wsObj.x + wsObj.w, cy: wsObj.y + wsObj.h, c: 'se-resize' }
+                { cx: ws.x, cy: ws.y, c: 'nw-resize' },
+                { cx: ws.x + ws.w, cy: ws.y, c: 'ne-resize' },
+                { cx: ws.x, cy: ws.y + ws.h, c: 'sw-resize' },
+                { cx: ws.x + ws.w, cy: ws.y + ws.h, c: 'se-resize' }
             ];
             for (let c of corners) {
                 if (Math.abs(coords.x - c.cx) < cornerSize && Math.abs(coords.y - c.cy) < cornerSize) {
@@ -1921,10 +1601,7 @@ function setupCanvasEvents() {
         canvas.style.cursor = cursor;
     });
     
-    // ============================================================
-    // ОТПУСКАНИЕ КНОПКИ
-    // ============================================================
-    canvas.addEventListener('mouseup', function(e) {
+    canvas.addEventListener('mouseup', function() {
         if (isDragging) {
             isDragging = false;
             dragTarget = null;
@@ -1938,7 +1615,6 @@ function setupCanvasEvents() {
             saveMap();
         }
     });
-    
     canvas.addEventListener('mouseleave', function() {
         if (isDragging) {
             isDragging = false;
@@ -1955,81 +1631,40 @@ function setupCanvasEvents() {
     });
 }
 
-// ============================================================
-// ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ: РАССТОЯНИЕ ДО ОТРЕЗКА
-// ============================================================
 function distanceToSegment(px, py, x1, y1, x2, y2) {
-    const dx = x2 - x1;
-    const dy = y2 - y1;
+    const dx = x2 - x1, dy = y2 - y1;
     const lenSq = dx * dx + dy * dy;
     if (lenSq === 0) return Math.sqrt((px - x1) ** 2 + (py - y1) ** 2);
     let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
     t = Math.max(0, Math.min(1, t));
-    const projX = x1 + t * dx;
-    const projY = y1 + t * dy;
-    return Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
+    return Math.sqrt((px - x1 - t * dx) ** 2 + (py - y1 - t * dy) ** 2);
 }
 
-// ============================================================
-// УДАЛЕНИЕ ВЫБРАННОГО ОБЪЕКТА
-// ============================================================
 function deleteSelectedObject() {
     const ws = getCurrentWorkshop();
-    if (!ws) {
-        alert('Нет участка для удаления объектов');
-        return;
-    }
-    
-    if (selectedObjectIndex < 0 || !selectedObjectType) {
-        alert('Сначала выберите объект (кликните на него)');
-        return;
-    }
+    if (!ws) { alert('Нет участка'); return; }
+    if (selectedObjectIndex < 0 || !selectedObjectType) { alert('Сначала выберите объект'); return; }
     
     let confirmMsg = '';
     if (selectedObjectType === 'workplace') {
-        if (!ws.workplaces || selectedObjectIndex >= ws.workplaces.length) {
-            alert('Объект не найден');
-            return;
-        }
-        const wp = ws.workplaces[selectedObjectIndex];
-        confirmMsg = `Удалить рабочее место "${wp.name}"?`;
+        if (!ws.workplaces || selectedObjectIndex >= ws.workplaces.length) return;
+        confirmMsg = `Удалить рабочее место "${ws.workplaces[selectedObjectIndex].name}"?`;
     } else if (selectedObjectType === 'evacuation') {
-        if (!mapData.evacuationPoints || selectedObjectIndex >= mapData.evacuationPoints.length) {
-            alert('Объект не найден');
-            return;
-        }
-        const ep = mapData.evacuationPoints[selectedObjectIndex];
-        confirmMsg = `Удалить выход "${ep.name || 'Выход'}"?`;
+        if (!mapData.evacuationPoints || selectedObjectIndex >= mapData.evacuationPoints.length) return;
+        confirmMsg = `Удалить выход "${mapData.evacuationPoints[selectedObjectIndex].name}"?`;
     } else if (selectedObjectType === 'fireExtinguisher') {
-        if (!mapData.fireExtinguishers || selectedObjectIndex >= mapData.fireExtinguishers.length) {
-            alert('Объект не найден');
-            return;
-        }
-        const fe = mapData.fireExtinguishers[selectedObjectIndex];
-        confirmMsg = `Удалить огнетушитель "${fe.model || 'ОП-5'}"?`;
+        if (!mapData.fireExtinguishers || selectedObjectIndex >= mapData.fireExtinguishers.length) return;
+        confirmMsg = `Удалить огнетушитель "${mapData.fireExtinguishers[selectedObjectIndex].model}"?`;
     } else if (selectedObjectType === 'route') {
-        if (!mapData.evacuationRoutes || selectedObjectIndex >= mapData.evacuationRoutes.length) {
-            alert('Объект не найден');
-            return;
-        }
-        const route = mapData.evacuationRoutes[selectedObjectIndex];
-        confirmMsg = `Удалить путь эвакуации "${route.name || 'Путь'}"?`;
-    } else {
-        alert('Неизвестный тип объекта');
-        return;
-    }
+        if (!mapData.evacuationRoutes || selectedObjectIndex >= mapData.evacuationRoutes.length) return;
+        confirmMsg = `Удалить путь "${mapData.evacuationRoutes[selectedObjectIndex].name}"?`;
+    } else { return; }
     
     if (!confirm(confirmMsg)) return;
-    
-    if (selectedObjectType === 'workplace') {
-        ws.workplaces.splice(selectedObjectIndex, 1);
-    } else if (selectedObjectType === 'evacuation') {
-        mapData.evacuationPoints.splice(selectedObjectIndex, 1);
-    } else if (selectedObjectType === 'fireExtinguisher') {
-        mapData.fireExtinguishers.splice(selectedObjectIndex, 1);
-    } else if (selectedObjectType === 'route') {
-        mapData.evacuationRoutes.splice(selectedObjectIndex, 1);
-    }
+    if (selectedObjectType === 'workplace') ws.workplaces.splice(selectedObjectIndex, 1);
+    else if (selectedObjectType === 'evacuation') mapData.evacuationPoints.splice(selectedObjectIndex, 1);
+    else if (selectedObjectType === 'fireExtinguisher') mapData.fireExtinguishers.splice(selectedObjectIndex, 1);
+    else if (selectedObjectType === 'route') mapData.evacuationRoutes.splice(selectedObjectIndex, 1);
     
     selectedObjectIndex = -1;
     selectedObjectType = null;
@@ -2039,72 +1674,32 @@ function deleteSelectedObject() {
     alert('✅ Объект удален');
 }
 
-// ============================================================
-// ОГНЕТУШИТЕЛИ
-// ============================================================
 function openFireExtinguisherModal() {
-    const modal = document.getElementById('fireExtinguisherModal');
-    if (!modal) return;
-    modal.classList.remove('hidden');
-    
-    const dateInput = document.getElementById('feDateInput');
-    const nextDateInput = document.getElementById('feNextDateInput');
-    if (dateInput) {
-        const now = new Date();
-        dateInput.value = now.toISOString().split('T')[0];
-    }
-    if (nextDateInput) {
-        const now = new Date();
-        now.setFullYear(now.getFullYear() + 1);
-        nextDateInput.value = now.toISOString().split('T')[0];
-    }
+    document.getElementById('fireExtinguisherModal').classList.remove('hidden');
+    const now = new Date();
+    document.getElementById('feDateInput').value = now.toISOString().split('T')[0];
+    now.setFullYear(now.getFullYear() + 1);
+    document.getElementById('feNextDateInput').value = now.toISOString().split('T')[0];
 }
 
 function closeFireExtinguisherModal() {
-    const modal = document.getElementById('fireExtinguisherModal');
-    if (modal) modal.classList.add('hidden');
+    document.getElementById('fireExtinguisherModal').classList.add('hidden');
     tempObjectPos = null;
     mapMode = 'view';
-    tempObjectType = null;
-    const modeEl = document.getElementById('mapMode');
-    if (modeEl) {
-        modeEl.textContent = 'Просмотр';
-        modeEl.style.color = '#00d4ff';
-    }
-    const canvas = document.getElementById('mapCanvas');
-    if (canvas) canvas.style.cursor = 'default';
+    document.getElementById('mapMode').textContent = 'Просмотр';
+    document.getElementById('mapMode').style.color = '#00d4ff';
+    document.getElementById('mapCanvas').style.cursor = 'default';
 }
 
 function saveFireExtinguisher() {
-    if (!tempObjectPos) {
-        alert('Ошибка: позиция не определена');
-        return;
-    }
-    
-    const typeSelect = document.getElementById('feTypeSelect');
-    const volumeSelect = document.getElementById('feVolumeSelect');
-    const modelInput = document.getElementById('feModelInput');
-    const dateInput = document.getElementById('feDateInput');
-    const nextDateInput = document.getElementById('feNextDateInput');
-    
-    const type = typeSelect ? typeSelect.value : 'ОП';
-    const volume = volumeSelect ? volumeSelect.value : '5';
-    const model = modelInput ? modelInput.value.trim() || `${type}-${volume}` : `${type}-${volume}`;
-    const date = dateInput ? dateInput.value : '';
-    const nextDate = nextDateInput ? nextDateInput.value : '';
-    
+    if (!tempObjectPos) { alert('Ошибка позиции'); return; }
+    const type = document.getElementById('feTypeSelect').value;
+    const volume = document.getElementById('feVolumeSelect').value;
+    const model = document.getElementById('feModelInput').value.trim() || `${type}-${volume}`;
+    const date = document.getElementById('feDateInput').value;
+    const nextDate = document.getElementById('feNextDateInput').value;
     if (!mapData.fireExtinguishers) mapData.fireExtinguishers = [];
-    mapData.fireExtinguishers.push({
-        x: tempObjectPos.x,
-        y: tempObjectPos.y,
-        type: type,
-        volume: volume,
-        model: model,
-        date: date,
-        nextDate: nextDate,
-        id: Date.now()
-    });
-    
+    mapData.fireExtinguishers.push({ x: tempObjectPos.x, y: tempObjectPos.y, type, volume, model, date, nextDate, id: Date.now() });
     closeFireExtinguisherModal();
     updateInfo();
     drawMap();
@@ -2112,41 +1707,25 @@ function saveFireExtinguisher() {
     alert('✅ Огнетушитель добавлен!');
 }
 
-// ============================================================
-// УЧАСТКИ
-// ============================================================
 function openWorkshopModal() {
     const ws = getCurrentWorkshop();
     if (!ws) { alert('Сначала создайте участок'); return; }
-    const modal = document.getElementById('workshopModal');
-    if (!modal) return;
-    modal.classList.remove('hidden');
-    const nameInput = document.getElementById('workshopNameInput');
-    const lengthInput = document.getElementById('workshopLengthInput');
-    const widthInput = document.getElementById('workshopWidthInput');
-    if (nameInput) nameInput.value = ws.name || '';
-    if (lengthInput) lengthInput.value = ws.length || 30;
-    if (widthInput) widthInput.value = ws.width || 20;
-    if (nameInput) nameInput.focus();
+    document.getElementById('workshopModal').classList.remove('hidden');
+    document.getElementById('workshopNameInput').value = ws.name || '';
+    document.getElementById('workshopLengthInput').value = ws.length || 30;
+    document.getElementById('workshopWidthInput').value = ws.width || 20;
 }
 
 function closeWorkshopModal() {
-    const modal = document.getElementById('workshopModal');
-    if (modal) modal.classList.add('hidden');
+    document.getElementById('workshopModal').classList.add('hidden');
 }
 
 function saveWorkshop() {
     const ws = getCurrentWorkshop();
     if (!ws) return;
-    const nameInput = document.getElementById('workshopNameInput');
-    const lengthInput = document.getElementById('workshopLengthInput');
-    const widthInput = document.getElementById('workshopWidthInput');
-    const name = nameInput ? nameInput.value.trim() || 'Участок' : 'Участок';
-    const length = lengthInput ? parseInt(lengthInput.value) || 30 : 30;
-    const width = widthInput ? parseInt(widthInput.value) || 20 : 20;
-    ws.name = name;
-    ws.length = length;
-    ws.width = width;
+    ws.name = document.getElementById('workshopNameInput').value.trim() || 'Участок';
+    ws.length = parseInt(document.getElementById('workshopLengthInput').value) || 30;
+    ws.width = parseInt(document.getElementById('workshopWidthInput').value) || 20;
     closeWorkshopModal();
     updateWorkshopSelect();
     updateInfo();
@@ -2156,86 +1735,40 @@ function saveWorkshop() {
 
 function openWorkplaceModal(x, y) {
     tempObjectPos = { x, y };
-    const modal = document.getElementById('workplaceModal');
-    if (!modal) return;
-    modal.classList.remove('hidden');
-    const nameInput = document.getElementById('workplaceNameInput');
-    const posInput = document.getElementById('workplacePositionInput');
-    const zoneInput = document.getElementById('workplaceZoneInput');
-    if (nameInput) nameInput.value = '';
-    if (posInput) posInput.value = '';
-    if (zoneInput) zoneInput.value = 50;
-    if (nameInput) nameInput.focus();
+    document.getElementById('workplaceModal').classList.remove('hidden');
+    document.getElementById('workplaceNameInput').value = '';
+    document.getElementById('workplacePositionInput').value = '';
+    document.getElementById('workplaceZoneInput').value = 50;
 }
 
 function closeWorkplaceModal() {
-    const modal = document.getElementById('workplaceModal');
-    if (modal) modal.classList.add('hidden');
+    document.getElementById('workplaceModal').classList.add('hidden');
     tempObjectPos = null;
     mapMode = 'view';
-    tempObjectType = null;
-    const modeEl = document.getElementById('mapMode');
-    if (modeEl) {
-        modeEl.textContent = 'Просмотр';
-        modeEl.style.color = '#00d4ff';
-    }
-    const canvas = document.getElementById('mapCanvas');
-    if (canvas) canvas.style.cursor = 'default';
+    document.getElementById('mapMode').textContent = 'Просмотр';
+    document.getElementById('mapMode').style.color = '#00d4ff';
+    document.getElementById('mapCanvas').style.cursor = 'default';
 }
 
 function saveWorkplace() {
-    if (!tempObjectPos) {
-        alert('Ошибка: позиция не определена');
-        return;
-    }
+    if (!tempObjectPos) { alert('Ошибка позиции'); return; }
     const ws = getCurrentWorkshop();
-    if (!ws) {
-        alert('Ошибка: участок не найден');
-        return;
-    }
-    
-    const nameInput = document.getElementById('workplaceNameInput');
-    const posInput = document.getElementById('workplacePositionInput');
-    const zoneInput = document.getElementById('workplaceZoneInput');
-    
-    const name = nameInput ? nameInput.value.trim() || 'Рабочее место ' + (ws.workplaces.length + 1) : 'Рабочее место ' + (ws.workplaces.length + 1);
-    const position = posInput ? posInput.value.trim() || '' : '';
-    const zone = zoneInput ? parseInt(zoneInput.value) || 50 : 50;
-    
-    ws.workplaces.push({
-        x: tempObjectPos.x,
-        y: tempObjectPos.y,
-        name: name,
-        position: position,
-        zone: zone,
-        id: Date.now(),
-        hasPPE: false,
-        ppeItems: [],
-        ppeSource: null
-    });
-    
+    if (!ws) { alert('Участок не найден'); return; }
+    const name = document.getElementById('workplaceNameInput').value.trim() || 'Рабочее место ' + (ws.workplaces.length + 1);
+    const position = document.getElementById('workplacePositionInput').value.trim() || '';
+    const zone = parseInt(document.getElementById('workplaceZoneInput').value) || 50;
+    ws.workplaces.push({ x: tempObjectPos.x, y: tempObjectPos.y, name, position, zone, id: Date.now(), hasPPE: false, ppeItems: [], ppeSource: null });
     closeWorkplaceModal();
     updateInfo();
     drawMap();
     saveMap();
-    
-    alert('✅ Рабочее место добавлено! Двойной клик по нему для добавления СИЗ.');
+    alert('✅ Рабочее место добавлено!');
 }
 
 function addNewWorkshop() {
     const name = prompt('Введите название нового участка:', 'Участок ' + (mapData.workshops.length + 1));
     if (!name) return;
-    mapData.workshops.push({
-        id: Date.now(),
-        name: name,
-        length: 30,
-        width: 20,
-        x: 50,
-        y: 50,
-        w: 3900,
-        h: 1900,
-        workplaces: []
-    });
+    mapData.workshops.push({ id: Date.now(), name, length: 30, width: 20, x: 50, y: 50, w: 3900, h: 1900, workplaces: [] });
     mapData.currentWorkshop = mapData.workshops.length - 1;
     if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
     if (!mapData.fireExtinguishers) mapData.fireExtinguishers = [];
@@ -2247,15 +1780,10 @@ function addNewWorkshop() {
 }
 
 function deleteWorkshop() {
-    if (mapData.workshops.length <= 1) {
-        alert('Нельзя удалить единственный участок');
-        return;
-    }
-    if (!confirm('Удалить текущий участок со всеми данными?')) return;
+    if (mapData.workshops.length <= 1) { alert('Нельзя удалить единственный участок'); return; }
+    if (!confirm('Удалить текущий участок?')) return;
     mapData.workshops.splice(mapData.currentWorkshop, 1);
-    if (mapData.currentWorkshop >= mapData.workshops.length) {
-        mapData.currentWorkshop = mapData.workshops.length - 1;
-    }
+    if (mapData.currentWorkshop >= mapData.workshops.length) mapData.currentWorkshop = mapData.workshops.length - 1;
     updateWorkshopSelect();
     updateInfo();
     drawMap();
@@ -2282,138 +1810,20 @@ function clearMap() {
         saveMap();
     }
 }
-
-// ============================================================
-// ИНИЦИАЛИЗАЦИЯ СТРАНИЦЫ ОБУЧЕНИЯ
-// ============================================================
-
-function initTrainingPage() {
-    renderOrgs();
-    renderStaff();
-    renderProtocol();
-    fillFamEmployeeSelect();
-    
-    const showOrgBtn = document.getElementById('showOrgFormBtn');
-    const saveOrgBtn = document.getElementById('saveOrgBtn');
-    const cancelOrgBtn = document.getElementById('cancelOrgBtn');
-    const deleteOrgBtn = document.getElementById('deleteOrgBtn');
-    const generateBtn = document.getElementById('generateBtn');
-    const addSelectedBtn = document.getElementById('addSelectedBtn');
-    const importBtn = document.getElementById('staffImportBtn');
-    const generateFamBtn = document.getElementById('generateFamBtn');
-    const printFamBtn = document.getElementById('printFamBtn');
-    
-    if (showOrgBtn) {
-        showOrgBtn.addEventListener('click', function() {
-            document.getElementById('orgForm').classList.remove('hidden');
-        });
-    }
-    
-    if (saveOrgBtn) {
-        saveOrgBtn.addEventListener('click', function() {
-            const nameInput = document.getElementById('orgNameInput');
-            const innInput = document.getElementById('orgInnInput');
-            const name = nameInput ? nameInput.value.trim() : '';
-            const inn = innInput ? innInput.value.trim() : '';
-            if (!name || !inn) { alert('Заполните все поля'); return; }
-            const orgs = getOrgs();
-            orgs.push({ id: Date.now(), name, inn });
-            saveOrgs(orgs);
-            renderOrgs();
-            document.getElementById('orgForm').classList.add('hidden');
-            if (nameInput) nameInput.value = '';
-            if (innInput) innInput.value = '';
-            alert('✅ Организация добавлена!');
-        });
-    }
-    
-    if (cancelOrgBtn) {
-        cancelOrgBtn.addEventListener('click', function() {
-            document.getElementById('orgForm').classList.add('hidden');
-        });
-    }
-    
-    if (deleteOrgBtn) {
-        deleteOrgBtn.addEventListener('click', function() {
-            const select = document.getElementById('orgSelect');
-            const id = select ? parseInt(select.value) : 0;
-            if (!id) { alert('Выберите организацию'); return; }
-            if (!confirm('Удалить организацию?')) return;
-            let orgs = getOrgs();
-            orgs = orgs.filter(o => o.id !== id);
-            saveOrgs(orgs);
-            renderOrgs();
-            alert('✅ Организация удалена');
-        });
-    }
-    
-    if (generateBtn) {
-        generateBtn.addEventListener('click', generateXML);
-    }
-    
-    if (addSelectedBtn) {
-        addSelectedBtn.addEventListener('click', addSelectedToProtocol);
-    }
-    
-    if (importBtn) {
-        importBtn.addEventListener('click', importStaffFile);
-    }
-    
-    if (generateFamBtn) {
-        generateFamBtn.addEventListener('click', generateFamiliarization);
-    }
-    
-    if (printFamBtn) {
-        printFamBtn.addEventListener('click', function() {
-            const content = document.getElementById('famContent');
-            if (!content) return;
-            
-            const win = window.open('', '_blank');
-            win.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Лист ознакомления</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 40px; color: #222; max-width: 900px; margin: 0 auto; }
-                        * { print-color-adjust: exact; }
-                        @media print {
-                            body { padding: 20px; }
-                            .no-print { display: none; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${content.innerHTML}
-                    <script>
-                        window.print();
-                        window.close();
-                    <\/script>
-                </body>
-                </html>
-            `);
-            win.document.close();
-        });
-    }
+function initMapPage() {
+    alert('⚠️ Код карты пока не загружен. Используйте предыдущую версию script.js для карты.');
 }
 
 // ============================================================
 // DOM READY
 // ============================================================
-
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 DOM загружен');
-    
-    const mainPage = document.getElementById('mainPage');
-    if (mainPage) mainPage.style.display = 'block';
-    
+    document.getElementById('mainPage').style.display = 'block';
     document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-    
     document.querySelectorAll('.nav-link').forEach(link => {
         if (link.textContent.trim() === 'Главная') link.classList.add('active');
     });
-    
     initTrainingPage();
-    
     console.log('✅ Все инициализировано!');
 });
