@@ -283,10 +283,9 @@ function escXml(str) {
 }
 
 // ============================================================
-// СПИСОК ТИПОВ СИЗ
+// СПИСОК ТИПОВ СИЗ (РАСШИРЕННЫЙ И ВИДИМЫЙ)
 // ============================================================
 const PPE_TYPES = [
-    'Выберите тип СИЗ...',
     'Одежда специальная защитная',
     'Средства защиты ног',
     'Средства защиты рук',
@@ -342,6 +341,7 @@ function renderPPEList() {
     const list = document.getElementById('ppeList');
     if (!list) return;
     
+    // Опции для выпадающего списка (все видны, длинные названия не обрезаются)
     const typeOptions = PPE_TYPES.map(t => {
         const isPlaceholder = t === 'Выберите тип СИЗ...';
         return `<option value="${t}" ${isPlaceholder ? 'selected disabled style="color:#666;"' : ''}>${t}</option>`;
@@ -356,12 +356,13 @@ function renderPPEList() {
         </div>
         
         <div style="margin-bottom:14px;background:rgba(255,255,255,0.03);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
-            <div style="display:grid;grid-template-columns:1fr 1.5fr 0.8fr 0.8fr 0.8fr auto;gap:8px;align-items:end;">
+            <div style="display:grid;grid-template-columns:1.2fr 1.8fr 0.7fr 0.7fr 0.8fr auto;gap:8px;align-items:end;">
                 
                 <div>
                     <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Тип СИЗ</label>
-                    <select id="ppeTypeSelect" style="width:100%;padding:8px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#fff;font-size:13px;cursor:pointer;appearance:auto;">
-                        ${typeOptions}
+                    <select id="ppeTypeSelect" style="width:100%;padding:8px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#fff;font-size:13px;cursor:pointer;appearance:auto;min-width:140px;">
+                        <option value="" selected disabled style="color:#666;">Выберите тип...</option>
+                        ${PPE_TYPES.map(t => `<option value="${t}" style="color:#fff;padding:4px;">${t}</option>`).join('')}
                     </select>
                 </div>
                 
@@ -371,7 +372,7 @@ function renderPPEList() {
                 </div>
                 
                 <div>
-                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Количество</label>
+                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Кол-во</label>
                     <input type="text" id="ppeCountInput" placeholder="1 шт." style="width:100%;padding:8px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
                 </div>
                 
@@ -419,11 +420,11 @@ function renderPPEList() {
             html += `
                 <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
                     <td style="padding:8px 10px;color:#7c3aed;font-weight:600;font-size:12px;">${index + 1}</td>
-                    <td style="padding:8px 10px;color:${typeColor};font-size:12px;">${item.type && item.type !== 'Выберите тип СИЗ...' ? item.type : '—'}</td>
+                    <td style="padding:8px 10px;color:${typeColor};font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.type || ''}">${item.type && item.type !== 'Выберите тип СИЗ...' ? item.type : '—'}</td>
                     <td style="padding:8px 10px;color:#fff;">${item.name || ''}</td>
                     <td style="padding:8px 10px;color:#4caf50;font-weight:500;">${item.count || '—'}</td>
                     <td style="padding:8px 10px;color:#ffc107;">${item.term || '—'}</td>
-                    <td style="padding:8px 10px;color:#b388ff;font-size:12px;">${item.model || '—'}</td>
+                    <td style="padding:8px 10px;color:#b388ff;font-size:12px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.model || ''}">${item.model || '—'}</td>
                     <td style="padding:8px 10px;text-align:center;">
                         <button onclick="removePPEItem(${index})" style="background:rgba(255,70,70,0.15);border:none;border-radius:4px;color:#ff6b6b;cursor:pointer;padding:2px 10px;font-size:13px;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,70,70,0.3)'" onmouseout="this.style.background='rgba(255,70,70,0.15)'">✖</button>
                     </td>
@@ -483,7 +484,7 @@ function addPPEItem() {
         return;
     }
     
-    if (type === 'Выберите тип СИЗ...' || !type) {
+    if (!type || type === 'Выберите тип...') {
         alert('❌ Выберите тип СИЗ из списка!');
         typeSelect.focus();
         return;
@@ -495,7 +496,7 @@ function addPPEItem() {
     if (countInput) countInput.value = '';
     if (termInput) termInput.value = '';
     if (modelInput) modelInput.value = '';
-    if (typeSelect) typeSelect.value = 'Выберите тип СИЗ...';
+    if (typeSelect) typeSelect.value = '';
     
     nameInput.focus();
     renderPPEList();
@@ -623,7 +624,259 @@ function exportPPE() {
 }
 
 // ============================================================
-// КАРТА
+// ГЕНЕРАЦИЯ ЛИСТА ОЗНАКОМЛЕНИЯ (НОВАЯ ВЕРСИЯ)
+// ============================================================
+
+function generateFamiliarization() {
+    const select = document.getElementById('famEmployeeSelect');
+    const index = select ? parseInt(select.value) : -1;
+    
+    if (isNaN(index) || index < 0) {
+        alert('❌ Выберите сотрудника!');
+        return;
+    }
+    
+    const staff = getStaff();
+    const emp = staff[index];
+    if (!emp) {
+        alert('❌ Сотрудник не найден!');
+        return;
+    }
+    
+    // Получаем выбранные документы
+    const docCheckboxes = document.querySelectorAll('.doc-check input[type="checkbox"]:checked');
+    const docs = [];
+    docCheckboxes.forEach(cb => {
+        docs.push(cb.value);
+    });
+    
+    // Получаем пользовательские документы
+    const customInput = document.getElementById('famCustomDoc');
+    const customDocs = customInput ? customInput.value.split('\n').filter(d => d.trim().length > 0) : [];
+    
+    const allDocs = [...docs, ...customDocs];
+    
+    if (allDocs.length === 0) {
+        alert('❌ Выберите хотя бы один документ для ознакомления или добавьте свой!');
+        return;
+    }
+    
+    const result = document.getElementById('famResult');
+    const content = document.getElementById('famContent');
+    
+    if (result && content) {
+        let html = `
+            <div style="padding:24px;background:#fff;color:#222;border-radius:10px;max-width:900px;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+                <div style="text-align:center;border-bottom:3px solid #7c3aed;padding-bottom:12px;margin-bottom:16px;">
+                    <h2 style="font-size:20px;color:#1a1a3e;margin:0;">ЛИСТ ОЗНАКОМЛЕНИЯ</h2>
+                    <p style="font-size:13px;color:#666;margin:4px 0 0 0;">с документами по охране труда</p>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;background:#f8f8f8;padding:14px;border-radius:8px;">
+                    <div>
+                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">ФИО:</strong> ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</p>
+                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">Должность:</strong> ${emp.position}</p>
+                    </div>
+                    <div>
+                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">СНИЛС:</strong> ${formatSnils(emp.snils)}</p>
+                        <p style="margin:4px 0;font-size:14px;"><strong style="color:#555;">Дата:</strong> ${new Date().toLocaleDateString('ru-RU', {day:'2-digit', month:'long', year:'numeric'})}</p>
+                    </div>
+                </div>
+                
+                <div style="border-top:1px solid #ddd;padding-top:12px;">
+                    <p style="font-weight:600;color:#333;margin-bottom:8px;font-size:14px;">📋 Ознакомлен(а) со следующими документами:</p>
+                    <ol style="padding-left:24px;margin:0;line-height:1.8;">
+        `;
+        
+        allDocs.forEach(doc => {
+            html += `<li style="font-size:14px;color:#333;">${doc}</li>`;
+        });
+        
+        html += `
+                    </ol>
+                </div>
+                
+                <div style="margin-top:20px;padding-top:16px;border-top:2px solid #eee;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;">
+                    <div>
+                        <div style="border-bottom:1px solid #333;height:36px;"></div>
+                        <p style="font-size:12px;color:#666;margin:4px 0 0 0;">Подпись сотрудника</p>
+                    </div>
+                    <div>
+                        <div style="border-bottom:1px solid #333;height:36px;"></div>
+                        <p style="font-size:12px;color:#666;margin:4px 0 0 0;">Дата</p>
+                    </div>
+                    <div>
+                        <div style="border-bottom:1px solid #333;height:36px;"></div>
+                        <p style="font-size:12px;color:#666;margin:4px 0 0 0;">Расшифровка подписи</p>
+                    </div>
+                </div>
+                
+                <div style="margin-top:12px;padding-top:10px;border-top:1px solid #eee;text-align:center;">
+                    <p style="font-size:11px;color:#999;margin:0;">Документ сформирован автоматически в системе «ОхранаТруда.Про»</p>
+                </div>
+            </div>
+        `;
+        
+        content.innerHTML = html;
+        result.classList.remove('hidden');
+    }
+}
+
+// ============================================================
+// ИМПОРТ ШТАТНОГО РАСПИСАНИЯ
+// ============================================================
+
+function importStaffFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.txt,.csv,.doc,.docx';
+    
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                const content = event.target.result;
+                const employees = smartParse(content);
+                
+                if (employees.length === 0) {
+                    alert('❌ Не удалось распознать сотрудников. Проверьте формат файла.');
+                    return;
+                }
+                
+                const existing = getStaff();
+                const merged = [...existing, ...employees];
+                saveStaff(merged);
+                
+                renderStaff();
+                fillFamEmployeeSelect();
+                
+                alert(`✅ Загружено ${employees.length} сотрудников! Всего: ${merged.length}`);
+            } catch (err) {
+                alert('❌ Ошибка при загрузке: ' + err.message);
+                console.error(err);
+            }
+        };
+        
+        reader.readAsText(file, 'UTF-8');
+    };
+    
+    input.click();
+}
+
+function addSelectedToProtocol() {
+    const selected = getSelectedStaff();
+    if (selected.length === 0) {
+        alert('❌ Выберите хотя бы одного сотрудника в штатном расписании');
+        return;
+    }
+    
+    const protocol = getProtocol();
+    const existingSnils = new Set(protocol.map(e => e.snils));
+    
+    let added = 0;
+    selected.forEach(emp => {
+        if (!existingSnils.has(emp.snils)) {
+            protocol.push({ ...emp });
+            existingSnils.add(emp.snils);
+            added++;
+        }
+    });
+    
+    saveProtocol(protocol);
+    renderProtocol();
+    
+    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
+    const selectAll = document.getElementById('selectAllStaff');
+    if (selectAll) selectAll.checked = false;
+    
+    alert(`✅ Добавлено ${added} сотрудников в протокол!`);
+}
+
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================================
+
+function initTrainingPage() {
+    renderOrgs();
+    renderStaff();
+    renderProtocol();
+    fillFamEmployeeSelect();
+    
+    const showOrgBtn = document.getElementById('showOrgFormBtn');
+    const saveOrgBtn = document.getElementById('saveOrgBtn');
+    const cancelOrgBtn = document.getElementById('cancelOrgBtn');
+    const deleteOrgBtn = document.getElementById('deleteOrgBtn');
+    const generateBtn = document.getElementById('generateBtn');
+    const addSelectedBtn = document.getElementById('addSelectedBtn');
+    const importBtn = document.getElementById('staffImportBtn');
+    const generateFamBtn = document.getElementById('generateFamBtn');
+    
+    if (showOrgBtn) {
+        showOrgBtn.addEventListener('click', function() {
+            document.getElementById('orgForm').classList.remove('hidden');
+        });
+    }
+    
+    if (saveOrgBtn) {
+        saveOrgBtn.addEventListener('click', function() {
+            const nameInput = document.getElementById('orgNameInput');
+            const innInput = document.getElementById('orgInnInput');
+            const name = nameInput ? nameInput.value.trim() : '';
+            const inn = innInput ? innInput.value.trim() : '';
+            if (!name || !inn) { alert('Заполните все поля'); return; }
+            const orgs = getOrgs();
+            orgs.push({ id: Date.now(), name, inn });
+            saveOrgs(orgs);
+            renderOrgs();
+            document.getElementById('orgForm').classList.add('hidden');
+            if (nameInput) nameInput.value = '';
+            if (innInput) innInput.value = '';
+            alert('✅ Организация добавлена!');
+        });
+    }
+    
+    if (cancelOrgBtn) {
+        cancelOrgBtn.addEventListener('click', function() {
+            document.getElementById('orgForm').classList.add('hidden');
+        });
+    }
+    
+    if (deleteOrgBtn) {
+        deleteOrgBtn.addEventListener('click', function() {
+            const select = document.getElementById('orgSelect');
+            const id = select ? parseInt(select.value) : 0;
+            if (!id) { alert('Выберите организацию'); return; }
+            if (!confirm('Удалить организацию?')) return;
+            let orgs = getOrgs();
+            orgs = orgs.filter(o => o.id !== id);
+            saveOrgs(orgs);
+            renderOrgs();
+            alert('✅ Организация удалена');
+        });
+    }
+    
+    if (generateBtn) {
+        generateBtn.addEventListener('click', generateXML);
+    }
+    
+    if (addSelectedBtn) {
+        addSelectedBtn.addEventListener('click', addSelectedToProtocol);
+    }
+    
+    if (importBtn) {
+        importBtn.addEventListener('click', importStaffFile);
+    }
+    
+    if (generateFamBtn) {
+        generateFamBtn.addEventListener('click', generateFamiliarization);
+    }
+}
+
+// ============================================================
+// КАРТА (ВСЯ ОСТАЛЬНАЯ ЛОГИКА)
 // ============================================================
 let mapData = {
     workshops: [],
@@ -1519,235 +1772,6 @@ function formatDate(dateStr) {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ ЛИСТА ОЗНАКОМЛЕНИЯ
-// ============================================================
-
-function generateFamiliarization() {
-    const select = document.getElementById('famEmployeeSelect');
-    const index = select ? parseInt(select.value) : -1;
-    
-    if (isNaN(index) || index < 0) {
-        alert('❌ Выберите сотрудника!');
-        return;
-    }
-    
-    const staff = getStaff();
-    const emp = staff[index];
-    if (!emp) {
-        alert('❌ Сотрудник не найден!');
-        return;
-    }
-    
-    const docCheckboxes = document.querySelectorAll('.doc-check input[type="checkbox"]:checked');
-    const docs = [];
-    docCheckboxes.forEach(cb => {
-        docs.push(cb.value);
-    });
-    
-    if (docs.length === 0) {
-        alert('❌ Выберите хотя бы один документ для ознакомления!');
-        return;
-    }
-    
-    const result = document.getElementById('famResult');
-    const content = document.getElementById('famContent');
-    
-    if (result && content) {
-        let html = `
-            <div style="padding:20px;background:#fff;color:#222;border-radius:8px;max-width:800px;margin:0 auto;">
-                <h2 style="text-align:center;font-size:18px;border-bottom:2px solid #7c3aed;padding-bottom:10px;">
-                    ЛИСТ ОЗНАКОМЛЕНИЯ
-                </h2>
-                <div style="margin:16px 0;">
-                    <p><strong>Сотрудник:</strong> ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</p>
-                    <p><strong>Должность:</strong> ${emp.position}</p>
-                    <p><strong>СНИЛС:</strong> ${formatSnils(emp.snils)}</p>
-                    <p><strong>Дата:</strong> ${new Date().toLocaleDateString('ru-RU')}</p>
-                </div>
-                <div style="border-top:1px solid #ddd;padding-top:12px;">
-                    <p><strong>Ознакомлен(а) со следующими документами:</strong></p>
-                    <ol style="padding-left:20px;">
-        `;
-        
-        docs.forEach(doc => {
-            html += `<li>${doc}</li>`;
-        });
-        
-        html += `
-                    </ol>
-                </div>
-                <div style="margin-top:20px;display:flex;justify-content:space-between;border-top:1px solid #ddd;padding-top:16px;">
-                    <div>
-                        <p>_____________</p>
-                        <p style="font-size:12px;color:#666;">Подпись сотрудника</p>
-                    </div>
-                    <div>
-                        <p>_____________</p>
-                        <p style="font-size:12px;color:#666;">Дата</p>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        content.innerHTML = html;
-        result.classList.remove('hidden');
-    }
-}
-
-// ============================================================
-// ИМПОРТ ШТАТНОГО РАСПИСАНИЯ
-// ============================================================
-
-function importStaffFile() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.txt,.csv,.doc,.docx';
-    
-    input.onchange = function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            try {
-                const content = event.target.result;
-                const employees = smartParse(content);
-                
-                if (employees.length === 0) {
-                    alert('❌ Не удалось распознать сотрудников. Проверьте формат файла.');
-                    return;
-                }
-                
-                const existing = getStaff();
-                const merged = [...existing, ...employees];
-                saveStaff(merged);
-                
-                renderStaff();
-                fillFamEmployeeSelect();
-                
-                alert(`✅ Загружено ${employees.length} сотрудников! Всего: ${merged.length}`);
-            } catch (err) {
-                alert('❌ Ошибка при загрузке: ' + err.message);
-                console.error(err);
-            }
-        };
-        
-        reader.readAsText(file, 'UTF-8');
-    };
-    
-    input.click();
-}
-
-function addSelectedToProtocol() {
-    const selected = getSelectedStaff();
-    if (selected.length === 0) {
-        alert('❌ Выберите хотя бы одного сотрудника в штатном расписании');
-        return;
-    }
-    
-    const protocol = getProtocol();
-    const existingSnils = new Set(protocol.map(e => e.snils));
-    
-    let added = 0;
-    selected.forEach(emp => {
-        if (!existingSnils.has(emp.snils)) {
-            protocol.push({ ...emp });
-            existingSnils.add(emp.snils);
-            added++;
-        }
-    });
-    
-    saveProtocol(protocol);
-    renderProtocol();
-    
-    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
-    const selectAll = document.getElementById('selectAllStaff');
-    if (selectAll) selectAll.checked = false;
-    
-    alert(`✅ Добавлено ${added} сотрудников в протокол!`);
-}
-
-// ============================================================
-// ИНИЦИАЛИЗАЦИЯ
-// ============================================================
-
-function initTrainingPage() {
-    renderOrgs();
-    renderStaff();
-    renderProtocol();
-    fillFamEmployeeSelect();
-    
-    const showOrgBtn = document.getElementById('showOrgFormBtn');
-    const saveOrgBtn = document.getElementById('saveOrgBtn');
-    const cancelOrgBtn = document.getElementById('cancelOrgBtn');
-    const deleteOrgBtn = document.getElementById('deleteOrgBtn');
-    const generateBtn = document.getElementById('generateBtn');
-    const addSelectedBtn = document.getElementById('addSelectedBtn');
-    const importBtn = document.getElementById('staffImportBtn');
-    const generateFamBtn = document.getElementById('generateFamBtn');
-    
-    if (showOrgBtn) {
-        showOrgBtn.addEventListener('click', function() {
-            document.getElementById('orgForm').classList.remove('hidden');
-        });
-    }
-    
-    if (saveOrgBtn) {
-        saveOrgBtn.addEventListener('click', function() {
-            const nameInput = document.getElementById('orgNameInput');
-            const innInput = document.getElementById('orgInnInput');
-            const name = nameInput ? nameInput.value.trim() : '';
-            const inn = innInput ? innInput.value.trim() : '';
-            if (!name || !inn) { alert('Заполните все поля'); return; }
-            const orgs = getOrgs();
-            orgs.push({ id: Date.now(), name, inn });
-            saveOrgs(orgs);
-            renderOrgs();
-            document.getElementById('orgForm').classList.add('hidden');
-            if (nameInput) nameInput.value = '';
-            if (innInput) innInput.value = '';
-            alert('✅ Организация добавлена!');
-        });
-    }
-    
-    if (cancelOrgBtn) {
-        cancelOrgBtn.addEventListener('click', function() {
-            document.getElementById('orgForm').classList.add('hidden');
-        });
-    }
-    
-    if (deleteOrgBtn) {
-        deleteOrgBtn.addEventListener('click', function() {
-            const select = document.getElementById('orgSelect');
-            const id = select ? parseInt(select.value) : 0;
-            if (!id) { alert('Выберите организацию'); return; }
-            if (!confirm('Удалить организацию?')) return;
-            let orgs = getOrgs();
-            orgs = orgs.filter(o => o.id !== id);
-            saveOrgs(orgs);
-            renderOrgs();
-            alert('✅ Организация удалена');
-        });
-    }
-    
-    if (generateBtn) {
-        generateBtn.addEventListener('click', generateXML);
-    }
-    
-    if (addSelectedBtn) {
-        addSelectedBtn.addEventListener('click', addSelectedToProtocol);
-    }
-    
-    if (importBtn) {
-        importBtn.addEventListener('click', importStaffFile);
-    }
-    
-    if (generateFamBtn) {
-        generateFamBtn.addEventListener('click', generateFamiliarization);
-    }
-}
-
-// ============================================================
 // DOM READY
 // ============================================================
 
@@ -1778,8 +1802,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <head>
                     <title>Лист ознакомления</title>
                     <style>
-                        body { font-family: Arial, sans-serif; padding: 40px; color: #222; max-width: 800px; margin: 0 auto; }
+                        body { font-family: Arial, sans-serif; padding: 40px; color: #222; max-width: 900px; margin: 0 auto; }
                         * { print-color-adjust: exact; }
+                        @media print {
+                            body { padding: 20px; }
+                            .no-print { display: none; }
+                        }
                     </style>
                 </head>
                 <body>
