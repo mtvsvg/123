@@ -214,7 +214,7 @@ function fillFamEmployeeSelect() {
 }
 
 // ============================================================
-// ПАРСЕР
+// ПАРСЕР ШТАТНОГО РАСПИСАНИЯ
 // ============================================================
 function smartParse(content) {
     const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
@@ -283,7 +283,7 @@ function escXml(str) {
 }
 
 // ============================================================
-// ФУНКЦИЯ ДЛЯ МОДАЛЬНОГО ОКНА СИЗ (ОНЛАЙН-ИНСПЕКЦИЯ)
+// МОДАЛЬНОЕ ОКНО СИЗ (ВЕРСИЯ С iframe)
 // ============================================================
 let currentPPEWorkplace = null;
 
@@ -319,46 +319,25 @@ function openPPEModal(wp) {
     try {
         const searchQuery = wp.position.trim();
         const encodedQuery = encodeURIComponent(searchQuery);
-        const url = `https://xn--80akibicpdbetz7e2g.xn--p1ai/ppe/search?q=${encodedQuery}`;
+        const url = `https://онлайнинспекция.рф/ppe/search?q=${encodedQuery}`;
         
         let html = `
-            <div style="background:rgba(0,212,255,0.05);padding:12px 16px;border-radius:8px;margin-bottom:16px;border:1px solid rgba(0,212,255,0.1);">
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <span style="font-size:32px;">🔍</span>
-                    <div>
-                        <div style="color:#00d4ff;font-weight:600;font-size:16px;">
-                            Поиск СИЗ на Онлайн-Инспекции
-                        </div>
-                        <div style="color:#8888aa;font-size:13px;margin-top:4px;">
-                            Должность: <strong style="color:#fff;">${wp.position}</strong>
-                        </div>
-                    </div>
-                </div>
+            <div style="background:rgba(0,212,255,0.05);padding:8px 12px;border-radius:6px;margin-bottom:12px;border:1px solid rgba(0,212,255,0.1);">
+                <span style="color:#8888aa;font-size:12px;">
+                    🔍 Поиск СИЗ для <strong style="color:#00d4ff;">"${wp.position}"</strong> на Онлайн-Инспекции
+                </span>
             </div>
             
-            <div style="background:rgba(255,255,255,0.03);padding:16px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);text-align:center;">
-                <div style="font-size:48px;margin-bottom:12px;">🌐</div>
-                <div style="color:#ccc;font-size:16px;margin-bottom:8px;">
-                    Сайт Онлайн-Инспекции откроется в новой вкладке
-                </div>
-                <div style="color:#8888aa;font-size:13px;margin-bottom:16px;">
-                    Там вы найдете актуальные СИЗ для профессии<br>
-                    <span style="color:#7c3aed;font-weight:500;">"${wp.position}"</span>
-                </div>
-                <button onclick="openOnlineInspection('${wp.position}')" 
-                        style="padding:14px 32px;background:linear-gradient(135deg,#7c3aed,#00d4ff);border:none;border-radius:12px;color:#fff;font-size:18px;font-weight:600;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(124,58,237,0.3);"
-                        onmouseover="this.style.transform='scale(1.05)'" 
-                        onmouseout="this.style.transform='scale(1)'">
-                    🔍 Открыть Онлайн-Инспекцию
-                </button>
-            </div>
-            
-            <div style="margin-top:16px;padding:12px;background:rgba(255,193,7,0.05);border-radius:8px;border:1px solid rgba(255,193,7,0.1);">
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <span style="font-size:18px;">💡</span>
-                    <span style="color:#8888aa;font-size:12px;">
-                        Выберите СИЗ на сайте и вернитесь, чтобы отметить их как подобранные
-                    </span>
+            <div style="position:relative;width:100%;height:500px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);background:#0a0a1a;">
+                <iframe 
+                    src="${url}" 
+                    style="width:100%;height:100%;border:none;background:#fff;"
+                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    loading="lazy"
+                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                ></iframe>
+                <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.8));padding:16px;text-align:center;pointer-events:none;">
+                    <span style="color:#fff;font-size:12px;opacity:0.6;">⬆️ Пролистайте страницу для просмотра СИЗ</span>
                 </div>
             </div>
             
@@ -370,6 +349,10 @@ function openPPEModal(wp) {
                 <button onclick="closePPEModal()" 
                         style="padding:8px 20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#aaa;cursor:pointer;font-size:14px;">
                     ✖ Закрыть
+                </button>
+                <button onclick="window.open('${url}', '_blank')" 
+                        style="padding:8px 20px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);border-radius:8px;color:#b388ff;cursor:pointer;font-size:14px;">
+                    🔗 Открыть в новой вкладке
                 </button>
             </div>
         `;
@@ -399,7 +382,7 @@ function openPPEModal(wp) {
 
 function openOnlineInspection(profession) {
     const encoded = encodeURIComponent(profession.trim());
-    const url = `https://xn--80akibicpdbetz7e2g.xn--p1ai/ppe/search?q=${encoded}`;
+    const url = `https://онлайнинспекция.рф/ppe/search?q=${encoded}`;
     window.open(url, '_blank');
 }
 
