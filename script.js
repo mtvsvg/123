@@ -471,7 +471,6 @@ const PPE_TYPES = [
     'Средства защиты кожи',
     'Средства защиты комплексные'
 ];
-
 // ============================================================
 // МОДАЛЬНОЕ ОКНО СИЗ
 // ============================================================
@@ -788,7 +787,6 @@ function initMapPage() {
     canvas.height = 2000;
     mapInited = true;
     
-    // Загружаем данные
     const saved = localStorage.getItem('mapData');
     if (saved) {
         try {
@@ -895,7 +893,6 @@ function setupMapButtons() {
     const saveFeBtn = document.getElementById('saveFireExtinguisherBtn');
     if (saveFeBtn) saveFeBtn.onclick = saveFireExtinguisher;
     
-    // Авторасчет даты перезарядки
     const feDateInput = document.getElementById('feDateInput');
     if (feDateInput) feDateInput.onchange = function() {
         const nextDateInput = document.getElementById('feNextDateInput');
@@ -951,11 +948,9 @@ function drawMap() {
     const ws = getCurrentWorkshop();
     if (!ws) return;
     
-    // Фон
     ctx.fillStyle = '#0a0a1a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Сетка
     ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 0.5;
     for (let i = 0; i < canvas.width; i += 50) {
@@ -971,7 +966,6 @@ function drawMap() {
         ctx.stroke();
     }
     
-    // Участок
     ctx.fillStyle = 'rgba(74,158,255,0.05)';
     ctx.fillRect(ws.x, ws.y, ws.w, ws.h);
     ctx.strokeStyle = '#4a9eff';
@@ -984,7 +978,6 @@ function drawMap() {
     ctx.textAlign = 'center';
     ctx.fillText(`🏭 ${ws.name} (${ws.length}×${ws.width} м)`, ws.x + ws.w/2, ws.y + 55);
     
-    // Уголки
     const cornerSize = 20;
     [[ws.x, ws.y], [ws.x+ws.w, ws.y], [ws.x, ws.y+ws.h], [ws.x+ws.w, ws.y+ws.h]].forEach(([cx, cy]) => {
         ctx.fillStyle = 'rgba(74,158,255,0.9)';
@@ -994,7 +987,6 @@ function drawMap() {
         ctx.strokeRect(cx - cornerSize/2, cy - cornerSize/2, cornerSize, cornerSize);
     });
     
-    // Пути эвакуации
     if (mapData.evacuationRoutes) {
         mapData.evacuationRoutes.forEach(route => {
             if (route.points && route.points.length >= 2) {
@@ -1011,7 +1003,6 @@ function drawMap() {
                 ctx.stroke();
                 ctx.shadowBlur = 0;
                 ctx.setLineDash([]);
-                // Стрелка
                 const last = route.points[route.points.length-1];
                 const prev = route.points[route.points.length-2];
                 const angle = Math.atan2(last.y - prev.y, last.x - prev.x);
@@ -1022,7 +1013,6 @@ function drawMap() {
                 ctx.lineTo(last.x - 18*Math.cos(angle+0.5), last.y - 18*Math.sin(angle+0.5));
                 ctx.closePath();
                 ctx.fill();
-                // Название
                 if (route.name) {
                     const midX = (route.points[0].x + route.points[route.points.length-1].x) / 2;
                     const midY = (route.points[0].y + route.points[route.points.length-1].y) / 2 - 20;
@@ -1039,7 +1029,6 @@ function drawMap() {
         });
     }
     
-    // Огнетушители
     if (mapData.fireExtinguishers) {
         mapData.fireExtinguishers.forEach(fe => {
             const x = fe.x - 22, y = fe.y - 32;
@@ -1065,7 +1054,6 @@ function drawMap() {
         });
     }
     
-    // Выходы
     if (mapData.evacuationPoints) {
         mapData.evacuationPoints.forEach(ep => {
             const ew = 120, eh = 60;
@@ -1093,7 +1081,6 @@ function drawMap() {
         });
     }
     
-    // Рабочие места
     if (ws.workplaces) {
         ws.workplaces.forEach(wp => {
             const zone = wp.zone || 60;
@@ -1132,7 +1119,9 @@ function drawMap() {
         });
     }
 }
-
+// ============================================================
+// СОБЫТИЯ CANVAS
+// ============================================================
 function setupCanvasEvents() {
     const canvas = document.getElementById('mapCanvas');
     if (!canvas) return;
@@ -1421,6 +1410,9 @@ function deleteSelectedObject() {
     alert('✅ Удалено');
 }
 
+// ============================================================
+// ОГНЕТУШИТЕЛИ
+// ============================================================
 function openFireExtinguisherModal() {
     document.getElementById('fireExtinguisherModal').classList.remove('hidden');
 }
@@ -1453,6 +1445,9 @@ function saveFireExtinguisher() {
     alert('✅ Огнетушитель добавлен!');
 }
 
+// ============================================================
+// УЧАСТКИ
+// ============================================================
 function openWorkshopModal() {
     const ws = getCurrentWorkshop();
     if (!ws) { alert('Сначала создайте участок'); return; }
