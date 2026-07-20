@@ -1622,3 +1622,113 @@ document.addEventListener('DOMContentLoaded', function() {
     initTrainingPage();
     console.log('✅ Готово!');
 });
+// ============================================================
+// ДАТА ИНСТРУКТАЖА ПРИ КЛИКЕ НА СОТРУДНИКА
+// ============================================================
+function openEmployeeCard(index) {
+    const staff = getStaff();
+    const emp = staff[index];
+    if (!emp) return;
+    
+    // Сохраняем выбранного сотрудника
+    currentEmployeeIndex = index;
+    
+    // Создаем модалку для сотрудника
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'employeeModal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h3>👤 ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</h3>
+                <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label style="color:#ccc;">Должность</label>
+                    <input type="text" value="${emp.position}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;" readonly>
+                </div>
+                <div class="form-group">
+                    <label style="color:#ccc;">Дата последнего инструктажа</label>
+                    <input type="date" id="empInstructionDate" value="${emp.instructionDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                </div>
+                <div class="form-group">
+                    <label style="color:#ccc;">Дата обучения</label>
+                    <input type="date" id="empTrainingDate" value="${emp.trainingDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                </div>
+                <div class="form-group">
+                    <label style="color:#ccc;">СИЗ (можно добавить)</label>
+                    <div style="max-height:150px;overflow-y:auto;">
+                        ${emp.ppeItems && emp.ppeItems.length > 0 ? emp.ppeItems.map((item, i) => 
+                            `<div style="padding:6px 10px;background:rgba(76,175,80,0.1);border-radius:4px;margin-bottom:4px;color:#ccc;font-size:13px;">✅ ${item.name} (${item.type})</div>`
+                        ).join('') : '<div style="color:#666;font-size:13px;">Нет добавленных СИЗ</div>'}
+                    </div>
+                    <button onclick="openPPEModalForEmployee()" style="margin-top:8px;padding:6px 16px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);border-radius:6px;color:#b388ff;cursor:pointer;font-size:13px;">➕ Добавить СИЗ</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="this.closest('.modal-overlay').remove()">Закрыть</button>
+                <button class="btn-primary" onclick="saveEmployeeData()" style="width:auto;padding:10px 24px;">💾 Сохранить</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+let currentEmployeeIndex = -1;
+
+function saveEmployeeData() {
+    const staff = getStaff();
+    const emp = staff[currentEmployeeIndex];
+    if (!emp) return;
+    
+    const instructionDate = document.getElementById('empInstructionDate')?.value || '';
+    const trainingDate = document.getElementById('empTrainingDate')?.value || '';
+    
+    emp.instructionDate = instructionDate;
+    emp.trainingDate = trainingDate;
+    saveStaff(staff);
+    
+    // Обновляем таблицу
+    renderStaff();
+    document.getElementById('employeeModal')?.remove();
+    alert('✅ Данные сохранены!');
+}
+
+function openPPEModalForEmployee() {
+    const staff = getStaff();
+    const emp = staff[currentEmployeeIndex];
+    if (!emp) return;
+    
+    // Создаем временное рабочее место для сотрудника
+    const tempWorkplace = {
+        name: `${emp.last_name} ${emp.first_name}`,
+        position: emp.position,
+        ppeItems: emp.ppeItems || []
+    };
+    
+    // Открываем модалку СИЗ
+    currentPPEWorkplace = tempWorkplace;
+    ppeItems = tempWorkplace.ppeItems || [];
+    openPPEModal(tempWorkplace);
+    
+    // Переопределяем savePPEItems для сохранения в сотрудника
+    const originalSave = savePPEItems;
+    savePPEItems = function() {
+        if (!currentPPEWorkplace) return;
+        if (ppeItems.length === 0) { alert('⚠️ Добавьте хотя бы одно СИЗ!'); return; }
+        
+        const staff = getStaff();
+        const emp = staff[currentEmployeeIndex];
+        if (emp) {
+            emp.ppeItems = ppeItems;
+            saveStaff(staff);
+        }
+        currentPPEWorkplace.ppeItems = ppeItems;
+        currentPPEWorkplace.hasPPE = true;
+        alert(`✅ Сохранено ${ppeItems.length} СИЗ!`);
+        closePPEModal();
+        savePPEItems = originalSave;
+        renderStaff();
+    };
+}
