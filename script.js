@@ -58,13 +58,363 @@ function showPage(page) {
 // ============================================================
 function getOrgs() { return JSON.parse(localStorage.getItem('organizations') || '[]'); }
 function saveOrgs(orgs) { localStorage.setItem('organizations', JSON.stringify(orgs)); }
-function getStaff() { return JSON.parse(localStorage.getItem('staff') || '[]'); }
-function saveStaff(staff) { localStorage.setItem('staff', JSON.stringify(staff)); }
 function getProtocol() { return JSON.parse(localStorage.getItem('protocol') || '[]'); }
 function saveProtocol(protocol) { localStorage.setItem('protocol', JSON.stringify(protocol)); }
 function getEvents() { return JSON.parse(localStorage.getItem('calendarEvents') || '[]'); }
 function saveEvents(events) { localStorage.setItem('calendarEvents', JSON.stringify(events)); }
 
+// ============================================================
+// ШТАТНОЕ РАСПИСАНИЕ С ОТДЕЛАМИ
+// ============================================================
+function getStaffData() {
+    const saved = localStorage.getItem('staffData');
+    if (saved) {
+        try {
+            const data = JSON.parse(saved);
+            if (data.departments && data.unassigned !== undefined) {
+                return data;
+            }
+        } catch(e) {}
+    }
+    return { departments: {}, unassigned: [] };
+}
+
+function saveStaffData(data) {
+    localStorage.setItem('staffData', JSON.stringify(data));
+}
+
+// Получить всех сотрудников (плоский список)
+function getAllEmployees() {
+    const data = getStaffData();
+    const all = [];
+    for (const [dept, deptData] of Object.entries(data.departments)) {
+        if (deptData.employees) {
+            deptData.employees.forEach(emp => {
+                all.push({ ...emp, department: dept });
+            });
+        }
+    }
+    data.unassigned.forEach(emp => {
+        all.push({ ...emp, department: null });
+    });
+    return all;
+}
+
+// Получить сотрудника по СНИЛС
+function findEmployeeBySnils(snils) {
+    const all = getAllEmployees();
+    return all.find(e => e.snils === snils) || null;
+}
+
+// Добавить сотрудника
+function addEmployee(employee) {
+    const data = getStaffData();
+    data.unassigned.push(employee);
+    saveStaffData(data);
+    renderStaffWithDepartments();
+}
+
+// Добавить нескольких сотрудников
+function addEmployees(employees) {
+    const data = getStaffData();
+    employees.forEach(emp => {
+        data.unassigned.push(emp);
+    });
+    saveStaffData(data);
+    renderStaffWithDepartments();
+}
+
+// Удалить сотрудника
+function removeEmployeeBySnils(snils) {
+    const data = getStaffData();
+    // Ищем в отделах
+    for (const [dept, deptData] of Object.entries(data.departments)) {
+        const idx = deptData.employees.findIndex(e => e.snils === snils);
+        if (idx !== -1) {
+            deptData.employees.splice(idx, 1);
+            saveStaffData(data);
+            renderStaffWithDepartments();
+            return;
+        }
+    }
+    // Ищем в непривязанных
+    const idx = data.unassigned.findIndex(e => e.snils === snils);
+    if (idx !== -1) {
+        data.unassigned.splice(idx, 1);
+        saveStaffData(data);
+        renderStaffWithDepartments();
+    }
+}
+
+// Получить выбранных сотрудников (из чекбоксов)
+function getSelectedStaffFromView() {
+    const checkboxes = document.querySelectorAll('.staff-check:checked');
+    const selected = [];
+    const data = getStaffData();
+    
+    checkboxes.forEach(cb => {
+        const snils = cb.dataset.snils;
+        const dept = cb.dataset.department;
+        if (dept && data.departments[dept]) {
+            const emp = data.departments[dept].employees.find(e => e.snils === snils);
+            if (emp) selected.push({ ...emp });
+        } else {
+            const emp = data.unassigned.find(e => e.snils === snils);
+            if (emp) selected.push({ ...emp });
+        }
+    });
+    return selected;
+}
+
+// ============================================================
+// ОТРИСОВКА ШТАТНОГО РАСПИСАНИЯ
+// ============================================================
+function renderStaffWithDepartments() {
+    const container = document.getElementById('staffContainer');
+    if (!container) return;
+    const data = getStaffData();
+    const allCount = getAllEmployees().length;
+    
+    if (allCount === 0) {
+        container.innerHTML = '<p style="color:#6a6a8a;text-align:center;padding:20px;">Нет загруженных сотрудников. Нажмите "Загрузить файл".</p>';
+        document.getElementById('staffTotalCount').textContent = 'Всего: 0';
+        return;
+    }
+    
+    document.getElementById('staffTotalCount').textContent = `Всего: ${allCount}`;
+    
+    let html = '';
+    
+    // Отделы
+    for (const [deptName, deptData] of Object.entries(data.departments)) {
+        const count = deptData.employees ? deptData.employees.length : 0;
+        const isOpen = localStorage.getItem(`dept_open_${deptName}`) !== 'false';
+        
+        html += `
+            <div style="background:rgba(255,255,255,0.03);border-radius:10px;margin-bottom:8px;border:1px solid rgba(255,255,255,0.06);overflow:hidden;">
+                <div class="department-header" onclick="toggleDepartment('${deptName}')">
+                    <span class="dept-name">📁 ${deptName}</span>
+                    <span class="dept-count">${count} сотрудников</span>
+                    <div>
+                        <button class="btn-delete" onclick="event.stopPropagation();deleteDepartment('${deptName}')" style="padding:4px 10px;font-size:12px;">🗑</button>
+                    </div>
+                </div>
+                <div class="department-body" id="dept_${deptName}" style="${isOpen ? 'display:block;' : 'display:none;'}">
+                    ${deptData.employees && deptData.employees.length > 0 ? 
+                        deptData.employees.map((emp, idx) => `
+                            <div class="employee-row">
+                                <input type="checkbox" class="staff-check" data-snils="${emp.snils}" data-department="${deptName}">
+                                <span class="emp-name" onclick="openEmployeeCardBySnils('${emp.snils}')">${emp.last_name} ${emp.first_name}</span>
+                                <span class="emp-position">${emp.position}</span>
+                                <span class="emp-snils">${formatSnils(emp.snils)}</span>
+                                <button class="emp-remove" onclick="removeEmployeeBySnils('${emp.snils}')">✖</button>
+                            </div>
+                        `).join('') 
+                    : '<div class="dept-empty">Нет сотрудников</div>'}
+                </div>
+            </div>
+        `;
+    }
+    
+    // Непривязанные сотрудники
+    if (data.unassigned.length > 0) {
+        html += `
+            <div class="unassigned-section">
+                <div class="unassigned-title">📂 Без службы (${data.unassigned.length})</div>
+                ${data.unassigned.map((emp, idx) => `
+                    <div class="employee-row">
+                        <input type="checkbox" class="staff-check" data-snils="${emp.snils}" data-unassigned="true">
+                        <span class="emp-name" onclick="openEmployeeCardBySnils('${emp.snils}')">${emp.last_name} ${emp.first_name}</span>
+                        <span class="emp-position">${emp.position}</span>
+                        <span class="emp-snils">${formatSnils(emp.snils)}</span>
+                        <button class="emp-remove" onclick="removeEmployeeBySnils('${emp.snils}')">✖</button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+    updateFamEmployeeSelect();
+}
+
+// Переключение отдела (сворачивание/разворачивание)
+function toggleDepartment(deptName) {
+    const body = document.getElementById(`dept_${deptName}`);
+    if (!body) return;
+    const isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : 'block';
+    localStorage.setItem(`dept_open_${deptName}`, String(!isOpen));
+}
+
+// Удаление отдела
+function deleteDepartment(deptName) {
+    if (!confirm(`Удалить службу "${deptName}" со всеми сотрудниками?`)) return;
+    const data = getStaffData();
+    if (data.departments[deptName]) {
+        // Перемещаем сотрудников в непривязанные
+        if (data.departments[deptName].employees) {
+            data.departments[deptName].employees.forEach(emp => {
+                data.unassigned.push(emp);
+            });
+        }
+        delete data.departments[deptName];
+        saveStaffData(data);
+        renderStaffWithDepartments();
+        alert(`✅ Служба "${deptName}" удалена, сотрудники перемещены в "Без службы"`);
+    }
+}
+
+// Создание отдела из выбранных сотрудников
+function createDepartmentFromSelected() {
+    const selected = getSelectedStaffFromView();
+    if (selected.length === 0) {
+        alert('❌ Выберите сотрудников!');
+        return;
+    }
+    
+    const deptName = prompt('Введите название службы:', 'Служба ' + (Object.keys(getStaffData().departments).length + 1));
+    if (!deptName) return;
+    
+    const data = getStaffData();
+    
+    // Удаляем выбранных из непривязанных
+    const selectedSnils = new Set(selected.map(e => e.snils));
+    data.unassigned = data.unassigned.filter(e => !selectedSnils.has(e.snils));
+    
+    // Удаляем выбранных из других отделов
+    for (const [dept, deptData] of Object.entries(data.departments)) {
+        data.departments[dept].employees = deptData.employees.filter(e => !selectedSnils.has(e.snils));
+    }
+    
+    // Добавляем новый отдел
+    data.departments[deptName] = { employees: selected };
+    
+    saveStaffData(data);
+    renderStaffWithDepartments();
+    alert(`✅ Создана служба "${deptName}" (${selected.length} сотрудников)`);
+}
+
+// Выбрать всех сотрудников в текущем отображении
+function selectAllStaffInCurrentView() {
+    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = true);
+}
+
+// Снять всех
+function deselectAllStaff() {
+    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
+}
+
+// Очистить всё штатное расписание
+function clearAllStaff() {
+    if (!confirm('Удалить ВСЕХ сотрудников из штатного расписания?')) return;
+    saveStaffData({ departments: {}, unassigned: [] });
+    renderStaffWithDepartments();
+    alert('✅ Штатное расписание очищено');
+}
+
+// ============================================================
+// ЗАГРУЗКА ШТАТНОГО РАСПИСАНИЯ (ИМПОРТ)
+// ============================================================
+function importStaffFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.txt,.csv,.doc,.docx';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                const employees = smartParse(event.target.result);
+                if (employees.length === 0) { alert('❌ Не удалось распознать сотрудников.'); return; }
+                
+                const data = getStaffData();
+                employees.forEach(emp => {
+                    // Проверяем, нет ли уже такого сотрудника
+                    const exists = getAllEmployees().some(e => e.snils === emp.snils);
+                    if (!exists) {
+                        data.unassigned.push(emp);
+                    }
+                });
+                saveStaffData(data);
+                renderStaffWithDepartments();
+                alert(`✅ Загружено ${employees.length} новых сотрудников!`);
+            } catch (err) { alert('❌ Ошибка: ' + err.message); }
+        };
+        reader.readAsText(file, 'UTF-8');
+    };
+    input.click();
+}
+
+// ============================================================
+// ПАРСЕР ШТАТНОГО РАСПИСАНИЯ
+// ============================================================
+function smartParse(content) {
+    const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
+    const employees = [];
+    lines.forEach(line => {
+        let trimmed = line.trim();
+        if (!trimmed) return;
+        trimmed = trimmed.replace(/\t/g, ' ');
+        trimmed = trimmed.replace(/\s+/g, ' ');
+        trimmed = trimmed.trim();
+        const result = parseLine(trimmed);
+        if (result) employees.push(result);
+    });
+    return employees;
+}
+function parseLine(line) {
+    let snils = ''; 
+    let snilsMatch = line.match(/\d{3}[- ]?\d{3}[- ]?\d{3}[- ]?\d{2}/);
+    if (snilsMatch) { 
+        snils = snilsMatch[0].replace(/[\s-]/g, ''); 
+        line = line.replace(snilsMatch[0], '').trim(); 
+    }
+    const words = line.split(/\s+/).filter(w => w.length > 0);
+    if (words.length < 2) return null;
+    const commonPositions = ['инженер','техник','механик','специалист','мастер','бригадир','директор','менеджер','бухгалтер','экономист','юрист','конструктор','технолог','электрик','сварщик','токарь','фрезеровщик','слесарь','водитель','грузчик','кладовщик','уборщик','охранник','программист','администратор','начальник','заведующий','главный','ведущий','старший','младший','помощник','заместитель','швея','вышивальщица','раскройщик','комплектовщик','упаковщик','контролер','наладчик','оператор','машинист','крановщик','стропальщик','троллейбуса','автобуса','трамвая','отк','спец','мех','энерг','снабж','электромонтер','диспетчер','фельдшер','медицинская','сестра','кассир','сторож','вахтер','аккумуляторщик','маляр','токарь','обмотчик','ремонтировщик','разр','отдела'];
+    let nameParts = [], positionParts = [], i = 0;
+    while (i < words.length) { 
+        const w = words[i]; 
+        const lower = w.toLowerCase(); 
+        const isName = /^[А-ЯЁ][а-яё]{1,19}$/.test(w) || /^[A-Z][a-z]{1,19}$/.test(w); 
+        const isPosition = commonPositions.some(pos => lower === pos || lower.includes(pos) || pos.includes(lower)); 
+        if (isName && !isPosition && nameParts.length < 3) { 
+            nameParts.push(w); 
+            i++; 
+        } else { 
+            positionParts.push(w); 
+            i++; 
+        } 
+    }
+    if (nameParts.length < 2) { 
+        const firstThree = words.slice(0, Math.min(3, words.length)); 
+        if (firstThree.length >= 2) { 
+            nameParts = firstThree; 
+            positionParts = words.slice(firstThree.length); 
+        } 
+    }
+    if (nameParts.length < 2) return null;
+    return { 
+        last_name: nameParts[0] || '', 
+        first_name: nameParts[1] || '', 
+        middle_name: nameParts[2] || '', 
+        position: positionParts.join(' ') || '', 
+        snils: snils || '', 
+        is_passed: true 
+    };
+}
+function formatSnils(snils) { 
+    if (!snils) return ''; 
+    const clean = snils.replace(/\D/g, ''); 
+    if (clean.length < 11) return snils; 
+    return clean.slice(0,3) + '-' + clean.slice(3,6) + '-' + clean.slice(6,9) + ' ' + clean.slice(9,11); 
+}
+function escXml(str) { 
+    if (!str) return ''; 
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); 
+}
 // ============================================================
 // ОРГАНИЗАЦИИ
 // ============================================================
@@ -109,7 +459,7 @@ function showTab(name) {
         const el = document.getElementById('tabStaff');
         if (el) el.classList.remove('hidden');
         document.querySelector('.tab button:nth-child(1)')?.classList.add('active');
-        renderStaff();
+        renderStaffWithDepartments();
         fillFamEmployeeSelect();
     } else if (name === 'protocol') {
         const el = document.getElementById('tabProtocol');
@@ -123,55 +473,6 @@ function showTab(name) {
         fillFamEmployeeSelect();
         renderOrgs();
     }
-}
-
-// ============================================================
-// ШТАТНОЕ РАСПИСАНИЕ
-// ============================================================
-function renderStaff() {
-    const container = document.getElementById('staffContainer');
-    if (!container) return;
-    const staff = getStaff();
-    if (staff.length === 0) { 
-        container.innerHTML = '<p style="color:#6a6a8a;text-align:center;padding:20px;">Нет загруженных сотрудников. Нажмите "Загрузить файл".</p>'; 
-        return; 
-    }
-    let html = `<table class="staff-table"><thead><tr><th style="width:40px;"><input type="checkbox" id="selectAllStaff" onchange="toggleAllStaff()"></th><th>Фамилия</th><th>Имя</th><th>Отчество</th><th>Должность</th><th>СНИЛС</th></tr></thead><tbody>`;
-    staff.forEach((emp, index) => {
-        html += `<tr><td><input type="checkbox" class="staff-check" data-index="${index}"></td><td class="staff-name" onclick="openEmployeeCard(${index})">${emp.last_name}</td><td>${emp.first_name}</td><td>${emp.middle_name || ''}</td><td>${emp.position}</td><td>${emp.snils}</td></tr>`;
-    });
-    html += '</tbody></table>';
-    container.innerHTML = html;
-}
-function toggleAllStaff() { 
-    const checked = document.getElementById('selectAllStaff')?.checked || false; 
-    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = checked); 
-}
-function selectAllStaff() { 
-    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = true); 
-    const selectAll = document.getElementById('selectAllStaff'); 
-    if (selectAll) selectAll.checked = true; 
-}
-function deselectAllStaff() { 
-    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false); 
-    const selectAll = document.getElementById('selectAllStaff'); 
-    if (selectAll) selectAll.checked = false; 
-}
-function getSelectedStaff() { 
-    const checkboxes = document.querySelectorAll('.staff-check:checked'); 
-    const staff = getStaff(); 
-    const selected = []; 
-    checkboxes.forEach(cb => { 
-        const index = parseInt(cb.dataset.index); 
-        if (staff[index]) selected.push({ ...staff[index] }); 
-    }); 
-    return selected; 
-}
-function clearStaff() { 
-    if (!confirm('Удалить всех сотрудников из штатного расписания?')) return; 
-    saveStaff([]); 
-    renderStaff(); 
-    fillFamEmployeeSelect(); 
 }
 
 // ============================================================
@@ -226,9 +527,9 @@ function getSelectedPrograms() {
 function fillFamEmployeeSelect() {
     const select = document.getElementById('famEmployeeSelect');
     if (!select) return;
-    const staff = getStaff();
+    const all = getAllEmployees();
     select.innerHTML = '<option value="">-- Выберите сотрудника --</option>';
-    staff.forEach((emp, index) => {
+    all.forEach((emp, index) => {
         const opt = document.createElement('option');
         opt.value = index;
         opt.textContent = `${emp.last_name} ${emp.first_name} ${emp.middle_name || ''} — ${emp.position}`;
@@ -255,8 +556,8 @@ function getFamEmployeeData() {
     }
     
     if (isNaN(index) || index < 0) return null;
-    const staff = getStaff();
-    return staff[index] || null;
+    const all = getAllEmployees();
+    return all[index] || null;
 }
 
 function getOrgName() {
@@ -391,74 +692,6 @@ function generateFamiliarization() {
         content.innerHTML = html;
         result.classList.remove('hidden');
     }
-}
-// ============================================================
-// ПАРСЕР ШТАТНОГО РАСПИСАНИЯ
-// ============================================================
-function smartParse(content) {
-    const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
-    const employees = [];
-    lines.forEach(line => {
-        let trimmed = line.trim();
-        if (!trimmed) return;
-        trimmed = trimmed.replace(/\t/g, ' ');
-        trimmed = trimmed.replace(/\s+/g, ' ');
-        trimmed = trimmed.trim();
-        const result = parseLine(trimmed);
-        if (result) employees.push(result);
-    });
-    return employees;
-}
-function parseLine(line) {
-    let snils = ''; 
-    let snilsMatch = line.match(/\d{3}[- ]?\d{3}[- ]?\d{3}[- ]?\d{2}/);
-    if (snilsMatch) { 
-        snils = snilsMatch[0].replace(/[\s-]/g, ''); 
-        line = line.replace(snilsMatch[0], '').trim(); 
-    }
-    const words = line.split(/\s+/).filter(w => w.length > 0);
-    if (words.length < 2) return null;
-    const commonPositions = ['инженер','техник','механик','специалист','мастер','бригадир','директор','менеджер','бухгалтер','экономист','юрист','конструктор','технолог','электрик','сварщик','токарь','фрезеровщик','слесарь','водитель','грузчик','кладовщик','уборщик','охранник','программист','администратор','начальник','заведующий','главный','ведущий','старший','младший','помощник','заместитель','швея','вышивальщица','раскройщик','комплектовщик','упаковщик','контролер','наладчик','оператор','машинист','крановщик','стропальщик','троллейбуса','автобуса','трамвая','отк','спец','мех','энерг','снабж','электромонтер','диспетчер','фельдшер','медицинская','сестра','кассир','сторож','вахтер','аккумуляторщик','маляр','токарь','обмотчик','ремонтировщик','разр','отдела'];
-    let nameParts = [], positionParts = [], i = 0;
-    while (i < words.length) { 
-        const w = words[i]; 
-        const lower = w.toLowerCase(); 
-        const isName = /^[А-ЯЁ][а-яё]{1,19}$/.test(w) || /^[A-Z][a-z]{1,19}$/.test(w); 
-        const isPosition = commonPositions.some(pos => lower === pos || lower.includes(pos) || pos.includes(lower)); 
-        if (isName && !isPosition && nameParts.length < 3) { 
-            nameParts.push(w); 
-            i++; 
-        } else { 
-            positionParts.push(w); 
-            i++; 
-        } 
-    }
-    if (nameParts.length < 2) { 
-        const firstThree = words.slice(0, Math.min(3, words.length)); 
-        if (firstThree.length >= 2) { 
-            nameParts = firstThree; 
-            positionParts = words.slice(firstThree.length); 
-        } 
-    }
-    if (nameParts.length < 2) return null;
-    return { 
-        last_name: nameParts[0] || '', 
-        first_name: nameParts[1] || '', 
-        middle_name: nameParts[2] || '', 
-        position: positionParts.join(' ') || '', 
-        snils: snils || '', 
-        is_passed: true 
-    };
-}
-function formatSnils(snils) { 
-    if (!snils) return ''; 
-    const clean = snils.replace(/\D/g, ''); 
-    if (clean.length < 11) return snils; 
-    return clean.slice(0,3) + '-' + clean.slice(3,6) + '-' + clean.slice(6,9) + ' ' + clean.slice(9,11); 
-}
-function escXml(str) { 
-    if (!str) return ''; 
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); 
 }
 
 // ============================================================
@@ -667,6 +900,69 @@ function exportPPE() {
     win.document.close();
 }
 
+// ============================================================
+// ДОБАВЛЕНИЕ В ПРОТОКОЛ ИЗ ШТАТКИ
+// ============================================================
+function addSelectedToProtocol() {
+    const selected = getSelectedStaffFromView();
+    if (selected.length === 0) { alert('❌ Выберите сотрудников!'); return; }
+    const protocol = getProtocol();
+    const existing = new Set(protocol.map(e => e.snils));
+    let added = 0;
+    selected.forEach(emp => {
+        if (!existing.has(emp.snils)) { protocol.push({...emp}); existing.add(emp.snils); added++; }
+    });
+    saveProtocol(protocol);
+    renderProtocol();
+    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
+    alert(`✅ Добавлено ${added} сотрудников!`);
+}
+
+// ============================================================
+// ГЕНЕРАЦИЯ XML
+// ============================================================
+function generateXML() {
+    const orgSelect = document.getElementById('orgSelect');
+    const orgs = getOrgs();
+    const org = orgs.find(o => o.id === parseInt(orgSelect.value));
+    if (!org) { alert('❌ Выберите организацию!'); return; }
+    const protocol = getProtocol();
+    if (protocol.length === 0) { alert('❌ Нет сотрудников в протоколе!'); return; }
+    
+    const number = document.getElementById('protocolNumber').value.trim() || '01/26';
+    const date = document.getElementById('protocolDate').value || new Date().toISOString().split('T')[0];
+    
+    const programs = [];
+    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked').forEach(cb => {
+        const label = cb.closest('.program-check');
+        if (label) programs.push(label.textContent.trim());
+    });
+    if (programs.length === 0) { alert('❌ Выберите программы!'); return; }
+    
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<Протокол>\n';
+    xml += `  <Номер>${escXml(number)}</Номер>\n  <Дата>${escXml(date)}</Дата>\n  <Организация>${escXml(org.name)}</Организация>\n`;
+    xml += '  <Программы>\n';
+    programs.forEach(p => xml += `    <Программа>${escXml(p)}</Программа>\n`);
+    xml += '  </Программы>\n  <Сотрудники>\n';
+    protocol.forEach((emp, i) => {
+        xml += `    <Сотрудник>\n      <Номер>${i+1}</Номер>\n      <Фамилия>${escXml(emp.last_name)}</Фамилия>\n      <Имя>${escXml(emp.first_name)}</Имя>\n`;
+        xml += `      <Отчество>${escXml(emp.middle_name || '')}</Отчество>\n      <Должность>${escXml(emp.position)}</Должность>\n`;
+        xml += `      <СНИЛС>${escXml(formatSnils(emp.snils))}</СНИЛС>\n      <Результат>Пройдено</Результат>\n    </Сотрудник>\n`;
+    });
+    xml += '  </Сотрудники>\n</Протокол>';
+    
+    const resultBlock = document.getElementById('resultBlock');
+    const downloadLink = document.getElementById('downloadLink');
+    resultBlock.classList.remove('hidden');
+    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = `Протокол_${number}_${date}.xml`;
+    const preview = document.createElement('pre');
+    preview.style.cssText = 'max-height:200px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;margin-top:12px;';
+    preview.textContent = xml.substring(0, 500) + '...';
+    resultBlock.querySelector('pre')?.remove();
+    resultBlock.appendChild(preview);
+}
 // ============================================================
 // КАЛЕНДАРЬ
 // ============================================================
@@ -880,24 +1176,40 @@ function markTrainingFromProtocol() {
     
     if (!confirm(`📅 Отметить в календаре обучение для ${protocol.length} сотрудников?`)) return;
     
-    const staff = getStaff();
+    const all = getAllEmployees();
     const today = new Date().toISOString().split('T')[0];
     let updated = 0;
     
     protocol.forEach(empFromProtocol => {
-        const found = staff.find(e => e.snils === empFromProtocol.snils);
+        const found = all.find(e => e.snils === empFromProtocol.snils);
         if (found) {
-            found.trainingDate = today;
-            updated++;
+            // Находим сотрудника в структуре и обновляем
+            const data = getStaffData();
+            for (const [dept, deptData] of Object.entries(data.departments)) {
+                const idx = deptData.employees.findIndex(e => e.snils === empFromProtocol.snils);
+                if (idx !== -1) {
+                    deptData.employees[idx].trainingDate = today;
+                    updated++;
+                    saveStaffData(data);
+                    break;
+                }
+            }
+            if (!updated) {
+                const idx = data.unassigned.findIndex(e => e.snils === empFromProtocol.snils);
+                if (idx !== -1) {
+                    data.unassigned[idx].trainingDate = today;
+                    updated++;
+                    saveStaffData(data);
+                }
+            }
         }
     });
     
-    saveStaff(staff);
-    renderStaff();
+    renderStaffWithDepartments();
     
     const events = getEvents();
     const existing = events.filter(e => e.date === today && e.title.includes('Обучение'));
-    if (existing.length === 0) {
+    if (existing.length === 0 && updated > 0) {
         events.push({
             id: Date.now(),
             title: `Обучение ${updated} сотрудников`,
@@ -911,95 +1223,147 @@ function markTrainingFromProtocol() {
     
     alert(`✅ Обновлено ${updated} сотрудников! Дата обучения: ${today}`);
 }
+
 // ============================================================
-// ИМПОРТ И ПРОТОКОЛ
+// ПЕРСОНАЛЬНАЯ КАРТОЧКА СОТРУДНИКА
 // ============================================================
-function importStaffFile() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.txt,.csv,.doc,.docx';
-    input.onchange = function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            try {
-                const employees = smartParse(event.target.result);
-                if (employees.length === 0) { alert('❌ Не удалось распознать сотрудников.'); return; }
-                const merged = [...getStaff(), ...employees];
-                saveStaff(merged);
-                renderStaff();
-                fillFamEmployeeSelect();
-                alert(`✅ Загружено ${employees.length} сотрудников!`);
-            } catch (err) { alert('❌ Ошибка: ' + err.message); }
-        };
-        reader.readAsText(file, 'UTF-8');
+function openEmployeeCardBySnils(snils) {
+    const all = getAllEmployees();
+    const emp = all.find(e => e.snils === snils);
+    if (!emp) {
+        alert('❌ Сотрудник не найден');
+        return;
+    }
+    openEmployeeCard(emp);
+}
+
+function openEmployeeCard(emp) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'employeeModal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:550px;">
+            <div class="modal-header">
+                <h3>👤 ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</h3>
+                <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label style="color:#ccc;">Должность</label>
+                    <input type="text" value="${emp.position}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;" readonly>
+                </div>
+                <div class="form-group">
+                    <label style="color:#ccc;">📅 Дата последнего инструктажа</label>
+                    <input type="date" id="empInstructionDate" value="${emp.instructionDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                </div>
+                <div class="form-group">
+                    <label style="color:#ccc;">📅 Дата обучения</label>
+                    <input type="date" id="empTrainingDate" value="${emp.trainingDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                </div>
+                <div class="form-group">
+                    <label style="color:#ccc;">🦺 СИЗ</label>
+                    <div style="max-height:150px;overflow-y:auto;background:rgba(255,255,255,0.03);border-radius:6px;padding:8px;">
+                        ${emp.ppeItems && emp.ppeItems.length > 0 ? emp.ppeItems.map((item, i) => 
+                            `<div style="padding:6px 10px;background:rgba(76,175,80,0.1);border-radius:4px;margin-bottom:4px;color:#ccc;font-size:13px;">✅ ${item.name} (${item.type})</div>`
+                        ).join('') : '<div style="color:#666;font-size:13px;">Нет добавленных СИЗ</div>'}
+                    </div>
+                    <button onclick="openPPEModalForEmployee('${emp.snils}')" style="margin-top:8px;padding:6px 16px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);border-radius:6px;color:#b388ff;cursor:pointer;font-size:13px;">➕ Добавить СИЗ</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="this.closest('.modal-overlay').remove()">Закрыть</button>
+                <button class="btn-primary" onclick="saveEmployeeDataFromModal('${emp.snils}')" style="width:auto;padding:10px 24px;">💾 Сохранить</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function saveEmployeeDataFromModal(snils) {
+    const data = getStaffData();
+    let emp = null;
+    
+    // Ищем в отделах
+    for (const [dept, deptData] of Object.entries(data.departments)) {
+        const idx = deptData.employees.findIndex(e => e.snils === snils);
+        if (idx !== -1) {
+            emp = deptData.employees[idx];
+            const instructionDate = document.getElementById('empInstructionDate')?.value || '';
+            const trainingDate = document.getElementById('empTrainingDate')?.value || '';
+            emp.instructionDate = instructionDate;
+            emp.trainingDate = trainingDate;
+            saveStaffData(data);
+            renderStaffWithDepartments();
+            document.getElementById('employeeModal')?.remove();
+            alert('✅ Данные сохранены!');
+            return;
+        }
+    }
+    
+    // Ищем в непривязанных
+    const idx = data.unassigned.findIndex(e => e.snils === snils);
+    if (idx !== -1) {
+        emp = data.unassigned[idx];
+        const instructionDate = document.getElementById('empInstructionDate')?.value || '';
+        const trainingDate = document.getElementById('empTrainingDate')?.value || '';
+        emp.instructionDate = instructionDate;
+        emp.trainingDate = trainingDate;
+        saveStaffData(data);
+        renderStaffWithDepartments();
+        document.getElementById('employeeModal')?.remove();
+        alert('✅ Данные сохранены!');
+    }
+}
+
+function openPPEModalForEmployee(snils) {
+    const data = getStaffData();
+    let emp = null;
+    
+    for (const [dept, deptData] of Object.entries(data.departments)) {
+        const found = deptData.employees.find(e => e.snils === snils);
+        if (found) { emp = found; break; }
+    }
+    if (!emp) {
+        emp = data.unassigned.find(e => e.snils === snils);
+    }
+    if (!emp) { alert('❌ Сотрудник не найден'); return; }
+    
+    const tempWorkplace = {
+        name: `${emp.last_name} ${emp.first_name}`,
+        position: emp.position,
+        ppeItems: emp.ppeItems || []
     };
-    input.click();
+    
+    currentPPEWorkplace = tempWorkplace;
+    ppeItems = tempWorkplace.ppeItems || [];
+    openPPEModal(tempWorkplace);
+    
+    const originalSave = savePPEItems;
+    savePPEItems = function() {
+        if (!currentPPEWorkplace) return;
+        if (ppeItems.length === 0) { alert('⚠️ Добавьте хотя бы одно СИЗ!'); return; }
+        
+        const data = getStaffData();
+        let target = null;
+        for (const [dept, deptData] of Object.entries(data.departments)) {
+            const found = deptData.employees.find(e => e.snils === snils);
+            if (found) { target = found; break; }
+        }
+        if (!target) {
+            target = data.unassigned.find(e => e.snils === snils);
+        }
+        if (target) {
+            target.ppeItems = ppeItems;
+            saveStaffData(data);
+        }
+        currentPPEWorkplace.ppeItems = ppeItems;
+        currentPPEWorkplace.hasPPE = true;
+        alert(`✅ Сохранено ${ppeItems.length} СИЗ!`);
+        closePPEModal();
+        savePPEItems = originalSave;
+        renderStaffWithDepartments();
+    };
 }
-
-function addSelectedToProtocol() {
-    const selected = getSelectedStaff();
-    if (selected.length === 0) { alert('❌ Выберите сотрудников!'); return; }
-    const protocol = getProtocol();
-    const existing = new Set(protocol.map(e => e.snils));
-    let added = 0;
-    selected.forEach(emp => {
-        if (!existing.has(emp.snils)) { protocol.push({...emp}); existing.add(emp.snils); added++; }
-    });
-    saveProtocol(protocol);
-    renderProtocol();
-    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
-    document.getElementById('selectAllStaff').checked = false;
-    alert(`✅ Добавлено ${added} сотрудников!`);
-}
-
-// ============================================================
-// ГЕНЕРАЦИЯ XML
-// ============================================================
-function generateXML() {
-    const orgSelect = document.getElementById('orgSelect');
-    const orgs = getOrgs();
-    const org = orgs.find(o => o.id === parseInt(orgSelect.value));
-    if (!org) { alert('❌ Выберите организацию!'); return; }
-    const protocol = getProtocol();
-    if (protocol.length === 0) { alert('❌ Нет сотрудников в протоколе!'); return; }
-    
-    const number = document.getElementById('protocolNumber').value.trim() || '01/26';
-    const date = document.getElementById('protocolDate').value || new Date().toISOString().split('T')[0];
-    
-    const programs = [];
-    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked').forEach(cb => {
-        const label = cb.closest('.program-check');
-        if (label) programs.push(label.textContent.trim());
-    });
-    if (programs.length === 0) { alert('❌ Выберите программы!'); return; }
-    
-    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<Протокол>\n';
-    xml += `  <Номер>${escXml(number)}</Номер>\n  <Дата>${escXml(date)}</Дата>\n  <Организация>${escXml(org.name)}</Организация>\n`;
-    xml += '  <Программы>\n';
-    programs.forEach(p => xml += `    <Программа>${escXml(p)}</Программа>\n`);
-    xml += '  </Программы>\n  <Сотрудники>\n';
-    protocol.forEach((emp, i) => {
-        xml += `    <Сотрудник>\n      <Номер>${i+1}</Номер>\n      <Фамилия>${escXml(emp.last_name)}</Фамилия>\n      <Имя>${escXml(emp.first_name)}</Имя>\n`;
-        xml += `      <Отчество>${escXml(emp.middle_name || '')}</Отчество>\n      <Должность>${escXml(emp.position)}</Должность>\n`;
-        xml += `      <СНИЛС>${escXml(formatSnils(emp.snils))}</СНИЛС>\n      <Результат>Пройдено</Результат>\n    </Сотрудник>\n`;
-    });
-    xml += '  </Сотрудники>\n</Протокол>';
-    
-    const resultBlock = document.getElementById('resultBlock');
-    const downloadLink = document.getElementById('downloadLink');
-    resultBlock.classList.remove('hidden');
-    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = `Протокол_${number}_${date}.xml`;
-    const preview = document.createElement('pre');
-    preview.style.cssText = 'max-height:200px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;margin-top:12px;';
-    preview.textContent = xml.substring(0, 500) + '...';
-    resultBlock.querySelector('pre')?.remove();
-    resultBlock.appendChild(preview);
-}
-
 // ============================================================
 // КАРТА (ВСЯ ЛОГИКА КАРТЫ)
 // ============================================================
@@ -1841,116 +2205,11 @@ function clearMap() {
 }
 
 // ============================================================
-// ПЕРСОНАЛЬНАЯ КАРТОЧКА СОТРУДНИКА
-// ============================================================
-let currentEmployeeIndex = -1;
-
-function openEmployeeCard(index) {
-    const staff = getStaff();
-    const emp = staff[index];
-    if (!emp) return;
-    
-    currentEmployeeIndex = index;
-    
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.id = 'employeeModal';
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width:550px;">
-            <div class="modal-header">
-                <h3>👤 ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</h3>
-                <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label style="color:#ccc;">Должность</label>
-                    <input type="text" value="${emp.position}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;" readonly>
-                </div>
-                <div class="form-group">
-                    <label style="color:#ccc;">📅 Дата последнего инструктажа</label>
-                    <input type="date" id="empInstructionDate" value="${emp.instructionDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
-                </div>
-                <div class="form-group">
-                    <label style="color:#ccc;">📅 Дата обучения</label>
-                    <input type="date" id="empTrainingDate" value="${emp.trainingDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
-                </div>
-                <div class="form-group">
-                    <label style="color:#ccc;">🦺 СИЗ</label>
-                    <div style="max-height:150px;overflow-y:auto;background:rgba(255,255,255,0.03);border-radius:6px;padding:8px;">
-                        ${emp.ppeItems && emp.ppeItems.length > 0 ? emp.ppeItems.map((item, i) => 
-                            `<div style="padding:6px 10px;background:rgba(76,175,80,0.1);border-radius:4px;margin-bottom:4px;color:#ccc;font-size:13px;">✅ ${item.name} (${item.type})</div>`
-                        ).join('') : '<div style="color:#666;font-size:13px;">Нет добавленных СИЗ</div>'}
-                    </div>
-                    <button onclick="openPPEModalForEmployee()" style="margin-top:8px;padding:6px 16px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);border-radius:6px;color:#b388ff;cursor:pointer;font-size:13px;">➕ Добавить СИЗ</button>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-cancel" onclick="this.closest('.modal-overlay').remove()">Закрыть</button>
-                <button class="btn-primary" onclick="saveEmployeeData()" style="width:auto;padding:10px 24px;">💾 Сохранить</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-function saveEmployeeData() {
-    const staff = getStaff();
-    const emp = staff[currentEmployeeIndex];
-    if (!emp) return;
-    
-    const instructionDate = document.getElementById('empInstructionDate')?.value || '';
-    const trainingDate = document.getElementById('empTrainingDate')?.value || '';
-    
-    emp.instructionDate = instructionDate;
-    emp.trainingDate = trainingDate;
-    saveStaff(staff);
-    
-    renderStaff();
-    document.getElementById('employeeModal')?.remove();
-    alert('✅ Данные сохранены!');
-}
-
-function openPPEModalForEmployee() {
-    const staff = getStaff();
-    const emp = staff[currentEmployeeIndex];
-    if (!emp) return;
-    
-    const tempWorkplace = {
-        name: `${emp.last_name} ${emp.first_name}`,
-        position: emp.position,
-        ppeItems: emp.ppeItems || []
-    };
-    
-    currentPPEWorkplace = tempWorkplace;
-    ppeItems = tempWorkplace.ppeItems || [];
-    openPPEModal(tempWorkplace);
-    
-    const originalSave = savePPEItems;
-    savePPEItems = function() {
-        if (!currentPPEWorkplace) return;
-        if (ppeItems.length === 0) { alert('⚠️ Добавьте хотя бы одно СИЗ!'); return; }
-        
-        const staff = getStaff();
-        const emp = staff[currentEmployeeIndex];
-        if (emp) {
-            emp.ppeItems = ppeItems;
-            saveStaff(staff);
-        }
-        currentPPEWorkplace.ppeItems = ppeItems;
-        currentPPEWorkplace.hasPPE = true;
-        alert(`✅ Сохранено ${ppeItems.length} СИЗ!`);
-        closePPEModal();
-        savePPEItems = originalSave;
-        renderStaff();
-    };
-}
-
-// ============================================================
 // ИНИЦИАЛИЗАЦИЯ
 // ============================================================
 function initTrainingPage() {
     renderOrgs();
-    renderStaff();
+    renderStaffWithDepartments();
     renderProtocol();
     fillFamEmployeeSelect();
     
