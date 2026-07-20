@@ -32,18 +32,14 @@
         #ppeTypeSelect option:hover {
             background: #2a2a5e !important;
         }
-        .ppe-table-cell {
-            word-wrap: break-word !important;
-            max-width: 160px !important;
-        }
         
         /* ============================================================ */
-        /* ОЗНАКОМЛЕНИЕ - БЕЗ ПРОЗРАЧНОСТИ */
+        /* ОЗНАКОМЛЕНИЕ - БЕЗ ПРОЗРАЧНОСТИ, НОВЫЙ ДИЗАЙН */
         /* ============================================================ */
         .doc-check {
-            background: rgba(255,255,255,0.06) !important;
-            border: 1px solid rgba(255,255,255,0.1) !important;
-            padding: 8px 14px !important;
+            background: rgba(255,255,255,0.08) !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
+            padding: 8px 16px !important;
             border-radius: 8px !important;
             color: #fff !important;
             display: inline-flex !important;
@@ -53,7 +49,7 @@
             font-size: 14px !important;
         }
         .doc-check:hover {
-            background: rgba(255,255,255,0.12) !important;
+            background: rgba(255,255,255,0.15) !important;
         }
         .doc-check input[type="checkbox"] {
             width: 18px !important;
@@ -62,8 +58,8 @@
             cursor: pointer !important;
         }
         #famCustomDoc {
-            background: rgba(255,255,255,0.06) !important;
-            border: 1px solid rgba(255,255,255,0.1) !important;
+            background: rgba(255,255,255,0.08) !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
             border-radius: 8px !important;
             color: #fff !important;
             padding: 12px !important;
@@ -78,7 +74,7 @@
             background: rgba(0,212,255,0.08) !important;
             border: 1px solid rgba(0,212,255,0.2) !important;
             border-radius: 12px !important;
-            padding: 16px !important;
+            padding: 20px !important;
         }
         #famContent {
             color: #fff !important;
@@ -87,6 +83,24 @@
         }
         #famContent strong {
             color: #fff !important;
+        }
+        
+        /* Ручной ввод для ознакомления */
+        .manual-fam-input {
+            background: rgba(255,255,255,0.08) !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
+            border-radius: 8px !important;
+            color: #fff !important;
+            padding: 10px 14px !important;
+            font-size: 14px !important;
+            width: 100% !important;
+        }
+        .manual-fam-input:focus {
+            border-color: #7c3aed !important;
+            outline: none !important;
+        }
+        .manual-fam-input::placeholder {
+            color: #8888aa !important;
         }
         
         /* ============================================================ */
@@ -109,26 +123,106 @@
             text-shadow: 0 0 10px rgba(0,0,0,0.9) !important;
             color: #fff !important;
             font-size: 16px !important;
-            background: rgba(0,0,0,0.5) !important;
-            padding: 2px 10px !important;
+            background: rgba(0,0,0,0.6) !important;
+            padding: 2px 12px !important;
             border-radius: 4px !important;
         }
         
         /* ============================================================ */
-        /* РУЧНОЙ ВВОД ДЛЯ ОЗНАКОМЛЕНИЯ */
+        /* СПИСОК СОТРУДНИКОВ - БЕЗ ПРОЗРАЧНОСТИ */
         /* ============================================================ */
-        .manual-fam-input {
+        .staff-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .staff-table th {
+            background: rgba(255,255,255,0.06) !important;
+            color: #8888aa !important;
+            padding: 10px 12px !important;
+            text-align: left;
+            border-bottom: 2px solid rgba(124,58,237,0.3) !important;
+            font-weight: 600;
+        }
+        .staff-table td {
+            padding: 8px 12px !important;
+            border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+            color: #ccc !important;
+        }
+        .staff-table tr:hover td {
+            background: rgba(255,255,255,0.04) !important;
+        }
+        .staff-table input[type="checkbox"] {
+            width: 18px !important;
+            height: 18px !important;
+            accent-color: #7c3aed !important;
+            cursor: pointer !important;
+        }
+        
+        /* Протокол таблица */
+        .protocol-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .protocol-table th {
+            background: rgba(255,255,255,0.06) !important;
+            color: #8888aa !important;
+            padding: 10px 12px !important;
+            text-align: left;
+            border-bottom: 2px solid rgba(124,58,237,0.3) !important;
+            font-weight: 600;
+        }
+        .protocol-table td {
+            padding: 8px 12px !important;
+            border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+            color: #ccc !important;
+        }
+        .protocol-table .btn-remove {
+            background: rgba(255,70,70,0.15) !important;
+            border: none !important;
+            color: #ff6b6b !important;
+            padding: 4px 10px !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+        }
+        .protocol-table .btn-remove:hover {
+            background: rgba(255,70,70,0.3) !important;
+        }
+        
+        /* ============================================================ */
+        /* КАРТА - ТОЧКИ ПУТЕЙ ЭВАКУАЦИИ */
+        /* ============================================================ */
+        .route-point {
+            fill: #4caf50;
+            stroke: #fff;
+            stroke-width: 2;
+        }
+        .route-point-active {
+            fill: #ffc107;
+            stroke: #fff;
+            stroke-width: 2;
+        }
+        
+        /* ============================================================ */
+        /* РЕДАКТИРУЕМЫЕ НАЗВАНИЯ ДОКУМЕНТОВ В ОЗНАКОМЛЕНИИ */
+        /* ============================================================ */
+        .doc-name-edit {
             background: rgba(255,255,255,0.06) !important;
             border: 1px solid rgba(255,255,255,0.1) !important;
-            border-radius: 8px !important;
+            border-radius: 6px !important;
             color: #fff !important;
-            padding: 10px 14px !important;
-            font-size: 14px !important;
+            padding: 4px 10px !important;
+            font-size: 13px !important;
             width: 100% !important;
+            min-width: 120px !important;
         }
-        .manual-fam-input:focus {
+        .doc-name-edit:focus {
             border-color: #7c3aed !important;
             outline: none !important;
+        }
+        .doc-name-edit::placeholder {
+            color: #666 !important;
         }
     </style>
 </head>
@@ -317,11 +411,19 @@
 
         <div id="tabFamiliarization" class="hidden">
             <div class="block">
-                <h2>📋 Лист ознакомления</h2>
+                <h2>📋 Лист ознакомления с нормативными актами</h2>
+                
+                <!-- Организация -->
+                <div style="margin-bottom:12px;padding:12px 14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
+                    <label style="color:#8888aa;font-size:13px;display:block;margin-bottom:4px;">🏢 Организация</label>
+                    <select id="famOrgSelect" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                        <option value="">-- Выберите организацию --</option>
+                    </select>
+                </div>
                 
                 <!-- Выбор сотрудника из штатного расписания -->
-                <div style="margin-bottom:16px;padding:14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
-                    <p style="color:#8888aa;font-size:13px;margin-bottom:10px;">👤 Выберите сотрудника из штатного расписания:</p>
+                <div style="margin-bottom:12px;padding:12px 14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
+                    <p style="color:#8888aa;font-size:13px;margin-bottom:8px;">👤 Выберите сотрудника из штатного расписания:</p>
                     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
                         <select id="famEmployeeSelect" style="flex:2;min-width:200px;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
                             <option value="">-- Выберите сотрудника --</option>
@@ -331,37 +433,64 @@
                 </div>
                 
                 <!-- Ручной ввод для новых сотрудников -->
-                <div style="margin-bottom:16px;padding:14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
-                    <p style="color:#8888aa;font-size:13px;margin-bottom:10px;">✏️ Или введите данные нового сотрудника вручную:</p>
+                <div style="margin-bottom:12px;padding:12px 14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
+                    <p style="color:#8888aa;font-size:13px;margin-bottom:8px;">✏️ Или введите данные нового сотрудника вручную:</p>
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
                         <input type="text" id="famManualLastName" placeholder="Фамилия" class="manual-fam-input">
                         <input type="text" id="famManualFirstName" placeholder="Имя" class="manual-fam-input">
                         <input type="text" id="famManualMiddleName" placeholder="Отчество" class="manual-fam-input">
                     </div>
-                    <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:10px;">
+                    <div style="margin-top:10px;">
                         <input type="text" id="famManualPosition" placeholder="Должность" class="manual-fam-input">
-                        <input type="text" id="famManualSnils" placeholder="СНИЛС" class="manual-fam-input">
                     </div>
                 </div>
                 
                 <button class="btn-primary" id="generateFamBtn" style="width:auto;padding:10px 24px;margin-bottom:16px;">📄 Составить лист</button>
                 
+                <!-- Документы для ознакомления с возможностью редактирования названий -->
                 <div style="margin-top:12px;">
-                    <h4 style="color:#ccc;margin-bottom:8px;">Документы для ознакомления:</h4>
-                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                        <label class="doc-check"><input type="checkbox" value="Инструкция по охране труда" checked> 📄 Инструкция по охране труда</label>
-                        <label class="doc-check"><input type="checkbox" value="СОУТ (Спецоценка условий труда)" checked> 📊 СОУТ</label>
-                        <label class="doc-check"><input type="checkbox" value="Оценка профессиональных рисков" checked> ⚠️ Оценка профрисков</label>
-                        <label class="doc-check"><input type="checkbox" value="Нормы выдачи СИЗ" checked> 🦺 Нормы выдачи СИЗ</label>
-                        <label class="doc-check"><input type="checkbox" value="Правила внутреннего трудового распорядка" checked> 📋 ПВТР</label>
-                        <label class="doc-check"><input type="checkbox" value="Инструкция по пожарной безопасности" checked> 🔥 Пожарная безопасность</label>
-                        <label class="doc-check"><input type="checkbox" value="Инструкция по электробезопасности" checked> ⚡ Электробезопасность</label>
+                    <h4 style="color:#ccc;margin-bottom:8px;">📋 Нормативные акты для ознакомления:</h4>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                            <input type="checkbox" value="Инструкция по охране труда" checked>
+                            <input type="text" class="doc-name-edit" value="Инструкция по охране труда" placeholder="Название документа">
+                        </label>
+                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                            <input type="checkbox" value="Специальная оценка условий труда" checked>
+                            <input type="text" class="doc-name-edit" value="Специальная оценка условий труда" placeholder="Название документа">
+                            <input type="text" id="soutCardNumber" placeholder="№ карты" style="width:70px;padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:#fff;font-size:12px;">
+                        </label>
+                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                            <input type="checkbox" value="Оценка профессиональных рисков" checked>
+                            <input type="text" class="doc-name-edit" value="Оценка профессиональных рисков" placeholder="Название документа">
+                        </label>
+                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                            <input type="checkbox" value="Нормы выдачи СИЗ" checked>
+                            <input type="text" class="doc-name-edit" value="Нормы выдачи СИЗ" placeholder="Название документа">
+                        </label>
+                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                            <input type="checkbox" value="Правила внутреннего трудового распорядка">
+                            <input type="text" class="doc-name-edit" value="Правила внутреннего трудового распорядка" placeholder="Название документа">
+                        </label>
+                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                            <input type="checkbox" value="Инструкция по пожарной безопасности">
+                            <input type="text" class="doc-name-edit" value="Инструкция по пожарной безопасности" placeholder="Название документа">
+                        </label>
+                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                            <input type="checkbox" value="Инструкция по электробезопасности">
+                            <input type="text" class="doc-name-edit" value="Инструкция по электробезопасности" placeholder="Название документа">
+                        </label>
+                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                            <input type="checkbox" value="Дополнительный документ">
+                            <input type="text" class="doc-name-edit" value="Дополнительный документ" placeholder="Название документа">
+                        </label>
                     </div>
                 </div>
                 <div style="margin-top:12px;">
-                    <label style="color:#ccc;display:block;margin-bottom:4px;">➕ Добавить свой документ (каждый с новой строки):</label>
+                    <label style="color:#8888aa;display:block;margin-bottom:4px;font-size:13px;">➕ Добавить свой документ (каждый с новой строки):</label>
                     <textarea id="famCustomDoc" rows="2" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;" placeholder="Свои документы..."></textarea>
                 </div>
+                
                 <div id="famResult" class="hidden" style="margin-top:16px;padding:16px;background:rgba(0,212,255,0.08);border-radius:12px;border:1px solid rgba(0,212,255,0.2);">
                     <h3 style="color:#00d4ff;margin-bottom:8px;">✅ Лист ознакомления сформирован</h3>
                     <div id="famContent" style="font-size:14px;line-height:1.8;color:#fff;"></div>
