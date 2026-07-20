@@ -283,45 +283,44 @@ function escXml(str) {
 }
 
 // ============================================================
-// ПОИСК СИЗ ПО ПРОФЕССИИ В ЛОКАЛЬНОЙ БАЗЕ
+// ПОИСК СИЗ ПО ПРОФЕССИИ (использует parser-ppe.js)
 // ============================================================
 function getPPEByProfession(profession) {
     if (!profession) return null;
-    const trimmed = profession.trim().toLowerCase();
     
-    // Проверяем, что ppeDatabase существует
-    if (typeof ppeDatabase === 'undefined') {
-        console.error('❌ ppeDatabase не определена! Проверьте подключение database.js');
-        return null;
+    // Если есть глобальная функция из parser-ppe.js - используем её
+    if (typeof window.getPPEByProfession === 'function') {
+        return window.getPPEByProfession(profession);
     }
     
-    // Точное совпадение
-    for (const [key, value] of Object.entries(ppeDatabase)) {
-        if (key.toLowerCase() === trimmed) {
-            return value;
-        }
-    }
-    
-    // Частичное совпадение
-    for (const [key, value] of Object.entries(ppeDatabase)) {
-        if (trimmed.includes(key.toLowerCase()) || 
-            key.toLowerCase().includes(trimmed)) {
-            return value;
-        }
-    }
-    
-    // Поиск по ключевым словам
-    const words = trimmed.split(/\s+/);
-    for (const [key, value] of Object.entries(ppeDatabase)) {
-        const keyLower = key.toLowerCase();
-        let matchCount = 0;
-        for (const word of words) {
-            if (word.length > 3 && keyLower.includes(word)) {
-                matchCount++;
+    // Fallback: проверяем локальную базу
+    if (typeof ppeDatabase !== 'undefined' && ppeDatabase) {
+        const trimmed = profession.trim().toLowerCase();
+        
+        for (const [key, value] of Object.entries(ppeDatabase)) {
+            if (key.toLowerCase() === trimmed) {
+                return value;
             }
         }
-        if (matchCount >= 2) {
-            return value;
+        
+        for (const [key, value] of Object.entries(ppeDatabase)) {
+            if (trimmed.includes(key.toLowerCase()) || key.toLowerCase().includes(trimmed)) {
+                return value;
+            }
+        }
+        
+        const words = trimmed.split(/\s+/);
+        for (const [key, value] of Object.entries(ppeDatabase)) {
+            const keyLower = key.toLowerCase();
+            let matchCount = 0;
+            for (const word of words) {
+                if (word.length > 3 && keyLower.includes(word)) {
+                    matchCount++;
+                }
+            }
+            if (matchCount >= 2) {
+                return value;
+            }
         }
     }
     
@@ -567,7 +566,6 @@ function initMapPage() {
     
     mapInited = true;
     
-    // Загружаем сохранённые данные
     const saved = localStorage.getItem('mapData');
     if (saved) {
         try {
@@ -581,7 +579,6 @@ function initMapPage() {
         }
     }
     
-    // Если нет данных - создаём цех по умолчанию
     if (mapData.workshops.length === 0) {
         mapData.workshops.push({
             id: Date.now(),
@@ -598,7 +595,6 @@ function initMapPage() {
         mapData.evacuationPoints = [];
     }
     
-    // Назначаем обработчики кнопок
     const editBtn = document.getElementById('editWorkshopBtn');
     if (editBtn) editBtn.addEventListener('click', openWorkshopModal);
     
@@ -661,10 +657,8 @@ function initMapPage() {
     const deleteBtn = document.getElementById('deleteSelectedBtn');
     if (deleteBtn) deleteBtn.addEventListener('click', deleteSelectedWorkplace);
     
-    // Назначаем события на canvas
     setupCanvasEvents();
     
-    // Обновляем интерфейс и рисуем
     updateWorkshopSelect();
     updateInfo();
     drawMap();
@@ -1302,14 +1296,499 @@ function clearMap() {
 }
 
 // ============================================================
-// ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
+// ГЕНЕРАЦИЯ XML ПРОТОКОЛА
 // ============================================================
+
+function generateXML() {
+    console.log('🚀 generateXML вызвана');
+    
+    const orgSelect = document.getElementById('orgSelect');
+    const orgId = orgSelect ? orgSelect.value : '';
+    const orgs = getOrgs();
+    const org = orgs.find(o => o.id === parseInt(orgId));
+    
+    if (!org) {
+        alert('❌ Выберите организацию!');
+        return;
+    }
+    
+    const protocol = getProtocol();
+    if (protocol.length === 0) {
+        alert('❌ В протоколе нет сотрудников! Добавьте их из штатного расписания.');
+        return;
+    }
+    
+    const numberInput = document.getElementById('protocolNumber');
+    const dateInput = document.getElementById('protocolDate');
+    
+    const number = numberInput ? numberInput.value.trim() || '01/26' : '01/26';
+    const date = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+    
+    const programCheckboxes = document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked');
+    const programs = [];
+    programCheckboxes.forEach(cb => {
+        const label = cb.closest('.program-check');
+        if (label) {
+            programs.push(label.textContent.trim());
+        }
+    });
+    
+    if (programs.length === 0) {
+        alert('❌ Выберите хотя бы одну программу обучения!');
+        return;
+    }
+    
+    const xml = buildXML(org, protocol, number, date, programs);
+    
+    const resultBlock = document.getElementById('resultBlock');
+    const downloadLink = document.getElementById('downloadLink');
+    
+    if (resultBlock && downloadLink) {
+        resultBlock.classList.remove('hidden');
+        
+        const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        downloadLink.href = url;
+        downloadLink.download = `Протокол_${number}_${date}.xml`;
+        
+        const preview = document.createElement('pre');
+        preview.style.cssText = 'max-height:300px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;text-align:left;margin-top:12px;';
+        preview.textContent = xml.substring(0, 500) + '...';
+        
+        const oldPreview = resultBlock.querySelector('pre');
+        if (oldPreview) oldPreview.remove();
+        
+        resultBlock.appendChild(preview);
+        
+        console.log('✅ XML сгенерирован успешно!');
+    }
+}
+
+function buildXML(org, employees, number, date, programs) {
+    const dateFormatted = formatDate(date);
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<Протокол xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
+    
+    xml += '  <ОбщиеСведения>\n';
+    xml += `    <НомерПротокола>${escXml(number)}</НомерПротокола>\n`;
+    xml += `    <ДатаПроведения>${escXml(dateFormatted)}</ДатаПроведения>\n`;
+    xml += `    <ДатаФормирования>${escXml(currentDate)}</ДатаФормирования>\n`;
+    xml += `    <Организация>\n`;
+    xml += `      <Наименование>${escXml(org.name)}</Наименование>\n`;
+    xml += `      <ИНН>${escXml(org.inn)}</ИНН>\n`;
+    xml += `    </Организация>\n`;
+    xml += '  </ОбщиеСведения>\n\n';
+    
+    xml += '  <ПрограммыОбучения>\n';
+    programs.forEach((prog, index) => {
+        xml += `    <Программа Номер="${index + 1}">${escXml(prog)}</Программа>\n`;
+    });
+    xml += '  </ПрограммыОбучения>\n\n';
+    
+    xml += '  <СписокСотрудников>\n';
+    employees.forEach((emp, index) => {
+        xml += '    <Сотрудник>\n';
+        xml += `      <Номер>${index + 1}</Номер>\n`;
+        xml += `      <Фамилия>${escXml(emp.last_name)}</Фамилия>\n`;
+        xml += `      <Имя>${escXml(emp.first_name)}</Имя>\n`;
+        xml += `      <Отчество>${escXml(emp.middle_name || '')}</Отчество>\n`;
+        xml += `      <Должность>${escXml(emp.position)}</Должность>\n`;
+        xml += `      <СНИЛС>${escXml(formatSnils(emp.snils))}</СНИЛС>\n`;
+        xml += `      <Результат>Пройдено</Результат>\n`;
+        xml += '    </Сотрудник>\n';
+    });
+    xml += '  </СписокСотрудников>\n';
+    
+    xml += '</Протокол>';
+    
+    return xml;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+        return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    }
+    return dateStr;
+}
+
+// ============================================================
+// ГЕНЕРАЦИЯ ЛИСТА ОЗНАКОМЛЕНИЯ
+// ============================================================
+
+function generateFamiliarization() {
+    const select = document.getElementById('famEmployeeSelect');
+    const index = select ? parseInt(select.value) : -1;
+    
+    if (isNaN(index) || index < 0) {
+        alert('❌ Выберите сотрудника!');
+        return;
+    }
+    
+    const staff = getStaff();
+    const emp = staff[index];
+    if (!emp) {
+        alert('❌ Сотрудник не найден!');
+        return;
+    }
+    
+    const docCheckboxes = document.querySelectorAll('.doc-check input[type="checkbox"]:checked');
+    const docs = [];
+    docCheckboxes.forEach(cb => {
+        docs.push(cb.value);
+    });
+    
+    if (docs.length === 0) {
+        alert('❌ Выберите хотя бы один документ для ознакомления!');
+        return;
+    }
+    
+    const result = document.getElementById('famResult');
+    const content = document.getElementById('famContent');
+    
+    if (result && content) {
+        let html = `
+            <div style="padding:20px;background:#fff;color:#222;border-radius:8px;max-width:800px;margin:0 auto;">
+                <h2 style="text-align:center;font-size:18px;border-bottom:2px solid #7c3aed;padding-bottom:10px;">
+                    ЛИСТ ОЗНАКОМЛЕНИЯ
+                </h2>
+                <div style="margin:16px 0;">
+                    <p><strong>Сотрудник:</strong> ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</p>
+                    <p><strong>Должность:</strong> ${emp.position}</p>
+                    <p><strong>СНИЛС:</strong> ${formatSnils(emp.snils)}</p>
+                    <p><strong>Дата:</strong> ${new Date().toLocaleDateString('ru-RU')}</p>
+                </div>
+                <div style="border-top:1px solid #ddd;padding-top:12px;">
+                    <p><strong>Ознакомлен(а) со следующими документами:</strong></p>
+                    <ol style="padding-left:20px;">
+        `;
+        
+        docs.forEach(doc => {
+            html += `<li>${doc}</li>`;
+        });
+        
+        html += `
+                    </ol>
+                </div>
+                <div style="margin-top:20px;display:flex;justify-content:space-between;border-top:1px solid #ddd;padding-top:16px;">
+                    <div>
+                        <p>_____________</p>
+                        <p style="font-size:12px;color:#666;">Подпись сотрудника</p>
+                    </div>
+                    <div>
+                        <p>_____________</p>
+                        <p style="font-size:12px;color:#666;">Дата</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        content.innerHTML = html;
+        result.classList.remove('hidden');
+    }
+}
+
+// ============================================================
+// ИМПОРТ ШТАТНОГО РАСПИСАНИЯ
+// ============================================================
+
+function importStaffFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.txt,.csv,.doc,.docx';
+    
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                const content = event.target.result;
+                const employees = smartParse(content);
+                
+                if (employees.length === 0) {
+                    alert('❌ Не удалось распознать сотрудников. Проверьте формат файла.');
+                    return;
+                }
+                
+                const existing = getStaff();
+                const merged = [...existing, ...employees];
+                saveStaff(merged);
+                
+                renderStaff();
+                fillFamEmployeeSelect();
+                
+                alert(`✅ Загружено ${employees.length} сотрудников! Всего: ${merged.length}`);
+            } catch (err) {
+                alert('❌ Ошибка при загрузке: ' + err.message);
+                console.error(err);
+            }
+        };
+        
+        reader.readAsText(file, 'UTF-8');
+    };
+    
+    input.click();
+}
+
+function addSelectedToProtocol() {
+    const selected = getSelectedStaff();
+    if (selected.length === 0) {
+        alert('❌ Выберите хотя бы одного сотрудника в штатном расписании');
+        return;
+    }
+    
+    const protocol = getProtocol();
+    const existingSnils = new Set(protocol.map(e => e.snils));
+    
+    let added = 0;
+    selected.forEach(emp => {
+        if (!existingSnils.has(emp.snils)) {
+            protocol.push({ ...emp });
+            existingSnils.add(emp.snils);
+            added++;
+        }
+    });
+    
+    saveProtocol(protocol);
+    renderProtocol();
+    
+    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
+    const selectAll = document.getElementById('selectAllStaff');
+    if (selectAll) selectAll.checked = false;
+    
+    alert(`✅ Добавлено ${added} сотрудников в протокол!`);
+}
+
+// ============================================================
+// ЗАГРУЗЧИК СИЗ ИЗ ПРИКАЗА
+// ============================================================
+
+function initPPELoader() {
+    const loadBtn = document.getElementById('loadPPEBtn');
+    const clearBtn = document.getElementById('clearPPEBtn');
+    const statusEl = document.getElementById('ppeStatus');
+    
+    if (loadBtn) {
+        loadBtn.addEventListener('click', function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.txt,.csv,.doc,.docx';
+            
+            input.onchange = async function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const statusDiv = document.getElementById('ppeLoadStatus');
+                if (statusDiv) {
+                    statusDiv.textContent = '⏳ Загрузка и парсинг...';
+                    statusDiv.style.color = '#ffc107';
+                }
+                
+                try {
+                    const result = await window.loadPPEFromFile(file);
+                    const count = Object.keys(result).length;
+                    
+                    if (statusDiv) {
+                        statusDiv.textContent = `✅ Загружено ${count} профессий!`;
+                        statusDiv.style.color = '#4caf50';
+                    }
+                    
+                    if (statusEl) {
+                        statusEl.textContent = '✅ Загружена';
+                        statusEl.style.color = '#4caf50';
+                    }
+                    
+                    if (typeof drawMap === 'function') {
+                        drawMap();
+                    }
+                    
+                    alert(`✅ База СИЗ загружена!\nНайдено ${count} профессий с СИЗ.\nТеперь при двойном клике по рабочему месту будут показываться СИЗ.`);
+                    
+                } catch (err) {
+                    if (statusDiv) {
+                        statusDiv.textContent = `❌ Ошибка: ${err.message}`;
+                        statusDiv.style.color = '#ff6b6b';
+                    }
+                    alert('❌ Ошибка при загрузке файла:\n' + err.message);
+                }
+            };
+            
+            input.click();
+        });
+    }
+    
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            if (confirm('Удалить загруженную базу СИЗ?')) {
+                localStorage.removeItem('ppeDatabase');
+                window.ppeDatabase = {};
+                window.ppeLoaded = false;
+                
+                if (statusEl) {
+                    statusEl.textContent = '❌ Не загружена';
+                    statusEl.style.color = '#ff6b6b';
+                }
+                
+                const statusDiv = document.getElementById('ppeLoadStatus');
+                if (statusDiv) {
+                    statusDiv.textContent = '🗑 База очищена';
+                    statusDiv.style.color = '#8888aa';
+                }
+                
+                alert('✅ База СИЗ очищена');
+            }
+        });
+    }
+    
+    const saved = localStorage.getItem('ppeDatabase');
+    if (saved && statusEl) {
+        try {
+            const data = JSON.parse(saved);
+            if (Object.keys(data).length > 0) {
+                statusEl.textContent = '✅ Загружена';
+                statusEl.style.color = '#4caf50';
+                window.ppeDatabase = data;
+                window.ppeLoaded = true;
+            }
+        } catch(e) {}
+    }
+}
+
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================================
+
+function initTrainingPage() {
+    renderOrgs();
+    renderStaff();
+    renderProtocol();
+    fillFamEmployeeSelect();
+    
+    // Обработчики кнопок
+    const showOrgBtn = document.getElementById('showOrgFormBtn');
+    const saveOrgBtn = document.getElementById('saveOrgBtn');
+    const cancelOrgBtn = document.getElementById('cancelOrgBtn');
+    const deleteOrgBtn = document.getElementById('deleteOrgBtn');
+    const generateBtn = document.getElementById('generateBtn');
+    const addSelectedBtn = document.getElementById('addSelectedBtn');
+    const importBtn = document.getElementById('staffImportBtn');
+    const generateFamBtn = document.getElementById('generateFamBtn');
+    
+    if (showOrgBtn) {
+        showOrgBtn.addEventListener('click', function() {
+            document.getElementById('orgForm').classList.remove('hidden');
+        });
+    }
+    
+    if (saveOrgBtn) {
+        saveOrgBtn.addEventListener('click', function() {
+            const nameInput = document.getElementById('orgNameInput');
+            const innInput = document.getElementById('orgInnInput');
+            const name = nameInput ? nameInput.value.trim() : '';
+            const inn = innInput ? innInput.value.trim() : '';
+            if (!name || !inn) { alert('Заполните все поля'); return; }
+            const orgs = getOrgs();
+            orgs.push({ id: Date.now(), name, inn });
+            saveOrgs(orgs);
+            renderOrgs();
+            document.getElementById('orgForm').classList.add('hidden');
+            if (nameInput) nameInput.value = '';
+            if (innInput) innInput.value = '';
+            alert('✅ Организация добавлена!');
+        });
+    }
+    
+    if (cancelOrgBtn) {
+        cancelOrgBtn.addEventListener('click', function() {
+            document.getElementById('orgForm').classList.add('hidden');
+        });
+    }
+    
+    if (deleteOrgBtn) {
+        deleteOrgBtn.addEventListener('click', function() {
+            const select = document.getElementById('orgSelect');
+            const id = select ? parseInt(select.value) : 0;
+            if (!id) { alert('Выберите организацию'); return; }
+            if (!confirm('Удалить организацию?')) return;
+            let orgs = getOrgs();
+            orgs = orgs.filter(o => o.id !== id);
+            saveOrgs(orgs);
+            renderOrgs();
+            alert('✅ Организация удалена');
+        });
+    }
+    
+    if (generateBtn) {
+        generateBtn.addEventListener('click', generateXML);
+    }
+    
+    if (addSelectedBtn) {
+        addSelectedBtn.addEventListener('click', addSelectedToProtocol);
+    }
+    
+    if (importBtn) {
+        importBtn.addEventListener('click', importStaffFile);
+    }
+    
+    if (generateFamBtn) {
+        generateFamBtn.addEventListener('click', generateFamiliarization);
+    }
+}
+
+// ============================================================
+// DOM READY
+// ============================================================
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 DOM загружен');
+    
     const mainPage = document.getElementById('mainPage');
     if (mainPage) mainPage.style.display = 'block';
+    
     document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    
     document.querySelectorAll('.nav-link').forEach(link => {
         if (link.textContent.trim() === 'Главная') link.classList.add('active');
     });
+    
+    initTrainingPage();
+    initPPELoader();
+    
+    // Обработчик печати листа ознакомления
+    const printFamBtn = document.getElementById('printFamBtn');
+    if (printFamBtn) {
+        printFamBtn.addEventListener('click', function() {
+            const content = document.getElementById('famContent');
+            if (!content) return;
+            
+            const win = window.open('', '_blank');
+            win.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Лист ознакомления</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 40px; color: #222; max-width: 800px; margin: 0 auto; }
+                        * { print-color-adjust: exact; }
+                    </style>
+                </head>
+                <body>
+                    ${content.innerHTML}
+                    <script>
+                        window.print();
+                        window.close();
+                    <\/script>
+                </body>
+                </html>
+            `);
+            win.document.close();
+        });
+    }
+    
+    console.log('✅ Все инициализировано!');
 });
