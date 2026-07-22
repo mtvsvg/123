@@ -233,7 +233,7 @@ function renderStaffWithDepartments() {
     }
     
     container.innerHTML = html;
-    updateFamEmployeeSelect();
+    fillFamEmployeeSelect();
 }
 
 function toggleDepartment(deptName) {
@@ -911,6 +911,13 @@ const PPE_CARD_TEMPLATES = [
 function initPPECardsPage() {
     renderPPECardStaffList();
     renderPPECardPPEList();
+    
+    // Привязываем кнопку генерации
+    const generateBtn = document.getElementById('generatePPECardsBtn');
+    if (generateBtn) {
+        generateBtn.onclick = generatePPECards;
+        console.log('✅ Кнопка генерации карточек СИЗ привязана');
+    }
 }
 
 function renderPPECardStaffList() {
@@ -969,7 +976,6 @@ function renderPPECardPPEList() {
     
     container.innerHTML = html;
     
-    // Обновляем выбранные СИЗ при изменении чекбоксов
     document.querySelectorAll('.ppe-card-ppe-check').forEach(cb => {
         cb.addEventListener('change', function() {
             const idx = parseInt(this.dataset.index);
@@ -1014,9 +1020,7 @@ function addCustomPPEToCardList() {
 }
 
 function updatePPECardSelectionCount() {
-    const container = document.getElementById('ppeCardPPEList');
-    if (!container) return;
-    const header = container?.previousElementSibling;
+    const header = document.querySelector('#ppeCardPPEList')?.previousElementSibling;
     if (header) {
         header.textContent = `🦺 Выберите СИЗ для выдачи (выбрано: ${selectedPPECardItems.length}):`;
     }
@@ -1067,13 +1071,19 @@ async function generatePPECards() {
     }
     
     // Проверяем, загружена ли библиотека
-    if (typeof docx === 'undefined' && typeof window.docx === 'undefined') {
+    let docxLib = null;
+    if (typeof docx !== 'undefined') {
+        docxLib = docx;
+    } else if (typeof window.docx !== 'undefined') {
+        docxLib = window.docx;
+    }
+    
+    if (!docxLib) {
         alert('❌ Библиотека docx не загружена. Проверьте интернет-соединение и перезагрузите страницу.\n\nЕсли проблема повторяется, попробуйте другой браузер.');
         console.error('docx is undefined');
         return;
     }
     
-    const docxLib = typeof docx !== 'undefined' ? docx : window.docx;
     console.log('📚 Библиотека docx загружена');
     
     const manager = document.getElementById('ppeCardManager').value.trim() || '';
@@ -1466,7 +1476,7 @@ async function generatePPECards() {
             <p>📋 Сотрудники: ${employees.map(e => `${e.last_name} ${e.first_name}`).join(', ')}</p>
             <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
             <p style="color:#8888aa;font-size:13px;margin-top:8px;">📁 Документы сохранены в папку "Загрузки"</p>
-            <button onclick="window.location.reload()" style="margin-top:12px;padding:8px 20px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);border-radius:8px;color:#b388ff;cursor:pointer;">🔄 Создать еще</button>
+            <button onclick="location.reload()" style="margin-top:12px;padding:8px 20px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);border-radius:8px;color:#b388ff;cursor:pointer;">🔄 Создать еще</button>
         `;
         
     } catch (error) {
@@ -1875,7 +1885,7 @@ function openPPEModalForEmployee(snils) {
 }
 
 // ============================================================
-// КАРТА (ВСЯ ЛОГИКА КАРТЫ)
+// КАРТА
 // ============================================================
 let mapData = {
     workshops: [],
@@ -2016,7 +2026,6 @@ function setupMapButtons() {
     const saveFeBtn = document.getElementById('saveFireExtinguisherBtn');
     if (saveFeBtn) saveFeBtn.onclick = saveFireExtinguisher;
     
-    // Дата перезарядки огнетушителей (по ГОСТ)
     const feDateInput = document.getElementById('feDateInput');
     if (feDateInput) {
         feDateInput.onchange = function() {
@@ -2846,14 +2855,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     initTrainingPage();
     console.log('✅ Готово!');
-});
-document.addEventListener('DOMContentLoaded', function() {
-    // ... существующий код ...
-    
-    // Привязываем кнопку генерации карточек СИЗ
-    const generateBtn = document.getElementById('generatePPECardsBtn');
-    if (generateBtn) {
-        generateBtn.addEventListener('click', generatePPECards);
-        console.log('✅ Кнопка генерации карточек СИЗ привязана');
-    }
 });
