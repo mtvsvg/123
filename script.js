@@ -1077,7 +1077,7 @@ function clearPPECardSelection() {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ПОЛНАЯ ВЕРСИЯ
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ПРАВИЛЬНАЯ ВЕРСИЯ
 // ============================================================
 function generatePPECardsHTML() {
     console.log('🔄 generatePPECardsHTML вызвана');
@@ -1107,7 +1107,7 @@ function generatePPECardsHTML() {
     const resultDiv = document.getElementById('ppeCardResult');
     const contentDiv = document.getElementById('ppeCardResultContent');
     
-    // Пакуем сотрудников по 2 на страницу
+    // Пакуем сотрудников по 2 на один лист А4
     let allCardsHTML = '';
     let cardCount = 0;
     let totalPages = Math.ceil(employees.length / 2);
@@ -1124,10 +1124,10 @@ function generatePPECardsHTML() {
             selectedPPECardItems.forEach((ppe, idx) => {
                 rows += `
                     <tr>
-                        <td style="border:1px solid #000;padding:4px;font-size:10px;">${ppe.name}</td>
-                        <td style="border:1px solid #000;padding:4px;font-size:10px;text-align:center;">${ppe.punkt}</td>
-                        <td style="border:1px solid #000;padding:4px;font-size:10px;text-align:center;">${ppe.unit}</td>
-                        <td style="border:1px solid #000;padding:4px;font-size:10px;text-align:center;">${ppe.quantity}</td>
+                        <td style="border:1px solid #000;padding:3px;font-size:9px;">${ppe.name}</td>
+                        <td style="border:1px solid #000;padding:3px;font-size:9px;text-align:center;">${ppe.punkt}</td>
+                        <td style="border:1px solid #000;padding:3px;font-size:9px;text-align:center;">${ppe.unit}</td>
+                        <td style="border:1px solid #000;padding:3px;font-size:9px;text-align:center;">${ppe.quantity}</td>
                     </tr>
                 `;
             });
@@ -1140,91 +1140,87 @@ function generatePPECardsHTML() {
             for (let r = 0; r < 10; r++) {
                 rows += `
                     <tr>
-                        <td style="border:1px solid #000;padding:2px;height:18px;font-size:8px;"></td>
-                        <td style="border:1px solid #000;padding:2px;height:18px;font-size:8px;"></td>
-                        <td style="border:1px solid #000;padding:2px;height:18px;font-size:8px;"></td>
-                        <td style="border:1px solid #000;padding:2px;height:18px;font-size:8px;"></td>
-                        <td style="border:1px solid #000;padding:2px;height:18px;font-size:8px;"></td>
-                        <td style="border:1px solid #000;padding:2px;height:18px;font-size:8px;"></td>
-                        <td style="border:1px solid #000;padding:2px;height:18px;font-size:8px;"></td>
-                        <td style="border:1px solid #000;padding:2px;height:18px;font-size:8px;"></td>
-                        <td style="border:1px solid #000;padding:2px;height:18px;font-size:8px;"></td>
-                        <td style="border:1px solid #000;padding:2px;height:18px;font-size:8px;"></td>
+                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
                     </tr>
                 `;
             }
             return rows;
         }
         
-        allCardsHTML += `
-        <div style="page-break-after:always;padding:8px;font-family:'Times New Roman',Times,serif;max-width:1000px;margin:0 auto;background:#fff;color:#000;border:1px solid #999;border-radius:2px;margin-bottom:8px;min-height:900px;">
-            
-            <!-- ============================================================ -->
-            <!-- ЛИЦЕВАЯ СТОРОНА - два сотрудника -->
-            <!-- ============================================================ -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
-                
-                <!-- ЛИЦЕВАЯ - СОТРУДНИК 1 -->
-                <div style="border-right:1px dashed #ccc;padding-right:6px;">
-                    <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:6px;">
-                        <div style="font-size:12px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
-                        <div style="font-size:12px;font-weight:bold;">учета выдачи СИЗ</div>
-                    </div>
-                    
-                    <table style="width:100%;border-collapse:collapse;font-size:9px;margin-bottom:4px;">
-                        <tr>
-                            <td style="width:55%;vertical-align:top;padding:1px;border:1px solid #000;">
-                                <div><strong>Фамилия</strong> ${emp1.last_name}</div>
-                                <div><strong>Имя</strong> ${emp1.first_name}</div>
-                                <div><strong>Отчество</strong> ${emp1.middle_name || ''}</div>
-                                <div><strong>Табельный номер</strong> ________</div>
-                                <div><strong>Структурное подразделение</strong> ${department}</div>
-                                <div><strong>Профессия (должность)</strong> ${emp1.position}</div>
-                                <div><strong>Дата поступления на работу</strong> __________</div>
-                                <div><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
-                            </td>
-                            <td style="width:45%;vertical-align:top;padding:1px;border:1px solid #000;">
-                                <div><strong>Пол</strong> ${gender}</div>
-                                <div><strong>Рост</strong> ${height}</div>
-                                <div style="margin-top:2px;"><strong>Размер:</strong></div>
-                                <div style="padding-left:8px;"><strong>одежды</strong> ${clothesSize}</div>
-                                <div style="padding-left:8px;"><strong>обуви</strong> ${shoeSize}</div>
-                                <div style="padding-left:8px;"><strong>головного убора</strong> ___</div>
-                                <div><strong>СИЗОД</strong> ___</div>
-                                <div><strong>СИЗ рук</strong> ___________</div>
-                            </td>
-                        </tr>
-                    </table>
-                    
-                    <table style="width:100%;border-collapse:collapse;font-size:9px;border:1px solid #000;">
-                        <thead>
-                            <tr style="background:#f0f0f0;">
-                                <th style="border:1px solid #000;padding:3px;text-align:center;width:32%;font-size:9px;">Наименование СИЗ</th>
-                                <th style="border:1px solid #000;padding:3px;text-align:center;width:22%;font-size:9px;">Пункт Норм</th>
-                                <th style="border:1px solid #000;padding:3px;text-align:center;width:26%;font-size:9px;">Единица измерения, периодичность выдачи</th>
-                                <th style="border:1px solid #000;padding:3px;text-align:center;width:20%;font-size:9px;">Количество на период</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${buildPPETable(emp1)}
-                        </tbody>
-                    </table>
-                    
-                    <div style="margin-top:6px;font-size:10px;">
-                        <div>${managerPosition} __________ ${manager}</div>
-                        <div style="font-size:8px;">(подпись) (фамилия, инициалы)</div>
-                    </div>
+        // ЛИЦЕВАЯ СТОРОНА (два сотрудника А и Б)
+        let faceHTML = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;height:50%;">
+        `;
+        
+        // Сотрудник А (левый)
+        faceHTML += `
+            <div style="border-right:1px dashed #999;padding-right:4px;">
+                <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:3px;margin-bottom:4px;">
+                    <div style="font-size:11px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
+                    <div style="font-size:11px;font-weight:bold;">учета выдачи СИЗ</div>
                 </div>
-                
-                <!-- ЛИЦЕВАЯ - СОТРУДНИК 2 -->
-                <div style="${emp2 ? '' : 'opacity:0.2;'}">
-                    ${emp2 ? `
-                    <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:6px;">
-                        <div style="font-size:12px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
-                        <div style="font-size:12px;font-weight:bold;">учета выдачи СИЗ</div>
+                <table style="width:100%;border-collapse:collapse;font-size:8px;margin-bottom:3px;">
+                    <tr>
+                        <td style="width:55%;vertical-align:top;padding:1px;border:1px solid #000;">
+                            <div><strong>Фамилия</strong> ${emp1.last_name}</div>
+                            <div><strong>Имя</strong> ${emp1.first_name}</div>
+                            <div><strong>Отчество</strong> ${emp1.middle_name || ''}</div>
+                            <div><strong>Табельный номер</strong> ________</div>
+                            <div><strong>Структурное подразделение</strong> ${department}</div>
+                            <div><strong>Профессия (должность)</strong> ${emp1.position}</div>
+                            <div><strong>Дата поступления на работу</strong> __________</div>
+                            <div><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
+                        </td>
+                        <td style="width:45%;vertical-align:top;padding:1px;border:1px solid #000;">
+                            <div><strong>Пол</strong> ${gender}</div>
+                            <div><strong>Рост</strong> ${height}</div>
+                            <div style="margin-top:2px;"><strong>Размер:</strong></div>
+                            <div style="padding-left:6px;"><strong>одежды</strong> ${clothesSize}</div>
+                            <div style="padding-left:6px;"><strong>обуви</strong> ${shoeSize}</div>
+                            <div style="padding-left:6px;"><strong>головного убора</strong> ___</div>
+                            <div><strong>СИЗОД</strong> ___</div>
+                            <div><strong>СИЗ рук</strong> ___________</div>
+                        </td>
+                    </tr>
+                </table>
+                <table style="width:100%;border-collapse:collapse;font-size:8px;border:1px solid #000;">
+                    <thead>
+                        <tr style="background:#f0f0f0;">
+                            <th style="border:1px solid #000;padding:2px;text-align:center;width:32%;font-size:8px;">Наименование СИЗ</th>
+                            <th style="border:1px solid #000;padding:2px;text-align:center;width:22%;font-size:8px;">Пункт Норм</th>
+                            <th style="border:1px solid #000;padding:2px;text-align:center;width:26%;font-size:8px;">Единица измерения, периодичность выдачи</th>
+                            <th style="border:1px solid #000;padding:2px;text-align:center;width:20%;font-size:8px;">Количество на период</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${buildPPETable(emp1)}
+                    </tbody>
+                </table>
+                <div style="margin-top:4px;font-size:9px;">
+                    <div>${managerPosition} __________ ${manager}</div>
+                    <div style="font-size:7px;">(подпись) (фамилия, инициалы)</div>
+                </div>
+            </div>
+        `;
+        
+        // Сотрудник Б (правый)
+        if (emp2) {
+            faceHTML += `
+                <div>
+                    <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:3px;margin-bottom:4px;">
+                        <div style="font-size:11px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
+                        <div style="font-size:11px;font-weight:bold;">учета выдачи СИЗ</div>
                     </div>
-                    
-                    <table style="width:100%;border-collapse:collapse;font-size:9px;margin-bottom:4px;">
+                    <table style="width:100%;border-collapse:collapse;font-size:8px;margin-bottom:3px;">
                         <tr>
                             <td style="width:55%;vertical-align:top;padding:1px;border:1px solid #000;">
                                 <div><strong>Фамилия</strong> ${emp2.last_name}</div>
@@ -1240,129 +1236,146 @@ function generatePPECardsHTML() {
                                 <div><strong>Пол</strong> ${gender}</div>
                                 <div><strong>Рост</strong> ${height}</div>
                                 <div style="margin-top:2px;"><strong>Размер:</strong></div>
-                                <div style="padding-left:8px;"><strong>одежды</strong> ${clothesSize}</div>
-                                <div style="padding-left:8px;"><strong>обуви</strong> ${shoeSize}</div>
-                                <div style="padding-left:8px;"><strong>головного убора</strong> ___</div>
+                                <div style="padding-left:6px;"><strong>одежды</strong> ${clothesSize}</div>
+                                <div style="padding-left:6px;"><strong>обуви</strong> ${shoeSize}</div>
+                                <div style="padding-left:6px;"><strong>головного убора</strong> ___</div>
                                 <div><strong>СИЗОД</strong> ___</div>
                                 <div><strong>СИЗ рук</strong> ___________</div>
                             </td>
                         </tr>
                     </table>
-                    
-                    <table style="width:100%;border-collapse:collapse;font-size:9px;border:1px solid #000;">
+                    <table style="width:100%;border-collapse:collapse;font-size:8px;border:1px solid #000;">
                         <thead>
                             <tr style="background:#f0f0f0;">
-                                <th style="border:1px solid #000;padding:3px;text-align:center;width:32%;font-size:9px;">Наименование СИЗ</th>
-                                <th style="border:1px solid #000;padding:3px;text-align:center;width:22%;font-size:9px;">Пункт Норм</th>
-                                <th style="border:1px solid #000;padding:3px;text-align:center;width:26%;font-size:9px;">Единица измерения, периодичность выдачи</th>
-                                <th style="border:1px solid #000;padding:3px;text-align:center;width:20%;font-size:9px;">Количество на период</th>
+                                <th style="border:1px solid #000;padding:2px;text-align:center;width:32%;font-size:8px;">Наименование СИЗ</th>
+                                <th style="border:1px solid #000;padding:2px;text-align:center;width:22%;font-size:8px;">Пункт Норм</th>
+                                <th style="border:1px solid #000;padding:2px;text-align:center;width:26%;font-size:8px;">Единица измерения, периодичность выдачи</th>
+                                <th style="border:1px solid #000;padding:2px;text-align:center;width:20%;font-size:8px;">Количество на период</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${buildPPETable(emp2)}
                         </tbody>
                     </table>
-                    
-                    <div style="margin-top:6px;font-size:10px;">
+                    <div style="margin-top:4px;font-size:9px;">
                         <div>${managerPosition} __________ ${manager}</div>
-                        <div style="font-size:8px;">(подпись) (фамилия, инициалы)</div>
-                    </div>
-                    ` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ccc;font-size:14px;">Пустая карточка</div>'}
-                </div>
-            </div>
-            
-            <!-- ============================================================ -->
-            <!-- ОБОРОТНАЯ СТОРОНА - два сотрудника -->
-            <!-- ============================================================ -->
-            <div style="border-top:2px dashed #999;padding-top:8px;">
-                <div style="text-align:center;font-size:12px;font-weight:bold;margin-bottom:4px;">ОБОРОТНАЯ СТОРОНА</div>
-                
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-                    
-                    <!-- ОБОРОТНАЯ - СОТРУДНИК 1 -->
-                    <div style="border-right:1px dashed #ccc;padding-right:6px;">
-                        <div style="font-weight:bold;font-size:10px;text-align:center;margin-bottom:2px;">Данные о выдаче СИЗ</div>
-                        <div style="font-size:8px;text-align:center;margin-bottom:2px;color:#666;">${emp1.last_name} ${emp1.first_name}</div>
-                        <table style="width:100%;border-collapse:collapse;font-size:7px;border:1px solid #000;">
-                            <thead>
-                                <tr style="background:#f0f0f0;">
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">Наименование СИЗ</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:12%;">Модель, марка, артикул</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">дата</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">кол-во</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">Лично/дозатор</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">подпись</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">дата</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">кол-во</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">Подпись</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">Акт</th>
-                                </tr>
-                                <tr style="background:#f0f0f0;">
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">1</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">2</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">3</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">4</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">5</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">6</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">7</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">8</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">9</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">10</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${buildReverseTable()}
-                            </tbody>
-                        </table>
-                        <div style="font-size:8px;margin-top:2px;">Ответственный за выдачу СИЗ __________</div>
-                    </div>
-                    
-                    <!-- ОБОРОТНАЯ - СОТРУДНИК 2 -->
-                    <div style="${emp2 ? '' : 'opacity:0.2;'}">
-                        ${emp2 ? `
-                        <div style="font-weight:bold;font-size:10px;text-align:center;margin-bottom:2px;">Данные о выдаче СИЗ</div>
-                        <div style="font-size:8px;text-align:center;margin-bottom:2px;color:#666;">${emp2.last_name} ${emp2.first_name}</div>
-                        <table style="width:100%;border-collapse:collapse;font-size:7px;border:1px solid #000;">
-                            <thead>
-                                <tr style="background:#f0f0f0;">
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">Наименование СИЗ</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:12%;">Модель, марка, артикул</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">дата</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">кол-во</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">Лично/дозатор</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">подпись</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">дата</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">кол-во</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">Подпись</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">Акт</th>
-                                </tr>
-                                <tr style="background:#f0f0f0;">
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">1</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">2</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">3</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">4</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">5</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">6</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">7</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">8</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">9</th>
-                                    <th style="border:1px solid #000;padding:1px;text-align:center;font-size:6px;">10</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${buildReverseTable()}
-                            </tbody>
-                        </table>
-                        <div style="font-size:8px;margin-top:2px;">Ответственный за выдачу СИЗ __________</div>
-                        ` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ccc;font-size:12px;">Пустая оборотная сторона</div>'}
+                        <div style="font-size:7px;">(подпись) (фамилия, инициалы)</div>
                     </div>
                 </div>
+            `;
+        } else {
+            faceHTML += `
+                <div style="display:flex;align-items:center;justify-content:center;color:#ccc;font-size:16px;border:1px dashed #ddd;">
+                    Пустая карточка
+                </div>
+            `;
+        }
+        
+        faceHTML += `</div>`;
+        
+        // ОБОРОТНАЯ СТОРОНА (два сотрудника А и Б)
+        let reverseHTML = `
+            <div style="border-top:2px dashed #999;padding-top:6px;margin-top:6px;">
+                <div style="text-align:center;font-size:11px;font-weight:bold;margin-bottom:3px;">ОБОРОТНАЯ СТОРОНА</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+        `;
+        
+        // Оборотная сторона сотрудника А
+        reverseHTML += `
+            <div style="border-right:1px dashed #999;padding-right:4px;">
+                <div style="font-weight:bold;font-size:9px;text-align:center;margin-bottom:2px;">Данные о выдаче СИЗ</div>
+                <div style="font-size:7px;text-align:center;margin-bottom:2px;color:#666;">${emp1.last_name} ${emp1.first_name}</div>
+                <table style="width:100%;border-collapse:collapse;font-size:6px;border:1px solid #000;">
+                    <thead>
+                        <tr style="background:#f0f0f0;">
+                            <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">Наименование СИЗ</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;width:12%;">Модель, марка, артикул</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">дата</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">кол-во</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">Лично/дозатор</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">подпись</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">дата</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">кол-во</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">Подпись</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">Акт</th>
+                        </tr>
+                        <tr style="background:#f0f0f0;">
+                            <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">1</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">2</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">3</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">4</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">5</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">6</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">7</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">8</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">9</th>
+                            <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">10</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${buildReverseTable()}
+                    </tbody>
+                </table>
             </div>
-            
-            <div style="text-align:center;font-size:7px;color:#999;margin-top:4px;border-top:1px solid #eee;padding-top:3px;">
+        `;
+        
+        // Оборотная сторона сотрудника Б
+        if (emp2) {
+            reverseHTML += `
+                <div>
+                    <div style="font-weight:bold;font-size:9px;text-align:center;margin-bottom:2px;">Данные о выдаче СИЗ</div>
+                    <div style="font-size:7px;text-align:center;margin-bottom:2px;color:#666;">${emp2.last_name} ${emp2.first_name}</div>
+                    <table style="width:100%;border-collapse:collapse;font-size:6px;border:1px solid #000;">
+                        <thead>
+                            <tr style="background:#f0f0f0;">
+                                <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">Наименование СИЗ</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;width:12%;">Модель, марка, артикул</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">дата</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">кол-во</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">Лично/дозатор</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">подпись</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">дата</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">кол-во</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">Подпись</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">Акт</th>
+                            </tr>
+                            <tr style="background:#f0f0f0;">
+                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">1</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">2</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">3</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">4</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">5</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">6</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">7</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">8</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">9</th>
+                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">10</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${buildReverseTable()}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        } else {
+            reverseHTML += `
+                <div style="display:flex;align-items:center;justify-content:center;color:#ccc;font-size:14px;border:1px dashed #ddd;">
+                    Пустая оборотная сторона
+                </div>
+            `;
+        }
+        
+        reverseHTML += `</div></div>`;
+        
+        // Весь лист А4 (одна страница = лицевая + оборотная)
+        allCardsHTML += `
+        <div style="page-break-after:always;padding:6px;font-family:'Times New Roman',Times,serif;max-width:1000px;margin:0 auto;background:#fff;color:#000;border:1px solid #999;border-radius:2px;margin-bottom:6px;min-height:900px;display:flex;flex-direction:column;height:100vh;">
+            ${faceHTML}
+            ${reverseHTML}
+            <div style="text-align:center;font-size:6px;color:#999;margin-top:auto;padding-top:3px;border-top:1px solid #eee;">
                 Сформировано в системе «ОхранаТруда.Про» • Страница ${pageNum} из ${totalPages}
             </div>
-            
         </div>
         `;
     }
@@ -1384,12 +1397,12 @@ function generatePPECardsHTML() {
                 body { 
                     font-family: 'Times New Roman', Times, serif; 
                     background: #f0f0f0; 
-                    padding: 20px; 
+                    padding: 10px; 
                     margin: 0;
                 }
                 @page {
                     size: A4;
-                    margin: 8mm 8mm 8mm 8mm;
+                    margin: 5mm 5mm 5mm 5mm;
                 }
                 @media print {
                     body { background: #fff; padding: 0; margin: 0; }
@@ -1400,7 +1413,7 @@ function generatePPECardsHTML() {
                 }
                 .no-print {
                     text-align: center;
-                    padding: 20px;
+                    padding: 15px;
                     background: #fff;
                     position: sticky;
                     top: 0;
@@ -1408,13 +1421,13 @@ function generatePPECardsHTML() {
                     border-bottom: 2px solid #7c3aed;
                 }
                 .no-print button {
-                    padding: 10px 30px;
-                    margin: 0 10px;
+                    padding: 8px 24px;
+                    margin: 0 8px;
                     background: linear-gradient(135deg, #7c3aed, #00d4ff);
                     border: none;
                     border-radius: 8px;
                     color: #fff;
-                    font-size: 16px;
+                    font-size: 14px;
                     font-weight: 600;
                     cursor: pointer;
                 }
@@ -1422,9 +1435,6 @@ function generatePPECardsHTML() {
                     transform: scale(1.02);
                 }
                 .no-print .btn-secondary {
-                    background: #666;
-                }
-                .no-print .btn-close {
                     background: #666;
                 }
                 @media print {
@@ -1437,8 +1447,12 @@ function generatePPECardsHTML() {
                 <h3>🖨️ Карточки готовы к печати (${cardCount} сотрудников, ${totalPages} страниц)</h3>
                 <button onclick="window.print()">🖨️ Печать</button>
                 <button class="btn-secondary" onclick="window.close()">✖ Закрыть</button>
-                <p style="font-size:12px;color:#666;margin-top:6px;">Нажмите "Печать" и выберите "Сохранить как PDF" или отправьте на принтер</p>
-                <p style="font-size:11px;color:#888;margin-top:4px;">💡 На одной странице — два сотрудника (лицевая и оборотная стороны)</p>
+                <p style="font-size:11px;color:#666;margin-top:4px;">
+                    📄 На одном листе А4: две лицевые карточки + две оборотные карточки
+                </p>
+                <p style="font-size:10px;color:#888;">
+                    💡 Распечатайте, переверните лист и разрежьте пополам
+                </p>
             </div>
             ${allCardsHTML}
             <script>
@@ -1455,7 +1469,8 @@ function generatePPECardsHTML() {
         <p>📋 Сотрудники: ${employees.map(e => `${e.last_name} ${e.first_name}`).join(', ')}</p>
         <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
         <p style="color:#8888aa;font-size:13px;margin-top:8px;">🖨️ Откроется новое окно для печати.</p>
-        <p style="color:#8888aa;font-size:12px;">📄 На одной странице — два сотрудника (лицевая и оборотная стороны).</p>
+        <p style="color:#8888aa;font-size:12px;">📄 На одном листе А4: две лицевые карточки + две оборотные карточки</p>
+        <p style="color:#8888aa;font-size:12px;">💡 Распечатайте, переверните лист и разрежьте пополам</p>
     `;
 }
 
