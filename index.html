@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Охрана труда — Цифровой помощник</title>
     <link rel="stylesheet" href="style.css">
-    <!-- БИБЛИОТЕКА ДЛЯ .DOCX -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.2.2/docx.min.js"></script>
     <style>
-        /* ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ КАРТОЧЕК СИЗ */
+        /* Дополнительные стили для карточек СИЗ - уже в style.css */
+        /* Эти стили остаются для совместимости */
         .ppe-card-toolbar {
             display: flex;
             gap: 12px;
@@ -44,6 +43,7 @@
             background: rgba(255,255,255,0.03);
             border-radius: 6px;
             border: 1px solid rgba(255,255,255,0.06);
+            flex-wrap: wrap;
         }
         .ppe-item-select input[type="checkbox"] {
             width: 18px;
@@ -59,6 +59,8 @@
             align-items: center;
             gap: 8px;
             flex-wrap: wrap;
+            flex: 1;
+            min-width: 150px;
         }
         .ppe-item-select .ppe-detail {
             color: #8888aa;
@@ -68,13 +70,15 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 4px 0;
+            padding: 6px 0;
             border-bottom: 1px solid rgba(255,255,255,0.03);
+            flex-wrap: wrap;
         }
         .employee-row .emp-name {
             color: #00d4ff;
             cursor: pointer;
             font-size: 14px;
+            min-width: 140px;
         }
         .employee-row .emp-name:hover {
             text-decoration: underline;
@@ -82,16 +86,129 @@
         .employee-row .emp-position {
             color: #8888aa;
             font-size: 13px;
+            flex: 1;
         }
         .employee-row .emp-snils {
             color: #666;
             font-size: 12px;
+            min-width: 100px;
         }
         .employee-row input[type="checkbox"] {
             width: 18px;
             height: 18px;
             accent-color: #7c3aed;
             cursor: pointer;
+        }
+        .staff-toolbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            padding: 8px 0;
+        }
+        /* Стили для департаментов */
+        .department-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            cursor: pointer;
+        }
+        .department-header .dept-name {
+            color: #fff;
+            font-weight: 500;
+        }
+        .department-header .dept-count {
+            color: #8888aa;
+            font-size: 13px;
+        }
+        .department-body {
+            padding: 0 14px 10px;
+        }
+        .dept-empty {
+            color: #666;
+            font-size: 13px;
+            padding: 8px 0;
+        }
+        .unassigned-section {
+            background: rgba(255,255,255,0.02);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(255,255,255,0.04);
+            overflow: hidden;
+        }
+        .unassigned-title {
+            padding: 10px 14px;
+            color: #8888aa;
+            font-weight: 500;
+        }
+        .unassigned-body {
+            padding: 0 14px 10px;
+        }
+        .emp-remove {
+            background: rgba(255,70,70,0.15);
+            border: none;
+            color: #ff6b6b;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .emp-remove:hover {
+            background: rgba(255,70,70,0.25);
+        }
+        .manual-fam-input {
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            width: 100%;
+        }
+        .manual-fam-input::placeholder {
+            color: #666;
+        }
+        #soutCardNumber {
+            width: 70px;
+            padding: 4px 8px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            color: #fff;
+            font-size: 12px;
+        }
+        .doc-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #ccc;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: background 0.2s;
+            flex-wrap: wrap;
+        }
+        .doc-check:hover {
+            background: rgba(255,255,255,0.08);
+        }
+        .doc-check input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #7c3aed;
+            cursor: pointer;
+        }
+        .doc-check .doc-name-edit {
+            flex: 1;
+            min-width: 100px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 4px;
+            color: #ccc;
+            padding: 4px 8px;
+            font-size: 13px;
         }
     </style>
 </head>
@@ -167,7 +284,7 @@
                 <div class="feature-card">
                     <div class="feature-icon">🦺</div>
                     <h3>Карточки СИЗ</h3>
-                    <p>Создавайте личные карточки учета выдачи СИЗ в формате Word.</p>
+                    <p>Создавайте личные карточки учета выдачи СИЗ в формате HTML для печати.</p>
                 </div>
             </div>
         </div>
@@ -228,7 +345,7 @@
             <button onclick="showTab('familiarization')">📋 Ознакомление</button>
         </div>
 
-        <!-- КРАТКО: Штатное расписание, Протокол, Ознакомление -->
+        <!-- Штатное расписание -->
         <div id="tabStaff">
             <div class="block">
                 <div class="block-header">
@@ -249,6 +366,7 @@
             </div>
         </div>
 
+        <!-- Протокол -->
         <div id="tabProtocol" class="hidden">
             <div class="block">
                 <h2>📝 Протокол</h2>
@@ -284,6 +402,7 @@
             </div>
         </div>
 
+        <!-- Ознакомление -->
         <div id="tabFamiliarization" class="hidden">
             <div class="block">
                 <h2>📋 Лист ознакомления с нормативными актами</h2>
@@ -317,36 +436,36 @@
                 <div style="margin-top:12px;">
                     <h4 style="color:#ccc;margin-bottom:8px;">📋 Нормативные акты для ознакомления:</h4>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                        <label class="doc-check">
                             <input type="checkbox" value="Инструкция по охране труда" checked>
                             <input type="text" class="doc-name-edit" value="Инструкция по охране труда" placeholder="Название документа">
                         </label>
-                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                        <label class="doc-check">
                             <input type="checkbox" value="Специальная оценка условий труда" checked>
                             <input type="text" class="doc-name-edit" value="Специальная оценка условий труда" placeholder="Название документа">
-                            <input type="text" id="soutCardNumber" placeholder="№ карты" style="width:70px;padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:#fff;font-size:12px;">
+                            <input type="text" id="soutCardNumber" placeholder="№ карты">
                         </label>
-                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                        <label class="doc-check">
                             <input type="checkbox" value="Оценка профессиональных рисков" checked>
                             <input type="text" class="doc-name-edit" value="Оценка профессиональных рисков" placeholder="Название документа">
                         </label>
-                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                        <label class="doc-check">
                             <input type="checkbox" value="Нормы выдачи СИЗ" checked>
                             <input type="text" class="doc-name-edit" value="Нормы выдачи СИЗ" placeholder="Название документа">
                         </label>
-                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                        <label class="doc-check">
                             <input type="checkbox" value="Правила внутреннего трудового распорядка">
                             <input type="text" class="doc-name-edit" value="Правила внутреннего трудового распорядка" placeholder="Название документа">
                         </label>
-                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                        <label class="doc-check">
                             <input type="checkbox" value="Инструкция по пожарной безопасности">
                             <input type="text" class="doc-name-edit" value="Инструкция по пожарной безопасности" placeholder="Название документа">
                         </label>
-                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                        <label class="doc-check">
                             <input type="checkbox" value="Инструкция по электробезопасности">
                             <input type="text" class="doc-name-edit" value="Инструкция по электробезопасности" placeholder="Название документа">
                         </label>
-                        <label class="doc-check" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+                        <label class="doc-check">
                             <input type="checkbox" value="Дополнительный документ">
                             <input type="text" class="doc-name-edit" value="Дополнительный документ" placeholder="Название документа">
                         </label>
@@ -428,13 +547,13 @@
             </div>
             
             <div style="margin-bottom:12px;padding:16px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
-                <p style="color:#8888aa;font-size:14px;margin-bottom:8px;">🦺 Выберите СИЗ:</p>
+                <p style="color:#8888aa;font-size:14px;margin-bottom:8px;">🦺 Выберите СИЗ для выдачи (выбрано: 0):</p>
                 <div id="ppeCardPPEList" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
                 <button class="btn-add" onclick="addPPEToCardList()" style="margin-top:8px;">➕ Добавить СИЗ</button>
             </div>
             
             <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
-                <button class="btn-primary" id="generatePPECardsBtn" style="width:auto;padding:12px 32px;">📄 Создать карточки СИЗ (.docx)</button>
+                <button class="btn-primary" id="generatePPECardsBtn" style="width:auto;padding:12px 32px;background:linear-gradient(135deg,#4caf50,#2e7d32) !important;">📄 Создать карточки СИЗ</button>
                 <button class="btn-secondary" onclick="clearPPECardSelection()">✖ Очистить выбор</button>
             </div>
             
@@ -491,7 +610,7 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- СТРАНИЦА "КАРТА" (сокращенно) -->
+<!-- СТРАНИЦА "КАРТА" -->
 <!-- ============================================================ -->
 <div id="mapPage" class="page hidden">
     <div class="container" style="max-width:1600px;">
