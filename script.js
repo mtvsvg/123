@@ -1075,46 +1075,349 @@ function clearPPECardSelection() {
     alert('✅ Выбор очищен');
 }
 
-<div class="ppe-card-toolbar">
-    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-        <label style="color:#8888aa;font-size:12px;">Номер карточки</label>
-        <input type="text" id="ppeCardNumber" placeholder="001">
-    </div>
-    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-        <label style="color:#8888aa;font-size:12px;">Структурное подразделение</label>
-        <input type="text" id="ppeCardDepartment" placeholder="Служба движения">
-    </div>
-    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-        <label style="color:#8888aa;font-size:12px;">Должность руководителя</label>
-        <input type="text" id="ppeCardManagerPosition" placeholder="Начальник службы движения">
-    </div>
-    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-        <label style="color:#8888aa;font-size:12px;">ФИО руководителя</label>
-        <input type="text" id="ppeCardManager" placeholder="Иванов И.И.">
-    </div>
-</div>
+// ============================================================
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ
+// ============================================================
+function generatePPECardsHTML() {
+    console.log('🔄 generatePPECardsHTML вызвана');
+    
+    const employees = getSelectedPPECardEmployees();
+    console.log('👤 Выбрано сотрудников:', employees.length);
+    
+    if (employees.length === 0) {
+        alert('❌ Выберите хотя бы одного сотрудника!');
+        return;
+    }
+    
+    if (selectedPPECardItems.length === 0) {
+        alert('❌ Выберите хотя бы одно СИЗ!');
+        return;
+    }
+    
+    const manager = document.getElementById('ppeCardManager').value.trim() || '_______________';
+    const managerPosition = document.getElementById('ppeCardManagerPosition').value.trim() || '_______________';
+    const cardNumber = document.getElementById('ppeCardNumber').value.trim() || '___';
+    const department = document.getElementById('ppeCardDepartment').value.trim() || '';
+    const gender = document.getElementById('ppeCardGender').value || 'М';
+    const height = document.getElementById('ppeCardHeight').value.trim() || '';
+    const clothesSize = document.getElementById('ppeCardClothesSize').value.trim() || '';
+    const shoeSize = document.getElementById('ppeCardShoeSize').value.trim() || '';
+    
+    const resultDiv = document.getElementById('ppeCardResult');
+    const contentDiv = document.getElementById('ppeCardResultContent');
+    
+    let cardCount = 0;
+    let totalPairs = Math.ceil(employees.length / 2);
+    
+    function buildPPETable() {
+        let rows = '';
+        selectedPPECardItems.forEach((ppe, idx) => {
+            rows += `
+                <tr>
+                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;height:45px;">${ppe.name}</td>
+                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;text-align:center;height:45px;"></td>
+                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;text-align:center;height:45px;"></td>
+                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;text-align:center;height:45px;"></td>
+                </tr>
+            `;
+        });
+        
+        const emptyRows = 4 - selectedPPECardItems.length;
+        for (let i = 0; i < emptyRows; i++) {
+            rows += `
+                <tr>
+                    <td style="border:1px solid #000;padding:8px 10px;height:45px;"></td>
+                    <td style="border:1px solid #000;padding:8px 10px;height:45px;"></td>
+                    <td style="border:1px solid #000;padding:8px 10px;height:45px;"></td>
+                    <td style="border:1px solid #000;padding:8px 10px;height:45px;"></td>
+                </tr>
+            `;
+        }
+        return rows;
+    }
+    
+    function buildReverseTable() {
+        let rows = '';
+        selectedPPECardItems.forEach((ppe, idx) => {
+            rows += `
+                <tr>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:10px;font-weight:bold;">${ppe.name}</td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                </tr>
+            `;
+        });
+        
+        const emptyRows = 6 - selectedPPECardItems.length;
+        for (let i = 0; i < emptyRows; i++) {
+            rows += `
+                <tr>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                </tr>
+            `;
+        }
+        return rows;
+    }
+    
+    function createFaceCard(emp) {
+        return `
+            <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:12px 16px 10px 16px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
+                <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:8px;flex-shrink:0;">
+                    <div style="font-size:16px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
+                    <div style="font-size:14px;font-weight:bold;">учета выдачи СИЗ</div>
+                </div>
+                
+                <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;flex-shrink:0;">
+                    <tr>
+                        <td style="width:55%;vertical-align:top;padding:3px 6px;border:1px solid #000;">
+                            <div style="margin:1px 0;"><strong>Фамилия</strong> ${emp.last_name}</div>
+                            <div style="margin:1px 0;"><strong>Имя</strong> ${emp.first_name}</div>
+                            <div style="margin:1px 0;"><strong>Отчество</strong> ${emp.middle_name || ''}</div>
+                            <div style="margin:1px 0;"><strong>Табельный номер</strong> ________</div>
+                            <div style="margin:1px 0;"><strong>Структурное подразделение</strong> ${department}</div>
+                            <div style="margin:1px 0;"><strong>Профессия (должность)</strong> ${emp.position}</div>
+                            <div style="margin:1px 0;"><strong>Дата поступления на работу</strong> __________</div>
+                            <div style="margin:1px 0;"><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
+                        </td>
+                        <td style="width:45%;vertical-align:top;padding:3px 6px;border:1px solid #000;">
+                            <div style="margin:1px 0;"><strong>Пол</strong> ${gender}</div>
+                            <div style="margin:1px 0;"><strong>Рост</strong> ${height}</div>
+                            <div style="margin-top:3px;"><strong>Размер:</strong></div>
+                            <div style="padding-left:6px;margin:1px 0;"><strong>одежды</strong> ${clothesSize}</div>
+                            <div style="padding-left:6px;margin:1px 0;"><strong>обуви</strong> ${shoeSize}</div>
+                            <div style="padding-left:6px;margin:1px 0;"><strong>головного убора</strong> ___</div>
+                            <div style="margin:1px 0;"><strong>СИЗОД</strong> ___</div>
+                            <div style="margin:1px 0;"><strong>СИЗ рук</strong> ___________</div>
+                        </td>
+                    </tr>
+                </table>
+                
+                <table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #000;flex:1;">
+                    <thead>
+                        <tr style="background:#f0f0f0;">
+                            <th style="border:1px solid #000;padding:6px 8px;text-align:center;width:32%;font-size:11px;font-weight:bold;">Наименование СИЗ</th>
+                            <th style="border:1px solid #000;padding:6px 8px;text-align:center;width:22%;font-size:11px;font-weight:bold;">Пункт Норм</th>
+                            <th style="border:1px solid #000;padding:6px 8px;text-align:center;width:26%;font-size:11px;font-weight:bold;">Единица измерения, периодичность выдачи</th>
+                            <th style="border:1px solid #000;padding:6px 8px;text-align:center;width:20%;font-size:11px;font-weight:bold;">Количество на период</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${buildPPETable()}
+                    </tbody>
+                </table>
+                
+                <!-- ПОДПИСЬ -->
+                <div style="margin-top:25px;font-size:12px;flex-shrink:0;width:100%;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+                        <span style="white-space:nowrap;font-size:12px;min-width:120px;">${managerPosition}</span>
+                        <span style="flex:1;border-bottom:1px solid #000;height:30px;margin:0 10px;"></span>
+                        <span style="white-space:nowrap;font-size:12px;min-width:100px;text-align:right;">${manager}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;width:100%;margin-top:2px;padding-left:10px;padding-right:10px;">
+                        <span style="font-size:10px;color:#333;min-width:120px;">(должность)</span>
+                        <span style="font-size:10px;color:#333;text-align:center;flex:1;">(подпись)</span>
+                        <span style="font-size:10px;color:#333;min-width:100px;text-align:right;">(фамилия, инициалы)</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function createReverseCard(emp) {
+        return `
+            <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:12px 16px 10px 16px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
+                <div style="font-weight:bold;font-size:14px;text-align:center;margin-bottom:4px;flex-shrink:0;">Данные о выдаче СИЗ</div>
+                <div style="font-size:11px;text-align:center;margin-bottom:6px;color:#666;flex-shrink:0;">${emp.last_name} ${emp.first_name}</div>
+                
+                <table style="width:100%;border-collapse:collapse;font-size:9px;border:1px solid #000;flex:1;">
+                    <thead>
+                        <tr style="background:#f0f0f0;">
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:10%;font-size:9px;font-weight:bold;">Наименование СИЗ</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:12%;font-size:9px;font-weight:bold;">Модель, марка, артикул</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:8%;font-size:9px;font-weight:bold;">дата</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:8%;font-size:9px;font-weight:bold;">кол-во</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:10%;font-size:9px;font-weight:bold;">Лично/дозатор</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:10%;font-size:9px;font-weight:bold;">подпись</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:8%;font-size:9px;font-weight:bold;">дата</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:8%;font-size:9px;font-weight:bold;">кол-во</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:10%;font-size:9px;font-weight:bold;">Подпись</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:8%;font-size:9px;font-weight:bold;">Акт</th>
+                        </tr>
+                        <tr style="background:#f0f0f0;">
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">1</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">2</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">3</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">4</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">5</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">6</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">7</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">8</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">9</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">10</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${buildReverseTable()}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+    
+    let allPagesHTML = '';
+    let pairNum = 0;
+    
+    for (let i = 0; i < employees.length; i += 2) {
+        const emp1 = employees[i];
+        const emp2 = employees[i + 1] || null;
+        pairNum++;
+        cardCount += emp2 ? 2 : 1;
+        
+        let facePageHTML = `
+        <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
+            ${createFaceCard(emp1)}
+            ${emp2 ? createFaceCard(emp2).replace('top:0', 'top:50%').replace('border-bottom', 'border-top') : `<div style="position:absolute;top:50%;left:0;width:100%;height:50%;display:flex;align-items:center;justify-content:center;color:#999;font-size:20px;border-top:1px dashed #ddd;">ПУСТАЯ КАРТОЧКА</div>`}
+            <div style="position:absolute;top:50%;left:0;width:100%;height:2px;border-top:2px dashed #ff0000;z-index:10;"></div>
+        </div>
+        `;
+        
+        let reversePageHTML = `
+        <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
+            ${createReverseCard(emp1)}
+            ${emp2 ? createReverseCard(emp2).replace('top:0', 'top:50%').replace('border-bottom', 'border-top') : `<div style="position:absolute;top:50%;left:0;width:100%;height:50%;display:flex;align-items:center;justify-content:center;color:#999;font-size:20px;border-top:1px dashed #ddd;">ПУСТАЯ ОБОРОТНАЯ СТОРОНА</div>`}
+            <div style="position:absolute;top:50%;left:0;width:100%;height:2px;border-top:2px dashed #ff0000;z-index:10;"></div>
+        </div>
+        `;
+        
+        allPagesHTML += facePageHTML + reversePageHTML;
+    }
+    
+    const win = window.open('', '_blank');
+    if (!win) {
+        alert('❌ Браузер заблокировал открытие нового окна. Разрешите всплывающие окна для этого сайта.');
+        return;
+    }
+    
+    win.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Карточки учета СИЗ</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { 
+                    font-family: 'Times New Roman', Times, serif; 
+                    background: #f0f0f0; 
+                    padding: 0; 
+                    margin: 0;
+                }
+                @page {
+                    size: A4 portrait;
+                    margin: 0;
+                }
+                @media print {
+                    body { background: #fff; padding: 0; margin: 0; }
+                    .no-print { display: none; }
+                    div[style*="page-break-after:always"] { 
+                        page-break-after: always; 
+                    }
+                    div[style*="border-top:2px dashed #ff0000"] {
+                        border-top: 1px dashed #ccc !important;
+                    }
+                }
+                .no-print {
+                    text-align: center;
+                    padding: 15px;
+                    background: #fff;
+                    position: sticky;
+                    top: 0;
+                    z-index: 100;
+                    border-bottom: 2px solid #7c3aed;
+                }
+                .no-print button {
+                    padding: 8px 24px;
+                    margin: 0 8px;
+                    background: linear-gradient(135deg, #7c3aed, #00d4ff);
+                    border: none;
+                    border-radius: 8px;
+                    color: #fff;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+                .no-print button:hover {
+                    transform: scale(1.02);
+                }
+                .no-print .btn-secondary {
+                    background: #666;
+                }
+                @media print {
+                    .no-print { display: none !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print">
+                <h3>🖨️ Карточки готовы к печати (${cardCount} сотрудников, ${totalPairs} пар)</h3>
+                <button onclick="window.print()">🖨️ Печать</button>
+                <button class="btn-secondary" onclick="window.close()">✖ Закрыть</button>
+                <p style="font-size:11px;color:#666;margin-top:4px;">
+                    📄 Для каждой пары сотрудников: 1 лист с лицевыми сторонами + 1 лист с оборотными сторонами
+                </p>
+                <p style="font-size:10px;color:#888;">
+                    📋 На каждом листе: сверху сотрудник А, снизу сотрудник Б
+                </p>
+                <p style="font-size:10px;color:#888;">
+                    📊 Лицевая таблица: ВСЕГДА 4 СТРОКИ (пустые ячейки для ручного заполнения)
+                </p>
+                <p style="font-size:10px;color:#888;">
+                    📊 Оборотная таблица: ВСЕГДА 6 СТРОК (названия СИЗ подставляются автоматически)
+                </p>
+                <p style="font-size:10px;color:#888;">
+                    ✂️ Разрез по горизонтали (посередине листа) — только пунктир
+                </p>
+                <p style="font-size:10px;color:#888;">
+                    📋 Всего листов: ${totalPairs * 2}
+                </p>
+            </div>
+            ${allPagesHTML}
+            <script>
+                setTimeout(() => window.print(), 1500);
+            <\/script>
+        </body>
+        </html>
+    `);
+    win.document.close();
+    
+    resultDiv.classList.remove('hidden');
+    contentDiv.innerHTML = `
+        <p>✅ Создано карточек: <strong>${cardCount}</strong></p>
+        <p>📋 Сотрудники: ${employees.map(e => `${e.last_name} ${e.first_name}`).join(', ')}</p>
+        <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
+        <p style="color:#8888aa;font-size:13px;margin-top:8px;">🖨️ Откроется новое окно для печати.</p>
+        <p style="color:#8888aa;font-size:12px;">📄 Всего листов: ${totalPairs * 2} (${totalPairs} лицевых + ${totalPairs} оборотных)</p>
+        <p style="color:#8888aa;font-size:12px;">📊 Лицевая таблица: ВСЕГДА 4 СТРОКИ (пустые ячейки для ручного заполнения)</p>
+        <p style="color:#8888aa;font-size:12px;">📊 Оборотная таблица: ВСЕГДА 6 СТРОК (названия СИЗ подставляются автоматически)</p>
+        <p style="color:#8888aa;font-size:12px;">✂️ Разрез по горизонтали (посередине листа) — только пунктир</p>
+    `;
+}
 
-<div class="ppe-card-toolbar" style="border-top:1px solid rgba(255,255,255,0.06);">
-    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-        <label style="color:#8888aa;font-size:12px;">Пол</label>
-        <select id="ppeCardGender">
-            <option value="М">М</option>
-            <option value="Ж">Ж</option>
-        </select>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-        <label style="color:#8888aa;font-size:12px;">Рост (см)</label>
-        <input type="text" id="ppeCardHeight" placeholder="175">
-    </div>
-    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-        <label style="color:#8888aa;font-size:12px;">Размер одежды</label>
-        <input type="text" id="ppeCardClothesSize" placeholder="48">
-    </div>
-    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-        <label style="color:#8888aa;font-size:12px;">Размер обуви</label>
-        <input type="text" id="ppeCardShoeSize" placeholder="42">
-    </div>
-</div>
 // ============================================================
 // КАЛЕНДАРЬ
 // ============================================================
@@ -1507,7 +1810,7 @@ function openPPEModalForEmployee(snils) {
 }
 
 // ============================================================
-// КАРТА (сокращённая версия)
+// КАРТА
 // ============================================================
 let mapData = {
     workshops: [],
