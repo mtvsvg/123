@@ -1076,7 +1076,7 @@ function clearPPECardSelection() {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ИСПРАВЛЕННАЯ
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ИСПРАВЛЕННАЯ ПОДПИСЬ
 // ============================================================
 function generatePPECardsHTML() {
     console.log('🔄 generatePPECardsHTML вызвана');
@@ -1228,24 +1228,29 @@ function generatePPECardsHTML() {
                     </tbody>
                 </table>
                 
-                <!-- ПОДПИСЬ - увеличен отступ, надписи перенесены -->
-                <div style="margin-top:20px;font-size:12px;flex-shrink:0;">
-                    <div>${managerPosition} __________ ${manager}</div>
-                    <div style="font-size:10px;margin-top:2px;">(подпись)</div>
-                    <div style="font-size:10px;">(фамилия, инициалы)</div>
+                <!-- ПОДПИСЬ - КАК В WORD -->
+                <div style="margin-top:25px;font-size:12px;flex-shrink:0;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;max-width:550px;">
+                        <span>${managerPosition}</span>
+                        <span style="flex:1;text-align:center;border-bottom:1px solid #000;margin:0 8px;height:30px;"></span>
+                        <span>${manager}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;max-width:550px;margin-top:2px;">
+                        <span style="font-size:10px;padding-left:160px;">(подпись)</span>
+                        <span style="font-size:10px;padding-right:10px;">(фамилия, инициалы)</span>
+                    </div>
                 </div>
             </div>
         `;
     }
     
-    // ОБОРОТНАЯ КАРТОЧКА - 6 СТРОК
+    // ОБОРОТНАЯ КАРТОЧКА
     function createReverseCard(emp) {
         return `
             <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:12px 16px 10px 16px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
                 <div style="font-weight:bold;font-size:14px;text-align:center;margin-bottom:4px;flex-shrink:0;">Данные о выдаче СИЗ</div>
                 <div style="font-size:11px;text-align:center;margin-bottom:6px;color:#666;flex-shrink:0;">${emp.last_name} ${emp.first_name}</div>
                 
-                <!-- ОБОРОТНАЯ ТАБЛИЦА -->
                 <table style="width:100%;border-collapse:collapse;font-size:9px;border:1px solid #000;flex:1;">
                     <thead>
                         <tr style="background:#f0f0f0;">
@@ -1290,22 +1295,18 @@ function generatePPECardsHTML() {
         pairNum++;
         cardCount += emp2 ? 2 : 1;
         
-        // ЛИСТ 1 - ДВЕ ЛИЦЕВЫЕ КАРТОЧКИ
         let facePageHTML = `
         <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
             ${createFaceCard(emp1)}
             ${emp2 ? createFaceCard(emp2).replace('top:0', 'top:50%').replace('border-bottom', 'border-top') : `<div style="position:absolute;top:50%;left:0;width:100%;height:50%;display:flex;align-items:center;justify-content:center;color:#999;font-size:20px;border-top:1px dashed #ddd;">ПУСТАЯ КАРТОЧКА</div>`}
-            <!-- ТОЛЬКО ПУНКТИР, БЕЗ НАДПИСИ -->
             <div style="position:absolute;top:50%;left:0;width:100%;height:2px;border-top:2px dashed #ff0000;z-index:10;"></div>
         </div>
         `;
         
-        // ЛИСТ 2 - ДВЕ ОБОРОТНЫЕ КАРТОЧКИ
         let reversePageHTML = `
         <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
             ${createReverseCard(emp1)}
             ${emp2 ? createReverseCard(emp2).replace('top:0', 'top:50%').replace('border-bottom', 'border-top') : `<div style="position:absolute;top:50%;left:0;width:100%;height:50%;display:flex;align-items:center;justify-content:center;color:#999;font-size:20px;border-top:1px dashed #ddd;">ПУСТАЯ ОБОРОТНАЯ СТОРОНА</div>`}
-            <!-- ТОЛЬКО ПУНКТИР, БЕЗ НАДПИСИ -->
             <div style="position:absolute;top:50%;left:0;width:100%;height:2px;border-top:2px dashed #ff0000;z-index:10;"></div>
         </div>
         `;
