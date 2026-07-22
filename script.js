@@ -7,7 +7,7 @@ function showPage(page) {
     if (mainPage) mainPage.style.display = 'none';
     
     if (page === 'main') {
-        if (mainPage) mainPage.style.display = 'block';
+        if (mainPage) mainPage.style.display = 'block');
         document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
         document.querySelectorAll('.nav-link').forEach(link => { 
             if (link.textContent.trim() === 'Главная') link.classList.add('active'); 
@@ -110,22 +110,6 @@ function getAllEmployees() {
 function findEmployeeBySnils(snils) {
     const all = getAllEmployees();
     return all.find(e => e.snils === snils) || null;
-}
-
-function addEmployee(employee) {
-    const data = getStaffData();
-    data.unassigned.push(employee);
-    saveStaffData(data);
-    renderStaffWithDepartments();
-}
-
-function addEmployees(employees) {
-    const data = getStaffData();
-    employees.forEach(emp => {
-        data.unassigned.push(emp);
-    });
-    saveStaffData(data);
-    renderStaffWithDepartments();
 }
 
 function removeEmployeeBySnils(snils) {
@@ -888,11 +872,10 @@ function exportPPE() {
 }
 
 // ============================================================
-// КАРТОЧКИ СИЗ
+// КАРТОЧКИ СИЗ (БЕЗ DOCX, ТОЛЬКО HTML + ПЕЧАТЬ)
 // ============================================================
 let selectedPPECardItems = [];
 
-// Стандартный список СИЗ для карточек (из приказа 767н)
 const PPE_CARD_TEMPLATES = [
     { name: 'Жилет сигнальный повышенной видимости', punkt: 'п. 793', unit: 'Штук, год', quantity: '1' },
     { name: 'Перчатки для защиты от механических воздействий', punkt: 'п. 793', unit: 'Пар, год', quantity: '12 пар' },
@@ -912,10 +895,9 @@ function initPPECardsPage() {
     renderPPECardStaffList();
     renderPPECardPPEList();
     
-    // Привязываем кнопку генерации
     const generateBtn = document.getElementById('generatePPECardsBtn');
     if (generateBtn) {
-        generateBtn.onclick = generatePPECards;
+        generateBtn.onclick = generatePPECardsHTML;
         console.log('✅ Кнопка генерации карточек СИЗ привязана');
     }
 }
@@ -1052,10 +1034,10 @@ function clearPPECardSelection() {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ В .DOCX
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ ЧЕРЕЗ HTML + ПЕЧАТЬ (БЕЗ DOCX)
 // ============================================================
-async function generatePPECards() {
-    console.log('🔄 generatePPECards вызвана');
+function generatePPECardsHTML() {
+    console.log('🔄 generatePPECardsHTML вызвана');
     
     const employees = getSelectedPPECardEmployees();
     console.log('👤 Выбрано сотрудников:', employees.length);
@@ -1070,22 +1052,6 @@ async function generatePPECards() {
         return;
     }
     
-    // Проверяем, загружена ли библиотека
-    let docxLib = null;
-    if (typeof docx !== 'undefined') {
-        docxLib = docx;
-    } else if (typeof window.docx !== 'undefined') {
-        docxLib = window.docx;
-    }
-    
-    if (!docxLib) {
-        alert('❌ Библиотека docx не загружена. Проверьте интернет-соединение и перезагрузите страницу.\n\nЕсли проблема повторяется, попробуйте другой браузер.');
-        console.error('docx is undefined');
-        return;
-    }
-    
-    console.log('📚 Библиотека docx загружена');
-    
     const manager = document.getElementById('ppeCardManager').value.trim() || '';
     const managerPosition = document.getElementById('ppeCardManagerPosition').value.trim() || '';
     const cardNumber = document.getElementById('ppeCardNumber').value.trim() || '';
@@ -1098,391 +1064,193 @@ async function generatePPECards() {
     const resultDiv = document.getElementById('ppeCardResult');
     const contentDiv = document.getElementById('ppeCardResultContent');
     
-    try {
-        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, AlignmentType, WidthType, TableLayoutType } = docxLib;
-        
-        let allDocs = [];
-        let progress = 0;
-        
-        for (const emp of employees) {
-            progress++;
-            console.log(`📄 Создаю карточку для ${emp.last_name} ${emp.first_name} (${progress}/${employees.length})`);
+    // Строим HTML для всех карточек
+    let allCardsHTML = '';
+    let cardCount = 0;
+    
+    employees.forEach((emp, idx) => {
+        cardCount++;
+        allCardsHTML += `
+        <div style="page-break-after:always;padding:20px;font-family:'Times New Roman',serif;max-width:800px;margin:0 auto;background:#fff;color:#000;border:1px solid #ccc;border-radius:4px;margin-bottom:20px;">
             
-            const doc = new Document({
-                sections: [{
-                    properties: {
-                        page: {
-                            margin: {
-                                top: 720,
-                                bottom: 720,
-                                left: 720,
-                                right: 720
-                            }
-                        }
-                    },
-                    children: [
-                        // ===== ЛИЦЕВАЯ СТОРОНА =====
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: `ЛИЧНАЯ КАРТОЧКА N ${cardNumber || '___'}`,
-                                    bold: true,
-                                    size: 28,
-                                    font: 'Times New Roman'
-                                })
-                            ],
-                            alignment: AlignmentType.CENTER,
-                            spacing: { after: 200 }
-                        }),
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: 'учета выдачи СИЗ',
-                                    bold: true,
-                                    size: 28,
-                                    font: 'Times New Roman'
-                                })
-                            ],
-                            alignment: AlignmentType.CENTER,
-                            spacing: { after: 300 }
-                        }),
-                        
-                        new Table({
-                            rows: [
-                                new TableRow({
-                                    children: [
-                                        new TableCell({
-                                            children: [
-                                                new Paragraph({
-                                                    children: [
-                                                        new TextRun({ text: `Фамилия ${emp.last_name}`, size: 22, font: 'Times New Roman' }),
-                                                        new TextRun({ text: '\n', size: 22 }),
-                                                        new TextRun({ text: `Имя ${emp.first_name}`, size: 22, font: 'Times New Roman' }),
-                                                        new TextRun({ text: '\n', size: 22 }),
-                                                        new TextRun({ text: `Отчество ${emp.middle_name || ''}`, size: 22, font: 'Times New Roman' }),
-                                                        new TextRun({ text: '\n', size: 22 }),
-                                                        new TextRun({ text: `Табельный номер ________`, size: 22, font: 'Times New Roman' }),
-                                                        new TextRun({ text: '\n', size: 22 }),
-                                                        new TextRun({ text: `Структурное подразделение ${department}`, size: 22, font: 'Times New Roman' }),
-                                                        new TextRun({ text: '\n', size: 22 }),
-                                                        new TextRun({ text: `Профессия (должность) ${emp.position}`, size: 22, font: 'Times New Roman' }),
-                                                        new TextRun({ text: '\n', size: 22 }),
-                                                        new TextRun({ text: 'Дата поступления на работу __________', size: 22, font: 'Times New Roman' }),
-                                                        new TextRun({ text: '\n', size: 22 }),
-                                                        new TextRun({ text: 'Дата изменения профессии (должности) или перевода в другое структурное подразделение __________', size: 22, font: 'Times New Roman' })
-                                                    ],
-                                                    spacing: { line: 280 }
-                                                })
-                                            ],
-                                            width: { size: 60, type: WidthType.PERCENTAGE }
-                                        }),
-                                        new TableCell({
-                                            children: [
-                                                new Paragraph({
-                                                    children: [
-                                                        new TextRun({ text: `Пол ${gender}`, size: 22, font: 'Times New Roman' }),
-                                                        new TextRun({ text: '\n', size: 22 }),
-                                                        new TextRun({ text: `Рост ${height}`, size: 22, font: 'Times New Roman' }),
-                                                        new TextRun({ text: '\n', size: 22 }),
-                                                        new TextRun({ text: 'Размер:', size: 22, font: 'Times New Roman', bold: true }),
-                                                        new TextRun({ text: '\n', size: 22 }),
-                                                        new TextRun({ text: `одежды ${clothesSize}`, size: 22, font: 'Times New Roman' }),
-                                                        new TextRun({ text: '\n', size: 22 }),
-                                                        new TextRun({ text: `обуви ${shoeSize}`, size: 22, font: 'Times New Roman' }),
-                                                        new TextRun({ text: '\n', size: 22 }),
-                                                        new TextRun({ text: 'головного убора ___', size: 22, font: 'Times New Roman' }),
-                                                        new TextRun({ text: '\n', size: 22 }),
-                                                        new TextRun({ text: 'СИЗОД ___', size: 22, font: 'Times New Roman' }),
-                                                        new TextRun({ text: '\n', size: 22 }),
-                                                        new TextRun({ text: 'СИЗ рук ___________', size: 22, font: 'Times New Roman' })
-                                                    ],
-                                                    spacing: { line: 280 }
-                                                })
-                                            ],
-                                            width: { size: 40, type: WidthType.PERCENTAGE }
-                                        })
-                                    ]
-                                })
-                            ],
-                            width: { size: 100, type: WidthType.PERCENTAGE },
-                            layout: TableLayoutType.FIXED
-                        }),
-                        
-                        new Paragraph({ spacing: { after: 200 } }),
-                        
-                        // Таблица с СИЗ
-                        new Table({
-                            rows: [
-                                new TableRow({
-                                    children: [
-                                        new TableCell({
-                                            children: [
-                                                new Paragraph({
-                                                    children: [
-                                                        new TextRun({ text: 'Наименование СИЗ', bold: true, size: 22, font: 'Times New Roman' })
-                                                    ],
-                                                    alignment: AlignmentType.CENTER
-                                                })
-                                            ],
-                                            width: { size: 30, type: WidthType.PERCENTAGE }
-                                        }),
-                                        new TableCell({
-                                            children: [
-                                                new Paragraph({
-                                                    children: [
-                                                        new TextRun({ text: 'Пункт Норм', bold: true, size: 22, font: 'Times New Roman' })
-                                                    ],
-                                                    alignment: AlignmentType.CENTER
-                                                })
-                                            ],
-                                            width: { size: 25, type: WidthType.PERCENTAGE }
-                                        }),
-                                        new TableCell({
-                                            children: [
-                                                new Paragraph({
-                                                    children: [
-                                                        new TextRun({ text: 'Единица измерения, периодичность выдачи', bold: true, size: 22, font: 'Times New Roman' })
-                                                    ],
-                                                    alignment: AlignmentType.CENTER
-                                                })
-                                            ],
-                                            width: { size: 25, type: WidthType.PERCENTAGE }
-                                        }),
-                                        new TableCell({
-                                            children: [
-                                                new Paragraph({
-                                                    children: [
-                                                        new TextRun({ text: 'Количество на период', bold: true, size: 22, font: 'Times New Roman' })
-                                                    ],
-                                                    alignment: AlignmentType.CENTER
-                                                })
-                                            ],
-                                            width: { size: 20, type: WidthType.PERCENTAGE }
-                                        })
-                                    ]
-                                }),
-                                ...selectedPPECardItems.map(ppe => 
-                                    new TableRow({
-                                        children: [
-                                            new TableCell({
-                                                children: [
-                                                    new Paragraph({
-                                                        children: [
-                                                            new TextRun({ text: ppe.name, size: 20, font: 'Times New Roman' })
-                                                        ]
-                                                    })
-                                                ]
-                                            }),
-                                            new TableCell({
-                                                children: [
-                                                    new Paragraph({
-                                                        children: [
-                                                            new TextRun({ text: ppe.punkt, size: 20, font: 'Times New Roman' })
-                                                        ]
-                                                    })
-                                                ]
-                                            }),
-                                            new TableCell({
-                                                children: [
-                                                    new Paragraph({
-                                                        children: [
-                                                            new TextRun({ text: ppe.unit, size: 20, font: 'Times New Roman' })
-                                                        ]
-                                                    })
-                                                ]
-                                            }),
-                                            new TableCell({
-                                                children: [
-                                                    new Paragraph({
-                                                        children: [
-                                                            new TextRun({ text: ppe.quantity, size: 20, font: 'Times New Roman' })
-                                                        ]
-                                                    })
-                                                ]
-                                            })
-                                        ]
-                                    })
-                                )
-                            ],
-                            width: { size: 100, type: WidthType.PERCENTAGE },
-                            layout: TableLayoutType.FIXED
-                        }),
-                        
-                        new Paragraph({ spacing: { after: 300 } }),
-                        
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: `${managerPosition || 'Начальник'} __________ ${manager || ''}`,
-                                    size: 22,
-                                    font: 'Times New Roman'
-                                })
-                            ],
-                            spacing: { before: 200, after: 100 }
-                        }),
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: '(подпись)     (фамилия, инициалы)',
-                                    size: 22,
-                                    font: 'Times New Roman'
-                                })
-                            ]
-                        }),
-                        
-                        new Paragraph({ spacing: { after: 600 } }),
-                        
-                        // ===== ОБОРОТНАЯ СТОРОНА =====
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: '----------------------------------------------------------------------------------------------------',
-                                    size: 18,
-                                    font: 'Times New Roman'
-                                })
-                            ],
-                            alignment: AlignmentType.CENTER
-                        }),
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: 'ОБОРОТНАЯ СТОРОНА',
-                                    bold: true,
-                                    size: 24,
-                                    font: 'Times New Roman'
-                                })
-                            ],
-                            alignment: AlignmentType.CENTER,
-                            spacing: { before: 200, after: 300 }
-                        }),
-                        
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: 'Данные о выдаче СИЗ',
-                                    bold: true,
-                                    size: 24,
-                                    font: 'Times New Roman'
-                                })
-                            ],
-                            alignment: AlignmentType.CENTER,
-                            spacing: { after: 200 }
-                        }),
-                        
-                        new Table({
-                            rows: [
-                                new TableRow({
-                                    children: [
-                                        new TableCell({ 
-                                            children: [new Paragraph({ children: [new TextRun({ text: 'Наименование СИЗ', bold: true, size: 16, font: 'Times New Roman' })], alignment: AlignmentType.CENTER })],
-                                            width: { size: 20, type: WidthType.PERCENTAGE }
-                                        }),
-                                        new TableCell({ 
-                                            children: [new Paragraph({ children: [new TextRun({ text: 'Модель, марка, артикул', bold: true, size: 16, font: 'Times New Roman' })], alignment: AlignmentType.CENTER })],
-                                            width: { size: 20, type: WidthType.PERCENTAGE }
-                                        }),
-                                        new TableCell({ 
-                                            children: [new Paragraph({ children: [new TextRun({ text: 'Выдано', bold: true, size: 16, font: 'Times New Roman' })], alignment: AlignmentType.CENTER })],
-                                            width: { size: 30, type: WidthType.PERCENTAGE }
-                                        }),
-                                        new TableCell({ 
-                                            children: [new Paragraph({ children: [new TextRun({ text: 'Возвращено', bold: true, size: 16, font: 'Times New Roman' })], alignment: AlignmentType.CENTER })],
-                                            width: { size: 30, type: WidthType.PERCENTAGE }
-                                        })
-                                    ]
-                                }),
-                                new TableRow({
-                                    children: [
-                                        new TableCell({ 
-                                            children: [new Paragraph({ children: [new TextRun({ text: '', size: 14, font: 'Times New Roman' })], spacing: { line: 200 } })]
-                                        }),
-                                        new TableCell({ 
-                                            children: [new Paragraph({ children: [new TextRun({ text: '', size: 14, font: 'Times New Roman' })], spacing: { line: 200 } })]
-                                        }),
-                                        new TableCell({ 
-                                            children: [
-                                                new Paragraph({ 
-                                                    children: [
-                                                        new TextRun({ text: 'дата', size: 14, font: 'Times New Roman', italics: true }),
-                                                        new TextRun({ text: '  кол-во', size: 14, font: 'Times New Roman', italics: true }),
-                                                        new TextRun({ text: '  подпись', size: 14, font: 'Times New Roman', italics: true })
-                                                    ],
-                                                    spacing: { line: 200 }
-                                                })
-                                            ]
-                                        }),
-                                        new TableCell({ 
-                                            children: [
-                                                new Paragraph({ 
-                                                    children: [
-                                                        new TextRun({ text: 'дата', size: 14, font: 'Times New Roman', italics: true }),
-                                                        new TextRun({ text: '  кол-во', size: 14, font: 'Times New Roman', italics: true }),
-                                                        new TextRun({ text: '  подпись', size: 14, font: 'Times New Roman', italics: true })
-                                                    ],
-                                                    spacing: { line: 200 }
-                                                })
-                                            ]
-                                        })
-                                    ]
-                                }),
-                                ...Array(10).fill(0).map(() => 
-                                    new TableRow({
-                                        children: [
-                                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '', size: 14, font: 'Times New Roman' })], spacing: { line: 200 } })] }),
-                                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '', size: 14, font: 'Times New Roman' })], spacing: { line: 200 } })] }),
-                                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '', size: 14, font: 'Times New Roman' })], spacing: { line: 200 } })] }),
-                                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '', size: 14, font: 'Times New Roman' })], spacing: { line: 200 } })] })
-                                        ]
-                                    })
-                                )
-                            ],
-                            width: { size: 100, type: WidthType.PERCENTAGE },
-                            layout: TableLayoutType.FIXED
-                        }),
-                        
-                        new Paragraph({ spacing: { after: 200 } }),
-                        
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: 'Ответственный за выдачу СИЗ __________',
-                                    size: 20,
-                                    font: 'Times New Roman'
-                                })
-                            ],
-                            spacing: { before: 200 }
-                        })
-                    ]
-                }]
-            });
+            <!-- ЛИЦЕВАЯ СТОРОНА -->
+            <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:15px;">
+                <div style="font-size:18px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber || '___'}</div>
+                <div style="font-size:18px;font-weight:bold;">учета выдачи СИЗ</div>
+            </div>
             
-            allDocs.push({ doc, employee: emp });
-        }
-        
-        // Скачиваем все документы
-        for (const { doc, employee } of allDocs) {
-            const blob = await Packer.toBlob(doc);
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `Карточка_СИЗ_${employee.last_name}_${employee.first_name}.docx`;
-            link.click();
-            setTimeout(() => URL.revokeObjectURL(link.href), 10000);
-        }
-        
-        // Показываем результат
-        resultDiv.classList.remove('hidden');
-        contentDiv.innerHTML = `
-            <p>✅ Создано карточек: <strong>${allDocs.length}</strong></p>
-            <p>📋 Сотрудники: ${employees.map(e => `${e.last_name} ${e.first_name}`).join(', ')}</p>
-            <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
-            <p style="color:#8888aa;font-size:13px;margin-top:8px;">📁 Документы сохранены в папку "Загрузки"</p>
-            <button onclick="location.reload()" style="margin-top:12px;padding:8px 20px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);border-radius:8px;color:#b388ff;cursor:pointer;">🔄 Создать еще</button>
+            <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                <tr>
+                    <td style="width:60%;vertical-align:top;padding:4px;">
+                        <div><strong>Фамилия</strong> ${emp.last_name}</div>
+                        <div><strong>Имя</strong> ${emp.first_name}</div>
+                        <div><strong>Отчество</strong> ${emp.middle_name || ''}</div>
+                        <div><strong>Табельный номер</strong> ________</div>
+                        <div><strong>Структурное подразделение</strong> ${department}</div>
+                        <div><strong>Профессия (должность)</strong> ${emp.position}</div>
+                        <div><strong>Дата поступления на работу</strong> __________</div>
+                        <div><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
+                    </td>
+                    <td style="width:40%;vertical-align:top;padding:4px;">
+                        <div><strong>Пол</strong> ${gender}</div>
+                        <div><strong>Рост</strong> ${height}</div>
+                        <div style="margin-top:6px;"><strong>Размер:</strong></div>
+                        <div><strong>одежды</strong> ${clothesSize}</div>
+                        <div><strong>обуви</strong> ${shoeSize}</div>
+                        <div><strong>головного убора</strong> ___</div>
+                        <div><strong>СИЗОД</strong> ___</div>
+                        <div><strong>СИЗ рук</strong> ___________</div>
+                    </td>
+                </tr>
+            </table>
+            
+            <div style="margin-top:15px;">
+                <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #000;">
+                    <thead>
+                        <tr style="background:#f0f0f0;">
+                            <th style="border:1px solid #000;padding:6px;text-align:center;width:30%;">Наименование СИЗ</th>
+                            <th style="border:1px solid #000;padding:6px;text-align:center;width:25%;">Пункт Норм</th>
+                            <th style="border:1px solid #000;padding:6px;text-align:center;width:25%;">Единица измерения, периодичность выдачи</th>
+                            <th style="border:1px solid #000;padding:6px;text-align:center;width:20%;">Количество на период</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${selectedPPECardItems.map(ppe => `
+                            <tr>
+                                <td style="border:1px solid #000;padding:6px;">${ppe.name}</td>
+                                <td style="border:1px solid #000;padding:6px;">${ppe.punkt}</td>
+                                <td style="border:1px solid #000;padding:6px;">${ppe.unit}</td>
+                                <td style="border:1px solid #000;padding:6px;">${ppe.quantity}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top:20px;">
+                <div style="font-size:14px;margin-top:10px;">${managerPosition || 'Начальник'} __________ ${manager || ''}</div>
+                <div style="font-size:12px;">(подпись)     (фамилия, инициалы)</div>
+            </div>
+            
+            <div style="margin-top:30px;text-align:center;border-top:1px dashed #999;padding-top:15px;">
+                <div style="font-size:14px;font-weight:bold;">ОБОРОТНАЯ СТОРОНА</div>
+            </div>
+            
+            <div style="margin-top:15px;">
+                <div style="font-weight:bold;font-size:14px;text-align:center;">Данные о выдаче СИЗ</div>
+                <table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid #000;margin-top:8px;">
+                    <thead>
+                        <tr style="background:#f0f0f0;">
+                            <th style="border:1px solid #000;padding:4px;text-align:center;width:20%;">Наименование СИЗ</th>
+                            <th style="border:1px solid #000;padding:4px;text-align:center;width:20%;">Модель, марка, артикул</th>
+                            <th style="border:1px solid #000;padding:4px;text-align:center;width:30%;">Выдано (дата, кол-во, подпись)</th>
+                            <th style="border:1px solid #000;padding:4px;text-align:center;width:30%;">Возвращено (дата, кол-во, подпись)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Array(8).fill(0).map(() => `
+                            <tr>
+                                <td style="border:1px solid #000;padding:4px;height:25px;"></td>
+                                <td style="border:1px solid #000;padding:4px;height:25px;"></td>
+                                <td style="border:1px solid #000;padding:4px;height:25px;"></td>
+                                <td style="border:1px solid #000;padding:4px;height:25px;"></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top:15px;font-size:13px;">
+                <div>Ответственный за выдачу СИЗ __________</div>
+            </div>
+            
+        </div>
         `;
-        
-    } catch (error) {
-        console.error('Ошибка генерации:', error);
-        alert('❌ Ошибка при создании документов:\n\n' + error.message);
+    });
+    
+    // Открываем в новой вкладке
+    const win = window.open('', '_blank');
+    if (!win) {
+        alert('❌ Браузер заблокировал открытие нового окна. Разрешите всплывающие окна для этого сайта.');
+        return;
     }
+    
+    win.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Карточки учета СИЗ</title>
+            <style>
+                body { 
+                    font-family: 'Times New Roman', Times, serif; 
+                    background: #f0f0f0; 
+                    padding: 20px; 
+                    margin: 0;
+                }
+                @page {
+                    size: A4;
+                    margin: 15mm 15mm 15mm 15mm;
+                }
+                @media print {
+                    body { background: #fff; padding: 0; margin: 0; }
+                    .no-print { display: none; }
+                    div[style*="page-break-after:always"] { 
+                        page-break-after: always; 
+                    }
+                }
+                .no-print {
+                    text-align: center;
+                    padding: 20px;
+                    background: #fff;
+                    position: sticky;
+                    top: 0;
+                    z-index: 100;
+                    border-bottom: 2px solid #7c3aed;
+                }
+                .no-print button {
+                    padding: 10px 30px;
+                    margin: 0 10px;
+                    background: linear-gradient(135deg, #7c3aed, #00d4ff);
+                    border: none;
+                    border-radius: 8px;
+                    color: #fff;
+                    font-size: 16px;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+                .no-print button:hover {
+                    transform: scale(1.02);
+                }
+                .no-print .btn-secondary {
+                    background: #666;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print">
+                <h3>🖨️ Карточки готовы к печати (${cardCount} шт.)</h3>
+                <button onclick="window.print()">🖨️ Печать</button>
+                <button class="btn-secondary" onclick="window.close()">✖ Закрыть</button>
+                <p style="font-size:12px;color:#666;margin-top:6px;">Нажмите "Печать" и выберите "Сохранить как PDF" или отправьте на принтер</p>
+            </div>
+            ${allCardsHTML}
+            <script>
+                // Автоматически открываем диалог печати через 1 секунду
+                setTimeout(() => window.print(), 1000);
+            <\/script>
+        </body>
+        </html>
+    `);
+    win.document.close();
+    
+    // Показываем результат
+    resultDiv.classList.remove('hidden');
+    contentDiv.innerHTML = `
+        <p>✅ Создано карточек: <strong>${cardCount}</strong></p>
+        <p>📋 Сотрудники: ${employees.map(e => `${e.last_name} ${e.first_name}`).join(', ')}</p>
+        <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
+        <p style="color:#8888aa;font-size:13px;margin-top:8px;">🖨️ Откроется новое окно для печати.</p>
+    `;
 }
 
 // ============================================================
@@ -1501,13 +1269,8 @@ function renderCalendar() {
     
     const grid = document.getElementById('calendarGrid');
     grid.innerHTML = `
-        <div class="weekday">Пн</div>
-        <div class="weekday">Вт</div>
-        <div class="weekday">Ср</div>
-        <div class="weekday">Чт</div>
-        <div class="weekday">Пт</div>
-        <div class="weekday">Сб</div>
-        <div class="weekday">Вс</div>
+        <div class="weekday">Пн</div><div class="weekday">Вт</div><div class="weekday">Ср</div>
+        <div class="weekday">Чт</div><div class="weekday">Пт</div><div class="weekday">Сб</div><div class="weekday">Вс</div>
     `;
     
     const firstDay = new Date(year, month, 1);
@@ -1523,7 +1286,6 @@ function renderCalendar() {
     
     const events = getEvents();
     
-    // Прошлый месяц
     for (let i = startDay - 1; i >= 0; i--) {
         const day = daysInPrevMonth - i;
         const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -1540,7 +1302,6 @@ function renderCalendar() {
         grid.appendChild(dayDiv);
     }
     
-    // Текущий месяц
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dayEvents = events.filter(e => e.date === dateStr);
@@ -1560,7 +1321,6 @@ function renderCalendar() {
         grid.appendChild(dayDiv);
     }
     
-    // Следующий месяц
     const totalDays = startDay + daysInMonth;
     const remaining = 42 - totalDays;
     for (let day = 1; day <= remaining; day++) {
@@ -1885,7 +1645,7 @@ function openPPEModalForEmployee(snils) {
 }
 
 // ============================================================
-// КАРТА (ВСЯ ЛОГИКА КАРТЫ)
+// КАРТА
 // ============================================================
 let mapData = {
     workshops: [],
@@ -2274,7 +2034,7 @@ function drawMap() {
 }
 
 // ============================================================
-// СОБЫТИЯ CANVAS
+// СОБЫТИЯ CANVAS (СОКРАЩЕННО)
 // ============================================================
 function setupCanvasEvents() {
     const canvas = document.getElementById('mapCanvas');
