@@ -1109,7 +1109,7 @@ function generatePPECardsHTML() {
     
     // Разбиваем сотрудников на пары (по 2 на страницу)
     let cardCount = 0;
-    let totalPages = Math.ceil(employees.length / 2);
+    let totalPairs = Math.ceil(employees.length / 2);
     
     // Функция построения таблицы СИЗ для лицевой стороны
     function buildPPETable() {
@@ -1246,47 +1246,47 @@ function generatePPECardsHTML() {
     }
     
     let allPagesHTML = '';
-    let pageNum = 0;
+    let pairNum = 0;
     
     // Группируем сотрудников по парам
     for (let i = 0; i < employees.length; i += 2) {
         const emp1 = employees[i];
         const emp2 = employees[i + 1] || null;
-        pageNum++;
+        pairNum++;
         cardCount += emp2 ? 2 : 1;
         
         // ============================================================
-        // СТРАНИЦА 1 - ЛИЦЕВЫЕ СТОРОНЫ (сотрудник А и Б)
+        // ЛИСТ 1 - ЛИЦЕВЫЕ СТОРОНЫ (сотрудник А и Б)
         // ============================================================
         let facePageHTML = `
         <div style="page-break-after:always;padding:6px;font-family:'Times New Roman',Times,serif;max-width:1000px;margin:0 auto;background:#fff;color:#000;border:1px solid #999;border-radius:2px;min-height:100vh;display:flex;flex-direction:column;">
             <div style="text-align:center;font-size:10px;color:#666;margin-bottom:4px;border-bottom:1px solid #eee;padding-bottom:2px;">
-                ЛИЦЕВАЯ СТОРОНА — Страница ${pageNum} из ${totalPages*2}
+                ЛИЦЕВАЯ СТОРОНА — Лист ${pairNum} из ${totalPairs} (сотрудники: ${emp1.last_name} ${emp1.first_name}${emp2 ? ' и ' + emp2.last_name + ' ' + emp2.first_name : ''})
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;flex:1;">
                 ${createFaceCard(emp1, true)}
                 ${emp2 ? createFaceCard(emp2, false) : `<div style="display:flex;align-items:center;justify-content:center;color:#ccc;font-size:16px;border:1px dashed #ddd;padding-left:6px;">Пустая карточка</div>`}
             </div>
             <div style="text-align:center;font-size:6px;color:#999;margin-top:auto;padding-top:3px;border-top:1px solid #eee;">
-                Сформировано в системе «ОхранаТруда.Про» • Лицевая сторона • Страница ${pageNum} из ${totalPages*2}
+                Сформировано в системе «ОхранаТруда.Про» • Лицевая сторона
             </div>
         </div>
         `;
         
         // ============================================================
-        // СТРАНИЦА 2 - ОБОРОТНЫЕ СТОРОНЫ (сотрудник А и Б)
+        // ЛИСТ 2 - ОБОРОТНЫЕ СТОРОНЫ (сотрудник А и Б)
         // ============================================================
         let reversePageHTML = `
         <div style="page-break-after:always;padding:6px;font-family:'Times New Roman',Times,serif;max-width:1000px;margin:0 auto;background:#fff;color:#000;border:1px solid #999;border-radius:2px;min-height:100vh;display:flex;flex-direction:column;">
             <div style="text-align:center;font-size:10px;color:#666;margin-bottom:4px;border-bottom:1px solid #eee;padding-bottom:2px;">
-                ОБОРОТНАЯ СТОРОНА — Страница ${pageNum + totalPages} из ${totalPages*2}
+                ОБОРОТНАЯ СТОРОНА — Лист ${pairNum} из ${totalPairs} (сотрудники: ${emp1.last_name} ${emp1.first_name}${emp2 ? ' и ' + emp2.last_name + ' ' + emp2.first_name : ''})
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;flex:1;">
                 ${createReverseCard(emp1, true)}
                 ${emp2 ? createReverseCard(emp2, false) : `<div style="display:flex;align-items:center;justify-content:center;color:#ccc;font-size:16px;border:1px dashed #ddd;padding-left:6px;">Пустая оборотная сторона</div>`}
             </div>
             <div style="text-align:center;font-size:6px;color:#999;margin-top:auto;padding-top:3px;border-top:1px solid #eee;">
-                Сформировано в системе «ОхранаТруда.Про» • Оборотная сторона • Страница ${pageNum + totalPages} из ${totalPages*2}
+                Сформировано в системе «ОхранаТруда.Про» • Оборотная сторона
             </div>
         </div>
         `;
@@ -1358,14 +1358,17 @@ function generatePPECardsHTML() {
         </head>
         <body>
             <div class="no-print">
-                <h3>🖨️ Карточки готовы к печати (${cardCount} сотрудников, ${totalPages*2} страниц)</h3>
+                <h3>🖨️ Карточки готовы к печати (${cardCount} сотрудников, ${totalPairs} пар)</h3>
                 <button onclick="window.print()">🖨️ Печать</button>
                 <button class="btn-secondary" onclick="window.close()">✖ Закрыть</button>
                 <p style="font-size:11px;color:#666;margin-top:4px;">
-                    📄 Страницы: ${totalPages} страниц с лицевыми сторонами + ${totalPages} страниц с оборотными сторонами
+                    📄 Для каждой пары сотрудников: 1 лист с лицевыми сторонами + 1 лист с оборотными сторонами
                 </p>
                 <p style="font-size:10px;color:#888;">
-                    💡 Распечатайте обе стороны, склейте и разрежьте пополам
+                    💡 Распечатайте оба листа, склейте их оборотными сторонами и разрежьте пополам
+                </p>
+                <p style="font-size:10px;color:#888;">
+                    📋 Всего листов: ${totalPairs * 2}
                 </p>
             </div>
             ${allPagesHTML}
@@ -1383,8 +1386,8 @@ function generatePPECardsHTML() {
         <p>📋 Сотрудники: ${employees.map(e => `${e.last_name} ${e.first_name}`).join(', ')}</p>
         <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
         <p style="color:#8888aa;font-size:13px;margin-top:8px;">🖨️ Откроется новое окно для печати.</p>
-        <p style="color:#8888aa;font-size:12px;">📄 Всего страниц: ${totalPages} лицевых + ${totalPages} оборотных</p>
-        <p style="color:#8888aa;font-size:12px;">💡 Распечатайте обе стороны, склейте и разрежьте пополам</p>
+        <p style="color:#8888aa;font-size:12px;">📄 Всего листов: ${totalPairs * 2} (${totalPairs} лицевых + ${totalPairs} оборотных)</p>
+        <p style="color:#8888aa;font-size:12px;">💡 Распечатайте оба листа, склейте и разрежьте пополам</p>
     `;
 }
 // ============================================================
