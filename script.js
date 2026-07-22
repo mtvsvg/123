@@ -1051,7 +1051,11 @@ function clearPPECardSelection() {
 // ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ В .DOCX
 // ============================================================
 async function generatePPECards() {
+    console.log('🔄 generatePPECards вызвана');
+    
     const employees = getSelectedPPECardEmployees();
+    console.log('👤 Выбрано сотрудников:', employees.length);
+    
     if (employees.length === 0) {
         alert('❌ Выберите хотя бы одного сотрудника!');
         return;
@@ -1061,6 +1065,16 @@ async function generatePPECards() {
         alert('❌ Выберите хотя бы одно СИЗ!');
         return;
     }
+    
+    // Проверяем, загружена ли библиотека
+    if (typeof docx === 'undefined' && typeof window.docx === 'undefined') {
+        alert('❌ Библиотека docx не загружена. Проверьте интернет-соединение и перезагрузите страницу.\n\nЕсли проблема повторяется, попробуйте другой браузер.');
+        console.error('docx is undefined');
+        return;
+    }
+    
+    const docxLib = typeof docx !== 'undefined' ? docx : window.docx;
+    console.log('📚 Библиотека docx загружена');
     
     const manager = document.getElementById('ppeCardManager').value.trim() || '';
     const managerPosition = document.getElementById('ppeCardManagerPosition').value.trim() || '';
@@ -1075,16 +1089,15 @@ async function generatePPECards() {
     const contentDiv = document.getElementById('ppeCardResultContent');
     
     try {
-        if (typeof docx === 'undefined') {
-            alert('❌ Библиотека docx не загружена. Проверьте интернет-соединение и перезагрузите страницу.');
-            return;
-        }
-        
-        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, AlignmentType, WidthType, TableLayoutType } = docx;
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, AlignmentType, WidthType, TableLayoutType } = docxLib;
         
         let allDocs = [];
+        let progress = 0;
         
         for (const emp of employees) {
+            progress++;
+            console.log(`📄 Создаю карточку для ${emp.last_name} ${emp.first_name} (${progress}/${employees.length})`);
+            
             const doc = new Document({
                 sections: [{
                     properties: {
@@ -1124,7 +1137,6 @@ async function generatePPECards() {
                             spacing: { after: 300 }
                         }),
                         
-                        // Таблица с информацией о сотруднике
                         new Table({
                             rows: [
                                 new TableRow({
@@ -1288,7 +1300,6 @@ async function generatePPECards() {
                         
                         new Paragraph({ spacing: { after: 300 } }),
                         
-                        // Подпись руководителя
                         new Paragraph({
                             children: [
                                 new TextRun({
@@ -1335,7 +1346,6 @@ async function generatePPECards() {
                             spacing: { before: 200, after: 300 }
                         }),
                         
-                        // Таблица выдачи СИЗ
                         new Paragraph({
                             children: [
                                 new TextRun({
@@ -1371,7 +1381,6 @@ async function generatePPECards() {
                                         })
                                     ]
                                 }),
-                                // Шапка таблицы выдачи
                                 new TableRow({
                                     children: [
                                         new TableCell({ 
@@ -1406,7 +1415,6 @@ async function generatePPECards() {
                                         })
                                     ]
                                 }),
-                                // 10 пустых строк для записей
                                 ...Array(10).fill(0).map(() => 
                                     new TableRow({
                                         children: [
@@ -1441,26 +1449,29 @@ async function generatePPECards() {
             allDocs.push({ doc, employee: emp });
         }
         
+        // Скачиваем все документы
         for (const { doc, employee } of allDocs) {
             const blob = await Packer.toBlob(doc);
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = `Карточка_СИЗ_${employee.last_name}_${employee.first_name}.docx`;
             link.click();
-            URL.revokeObjectURL(link.href);
+            setTimeout(() => URL.revokeObjectURL(link.href), 10000);
         }
         
+        // Показываем результат
         resultDiv.classList.remove('hidden');
         contentDiv.innerHTML = `
             <p>✅ Создано карточек: <strong>${allDocs.length}</strong></p>
             <p>📋 Сотрудники: ${employees.map(e => `${e.last_name} ${e.first_name}`).join(', ')}</p>
             <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
             <p style="color:#8888aa;font-size:13px;margin-top:8px;">📁 Документы сохранены в папку "Загрузки"</p>
+            <button onclick="window.location.reload()" style="margin-top:12px;padding:8px 20px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);border-radius:8px;color:#b388ff;cursor:pointer;">🔄 Создать еще</button>
         `;
         
     } catch (error) {
         console.error('Ошибка генерации:', error);
-        alert('❌ Ошибка при создании документов. Проверьте консоль.\n\n' + error.message);
+        alert('❌ Ошибка при создании документов:\n\n' + error.message);
     }
 }
 
