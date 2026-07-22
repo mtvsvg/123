@@ -643,6 +643,7 @@ input::placeholder, textarea::placeholder {
     border-radius: 8px; 
     border: 1px solid rgba(255,255,255,0.06); 
     transition: background 0.2s; 
+    flex-wrap: wrap; 
 }
 
 .doc-check:hover { 
@@ -656,15 +657,15 @@ input::placeholder, textarea::placeholder {
     cursor: pointer; 
 }
 
-.doc-check .doc-name-edit {
-    flex: 1;
-    min-width: 100px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 4px;
-    color: #ccc;
-    padding: 4px 8px;
-    font-size: 13px;
+.doc-check .doc-name-edit { 
+    flex: 1; 
+    min-width: 100px; 
+    background: rgba(255,255,255,0.05); 
+    border: 1px solid rgba(255,255,255,0.08); 
+    border-radius: 4px; 
+    color: #ccc; 
+    padding: 4px 8px; 
+    font-size: 13px; 
 }
 
 .result-block { 
@@ -804,7 +805,6 @@ input::placeholder, textarea::placeholder {
     padding: 0 15px;
 }
 
-/* Стили для форм внутри модалок */
 .form-group {
     margin-bottom: 16px;
 }
@@ -849,7 +849,6 @@ input::placeholder, textarea::placeholder {
     background: rgba(255,70,70,0.35) !important;
 }
 
-/* Стили для СИЗ */
 #ppeList .ppe-item {
     background: rgba(255,255,255,0.03);
     padding: 12px 16px;
@@ -1231,6 +1230,7 @@ input::placeholder, textarea::placeholder {
     gap: 10px;
     padding: 6px 0;
     border-bottom: 1px solid rgba(255,255,255,0.03);
+    flex-wrap: wrap;
 }
 
 .employee-row .emp-name {
@@ -1306,9 +1306,85 @@ input::placeholder, textarea::placeholder {
     padding: 8px 0;
 }
 
-/* ============================================================ */
-/* СТИЛИ ДЛЯ КНОПКИ ГЕНЕРАЦИИ КАРТОЧЕК */
-/* ============================================================ */
+.department-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    cursor: pointer;
+}
+
+.department-header .dept-name {
+    color: #fff;
+    font-weight: 500;
+}
+
+.department-header .dept-count {
+    color: #8888aa;
+    font-size: 13px;
+}
+
+.department-body {
+    padding: 0 14px 10px;
+}
+
+.dept-empty {
+    color: #666;
+    font-size: 13px;
+    padding: 8px 0;
+}
+
+.unassigned-section {
+    background: rgba(255,255,255,0.02);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(255,255,255,0.04);
+    overflow: hidden;
+}
+
+.unassigned-title {
+    padding: 10px 14px;
+    color: #8888aa;
+    font-weight: 500;
+}
+
+.emp-remove {
+    background: rgba(255,70,70,0.15);
+    border: none;
+    color: #ff6b6b;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.emp-remove:hover {
+    background: rgba(255,70,70,0.25);
+}
+
+.manual-fam-input {
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    width: 100%;
+}
+
+.manual-fam-input::placeholder {
+    color: #666;
+}
+
+#soutCardNumber {
+    width: 70px;
+    padding: 4px 8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    color: #fff;
+    font-size: 12px;
+}
+
 #generatePPECardsBtn {
     background: linear-gradient(135deg, #4caf50, #2e7d32) !important;
     border: none !important;
