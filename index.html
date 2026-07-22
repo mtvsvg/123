@@ -5,212 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Охрана труда — Цифровой помощник</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Дополнительные стили для карточек СИЗ - уже в style.css */
-        /* Эти стили остаются для совместимости */
-        .ppe-card-toolbar {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 16px;
-            padding: 16px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.06);
-        }
-        .ppe-card-toolbar input,
-        .ppe-card-toolbar select {
-            padding: 8px 12px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            color: #fff;
-            font-size: 14px;
-            min-width: 150px;
-        }
-        .ppe-card-toolbar input::placeholder {
-            color: #666;
-        }
-        .ppe-card-toolbar select option {
-            background: #1a1a3e;
-            color: #fff;
-        }
-        .ppe-item-select {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            padding: 6px 10px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.06);
-            flex-wrap: wrap;
-        }
-        .ppe-item-select input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: #7c3aed;
-            cursor: pointer;
-        }
-        .ppe-item-select label {
-            color: #ccc;
-            font-size: 13px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            flex: 1;
-            min-width: 150px;
-        }
-        .ppe-item-select .ppe-detail {
-            color: #8888aa;
-            font-size: 12px;
-        }
-        .employee-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 6px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.03);
-            flex-wrap: wrap;
-        }
-        .employee-row .emp-name {
-            color: #00d4ff;
-            cursor: pointer;
-            font-size: 14px;
-            min-width: 140px;
-        }
-        .employee-row .emp-name:hover {
-            text-decoration: underline;
-        }
-        .employee-row .emp-position {
-            color: #8888aa;
-            font-size: 13px;
-            flex: 1;
-        }
-        .employee-row .emp-snils {
-            color: #666;
-            font-size: 12px;
-            min-width: 100px;
-        }
-        .employee-row input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: #7c3aed;
-            cursor: pointer;
-        }
-        .staff-toolbar {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 12px;
-            padding: 8px 0;
-        }
-        /* Стили для департаментов */
-        .department-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 14px;
-            cursor: pointer;
-        }
-        .department-header .dept-name {
-            color: #fff;
-            font-weight: 500;
-        }
-        .department-header .dept-count {
-            color: #8888aa;
-            font-size: 13px;
-        }
-        .department-body {
-            padding: 0 14px 10px;
-        }
-        .dept-empty {
-            color: #666;
-            font-size: 13px;
-            padding: 8px 0;
-        }
-        .unassigned-section {
-            background: rgba(255,255,255,0.02);
-            border-radius: 10px;
-            margin-bottom: 8px;
-            border: 1px solid rgba(255,255,255,0.04);
-            overflow: hidden;
-        }
-        .unassigned-title {
-            padding: 10px 14px;
-            color: #8888aa;
-            font-weight: 500;
-        }
-        .unassigned-body {
-            padding: 0 14px 10px;
-        }
-        .emp-remove {
-            background: rgba(255,70,70,0.15);
-            border: none;
-            color: #ff6b6b;
-            padding: 2px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .emp-remove:hover {
-            background: rgba(255,70,70,0.25);
-        }
-        .manual-fam-input {
-            padding: 8px 12px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            color: #fff;
-            font-size: 14px;
-            width: 100%;
-        }
-        .manual-fam-input::placeholder {
-            color: #666;
-        }
-        #soutCardNumber {
-            width: 70px;
-            padding: 4px 8px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 4px;
-            color: #fff;
-            font-size: 12px;
-        }
-        .doc-check {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #ccc;
-            font-size: 14px;
-            cursor: pointer;
-            padding: 6px 12px;
-            background: rgba(255,255,255,0.04);
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.06);
-            transition: background 0.2s;
-            flex-wrap: wrap;
-        }
-        .doc-check:hover {
-            background: rgba(255,255,255,0.08);
-        }
-        .doc-check input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: #7c3aed;
-            cursor: pointer;
-        }
-        .doc-check .doc-name-edit {
-            flex: 1;
-            min-width: 100px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 4px;
-            color: #ccc;
-            padding: 4px 8px;
-            font-size: 13px;
-        }
-    </style>
 </head>
 <body>
 
@@ -345,7 +139,6 @@
             <button onclick="showTab('familiarization')">📋 Ознакомление</button>
         </div>
 
-        <!-- Штатное расписание -->
         <div id="tabStaff">
             <div class="block">
                 <div class="block-header">
@@ -366,7 +159,6 @@
             </div>
         </div>
 
-        <!-- Протокол -->
         <div id="tabProtocol" class="hidden">
             <div class="block">
                 <h2>📝 Протокол</h2>
@@ -402,7 +194,6 @@
             </div>
         </div>
 
-        <!-- Ознакомление -->
         <div id="tabFamiliarization" class="hidden">
             <div class="block">
                 <h2>📋 Лист ознакомления с нормативными актами</h2>
