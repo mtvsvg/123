@@ -474,7 +474,7 @@ body {
     min-width: 80px; 
 }
 
-input, select { 
+input, select, textarea { 
     width: 100%; 
     padding: 10px 14px; 
     background: rgba(255,255,255,0.06); 
@@ -485,12 +485,12 @@ input, select {
     outline: none; 
 }
 
-input:focus, select:focus { 
+input:focus, select:focus, textarea:focus { 
     border-color: #7c3aed; 
     box-shadow: 0 0 0 3px rgba(124,58,237,0.2); 
 }
 
-input::placeholder { 
+input::placeholder, textarea::placeholder { 
     color: #666; 
 }
 
@@ -656,6 +656,17 @@ input::placeholder {
     cursor: pointer; 
 }
 
+.doc-check .doc-name-edit {
+    flex: 1;
+    min-width: 100px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    color: #ccc;
+    padding: 4px 8px;
+    font-size: 13px;
+}
+
 .result-block { 
     margin-top: 16px; 
     padding: 20px; 
@@ -776,10 +787,7 @@ input::placeholder {
     color: #fff; 
 }
 
-/* ============================================================ */
-/* КАРТА - МАКСИМАЛЬНО БОЛЬШАЯ */
-/* ============================================================ */
-
+/* КАРТА */
 #mapCanvas {
     width: 100% !important;
     height: auto !important;
@@ -831,10 +839,6 @@ input::placeholder {
     color: #666;
 }
 
-/* ============================================================ */
-/* КНОПКА УДАЛЕНИЯ ОБЪЕКТА */
-/* ============================================================ */
-
 #deleteSelectedBtn {
     background: rgba(255,70,70,0.2) !important;
     color: #ff6b6b !important;
@@ -845,10 +849,7 @@ input::placeholder {
     background: rgba(255,70,70,0.35) !important;
 }
 
-/* ============================================================ */
-/* ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ МОДАЛКИ СИЗ */
-/* ============================================================ */
-
+/* Стили для СИЗ */
 #ppeList .ppe-item {
     background: rgba(255,255,255,0.03);
     padding: 12px 16px;
@@ -883,7 +884,6 @@ input::placeholder {
     font-size: 20px;
 }
 
-/* Стили для источника данных */
 .ppe-source {
     background: rgba(0,212,255,0.05);
     padding: 8px 12px;
@@ -901,7 +901,6 @@ input::placeholder {
     color: #00d4ff;
 }
 
-/* Кнопка повторной попытки */
 .retry-btn {
     margin-top: 16px;
     padding: 8px 24px;
@@ -918,13 +917,9 @@ input::placeholder {
     background: rgba(124,58,237,0.35);
 }
 
-/* ============================================================ */
-/* СТИЛИ ДЛЯ МОДАЛКИ СИЗ */
-/* ============================================================ */
-
 #ppeModal .modal-content {
-    max-width: 700px;
-    max-height: 80vh;
+    max-width: 950px;
+    max-height: 85vh;
     overflow-y: auto;
 }
 
@@ -953,9 +948,380 @@ input::placeholder {
 }
 
 /* ============================================================ */
-/* АДАПТИВ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ */
+/* КАЛЕНДАРЬ */
 /* ============================================================ */
+.calendar-container {
+    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    padding: 20px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
 
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.calendar-header h2 {
+    color: #fff;
+    font-size: 22px;
+}
+
+.calendar-nav-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #ccc;
+    padding: 6px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.calendar-nav-btn:hover {
+    background: rgba(255,255,255,0.12);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.weekday {
+    text-align: center;
+    font-weight: 600;
+    color: #8888aa;
+    font-size: 13px;
+    padding: 8px 0;
+}
+
+.calendar-day {
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    padding: 6px;
+    min-height: 70px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.04);
+    transition: all 0.2s;
+}
+
+.calendar-day:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(124,58,237,0.2);
+}
+
+.calendar-day.today {
+    border-color: #7c3aed;
+    background: rgba(124,58,237,0.1);
+}
+
+.calendar-day.other-month {
+    opacity: 0.3;
+}
+
+.day-number {
+    font-size: 14px;
+    color: #ccc;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.day-events {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 2px;
+}
+
+.event-text {
+    font-size: 9px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.event-text.overdue {
+    background: rgba(255,70,70,0.2);
+    color: #ff6b6b;
+}
+
+.event-text.today-event {
+    background: rgba(255,193,7,0.2);
+    color: #ffc107;
+}
+
+.event-text.upcoming {
+    background: rgba(76,175,80,0.2);
+    color: #4caf50;
+}
+
+.event-text.done {
+    background: rgba(76,175,80,0.1);
+    color: #4caf50;
+    text-decoration: line-through;
+}
+
+.calendar-legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 12px 0;
+    padding: 10px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+}
+
+.calendar-legend span {
+    font-size: 12px;
+    color: #8888aa;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.dot.overdue { background: #ff6b6b; }
+.dot.today-event { background: #ffc107; }
+.dot.upcoming { background: #4caf50; }
+.dot.done { background: #4caf50; opacity: 0.5; }
+
+.calendar-events-sidebar {
+    margin: 12px 0;
+    padding: 12px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.calendar-events-sidebar h4 {
+    color: #ccc;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+#selectedDayEvents {
+    font-size: 13px;
+    color: #8888aa;
+}
+
+.event-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+    margin-bottom: 4px;
+}
+
+.event-item .event-title {
+    color: #fff;
+    font-weight: 500;
+}
+
+.event-item .event-type {
+    color: #8888aa;
+    font-size: 11px;
+    margin-left: 8px;
+}
+
+.event-delete {
+    background: rgba(255,70,70,0.15);
+    border: none;
+    color: #ff6b6b;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.event-delete:hover {
+    background: rgba(255,70,70,0.25);
+}
+
+.calendar-add-event {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.calendar-add-event input,
+.calendar-add-event select {
+    flex: 1;
+    min-width: 120px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+}
+
+.calendar-add-event button {
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #7c3aed, #00d4ff);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.calendar-add-event button:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px rgba(124,58,237,0.3);
+}
+
+/* ============================================================ */
+/* КАРТОЧКИ СИЗ */
+/* ============================================================ */
+.ppe-card-toolbar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 16px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+.ppe-card-toolbar input,
+.ppe-card-toolbar select {
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    min-width: 150px;
+}
+
+.ppe-card-toolbar input::placeholder {
+    color: #666;
+}
+
+.ppe-card-toolbar select option {
+    background: #1a1a3e;
+    color: #fff;
+}
+
+.employee-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.employee-row .emp-name {
+    color: #00d4ff;
+    cursor: pointer;
+    font-size: 14px;
+    min-width: 140px;
+}
+
+.employee-row .emp-name:hover {
+    text-decoration: underline;
+}
+
+.employee-row .emp-position {
+    color: #8888aa;
+    font-size: 13px;
+    flex: 1;
+}
+
+.employee-row .emp-snils {
+    color: #666;
+    font-size: 12px;
+    min-width: 100px;
+}
+
+.employee-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #7c3aed;
+    cursor: pointer;
+}
+
+.ppe-item-select {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.06);
+    flex-wrap: wrap;
+}
+
+.ppe-item-select input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #7c3aed;
+    cursor: pointer;
+}
+
+.ppe-item-select label {
+    color: #ccc;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 150px;
+}
+
+.ppe-item-select .ppe-detail {
+    color: #8888aa;
+    font-size: 12px;
+}
+
+.staff-toolbar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    padding: 8px 0;
+}
+
+/* ============================================================ */
+/* СТИЛИ ДЛЯ КНОПКИ ГЕНЕРАЦИИ КАРТОЧЕК */
+/* ============================================================ */
+#generatePPECardsBtn {
+    background: linear-gradient(135deg, #4caf50, #2e7d32) !important;
+    border: none !important;
+}
+
+#generatePPECardsBtn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 30px rgba(76,175,80,0.3);
+}
+
+/* ============================================================ */
+/* АДАПТИВ */
+/* ============================================================ */
 @media (max-width: 768px) {
     .hero-inner { 
         grid-template-columns: 1fr; 
@@ -1005,6 +1371,33 @@ input::placeholder {
     .modal-content {
         width: 95%;
     }
+
+    .ppe-card-toolbar {
+        flex-direction: column;
+    }
+    
+    .ppe-card-toolbar input,
+    .ppe-card-toolbar select {
+        min-width: 100%;
+    }
+
+    .calendar-grid {
+        gap: 2px;
+    }
+    
+    .calendar-day {
+        min-height: 50px;
+        padding: 4px;
+    }
+    
+    .calendar-add-event {
+        flex-direction: column;
+    }
+    
+    .calendar-add-event input,
+    .calendar-add-event select {
+        min-width: 100%;
+    }
 }
 
 @media (max-width: 500px) { 
@@ -1016,11 +1409,16 @@ input::placeholder {
         min-height: 350px !important;
         max-height: 60vh !important;
     }
-}
 
-/* ============================================================ */
-/* АДАПТАЦИЯ ДЛЯ БОЛЬШИХ ЭКРАНОВ */
-/* ============================================================ */
+    .employee-row {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .employee-row .emp-name {
+        min-width: 100px;
+    }
+}
 
 @media (min-width: 1600px) {
     #mapPage .container {
@@ -1028,10 +1426,6 @@ input::placeholder {
         padding: 0 20px;
     }
 }
-
-/* ============================================================ */
-/* ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ ПЕЧАТИ */
-/* ============================================================ */
 
 @media print {
     body {
