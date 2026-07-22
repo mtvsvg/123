@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Охрана труда — Цифровой помощник</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Библиотека для создания .docx -->
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.2.2/build/index.min.js"></script>
     <style>
         /* ============================================================ */
         /* ОБЩИЕ СТИЛИ */
@@ -259,13 +261,6 @@
             flex-direction: column;
             gap: 2px;
         }
-        .calendar-day .event-dot {
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            margin-right: 4px;
-        }
         .calendar-day .event-text {
             font-size: 10px;
             color: #ccc;
@@ -396,6 +391,77 @@
         .calendar-add-event button:hover {
             transform: scale(1.02);
         }
+        
+        /* ============================================================ */
+        /* КАРТОЧКИ СИЗ */
+        /* ============================================================ */
+        .ppe-card-toolbar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            padding: 16px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .ppe-card-toolbar select {
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            min-width: 150px;
+        }
+        .ppe-card-toolbar select option {
+            background: #1a1a3e;
+            color: #fff;
+        }
+        .ppe-card-toolbar input {
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            min-width: 150px;
+        }
+        .ppe-card-toolbar input::placeholder {
+            color: #666;
+        }
+        .ppe-card-toolbar .btn-primary {
+            padding: 10px 24px;
+        }
+        
+        .ppe-item-select {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 6px 10px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .ppe-item-select input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #7c3aed;
+            cursor: pointer;
+        }
+        .ppe-item-select label {
+            color: #ccc;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .ppe-item-select .ppe-detail {
+            color: #8888aa;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -417,6 +483,7 @@
                 <a href="#" class="nav-link" onclick="showPage('calendar')">📅 Календарь</a>
                 <a href="#" class="nav-link" onclick="showPage('risks')">Оценка рисков</a>
                 <a href="#" class="nav-link" onclick="showPage('analytics')">Аналитика</a>
+                <a href="#" class="nav-link" onclick="showPage('ppeCards')">🦺 Карточки СИЗ</a>
             </nav>
             <button class="btn-login" onclick="alert('Вход в разработке')">Войти</button>
         </div>
@@ -467,9 +534,9 @@
                     <p>Визуализируйте рабочие места, расставляйте сотрудников и оценивайте риски.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">📅</div>
-                    <h3>Календарь событий</h3>
-                    <p>Отслеживайте обучение, инструктажи и перезарядку СИЗ в едином календаре.</p>
+                    <div class="feature-icon">🦺</div>
+                    <h3>Карточки СИЗ</h3>
+                    <p>Создавайте личные карточки учета выдачи СИЗ в формате Word.</p>
                 </div>
             </div>
         </div>
@@ -488,6 +555,7 @@
                 <a href="#" onclick="showPage('calendar')">Календарь</a>
                 <a href="#" onclick="showPage('risks')">Оценка рисков</a>
                 <a href="#" onclick="showPage('analytics')">Аналитика</a>
+                <a href="#" onclick="showPage('ppeCards')">Карточки СИЗ</a>
             </div>
             <div class="footer-copy"><p>© 2026 ОхранаТруда.Про</p></div>
         </div>
@@ -537,7 +605,6 @@
                 </div>
                 <p style="color:#8888aa;font-size:14px;margin-bottom:12px;">Загрузите файл со штатным расписанием. Выберите сотрудников и создайте службы.</p>
                 
-                <!-- Панель инструментов -->
                 <div class="staff-toolbar">
                     <button class="btn-add" onclick="createDepartmentFromSelected()">📁 Создать службу</button>
                     <button class="btn-add" onclick="selectAllStaffInCurrentView()">✅ Выбрать всех</button>
@@ -549,7 +616,6 @@
                 <div id="staffContainer"><p style="color:#6a6a8a;text-align:center;padding:20px;">Нет загруженных сотрудников. Нажмите "Загрузить файл".</p></div>
                 <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
                     <button class="btn-primary" id="addSelectedBtn" style="width:auto;padding:10px 24px;">➕ Добавить выбранных в протокол</button>
-                    <button class="btn-primary" id="exportStaffBtn" style="width:auto;padding:10px 24px;background:linear-gradient(135deg,#00d4ff,#7c3aed);">📥 Экспорт штатки</button>
                 </div>
             </div>
         </div>
@@ -675,6 +741,88 @@
                     <div id="famContent" style="font-size:14px;line-height:1.8;color:#fff;"></div>
                     <button class="btn-primary" id="printFamBtn" style="margin-top:12px;width:auto;padding:10px 24px;">🖨️ Печать / PDF</button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- СТРАНИЦА "КАРТОЧКИ СИЗ" -->
+<!-- ============================================================ -->
+<div id="ppeCardsPage" class="page hidden">
+    <div class="container">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+            <h1 style="font-size:28px;font-weight:700;background:linear-gradient(135deg,#00d4ff,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🦺 Личные карточки учета СИЗ</h1>
+            <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
+        </div>
+
+        <div class="block">
+            <h2>📋 Создание карточек</h2>
+            
+            <div class="ppe-card-toolbar">
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                    <label style="color:#8888aa;font-size:12px;">Руководитель (ФИО)</label>
+                    <input type="text" id="ppeCardManager" placeholder="Например: М.В. Чибисов" style="min-width:200px;">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                    <label style="color:#8888aa;font-size:12px;">Должность руководителя</label>
+                    <input type="text" id="ppeCardManagerPosition" placeholder="Начальник службы движения" style="min-width:200px;">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                    <label style="color:#8888aa;font-size:12px;">Номер карточки (опционально)</label>
+                    <input type="text" id="ppeCardNumber" placeholder="Например: 001" style="min-width:150px;">
+                </div>
+            </div>
+            
+            <div class="ppe-card-toolbar" style="border-top:1px solid rgba(255,255,255,0.06);">
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                    <label style="color:#8888aa;font-size:12px;">Структурное подразделение</label>
+                    <input type="text" id="ppeCardDepartment" placeholder="Например: Служба движения" style="min-width:200px;">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                    <label style="color:#8888aa;font-size:12px;">Пол (М/Ж)</label>
+                    <select id="ppeCardGender" style="min-width:100px;">
+                        <option value="М">М</option>
+                        <option value="Ж">Ж</option>
+                    </select>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                    <label style="color:#8888aa;font-size:12px;">Рост (см)</label>
+                    <input type="text" id="ppeCardHeight" placeholder="Например: 175" style="min-width:100px;">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                    <label style="color:#8888aa;font-size:12px;">Размер одежды</label>
+                    <input type="text" id="ppeCardClothesSize" placeholder="Например: 48" style="min-width:100px;">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                    <label style="color:#8888aa;font-size:12px;">Размер обуви</label>
+                    <input type="text" id="ppeCardShoeSize" placeholder="Например: 42" style="min-width:100px;">
+                </div>
+            </div>
+            
+            <div style="margin-bottom:12px;">
+                <p style="color:#8888aa;font-size:14px;margin-bottom:8px;">👤 Выберите сотрудников из штатного расписания (отметьте галочками):</p>
+                <div id="ppeCardStaffList">
+                    <p style="color:#6a6a8a;text-align:center;padding:20px;">Нет загруженных сотрудников. Сначала загрузите штатное расписание.</p>
+                </div>
+            </div>
+            
+            <div style="margin-bottom:12px;padding:16px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
+                <p style="color:#8888aa;font-size:14px;margin-bottom:8px;">🦺 Выберите СИЗ для выдачи:</p>
+                <div id="ppeCardPPEList" style="display:flex;flex-wrap:wrap;gap:8px;">
+                    <!-- Динамически заполняется -->
+                </div>
+                <button class="btn-add" onclick="addPPEToCardList()" style="margin-top:8px;">➕ Добавить СИЗ в список</button>
+            </div>
+            
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
+                <button class="btn-primary" id="generatePPECardsBtn" style="width:auto;padding:12px 32px;">📄 Создать карточки СИЗ (.docx)</button>
+                <button class="btn-secondary" onclick="clearPPECardSelection()">✖ Очистить выбор</button>
+            </div>
+            
+            <div id="ppeCardResult" class="hidden" style="margin-top:16px;padding:16px;background:rgba(0,212,255,0.08);border-radius:12px;border:1px solid rgba(0,212,255,0.2);">
+                <h3 style="color:#00d4ff;margin-bottom:8px;">✅ Карточки созданы!</h3>
+                <div id="ppeCardResultContent" style="font-size:14px;line-height:1.8;color:#ccc;"></div>
             </div>
         </div>
     </div>
