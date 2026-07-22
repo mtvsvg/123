@@ -1107,76 +1107,66 @@ function generatePPECardsHTML() {
     const resultDiv = document.getElementById('ppeCardResult');
     const contentDiv = document.getElementById('ppeCardResultContent');
     
-    // Пакуем сотрудников по 2 на один лист А4
-    let allCardsHTML = '';
+    // Разбиваем сотрудников на пары (по 2 на страницу)
     let cardCount = 0;
     let totalPages = Math.ceil(employees.length / 2);
     
-    for (let i = 0; i < employees.length; i += 2) {
-        const emp1 = employees[i];
-        const emp2 = employees[i + 1] || null;
-        const pageNum = Math.floor(i / 2) + 1;
-        cardCount += emp2 ? 2 : 1;
-        
-        // Строим таблицу СИЗ для сотрудника
-        function buildPPETable(emp) {
-            let rows = '';
-            selectedPPECardItems.forEach((ppe, idx) => {
-                rows += `
-                    <tr>
-                        <td style="border:1px solid #000;padding:3px;font-size:9px;">${ppe.name}</td>
-                        <td style="border:1px solid #000;padding:3px;font-size:9px;text-align:center;">${ppe.punkt}</td>
-                        <td style="border:1px solid #000;padding:3px;font-size:9px;text-align:center;">${ppe.unit}</td>
-                        <td style="border:1px solid #000;padding:3px;font-size:9px;text-align:center;">${ppe.quantity}</td>
-                    </tr>
-                `;
-            });
-            return rows;
+    // Функция построения таблицы СИЗ для лицевой стороны
+    function buildPPETable() {
+        let rows = '';
+        selectedPPECardItems.forEach((ppe, idx) => {
+            rows += `
+                <tr>
+                    <td style="border:1px solid #000;padding:3px;font-size:9px;">${ppe.name}</td>
+                    <td style="border:1px solid #000;padding:3px;font-size:9px;text-align:center;">${ppe.punkt}</td>
+                    <td style="border:1px solid #000;padding:3px;font-size:9px;text-align:center;">${ppe.unit}</td>
+                    <td style="border:1px solid #000;padding:3px;font-size:9px;text-align:center;">${ppe.quantity}</td>
+                </tr>
+            `;
+        });
+        return rows;
+    }
+    
+    // Функция построения оборотной таблицы (10 строк)
+    function buildReverseTable() {
+        let rows = '';
+        for (let r = 0; r < 10; r++) {
+            rows += `
+                <tr>
+                    <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                    <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                    <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                    <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                    <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                    <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                    <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                    <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                    <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                    <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
+                </tr>
+            `;
         }
-        
-        // Строим оборотную таблицу (10 строк)
-        function buildReverseTable() {
-            let rows = '';
-            for (let r = 0; r < 10; r++) {
-                rows += `
-                    <tr>
-                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
-                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
-                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
-                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
-                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
-                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
-                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
-                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
-                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
-                        <td style="border:1px solid #000;padding:1px;height:16px;font-size:7px;"></td>
-                    </tr>
-                `;
-            }
-            return rows;
-        }
-        
-        // ЛИЦЕВАЯ СТОРОНА (два сотрудника А и Б)
-        let faceHTML = `
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;height:50%;">
-        `;
-        
-        // Сотрудник А (левый)
-        faceHTML += `
-            <div style="border-right:1px dashed #999;padding-right:4px;">
+        return rows;
+    }
+    
+    // Функция создания лицевой карточки для одного сотрудника
+    function createFaceCard(emp, isLeft) {
+        const borderStyle = isLeft ? 'border-right:1px dashed #999;padding-right:6px;' : 'padding-left:6px;';
+        return `
+            <div style="${borderStyle}">
                 <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:3px;margin-bottom:4px;">
-                    <div style="font-size:11px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
-                    <div style="font-size:11px;font-weight:bold;">учета выдачи СИЗ</div>
+                    <div style="font-size:12px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
+                    <div style="font-size:12px;font-weight:bold;">учета выдачи СИЗ</div>
                 </div>
                 <table style="width:100%;border-collapse:collapse;font-size:8px;margin-bottom:3px;">
                     <tr>
                         <td style="width:55%;vertical-align:top;padding:1px;border:1px solid #000;">
-                            <div><strong>Фамилия</strong> ${emp1.last_name}</div>
-                            <div><strong>Имя</strong> ${emp1.first_name}</div>
-                            <div><strong>Отчество</strong> ${emp1.middle_name || ''}</div>
+                            <div><strong>Фамилия</strong> ${emp.last_name}</div>
+                            <div><strong>Имя</strong> ${emp.first_name}</div>
+                            <div><strong>Отчество</strong> ${emp.middle_name || ''}</div>
                             <div><strong>Табельный номер</strong> ________</div>
                             <div><strong>Структурное подразделение</strong> ${department}</div>
-                            <div><strong>Профессия (должность)</strong> ${emp1.position}</div>
+                            <div><strong>Профессия (должность)</strong> ${emp.position}</div>
                             <div><strong>Дата поступления на работу</strong> __________</div>
                             <div><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
                         </td>
@@ -1202,7 +1192,7 @@ function generatePPECardsHTML() {
                         </tr>
                     </thead>
                     <tbody>
-                        ${buildPPETable(emp1)}
+                        ${buildPPETable()}
                     </tbody>
                 </table>
                 <div style="margin-top:4px;font-size:9px;">
@@ -1211,80 +1201,15 @@ function generatePPECardsHTML() {
                 </div>
             </div>
         `;
-        
-        // Сотрудник Б (правый)
-        if (emp2) {
-            faceHTML += `
-                <div>
-                    <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:3px;margin-bottom:4px;">
-                        <div style="font-size:11px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
-                        <div style="font-size:11px;font-weight:bold;">учета выдачи СИЗ</div>
-                    </div>
-                    <table style="width:100%;border-collapse:collapse;font-size:8px;margin-bottom:3px;">
-                        <tr>
-                            <td style="width:55%;vertical-align:top;padding:1px;border:1px solid #000;">
-                                <div><strong>Фамилия</strong> ${emp2.last_name}</div>
-                                <div><strong>Имя</strong> ${emp2.first_name}</div>
-                                <div><strong>Отчество</strong> ${emp2.middle_name || ''}</div>
-                                <div><strong>Табельный номер</strong> ________</div>
-                                <div><strong>Структурное подразделение</strong> ${department}</div>
-                                <div><strong>Профессия (должность)</strong> ${emp2.position}</div>
-                                <div><strong>Дата поступления на работу</strong> __________</div>
-                                <div><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
-                            </td>
-                            <td style="width:45%;vertical-align:top;padding:1px;border:1px solid #000;">
-                                <div><strong>Пол</strong> ${gender}</div>
-                                <div><strong>Рост</strong> ${height}</div>
-                                <div style="margin-top:2px;"><strong>Размер:</strong></div>
-                                <div style="padding-left:6px;"><strong>одежды</strong> ${clothesSize}</div>
-                                <div style="padding-left:6px;"><strong>обуви</strong> ${shoeSize}</div>
-                                <div style="padding-left:6px;"><strong>головного убора</strong> ___</div>
-                                <div><strong>СИЗОД</strong> ___</div>
-                                <div><strong>СИЗ рук</strong> ___________</div>
-                            </td>
-                        </tr>
-                    </table>
-                    <table style="width:100%;border-collapse:collapse;font-size:8px;border:1px solid #000;">
-                        <thead>
-                            <tr style="background:#f0f0f0;">
-                                <th style="border:1px solid #000;padding:2px;text-align:center;width:32%;font-size:8px;">Наименование СИЗ</th>
-                                <th style="border:1px solid #000;padding:2px;text-align:center;width:22%;font-size:8px;">Пункт Норм</th>
-                                <th style="border:1px solid #000;padding:2px;text-align:center;width:26%;font-size:8px;">Единица измерения, периодичность выдачи</th>
-                                <th style="border:1px solid #000;padding:2px;text-align:center;width:20%;font-size:8px;">Количество на период</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${buildPPETable(emp2)}
-                        </tbody>
-                    </table>
-                    <div style="margin-top:4px;font-size:9px;">
-                        <div>${managerPosition} __________ ${manager}</div>
-                        <div style="font-size:7px;">(подпись) (фамилия, инициалы)</div>
-                    </div>
-                </div>
-            `;
-        } else {
-            faceHTML += `
-                <div style="display:flex;align-items:center;justify-content:center;color:#ccc;font-size:16px;border:1px dashed #ddd;">
-                    Пустая карточка
-                </div>
-            `;
-        }
-        
-        faceHTML += `</div>`;
-        
-        // ОБОРОТНАЯ СТОРОНА (два сотрудника А и Б)
-        let reverseHTML = `
-            <div style="border-top:2px dashed #999;padding-top:6px;margin-top:6px;">
-                <div style="text-align:center;font-size:11px;font-weight:bold;margin-bottom:3px;">ОБОРОТНАЯ СТОРОНА</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-        `;
-        
-        // Оборотная сторона сотрудника А
-        reverseHTML += `
-            <div style="border-right:1px dashed #999;padding-right:4px;">
-                <div style="font-weight:bold;font-size:9px;text-align:center;margin-bottom:2px;">Данные о выдаче СИЗ</div>
-                <div style="font-size:7px;text-align:center;margin-bottom:2px;color:#666;">${emp1.last_name} ${emp1.first_name}</div>
+    }
+    
+    // Функция создания оборотной карточки для одного сотрудника
+    function createReverseCard(emp, isLeft) {
+        const borderStyle = isLeft ? 'border-right:1px dashed #999;padding-right:6px;' : 'padding-left:6px;';
+        return `
+            <div style="${borderStyle}">
+                <div style="font-weight:bold;font-size:10px;text-align:center;margin-bottom:2px;">Данные о выдаче СИЗ</div>
+                <div style="font-size:8px;text-align:center;margin-bottom:2px;color:#666;">${emp.last_name} ${emp.first_name}</div>
                 <table style="width:100%;border-collapse:collapse;font-size:6px;border:1px solid #000;">
                     <thead>
                         <tr style="background:#f0f0f0;">
@@ -1318,66 +1243,55 @@ function generatePPECardsHTML() {
                 </table>
             </div>
         `;
+    }
+    
+    let allPagesHTML = '';
+    let pageNum = 0;
+    
+    // Группируем сотрудников по парам
+    for (let i = 0; i < employees.length; i += 2) {
+        const emp1 = employees[i];
+        const emp2 = employees[i + 1] || null;
+        pageNum++;
+        cardCount += emp2 ? 2 : 1;
         
-        // Оборотная сторона сотрудника Б
-        if (emp2) {
-            reverseHTML += `
-                <div>
-                    <div style="font-weight:bold;font-size:9px;text-align:center;margin-bottom:2px;">Данные о выдаче СИЗ</div>
-                    <div style="font-size:7px;text-align:center;margin-bottom:2px;color:#666;">${emp2.last_name} ${emp2.first_name}</div>
-                    <table style="width:100%;border-collapse:collapse;font-size:6px;border:1px solid #000;">
-                        <thead>
-                            <tr style="background:#f0f0f0;">
-                                <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">Наименование СИЗ</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;width:12%;">Модель, марка, артикул</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">дата</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">кол-во</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">Лично/дозатор</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">подпись</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">дата</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">кол-во</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;width:10%;">Подпись</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;width:8%;">Акт</th>
-                            </tr>
-                            <tr style="background:#f0f0f0;">
-                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">1</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">2</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">3</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">4</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">5</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">6</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">7</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">8</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">9</th>
-                                <th style="border:1px solid #000;padding:1px;text-align:center;font-size:5px;">10</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${buildReverseTable()}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        } else {
-            reverseHTML += `
-                <div style="display:flex;align-items:center;justify-content:center;color:#ccc;font-size:14px;border:1px dashed #ddd;">
-                    Пустая оборотная сторона
-                </div>
-            `;
-        }
-        
-        reverseHTML += `</div></div>`;
-        
-        // Весь лист А4 (одна страница = лицевая + оборотная)
-        allCardsHTML += `
-        <div style="page-break-after:always;padding:6px;font-family:'Times New Roman',Times,serif;max-width:1000px;margin:0 auto;background:#fff;color:#000;border:1px solid #999;border-radius:2px;margin-bottom:6px;min-height:900px;display:flex;flex-direction:column;height:100vh;">
-            ${faceHTML}
-            ${reverseHTML}
+        // ============================================================
+        // СТРАНИЦА 1 - ЛИЦЕВЫЕ СТОРОНЫ (сотрудник А и Б)
+        // ============================================================
+        let facePageHTML = `
+        <div style="page-break-after:always;padding:6px;font-family:'Times New Roman',Times,serif;max-width:1000px;margin:0 auto;background:#fff;color:#000;border:1px solid #999;border-radius:2px;min-height:100vh;display:flex;flex-direction:column;">
+            <div style="text-align:center;font-size:10px;color:#666;margin-bottom:4px;border-bottom:1px solid #eee;padding-bottom:2px;">
+                ЛИЦЕВАЯ СТОРОНА — Страница ${pageNum} из ${totalPages*2}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;flex:1;">
+                ${createFaceCard(emp1, true)}
+                ${emp2 ? createFaceCard(emp2, false) : `<div style="display:flex;align-items:center;justify-content:center;color:#ccc;font-size:16px;border:1px dashed #ddd;padding-left:6px;">Пустая карточка</div>`}
+            </div>
             <div style="text-align:center;font-size:6px;color:#999;margin-top:auto;padding-top:3px;border-top:1px solid #eee;">
-                Сформировано в системе «ОхранаТруда.Про» • Страница ${pageNum} из ${totalPages}
+                Сформировано в системе «ОхранаТруда.Про» • Лицевая сторона • Страница ${pageNum} из ${totalPages*2}
             </div>
         </div>
         `;
+        
+        // ============================================================
+        // СТРАНИЦА 2 - ОБОРОТНЫЕ СТОРОНЫ (сотрудник А и Б)
+        // ============================================================
+        let reversePageHTML = `
+        <div style="page-break-after:always;padding:6px;font-family:'Times New Roman',Times,serif;max-width:1000px;margin:0 auto;background:#fff;color:#000;border:1px solid #999;border-radius:2px;min-height:100vh;display:flex;flex-direction:column;">
+            <div style="text-align:center;font-size:10px;color:#666;margin-bottom:4px;border-bottom:1px solid #eee;padding-bottom:2px;">
+                ОБОРОТНАЯ СТОРОНА — Страница ${pageNum + totalPages} из ${totalPages*2}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;flex:1;">
+                ${createReverseCard(emp1, true)}
+                ${emp2 ? createReverseCard(emp2, false) : `<div style="display:flex;align-items:center;justify-content:center;color:#ccc;font-size:16px;border:1px dashed #ddd;padding-left:6px;">Пустая оборотная сторона</div>`}
+            </div>
+            <div style="text-align:center;font-size:6px;color:#999;margin-top:auto;padding-top:3px;border-top:1px solid #eee;">
+                Сформировано в системе «ОхранаТруда.Про» • Оборотная сторона • Страница ${pageNum + totalPages} из ${totalPages*2}
+            </div>
+        </div>
+        `;
+        
+        allPagesHTML += facePageHTML + reversePageHTML;
     }
     
     // Открываем в новой вкладке
@@ -1444,17 +1358,17 @@ function generatePPECardsHTML() {
         </head>
         <body>
             <div class="no-print">
-                <h3>🖨️ Карточки готовы к печати (${cardCount} сотрудников, ${totalPages} страниц)</h3>
+                <h3>🖨️ Карточки готовы к печати (${cardCount} сотрудников, ${totalPages*2} страниц)</h3>
                 <button onclick="window.print()">🖨️ Печать</button>
                 <button class="btn-secondary" onclick="window.close()">✖ Закрыть</button>
                 <p style="font-size:11px;color:#666;margin-top:4px;">
-                    📄 На одном листе А4: две лицевые карточки + две оборотные карточки
+                    📄 Страницы: ${totalPages} страниц с лицевыми сторонами + ${totalPages} страниц с оборотными сторонами
                 </p>
                 <p style="font-size:10px;color:#888;">
-                    💡 Распечатайте, переверните лист и разрежьте пополам
+                    💡 Распечатайте обе стороны, склейте и разрежьте пополам
                 </p>
             </div>
-            ${allCardsHTML}
+            ${allPagesHTML}
             <script>
                 setTimeout(() => window.print(), 1500);
             <\/script>
@@ -1469,11 +1383,10 @@ function generatePPECardsHTML() {
         <p>📋 Сотрудники: ${employees.map(e => `${e.last_name} ${e.first_name}`).join(', ')}</p>
         <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
         <p style="color:#8888aa;font-size:13px;margin-top:8px;">🖨️ Откроется новое окно для печати.</p>
-        <p style="color:#8888aa;font-size:12px;">📄 На одном листе А4: две лицевые карточки + две оборотные карточки</p>
-        <p style="color:#8888aa;font-size:12px;">💡 Распечатайте, переверните лист и разрежьте пополам</p>
+        <p style="color:#8888aa;font-size:12px;">📄 Всего страниц: ${totalPages} лицевых + ${totalPages} оборотных</p>
+        <p style="color:#8888aa;font-size:12px;">💡 Распечатайте обе стороны, склейте и разрежьте пополам</p>
     `;
 }
-
 // ============================================================
 // КАЛЕНДАРЬ
 // ============================================================
