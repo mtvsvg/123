@@ -7,7 +7,7 @@ function showPage(page) {
     if (mainPage) mainPage.style.display = 'none';
     
     if (page === 'main') {
-        if (mainPage) mainPage.style.display = 'block');
+        if (mainPage) mainPage.style.display = 'block';
         document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
         document.querySelectorAll('.nav-link').forEach(link => { 
             if (link.textContent.trim() === 'Главная') link.classList.add('active'); 
@@ -72,7 +72,7 @@ function getEvents() { return JSON.parse(localStorage.getItem('calendarEvents') 
 function saveEvents(events) { localStorage.setItem('calendarEvents', JSON.stringify(events)); }
 
 // ============================================================
-// ШТАТНОЕ РАСПИСАНИЕ С ОТДЕЛАМИ
+// ШТАТНОЕ РАСПИСАНИЕ
 // ============================================================
 function getStaffData() {
     const saved = localStorage.getItem('staffData');
@@ -175,14 +175,14 @@ function renderStaffWithDepartments() {
         
         html += `
             <div style="background:rgba(255,255,255,0.03);border-radius:10px;margin-bottom:8px;border:1px solid rgba(255,255,255,0.06);overflow:hidden;">
-                <div class="department-header" onclick="toggleDepartment('${deptName}')">
-                    <span class="dept-name">📁 ${deptName}</span>
-                    <span class="dept-count">${count} сотрудников</span>
+                <div class="department-header" onclick="toggleDepartment('${deptName}')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;cursor:pointer;">
+                    <span class="dept-name" style="color:#fff;font-weight:500;">📁 ${deptName}</span>
+                    <span class="dept-count" style="color:#8888aa;font-size:13px;">${count} сотрудников</span>
                     <div>
                         <button class="btn-delete" onclick="event.stopPropagation();deleteDepartment('${deptName}')" style="padding:4px 10px;font-size:12px;">🗑</button>
                     </div>
                 </div>
-                <div class="department-body" id="dept_${deptName}" style="${isOpen ? 'display:block;' : 'display:none;'}">
+                <div class="department-body" id="dept_${deptName}" style="${isOpen ? 'display:block;' : 'display:none;'} padding:0 14px 10px;">
                     ${deptData.employees && deptData.employees.length > 0 ? 
                         deptData.employees.map((emp, idx) => `
                             <div class="employee-row">
@@ -190,10 +190,10 @@ function renderStaffWithDepartments() {
                                 <span class="emp-name" onclick="openEmployeeCardBySnils('${emp.snils}')">${emp.last_name} ${emp.first_name}</span>
                                 <span class="emp-position">${emp.position}</span>
                                 <span class="emp-snils">${formatSnils(emp.snils)}</span>
-                                <button class="emp-remove" onclick="removeEmployeeBySnils('${emp.snils}')">✖</button>
+                                <button class="emp-remove" onclick="removeEmployeeBySnils('${emp.snils}')" style="background:rgba(255,70,70,0.15);border:none;color:#ff6b6b;padding:2px 8px;border-radius:4px;cursor:pointer;">✖</button>
                             </div>
                         `).join('') 
-                    : '<div class="dept-empty">Нет сотрудников</div>'}
+                    : '<div class="dept-empty" style="color:#666;font-size:13px;padding:8px 0;">Нет сотрудников</div>'}
                 </div>
             </div>
         `;
@@ -201,17 +201,19 @@ function renderStaffWithDepartments() {
     
     if (data.unassigned.length > 0) {
         html += `
-            <div class="unassigned-section">
-                <div class="unassigned-title">📂 Без службы (${data.unassigned.length})</div>
-                ${data.unassigned.map((emp, idx) => `
-                    <div class="employee-row">
-                        <input type="checkbox" class="staff-check" data-snils="${emp.snils}" data-unassigned="true">
-                        <span class="emp-name" onclick="openEmployeeCardBySnils('${emp.snils}')">${emp.last_name} ${emp.first_name}</span>
-                        <span class="emp-position">${emp.position}</span>
-                        <span class="emp-snils">${formatSnils(emp.snils)}</span>
-                        <button class="emp-remove" onclick="removeEmployeeBySnils('${emp.snils}')">✖</button>
-                    </div>
-                `).join('')}
+            <div class="unassigned-section" style="background:rgba(255,255,255,0.02);border-radius:10px;margin-bottom:8px;border:1px solid rgba(255,255,255,0.04);overflow:hidden;">
+                <div class="unassigned-title" style="padding:10px 14px;color:#8888aa;font-weight:500;">📂 Без службы (${data.unassigned.length})</div>
+                <div style="padding:0 14px 10px;">
+                    ${data.unassigned.map((emp, idx) => `
+                        <div class="employee-row">
+                            <input type="checkbox" class="staff-check" data-snils="${emp.snils}" data-unassigned="true">
+                            <span class="emp-name" onclick="openEmployeeCardBySnils('${emp.snils}')">${emp.last_name} ${emp.first_name}</span>
+                            <span class="emp-position">${emp.position}</span>
+                            <span class="emp-snils">${formatSnils(emp.snils)}</span>
+                            <button class="emp-remove" onclick="removeEmployeeBySnils('${emp.snils}')" style="background:rgba(255,70,70,0.15);border:none;color:#ff6b6b;padding:2px 8px;border-radius:4px;cursor:pointer;">✖</button>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
         `;
     }
@@ -334,6 +336,7 @@ function smartParse(content) {
     });
     return employees;
 }
+
 function parseLine(line) {
     let snils = ''; 
     let snilsMatch = line.match(/\d{3}[- ]?\d{3}[- ]?\d{3}[- ]?\d{2}/);
@@ -375,12 +378,14 @@ function parseLine(line) {
         is_passed: true 
     };
 }
+
 function formatSnils(snils) { 
     if (!snils) return ''; 
     const clean = snils.replace(/\D/g, ''); 
     if (clean.length < 11) return snils; 
     return clean.slice(0,3) + '-' + clean.slice(3,6) + '-' + clean.slice(6,9) + ' ' + clean.slice(9,11); 
 }
+
 function escXml(str) { 
     if (!str) return ''; 
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); 
@@ -415,6 +420,7 @@ function renderOrgs() {
         if (currentOrgId) famOrgSelect.value = currentOrgId;
     }
 }
+
 function selectOrg(id) { 
     localStorage.setItem('currentOrgId', id); 
 }
@@ -464,6 +470,7 @@ function renderProtocol() {
     html += '</tbody></table>';
     container.innerHTML = html;
 }
+
 function removeFromProtocol(index) { 
     const protocol = getProtocol(); 
     protocol.splice(index, 1); 
@@ -682,7 +689,7 @@ const PPE_TYPES = [
 ];
 
 // ============================================================
-// МОДАЛЬНОЕ ОКНО СИЗ (ДЛЯ КАРТЫ И КАРТОЧЕК)
+// МОДАЛЬНОЕ ОКНО СИЗ
 // ============================================================
 let currentPPEWorkplace = null;
 let ppeItems = [];
@@ -872,11 +879,11 @@ function exportPPE() {
 }
 
 // ============================================================
-// КАРТОЧКИ СИЗ
+// КАРТОЧКИ СИЗ - ОСНОВНАЯ ФУНКЦИОНАЛЬНОСТЬ
 // ============================================================
 let selectedPPECardItems = [];
 
-// ШАБЛОНЫ СИЗ - теперь пользователь сам выбирает пункт, единицу и количество
+// ШАБЛОНЫ СИЗ
 const PPE_CARD_TEMPLATES = [
     { name: 'Жилет сигнальный повышенной видимости' },
     { name: 'Перчатки для защиты от механических воздействий' },
@@ -896,10 +903,13 @@ function initPPECardsPage() {
     renderPPECardStaffList();
     renderPPECardPPEList();
     
+    // Привязка кнопки генерации
     const generateBtn = document.getElementById('generatePPECardsBtn');
     if (generateBtn) {
-        generateBtn.onclick = generatePPECardsHTML;
-        console.log('✅ Кнопка генерации карточек СИЗ привязана');
+        generateBtn.onclick = function() {
+            console.log('🔄 Кнопка генерации нажата');
+            generatePPECardsHTML();
+        };
     }
 }
 
@@ -936,13 +946,14 @@ function renderPPECardPPEList() {
     let html = '';
     PPE_CARD_TEMPLATES.forEach((ppe, idx) => {
         const checked = selectedPPECardItems.some(item => item.name === ppe.name) ? 'checked' : '';
+        const existing = selectedPPECardItems.find(item => item.name === ppe.name);
         html += `
             <div class="ppe-item-select" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:6px;border:1px solid rgba(255,255,255,0.06);margin-bottom:4px;">
                 <input type="checkbox" class="ppe-card-ppe-check" data-index="${idx}" ${checked} style="width:18px;height:18px;accent-color:#7c3aed;cursor:pointer;">
                 <label style="color:#fff;font-size:13px;cursor:pointer;min-width:200px;">${ppe.name}</label>
-                <input type="text" class="ppe-punkt-input" placeholder="п. ___" value="${selectedPPECardItems.find(item => item.name === ppe.name)?.punkt || ''}" style="width:80px;padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:#fff;font-size:12px;">
-                <input type="text" class="ppe-unit-input" placeholder="Штук, год" value="${selectedPPECardItems.find(item => item.name === ppe.name)?.unit || ''}" style="width:100px;padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:#fff;font-size:12px;">
-                <input type="text" class="ppe-quantity-input" placeholder="Кол-во" value="${selectedPPECardItems.find(item => item.name === ppe.name)?.quantity || ''}" style="width:70px;padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:#fff;font-size:12px;">
+                <input type="text" class="ppe-punkt-input" placeholder="п. ___" value="${existing?.punkt || ''}" style="width:80px;padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:#fff;font-size:12px;">
+                <input type="text" class="ppe-unit-input" placeholder="Штук, год" value="${existing?.unit || ''}" style="width:100px;padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:#fff;font-size:12px;">
+                <input type="text" class="ppe-quantity-input" placeholder="Кол-во" value="${existing?.quantity || ''}" style="width:70px;padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:#fff;font-size:12px;">
             </div>
         `;
     });
@@ -959,7 +970,7 @@ function renderPPECardPPEList() {
     
     container.innerHTML = html;
     
-    // Обновляем выбранные СИЗ при изменении чекбоксов
+    // Обработчики событий для чекбоксов
     document.querySelectorAll('.ppe-card-ppe-check').forEach(cb => {
         cb.addEventListener('change', function() {
             const idx = parseInt(this.dataset.index);
@@ -1068,7 +1079,7 @@ function clearPPECardSelection() {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ ЧЕРЕЗ HTML + ПЕЧАТЬ (ПО ТВОЕМУ ОБРАЗЦУ)
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ (HTML + ПЕЧАТЬ)
 // ============================================================
 function generatePPECardsHTML() {
     console.log('🔄 generatePPECardsHTML вызвана');
@@ -1098,7 +1109,7 @@ function generatePPECardsHTML() {
     const resultDiv = document.getElementById('ppeCardResult');
     const contentDiv = document.getElementById('ppeCardResultContent');
     
-    // Пакуем сотрудников по 2 на страницу (ЛИЦЕВАЯ СТОРОНА - два сотрудника)
+    // Пакуем сотрудников по 2 на страницу
     let allCardsHTML = '';
     let cardCount = 0;
     let totalPages = Math.ceil(employees.length / 2);
@@ -1112,21 +1123,16 @@ function generatePPECardsHTML() {
         allCardsHTML += `
         <div style="page-break-after:always;padding:8px;font-family:'Times New Roman',serif;max-width:1000px;margin:0 auto;background:#fff;color:#000;border:1px solid #999;border-radius:2px;margin-bottom:8px;min-height:900px;">
             
-            <!-- ============================================================ -->
-            <!-- ЛИЦЕВАЯ СТОРОНА - ДВА СОТРУДНИКА (А и Б) -->
-            <!-- ============================================================ -->
+            <!-- ЛИЦЕВАЯ СТОРОНА - ДВА СОТРУДНИКА -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                 
-                <!-- ЛИЦЕВАЯ СТОРОНА - СОТРУДНИК 1 -->
+                <!-- ЛИЦЕВАЯ - СОТРУДНИК 1 -->
                 <div style="border-right:1px dashed #ccc;padding-right:8px;">
-                    
-                    <!-- Шапка -->
                     <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:8px;">
                         <div style="font-size:13px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber || '___'}</div>
                         <div style="font-size:13px;font-weight:bold;">учета выдачи СИЗ</div>
                     </div>
                     
-                    <!-- Информация о сотруднике -->
                     <table style="width:100%;border-collapse:collapse;font-size:10px;">
                         <tr>
                             <td style="width:55%;vertical-align:top;padding:1px;">
@@ -1152,7 +1158,6 @@ function generatePPECardsHTML() {
                         </tr>
                     </table>
                     
-                    <!-- Таблица СИЗ -->
                     <div style="margin-top:6px;">
                         <table style="width:100%;border-collapse:collapse;font-size:9px;border:1px solid #000;">
                             <thead>
@@ -1176,24 +1181,20 @@ function generatePPECardsHTML() {
                         </table>
                     </div>
                     
-                    <!-- Подпись -->
                     <div style="margin-top:8px;">
                         <div style="font-size:11px;margin-top:4px;">${managerPosition} __________ ${manager}</div>
                         <div style="font-size:9px;">(подпись)     (фамилия, инициалы)</div>
                     </div>
-                    
                 </div>
                 
-                <!-- ЛИЦЕВАЯ СТОРОНА - СОТРУДНИК 2 -->
+                <!-- ЛИЦЕВАЯ - СОТРУДНИК 2 -->
                 <div style="${emp2 ? '' : 'opacity:0.2;'}">
                     ${emp2 ? `
-                    <!-- Шапка -->
                     <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:8px;">
                         <div style="font-size:13px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber || '___'}</div>
                         <div style="font-size:13px;font-weight:bold;">учета выдачи СИЗ</div>
                     </div>
                     
-                    <!-- Информация о сотруднике -->
                     <table style="width:100%;border-collapse:collapse;font-size:10px;">
                         <tr>
                             <td style="width:55%;vertical-align:top;padding:1px;">
@@ -1219,7 +1220,6 @@ function generatePPECardsHTML() {
                         </tr>
                     </table>
                     
-                    <!-- Таблица СИЗ -->
                     <div style="margin-top:6px;">
                         <table style="width:100%;border-collapse:collapse;font-size:9px;border:1px solid #000;">
                             <thead>
@@ -1243,7 +1243,6 @@ function generatePPECardsHTML() {
                         </table>
                     </div>
                     
-                    <!-- Подпись -->
                     <div style="margin-top:8px;">
                         <div style="font-size:11px;margin-top:4px;">${managerPosition} __________ ${manager}</div>
                         <div style="font-size:9px;">(подпись)     (фамилия, инициалы)</div>
@@ -1252,15 +1251,13 @@ function generatePPECardsHTML() {
                 </div>
             </div>
             
-            <!-- ============================================================ -->
-            <!-- ОБОРОТНАЯ СТОРОНА - ДВА СОТРУДНИКА (А и Б) -->
-            <!-- ============================================================ -->
+            <!-- ОБОРОТНАЯ СТОРОНА -->
             <div style="margin-top:15px;border-top:2px dashed #999;padding-top:12px;">
                 <div style="text-align:center;font-size:13px;font-weight:bold;margin-bottom:6px;">ОБОРОТНАЯ СТОРОНА</div>
                 
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                     
-                    <!-- ОБОРОТНАЯ СТОРОНА - СОТРУДНИК 1 -->
+                    <!-- ОБОРОТНАЯ - СОТРУДНИК 1 -->
                     <div style="border-right:1px dashed #ccc;padding-right:8px;">
                         <div style="font-weight:bold;font-size:11px;text-align:center;margin-bottom:4px;">Данные о выдаче СИЗ</div>
                         <div style="font-size:9px;text-align:center;margin-bottom:3px;color:#666;">${emp1.last_name} ${emp1.first_name}</div>
@@ -1287,7 +1284,7 @@ function generatePPECardsHTML() {
                         <div style="font-size:9px;margin-top:3px;">Ответственный за выдачу СИЗ __________</div>
                     </div>
                     
-                    <!-- ОБОРОТНАЯ СТОРОНА - СОТРУДНИК 2 -->
+                    <!-- ОБОРОТНАЯ - СОТРУДНИК 2 -->
                     <div style="${emp2 ? '' : 'opacity:0.2;'}">
                         ${emp2 ? `
                         <div style="font-weight:bold;font-size:11px;text-align:center;margin-bottom:4px;">Данные о выдаче СИЗ</div>
@@ -1807,7 +1804,7 @@ function openPPEModalForEmployee(snils) {
 }
 
 // ============================================================
-// КАРТА (СОКРАЩЕННАЯ)
+// КАРТА (сокращённая версия)
 // ============================================================
 let mapData = {
     workshops: [],
@@ -2196,7 +2193,7 @@ function drawMap() {
 }
 
 // ============================================================
-// ОСТАЛЬНЫЕ ФУНКЦИИ КАРТЫ
+// ОСТАЛЬНЫЕ ФУНКЦИИ КАРТЫ (сокращены для экономии места)
 // ============================================================
 function setupCanvasEvents() {
     const canvas = document.getElementById('mapCanvas');
@@ -2494,9 +2491,6 @@ function deleteSelectedObject() {
     alert('✅ Удалено');
 }
 
-// ============================================================
-// ОГНЕТУШИТЕЛИ
-// ============================================================
 function openFireExtinguisherModal() {
     document.getElementById('fireExtinguisherModal').classList.remove('hidden');
 }
@@ -2529,9 +2523,6 @@ function saveFireExtinguisher() {
     alert('✅ Огнетушитель добавлен!');
 }
 
-// ============================================================
-// УЧАСТКИ
-// ============================================================
 function openWorkshopModal() {
     const ws = getCurrentWorkshop();
     if (!ws) { alert('Сначала создайте участок'); return; }
