@@ -1034,7 +1034,7 @@ function clearPPECardSelection() {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ ЧЕРЕЗ HTML + ПЕЧАТЬ (БЕЗ DOCX)
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ ЧЕРЕЗ HTML + ПЕЧАТЬ (ПО ТВОЕМУ ОБРАЗЦУ)
 // ============================================================
 function generatePPECardsHTML() {
     console.log('🔄 generatePPECardsHTML вызвана');
@@ -1052,11 +1052,11 @@ function generatePPECardsHTML() {
         return;
     }
     
-    const manager = document.getElementById('ppeCardManager').value.trim() || '';
-    const managerPosition = document.getElementById('ppeCardManagerPosition').value.trim() || '';
+    const manager = document.getElementById('ppeCardManager').value.trim() || 'М.В. Чибисов';
+    const managerPosition = document.getElementById('ppeCardManagerPosition').value.trim() || 'Начальник службы движения';
     const cardNumber = document.getElementById('ppeCardNumber').value.trim() || '';
     const department = document.getElementById('ppeCardDepartment').value.trim() || '';
-    const gender = document.getElementById('ppeCardGender').value;
+    const gender = document.getElementById('ppeCardGender').value || 'М';
     const height = document.getElementById('ppeCardHeight').value.trim() || '';
     const clothesSize = document.getElementById('ppeCardClothesSize').value.trim() || '';
     const shoeSize = document.getElementById('ppeCardShoeSize').value.trim() || '';
@@ -1064,109 +1064,237 @@ function generatePPECardsHTML() {
     const resultDiv = document.getElementById('ppeCardResult');
     const contentDiv = document.getElementById('ppeCardResultContent');
     
-    // Строим HTML для всех карточек
+    // Пакуем сотрудников по 2 на страницу
     let allCardsHTML = '';
     let cardCount = 0;
+    let totalPages = Math.ceil(employees.length / 2);
     
-    employees.forEach((emp, idx) => {
-        cardCount++;
+    for (let i = 0; i < employees.length; i += 2) {
+        const emp1 = employees[i];
+        const emp2 = employees[i + 1] || null;
+        const pageNum = Math.floor(i / 2) + 1;
+        cardCount += emp2 ? 2 : 1;
+        
         allCardsHTML += `
-        <div style="page-break-after:always;padding:20px;font-family:'Times New Roman',serif;max-width:800px;margin:0 auto;background:#fff;color:#000;border:1px solid #ccc;border-radius:4px;margin-bottom:20px;">
+        <div style="page-break-after:always;padding:10px;font-family:'Times New Roman',serif;max-width:1000px;margin:0 auto;background:#fff;color:#000;border:1px solid #999;border-radius:2px;margin-bottom:10px;min-height:950px;">
             
-            <!-- ЛИЦЕВАЯ СТОРОНА -->
-            <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:15px;">
-                <div style="font-size:18px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber || '___'}</div>
-                <div style="font-size:18px;font-weight:bold;">учета выдачи СИЗ</div>
-            </div>
-            
-            <table style="width:100%;border-collapse:collapse;font-size:14px;">
-                <tr>
-                    <td style="width:60%;vertical-align:top;padding:4px;">
-                        <div><strong>Фамилия</strong> ${emp.last_name}</div>
-                        <div><strong>Имя</strong> ${emp.first_name}</div>
-                        <div><strong>Отчество</strong> ${emp.middle_name || ''}</div>
-                        <div><strong>Табельный номер</strong> ________</div>
-                        <div><strong>Структурное подразделение</strong> ${department}</div>
-                        <div><strong>Профессия (должность)</strong> ${emp.position}</div>
-                        <div><strong>Дата поступления на работу</strong> __________</div>
-                        <div><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
-                    </td>
-                    <td style="width:40%;vertical-align:top;padding:4px;">
-                        <div><strong>Пол</strong> ${gender}</div>
-                        <div><strong>Рост</strong> ${height}</div>
-                        <div style="margin-top:6px;"><strong>Размер:</strong></div>
-                        <div><strong>одежды</strong> ${clothesSize}</div>
-                        <div><strong>обуви</strong> ${shoeSize}</div>
-                        <div><strong>головного убора</strong> ___</div>
-                        <div><strong>СИЗОД</strong> ___</div>
-                        <div><strong>СИЗ рук</strong> ___________</div>
-                    </td>
-                </tr>
-            </table>
-            
-            <div style="margin-top:15px;">
-                <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #000;">
-                    <thead>
-                        <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:6px;text-align:center;width:30%;">Наименование СИЗ</th>
-                            <th style="border:1px solid #000;padding:6px;text-align:center;width:25%;">Пункт Норм</th>
-                            <th style="border:1px solid #000;padding:6px;text-align:center;width:25%;">Единица измерения, периодичность выдачи</th>
-                            <th style="border:1px solid #000;padding:6px;text-align:center;width:20%;">Количество на период</th>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;height:100%;">
+                
+                <!-- ============================================================ -->
+                <!-- ЛИЦЕВАЯ СТОРОНА - СОТРУДНИК 1 -->
+                <!-- ============================================================ -->
+                <div style="border-right:1px dashed #ccc;padding-right:10px;">
+                    
+                    <!-- Шапка -->
+                    <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:10px;">
+                        <div style="font-size:14px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber || '___'}</div>
+                        <div style="font-size:14px;font-weight:bold;">учета выдачи СИЗ</div>
+                    </div>
+                    
+                    <!-- Информация о сотруднике -->
+                    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                        <tr>
+                            <td style="width:55%;vertical-align:top;padding:2px;">
+                                <div><strong>Фамилия</strong> ${emp1.last_name}</div>
+                                <div><strong>Имя</strong> ${emp1.first_name}</div>
+                                <div><strong>Отчество</strong> ${emp1.middle_name || ''}</div>
+                                <div><strong>Табельный номер</strong> ________</div>
+                                <div><strong>Структурное подразделение</strong> ${department}</div>
+                                <div><strong>Профессия (должность)</strong> ${emp1.position}</div>
+                                <div><strong>Дата поступления на работу</strong> __________</div>
+                                <div><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
+                            </td>
+                            <td style="width:45%;vertical-align:top;padding:2px;">
+                                <div><strong>Пол</strong> ${gender}</div>
+                                <div><strong>Рост</strong> ${height}</div>
+                                <div style="margin-top:4px;"><strong>Размер:</strong></div>
+                                <div style="padding-left:12px;"><strong>одежды</strong> ${clothesSize}</div>
+                                <div style="padding-left:12px;"><strong>обуви</strong> ${shoeSize}</div>
+                                <div style="padding-left:12px;"><strong>головного убора</strong> ___</div>
+                                <div><strong>СИЗОД</strong> ___</div>
+                                <div><strong>СИЗ рук</strong> ___________</div>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        ${selectedPPECardItems.map(ppe => `
-                            <tr>
-                                <td style="border:1px solid #000;padding:6px;">${ppe.name}</td>
-                                <td style="border:1px solid #000;padding:6px;">${ppe.punkt}</td>
-                                <td style="border:1px solid #000;padding:6px;">${ppe.unit}</td>
-                                <td style="border:1px solid #000;padding:6px;">${ppe.quantity}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-            
-            <div style="margin-top:20px;">
-                <div style="font-size:14px;margin-top:10px;">${managerPosition || 'Начальник'} __________ ${manager || ''}</div>
-                <div style="font-size:12px;">(подпись)     (фамилия, инициалы)</div>
-            </div>
-            
-            <div style="margin-top:30px;text-align:center;border-top:1px dashed #999;padding-top:15px;">
-                <div style="font-size:14px;font-weight:bold;">ОБОРОТНАЯ СТОРОНА</div>
-            </div>
-            
-            <div style="margin-top:15px;">
-                <div style="font-weight:bold;font-size:14px;text-align:center;">Данные о выдаче СИЗ</div>
-                <table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid #000;margin-top:8px;">
-                    <thead>
-                        <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:4px;text-align:center;width:20%;">Наименование СИЗ</th>
-                            <th style="border:1px solid #000;padding:4px;text-align:center;width:20%;">Модель, марка, артикул</th>
-                            <th style="border:1px solid #000;padding:4px;text-align:center;width:30%;">Выдано (дата, кол-во, подпись)</th>
-                            <th style="border:1px solid #000;padding:4px;text-align:center;width:30%;">Возвращено (дата, кол-во, подпись)</th>
+                    </table>
+                    
+                    <!-- Таблица СИЗ -->
+                    <div style="margin-top:8px;">
+                        <table style="width:100%;border-collapse:collapse;font-size:10px;border:1px solid #000;">
+                            <thead>
+                                <tr style="background:#f0f0f0;">
+                                    <th style="border:1px solid #000;padding:3px;text-align:center;width:35%;">Наименование СИЗ</th>
+                                    <th style="border:1px solid #000;padding:3px;text-align:center;width:20%;">Пункт Норм</th>
+                                    <th style="border:1px solid #000;padding:3px;text-align:center;width:25%;">Единица измерения, периодичность выдачи</th>
+                                    <th style="border:1px solid #000;padding:3px;text-align:center;width:20%;">Количество на период</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${selectedPPECardItems.map(ppe => `
+                                    <tr>
+                                        <td style="border:1px solid #000;padding:3px;">${ppe.name}</td>
+                                        <td style="border:1px solid #000;padding:3px;">${ppe.punkt}</td>
+                                        <td style="border:1px solid #000;padding:3px;">${ppe.unit}</td>
+                                        <td style="border:1px solid #000;padding:3px;">${ppe.quantity}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Подпись -->
+                    <div style="margin-top:12px;">
+                        <div style="font-size:12px;margin-top:6px;">${managerPosition} __________ ${manager}</div>
+                        <div style="font-size:10px;">(подпись)     (фамилия, инициалы)</div>
+                    </div>
+                    
+                </div>
+                
+                <!-- ============================================================ -->
+                <!-- ЛИЦЕВАЯ СТОРОНА - СОТРУДНИК 2 (если есть) -->
+                <!-- ============================================================ -->
+                <div style="${emp2 ? '' : 'opacity:0.3;'}">
+                    
+                    ${emp2 ? `
+                    <!-- Шапка -->
+                    <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:10px;">
+                        <div style="font-size:14px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber || '___'}</div>
+                        <div style="font-size:14px;font-weight:bold;">учета выдачи СИЗ</div>
+                    </div>
+                    
+                    <!-- Информация о сотруднике -->
+                    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                        <tr>
+                            <td style="width:55%;vertical-align:top;padding:2px;">
+                                <div><strong>Фамилия</strong> ${emp2.last_name}</div>
+                                <div><strong>Имя</strong> ${emp2.first_name}</div>
+                                <div><strong>Отчество</strong> ${emp2.middle_name || ''}</div>
+                                <div><strong>Табельный номер</strong> ________</div>
+                                <div><strong>Структурное подразделение</strong> ${department}</div>
+                                <div><strong>Профессия (должность)</strong> ${emp2.position}</div>
+                                <div><strong>Дата поступления на работу</strong> __________</div>
+                                <div><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
+                            </td>
+                            <td style="width:45%;vertical-align:top;padding:2px;">
+                                <div><strong>Пол</strong> ${gender}</div>
+                                <div><strong>Рост</strong> ${height}</div>
+                                <div style="margin-top:4px;"><strong>Размер:</strong></div>
+                                <div style="padding-left:12px;"><strong>одежды</strong> ${clothesSize}</div>
+                                <div style="padding-left:12px;"><strong>обуви</strong> ${shoeSize}</div>
+                                <div style="padding-left:12px;"><strong>головного убора</strong> ___</div>
+                                <div><strong>СИЗОД</strong> ___</div>
+                                <div><strong>СИЗ рук</strong> ___________</div>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        ${Array(8).fill(0).map(() => `
-                            <tr>
-                                <td style="border:1px solid #000;padding:4px;height:25px;"></td>
-                                <td style="border:1px solid #000;padding:4px;height:25px;"></td>
-                                <td style="border:1px solid #000;padding:4px;height:25px;"></td>
-                                <td style="border:1px solid #000;padding:4px;height:25px;"></td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
+                    </table>
+                    
+                    <!-- Таблица СИЗ -->
+                    <div style="margin-top:8px;">
+                        <table style="width:100%;border-collapse:collapse;font-size:10px;border:1px solid #000;">
+                            <thead>
+                                <tr style="background:#f0f0f0;">
+                                    <th style="border:1px solid #000;padding:3px;text-align:center;width:35%;">Наименование СИЗ</th>
+                                    <th style="border:1px solid #000;padding:3px;text-align:center;width:20%;">Пункт Норм</th>
+                                    <th style="border:1px solid #000;padding:3px;text-align:center;width:25%;">Единица измерения, периодичность выдачи</th>
+                                    <th style="border:1px solid #000;padding:3px;text-align:center;width:20%;">Количество на период</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${selectedPPECardItems.map(ppe => `
+                                    <tr>
+                                        <td style="border:1px solid #000;padding:3px;">${ppe.name}</td>
+                                        <td style="border:1px solid #000;padding:3px;">${ppe.punkt}</td>
+                                        <td style="border:1px solid #000;padding:3px;">${ppe.unit}</td>
+                                        <td style="border:1px solid #000;padding:3px;">${ppe.quantity}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Подпись -->
+                    <div style="margin-top:12px;">
+                        <div style="font-size:12px;margin-top:6px;">${managerPosition} __________ ${manager}</div>
+                        <div style="font-size:10px;">(подпись)     (фамилия, инициалы)</div>
+                    </div>
+                    ` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ccc;font-size:16px;">Пустая карточка</div>'}
+                    
+                </div>
             </div>
             
-            <div style="margin-top:15px;font-size:13px;">
-                <div>Ответственный за выдачу СИЗ __________</div>
+            <!-- ============================================================ -->
+            <!-- ОБОРОТНАЯ СТОРОНА (ВСЯ СТРАНИЦА) -->
+            <!-- ============================================================ -->
+            <div style="margin-top:20px;border-top:2px dashed #999;padding-top:15px;">
+                <div style="text-align:center;font-size:14px;font-weight:bold;margin-bottom:8px;">ОБОРОТНАЯ СТОРОНА</div>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    
+                    <!-- Оборотная сторона - сотрудник 1 -->
+                    <div style="border-right:1px dashed #ccc;padding-right:10px;">
+                        <div style="font-weight:bold;font-size:12px;text-align:center;margin-bottom:6px;">Данные о выдаче СИЗ</div>
+                        <div style="font-size:10px;text-align:center;margin-bottom:4px;color:#666;">${emp1.last_name} ${emp1.first_name}</div>
+                        <table style="width:100%;border-collapse:collapse;font-size:9px;border:1px solid #000;">
+                            <thead>
+                                <tr style="background:#f0f0f0;">
+                                    <th style="border:1px solid #000;padding:2px;text-align:center;width:18%;">Наименование СИЗ</th>
+                                    <th style="border:1px solid #000;padding:2px;text-align:center;width:18%;">Модель, марка, артикул</th>
+                                    <th style="border:1px solid #000;padding:2px;text-align:center;width:32%;">Выдано (дата, кол-во, подпись)</th>
+                                    <th style="border:1px solid #000;padding:2px;text-align:center;width:32%;">Возвращено (дата, кол-во, подпись)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Array(10).fill(0).map(() => `
+                                    <tr>
+                                        <td style="border:1px solid #000;padding:2px;height:18px;"></td>
+                                        <td style="border:1px solid #000;padding:2px;height:18px;"></td>
+                                        <td style="border:1px solid #000;padding:2px;height:18px;"></td>
+                                        <td style="border:1px solid #000;padding:2px;height:18px;"></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <div style="font-size:10px;margin-top:4px;">Ответственный за выдачу СИЗ __________</div>
+                    </div>
+                    
+                    <!-- Оборотная сторона - сотрудник 2 -->
+                    <div style="${emp2 ? '' : 'opacity:0.3;'}">
+                        ${emp2 ? `
+                        <div style="font-weight:bold;font-size:12px;text-align:center;margin-bottom:6px;">Данные о выдаче СИЗ</div>
+                        <div style="font-size:10px;text-align:center;margin-bottom:4px;color:#666;">${emp2.last_name} ${emp2.first_name}</div>
+                        <table style="width:100%;border-collapse:collapse;font-size:9px;border:1px solid #000;">
+                            <thead>
+                                <tr style="background:#f0f0f0;">
+                                    <th style="border:1px solid #000;padding:2px;text-align:center;width:18%;">Наименование СИЗ</th>
+                                    <th style="border:1px solid #000;padding:2px;text-align:center;width:18%;">Модель, марка, артикул</th>
+                                    <th style="border:1px solid #000;padding:2px;text-align:center;width:32%;">Выдано (дата, кол-во, подпись)</th>
+                                    <th style="border:1px solid #000;padding:2px;text-align:center;width:32%;">Возвращено (дата, кол-во, подпись)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Array(10).fill(0).map(() => `
+                                    <tr>
+                                        <td style="border:1px solid #000;padding:2px;height:18px;"></td>
+                                        <td style="border:1px solid #000;padding:2px;height:18px;"></td>
+                                        <td style="border:1px solid #000;padding:2px;height:18px;"></td>
+                                        <td style="border:1px solid #000;padding:2px;height:18px;"></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <div style="font-size:10px;margin-top:4px;">Ответственный за выдачу СИЗ __________</div>
+                        ` : '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:#ccc;font-size:14px;">Пустая оборотная сторона</div>'}
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div style="text-align:center;font-size:9px;color:#999;margin-top:6px;border-top:1px solid #eee;padding-top:4px;">
+                Сформировано в системе «ОхранаТруда.Про» • Страница ${pageNum} из ${totalPages}
             </div>
             
         </div>
         `;
-    });
+    }
     
     // Открываем в новой вкладке
     const win = window.open('', '_blank');
@@ -1181,6 +1309,7 @@ function generatePPECardsHTML() {
         <head>
             <title>Карточки учета СИЗ</title>
             <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
                 body { 
                     font-family: 'Times New Roman', Times, serif; 
                     background: #f0f0f0; 
@@ -1189,7 +1318,7 @@ function generatePPECardsHTML() {
                 }
                 @page {
                     size: A4;
-                    margin: 15mm 15mm 15mm 15mm;
+                    margin: 10mm 10mm 10mm 10mm;
                 }
                 @media print {
                     body { background: #fff; padding: 0; margin: 0; }
@@ -1224,19 +1353,23 @@ function generatePPECardsHTML() {
                 .no-print .btn-secondary {
                     background: #666;
                 }
+                @media print {
+                    .no-print { display: none !important; }
+                }
             </style>
         </head>
         <body>
             <div class="no-print">
-                <h3>🖨️ Карточки готовы к печати (${cardCount} шт.)</h3>
+                <h3>🖨️ Карточки готовы к печати (${cardCount} сотрудников, ${totalPages} страниц)</h3>
                 <button onclick="window.print()">🖨️ Печать</button>
                 <button class="btn-secondary" onclick="window.close()">✖ Закрыть</button>
                 <p style="font-size:12px;color:#666;margin-top:6px;">Нажмите "Печать" и выберите "Сохранить как PDF" или отправьте на принтер</p>
+                <p style="font-size:11px;color:#888;margin-top:4px;">💡 На одной странице — два сотрудника (лицевая и оборотная стороны)</p>
             </div>
             ${allCardsHTML}
             <script>
-                // Автоматически открываем диалог печати через 1 секунду
-                setTimeout(() => window.print(), 1000);
+                // Автоматически открываем диалог печати через 1.5 секунды
+                setTimeout(() => window.print(), 1500);
             <\/script>
         </body>
         </html>
@@ -1250,6 +1383,7 @@ function generatePPECardsHTML() {
         <p>📋 Сотрудники: ${employees.map(e => `${e.last_name} ${e.first_name}`).join(', ')}</p>
         <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
         <p style="color:#8888aa;font-size:13px;margin-top:8px;">🖨️ Откроется новое окно для печати.</p>
+        <p style="color:#8888aa;font-size:12px;">📄 На одной странице — два сотрудника.</p>
     `;
 }
 
