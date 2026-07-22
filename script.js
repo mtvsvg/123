@@ -2847,3 +2847,13 @@ document.addEventListener('DOMContentLoaded', function() {
     initTrainingPage();
     console.log('✅ Готово!');
 });
+document.addEventListener('DOMContentLoaded', function() {
+    // ... существующий код ...
+    
+    // Привязываем кнопку генерации карточек СИЗ
+    const generateBtn = document.getElementById('generatePPECardsBtn');
+    if (generateBtn) {
+        generateBtn.addEventListener('click', generatePPECards);
+        console.log('✅ Кнопка генерации карточек СИЗ привязана');
+    }
+});
