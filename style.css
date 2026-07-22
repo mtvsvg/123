@@ -788,7 +788,6 @@ input::placeholder, textarea::placeholder {
     color: #fff; 
 }
 
-/* КАРТА */
 #mapCanvas {
     width: 100% !important;
     height: auto !important;
