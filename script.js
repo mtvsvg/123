@@ -36,6 +36,14 @@ function showPage(page) {
             if (link.textContent.trim() === 'Календарь') link.classList.add('active'); 
         });
         renderCalendar();
+    } else if (page === 'ppeCards') {
+        const el = document.getElementById('ppeCardsPage');
+        if (el) el.classList.remove('hidden');
+        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(link => { 
+            if (link.textContent.trim() === 'Карточки СИЗ') link.classList.add('active'); 
+        });
+        initPPECardsPage();
     } else if (page === 'risks') {
         const el = document.getElementById('risksPage');
         if (el) el.classList.remove('hidden');
@@ -83,7 +91,6 @@ function saveStaffData(data) {
     localStorage.setItem('staffData', JSON.stringify(data));
 }
 
-// Получить всех сотрудников (плоский список)
 function getAllEmployees() {
     const data = getStaffData();
     const all = [];
@@ -100,13 +107,11 @@ function getAllEmployees() {
     return all;
 }
 
-// Получить сотрудника по СНИЛС
 function findEmployeeBySnils(snils) {
     const all = getAllEmployees();
     return all.find(e => e.snils === snils) || null;
 }
 
-// Добавить сотрудника
 function addEmployee(employee) {
     const data = getStaffData();
     data.unassigned.push(employee);
@@ -114,7 +119,6 @@ function addEmployee(employee) {
     renderStaffWithDepartments();
 }
 
-// Добавить нескольких сотрудников
 function addEmployees(employees) {
     const data = getStaffData();
     employees.forEach(emp => {
@@ -124,10 +128,8 @@ function addEmployees(employees) {
     renderStaffWithDepartments();
 }
 
-// Удалить сотрудника
 function removeEmployeeBySnils(snils) {
     const data = getStaffData();
-    // Ищем в отделах
     for (const [dept, deptData] of Object.entries(data.departments)) {
         const idx = deptData.employees.findIndex(e => e.snils === snils);
         if (idx !== -1) {
@@ -137,7 +139,6 @@ function removeEmployeeBySnils(snils) {
             return;
         }
     }
-    // Ищем в непривязанных
     const idx = data.unassigned.findIndex(e => e.snils === snils);
     if (idx !== -1) {
         data.unassigned.splice(idx, 1);
@@ -146,7 +147,6 @@ function removeEmployeeBySnils(snils) {
     }
 }
 
-// Получить выбранных сотрудников (из чекбоксов)
 function getSelectedStaffFromView() {
     const checkboxes = document.querySelectorAll('.staff-check:checked');
     const selected = [];
@@ -185,7 +185,6 @@ function renderStaffWithDepartments() {
     
     let html = '';
     
-    // Отделы
     for (const [deptName, deptData] of Object.entries(data.departments)) {
         const count = deptData.employees ? deptData.employees.length : 0;
         const isOpen = localStorage.getItem(`dept_open_${deptName}`) !== 'false';
@@ -216,7 +215,6 @@ function renderStaffWithDepartments() {
         `;
     }
     
-    // Непривязанные сотрудники
     if (data.unassigned.length > 0) {
         html += `
             <div class="unassigned-section">
@@ -238,7 +236,6 @@ function renderStaffWithDepartments() {
     updateFamEmployeeSelect();
 }
 
-// Переключение отдела (сворачивание/разворачивание)
 function toggleDepartment(deptName) {
     const body = document.getElementById(`dept_${deptName}`);
     if (!body) return;
@@ -247,12 +244,10 @@ function toggleDepartment(deptName) {
     localStorage.setItem(`dept_open_${deptName}`, String(!isOpen));
 }
 
-// Удаление отдела
 function deleteDepartment(deptName) {
     if (!confirm(`Удалить службу "${deptName}" со всеми сотрудниками?`)) return;
     const data = getStaffData();
     if (data.departments[deptName]) {
-        // Перемещаем сотрудников в непривязанные
         if (data.departments[deptName].employees) {
             data.departments[deptName].employees.forEach(emp => {
                 data.unassigned.push(emp);
@@ -265,7 +260,6 @@ function deleteDepartment(deptName) {
     }
 }
 
-// Создание отдела из выбранных сотрудников
 function createDepartmentFromSelected() {
     const selected = getSelectedStaffFromView();
     if (selected.length === 0) {
@@ -277,17 +271,13 @@ function createDepartmentFromSelected() {
     if (!deptName) return;
     
     const data = getStaffData();
-    
-    // Удаляем выбранных из непривязанных
     const selectedSnils = new Set(selected.map(e => e.snils));
     data.unassigned = data.unassigned.filter(e => !selectedSnils.has(e.snils));
     
-    // Удаляем выбранных из других отделов
     for (const [dept, deptData] of Object.entries(data.departments)) {
         data.departments[dept].employees = deptData.employees.filter(e => !selectedSnils.has(e.snils));
     }
     
-    // Добавляем новый отдел
     data.departments[deptName] = { employees: selected };
     
     saveStaffData(data);
@@ -295,17 +285,14 @@ function createDepartmentFromSelected() {
     alert(`✅ Создана служба "${deptName}" (${selected.length} сотрудников)`);
 }
 
-// Выбрать всех сотрудников в текущем отображении
 function selectAllStaffInCurrentView() {
     document.querySelectorAll('.staff-check').forEach(cb => cb.checked = true);
 }
 
-// Снять всех
 function deselectAllStaff() {
     document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
 }
 
-// Очистить всё штатное расписание
 function clearAllStaff() {
     if (!confirm('Удалить ВСЕХ сотрудников из штатного расписания?')) return;
     saveStaffData({ departments: {}, unassigned: [] });
@@ -314,7 +301,7 @@ function clearAllStaff() {
 }
 
 // ============================================================
-// ЗАГРУЗКА ШТАТНОГО РАСПИСАНИЯ (ИМПОРТ)
+// ЗАГРУЗКА ШТАТНОГО РАСПИСАНИЯ
 // ============================================================
 function importStaffFile() {
     const input = document.createElement('input');
@@ -331,7 +318,6 @@ function importStaffFile() {
                 
                 const data = getStaffData();
                 employees.forEach(emp => {
-                    // Проверяем, нет ли уже такого сотрудника
                     const exists = getAllEmployees().some(e => e.snils === emp.snils);
                     if (!exists) {
                         data.unassigned.push(emp);
@@ -415,6 +401,7 @@ function escXml(str) {
     if (!str) return ''; 
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); 
 }
+
 // ============================================================
 // ОРГАНИЗАЦИИ
 // ============================================================
@@ -693,276 +680,530 @@ function generateFamiliarization() {
         result.classList.remove('hidden');
     }
 }
+// ============================================================
+// КАРТОЧКИ СИЗ
+// ============================================================
+let selectedPPECardItems = [];
 
-// ============================================================
-// СПИСОК ТИПОВ СИЗ
-// ============================================================
-const PPE_TYPES = [
-    'Одежда специальная защитная',
-    'Средства защиты ног',
-    'Средства защиты рук',
-    'Средства защиты головы',
-    'Средства защиты глаз и лица',
-    'Средства защиты слуха',
-    'Средства защиты органов дыхания',
-    'Средства защиты от падения с высоты',
-    'Средства защиты кожи',
-    'Средства защиты комплексные'
+// Стандартный список СИЗ для карточек (из приказа 767н)
+const PPE_CARD_TEMPLATES = [
+    { name: 'Жилет сигнальный повышенной видимости', punkt: 'п. 793', unit: 'Штук, год', quantity: '1' },
+    { name: 'Перчатки для защиты от механических воздействий', punkt: 'п. 793', unit: 'Пар, год', quantity: '12 пар' },
+    { name: 'Перчатки специальные диэлектрические', punkt: 'п. 793', unit: 'Пара', quantity: 'опр. док. изготовителя' },
+    { name: 'Галоши диэлектрические', punkt: 'п. 6', unit: 'Пара', quantity: 'опр. док. изготовителя' },
+    { name: 'Костюм для защиты от механических воздействий', punkt: 'п. 793', unit: 'Штук, год', quantity: '1' },
+    { name: 'Обувь специальная для защиты от механических воздействий', punkt: 'п. 793', unit: 'Пар, год', quantity: '1' },
+    { name: 'Каска защитная', punkt: 'п. 793', unit: 'Штук, год', quantity: '1' },
+    { name: 'Очки защитные', punkt: 'п. 793', unit: 'Штук, год', quantity: '1' },
+    { name: 'Респиратор', punkt: 'п. 793', unit: 'Штук, год', quantity: '1' },
+    { name: 'Наушники противошумные', punkt: 'п. 793', unit: 'Штук, год', quantity: '1' },
+    { name: 'Рукавицы комбинированные', punkt: 'п. 793', unit: 'Пар, год', quantity: '6 пар' },
+    { name: 'Пояс предохранительный', punkt: 'п. 793', unit: 'Штук, год', quantity: '1' }
 ];
 
-// ============================================================
-// МОДАЛЬНОЕ ОКНО СИЗ
-// ============================================================
-let currentPPEWorkplace = null;
-let ppeItems = [];
+function initPPECardsPage() {
+    renderPPECardStaffList();
+    renderPPECardPPEList();
+}
 
-function openPPEModal(wp) {
-    if (!wp || !wp.position || wp.position.trim() === '') {
-        alert('⚠️ Для этого рабочего места не указана должность.');
+function renderPPECardStaffList() {
+    const container = document.getElementById('ppeCardStaffList');
+    if (!container) return;
+    const all = getAllEmployees();
+    
+    if (all.length === 0) {
+        container.innerHTML = '<p style="color:#6a6a8a;text-align:center;padding:20px;">Нет загруженных сотрудников. Сначала загрузите штатное расписание.</p>';
         return;
     }
-    currentPPEWorkplace = wp;
-    ppeItems = wp.ppeItems || [];
     
-    const modal = document.getElementById('ppeModal');
-    const loading = document.getElementById('ppeLoading');
-    const content = document.getElementById('ppeContent');
-    const error = document.getElementById('ppeError');
-    const list = document.getElementById('ppeList');
-    
-    if (!modal) return;
-    
-    loading.style.display = 'none';
-    content.style.display = 'block';
-    error.style.display = 'none';
-    modal.classList.remove('hidden');
-    
-    document.getElementById('ppeEmployeeName').textContent = wp.name || 'Сотрудник';
-    document.getElementById('ppePosition').textContent = wp.position || 'Должность не указана';
-    
-    renderPPEList();
+    let html = '<div style="max-height:400px;overflow-y:auto;">';
+    all.forEach((emp, idx) => {
+        html += `
+            <div class="employee-row">
+                <input type="checkbox" class="ppe-card-staff-check" data-snils="${emp.snils}">
+                <span class="emp-name" onclick="openEmployeeCardBySnils('${emp.snils}')">${emp.last_name} ${emp.first_name}</span>
+                <span class="emp-position">${emp.position}</span>
+                <span class="emp-snils">${formatSnils(emp.snils)}</span>
+                ${emp.department ? `<span style="color:#8888aa;font-size:12px;margin-left:auto;">${emp.department}</span>` : '<span style="color:#666;font-size:12px;margin-left:auto;">Без службы</span>'}
+            </div>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
 }
 
-function renderPPEList() {
-    const list = document.getElementById('ppeList');
-    if (!list) return;
+function renderPPECardPPEList() {
+    const container = document.getElementById('ppeCardPPEList');
+    if (!container) return;
     
-    const typeOptions = PPE_TYPES.map(t => {
-        return `<option value="${t}" style="color:#fff;background:#1a1a3e;padding:8px;">${t}</option>`;
-    }).join('');
-    
-    let html = `
-        <div style="background:rgba(0,212,255,0.08);padding:10px 14px;border-radius:8px;margin-bottom:14px;border:1px solid rgba(0,212,255,0.15);">
-            <span style="color:#8888aa;font-size:13px;">
-                📋 Добавьте СИЗ для <strong style="color:#00d4ff;">"${currentPPEWorkplace.position}"</strong>
-            </span>
-            <span style="color:#4caf50;font-size:12px;margin-left:12px;">● ${ppeItems.length} добавлено</span>
-        </div>
-        
-        <div style="margin-bottom:14px;background:rgba(255,255,255,0.03);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
-            <div style="display:grid;grid-template-columns:1.4fr 2fr 0.8fr 0.8fr 1fr auto;gap:10px;align-items:end;">
-                <div>
-                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Тип СИЗ</label>
-                    <select id="ppeTypeSelect" style="width:100%;padding:10px 12px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#fff;font-size:13px;cursor:pointer;min-width:180px;">
-                        <option value="" selected disabled style="color:#888;background:#1a1a3e;">▼ Выберите тип...</option>
-                        ${typeOptions}
-                    </select>
-                </div>
-                <div>
-                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Наименование</label>
-                    <input type="text" id="ppeNameInput" placeholder="Костюм х/б" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
-                </div>
-                <div>
-                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Кол-во</label>
-                    <input type="text" id="ppeCountInput" placeholder="1 шт." style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
-                </div>
-                <div>
-                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Срок</label>
-                    <input type="text" id="ppeTermInput" placeholder="12 мес" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
-                </div>
-                <div>
-                    <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Модель</label>
-                    <input type="text" id="ppeModelInput" placeholder="Артикул" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
-                </div>
-                <div>
-                    <button onclick="addPPEItem()" style="padding:10px 20px;background:linear-gradient(135deg,#7c3aed,#00d4ff);border:none;border-radius:6px;color:#fff;font-weight:600;cursor:pointer;width:100%;font-size:14px;">➕ Добавить</button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    if (ppeItems.length === 0) {
-        html += `<div style="text-align:center;padding:20px;color:#666;font-size:14px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px dashed rgba(255,255,255,0.06);">Нет добавленных СИЗ.</div>`;
-    } else {
+    let html = '';
+    PPE_CARD_TEMPLATES.forEach((ppe, idx) => {
+        const checked = selectedPPECardItems.some(item => item.name === ppe.name) ? 'checked' : '';
         html += `
-            <div style="max-height:300px;overflow-y:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">
-                <table style="width:100%;border-collapse:collapse;font-size:13px;">
-                    <thead style="position:sticky;top:0;background:#1a1a3e;z-index:2;">
-                        <tr style="border-bottom:2px solid rgba(124,58,237,0.3);">
-                            <th style="padding:8px 10px;color:#8888aa;text-align:left;">№</th>
-                            <th style="padding:8px 10px;color:#8888aa;text-align:left;">Тип</th>
-                            <th style="padding:8px 10px;color:#8888aa;text-align:left;">Наименование</th>
-                            <th style="padding:8px 10px;color:#8888aa;text-align:left;">Кол-во</th>
-                            <th style="padding:8px 10px;color:#8888aa;text-align:left;">Срок</th>
-                            <th style="padding:8px 10px;color:#8888aa;text-align:left;">Модель</th>
-                            <th style="width:40px;text-align:center;color:#8888aa;">✖</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            <div class="ppe-item-select">
+                <input type="checkbox" class="ppe-card-ppe-check" data-index="${idx}" ${checked}>
+                <label>
+                    <span style="color:#fff;">${ppe.name}</span>
+                    <span class="ppe-detail">(${ppe.punkt}, ${ppe.unit}, ${ppe.quantity})</span>
+                </label>
+            </div>
         `;
-        ppeItems.forEach((item, index) => {
-            html += `
-                <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                    <td style="padding:8px 10px;color:#7c3aed;font-weight:600;">${index+1}</td>
-                    <td style="padding:8px 10px;color:#7c3aed;">${item.type || '—'}</td>
-                    <td style="padding:8px 10px;color:#fff;">${item.name || ''}</td>
-                    <td style="padding:8px 10px;color:#4caf50;">${item.count || '—'}</td>
-                    <td style="padding:8px 10px;color:#ffc107;">${item.term || '—'}</td>
-                    <td style="padding:8px 10px;color:#b388ff;">${item.model || '—'}</td>
-                    <td style="padding:8px 10px;text-align:center;">
-                        <button onclick="removePPEItem(${index})" style="background:rgba(255,70,70,0.15);border:none;border-radius:4px;color:#ff6b6b;cursor:pointer;padding:2px 10px;">✖</button>
-                    </td>
-                </tr>
-            `;
-        });
-        html += `</tbody></table></div>`;
-    }
+    });
     
     html += `
-        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;border-top:1px solid rgba(255,255,255,0.06);padding-top:14px;">
-            <button onclick="savePPEItems()" style="padding:10px 28px;background:linear-gradient(135deg,#4caf50,#2e7d32);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">💾 Сохранить</button>
-            <button onclick="exportPPE()" style="padding:10px 28px;background:linear-gradient(135deg,#7c3aed,#00d4ff);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">📥 Экспорт PDF</button>
-            <button onclick="closePPEModal()" style="padding:10px 28px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#aaa;cursor:pointer;">✖ Закрыть</button>
+        <div style="width:100%;margin-top:8px;padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:6px;border:1px dashed rgba(255,255,255,0.06);display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <input type="text" id="ppeCardCustomName" placeholder="Свое СИЗ (наименование)" style="flex:2;min-width:150px;padding:6px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+            <input type="text" id="ppeCardCustomPunkt" placeholder="Пункт норм" style="flex:1;min-width:100px;padding:6px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+            <input type="text" id="ppeCardCustomUnit" placeholder="Ед. изм." style="flex:1;min-width:100px;padding:6px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+            <input type="text" id="ppeCardCustomQuantity" placeholder="Кол-во" style="flex:1;min-width:80px;padding:6px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+            <button onclick="addCustomPPEToCardList()" style="padding:6px 16px;background:linear-gradient(135deg,#7c3aed,#00d4ff);border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:13px;">➕ Добавить</button>
         </div>
     `;
-    list.innerHTML = html;
-}
-
-function addPPEItem() {
-    const type = document.getElementById('ppeTypeSelect').value;
-    const name = document.getElementById('ppeNameInput').value.trim();
-    const count = document.getElementById('ppeCountInput').value.trim();
-    const term = document.getElementById('ppeTermInput').value.trim();
-    const model = document.getElementById('ppeModelInput').value.trim();
     
-    if (!name) { alert('❌ Введите наименование СИЗ!'); return; }
-    if (!type || type === 'Выберите тип...') { alert('❌ Выберите тип СИЗ!'); return; }
+    container.innerHTML = html;
     
-    ppeItems.push({ type, name, count, term, model });
-    document.getElementById('ppeNameInput').value = '';
-    document.getElementById('ppeCountInput').value = '';
-    document.getElementById('ppeTermInput').value = '';
-    document.getElementById('ppeModelInput').value = '';
-    document.getElementById('ppeTypeSelect').value = '';
-    renderPPEList();
-}
-
-function removePPEItem(index) {
-    ppeItems.splice(index, 1);
-    renderPPEList();
-}
-
-function savePPEItems() {
-    if (!currentPPEWorkplace) return;
-    if (ppeItems.length === 0) { alert('⚠️ Добавьте хотя бы одно СИЗ!'); return; }
-    currentPPEWorkplace.ppeItems = ppeItems;
-    currentPPEWorkplace.hasPPE = true;
-    currentPPEWorkplace.ppeSource = 'Введено вручную';
-    saveMap();
-    drawMap();
-    alert(`✅ Сохранено ${ppeItems.length} СИЗ!`);
-    closePPEModal();
-}
-
-function closePPEModal() {
-    document.getElementById('ppeModal').classList.add('hidden');
-    currentPPEWorkplace = null;
-    ppeItems = [];
-}
-
-function exportPPE() {
-    if (!currentPPEWorkplace) { alert('Нет данных'); return; }
-    let ppeText = '';
-    ppeItems.forEach((item, i) => {
-        ppeText += `<div style="padding:8px 12px;margin:4px 0;background:#f5f5f5;border-radius:4px;border-left:3px solid #7c3aed;">
-            <span style="font-weight:700;color:#7c3aed;">${i+1}.</span>
-            <span><strong>${item.type}:</strong> ${item.name}</span>
-            <span style="color:#4caf50;float:right;">${item.count || ''} ${item.term || ''}</span>
-            ${item.model ? `<br><span style="color:#888;font-size:12px;margin-left:28px;">📦 ${item.model}</span>` : ''}
-        </div>`;
+    // Обновляем выбранные СИЗ при изменении чекбоксов
+    document.querySelectorAll('.ppe-card-ppe-check').forEach(cb => {
+        cb.addEventListener('change', function() {
+            const idx = parseInt(this.dataset.index);
+            const ppe = PPE_CARD_TEMPLATES[idx];
+            if (this.checked) {
+                if (!selectedPPECardItems.some(item => item.name === ppe.name)) {
+                    selectedPPECardItems.push({ ...ppe });
+                }
+            } else {
+                selectedPPECardItems = selectedPPECardItems.filter(item => item.name !== ppe.name);
+            }
+            updatePPECardSelectionCount();
+        });
     });
-    const win = window.open('', '_blank');
-    win.document.write(`<!DOCTYPE html><html><head><title>СИЗ</title><style>body{font-family:Arial;padding:40px;color:#333;max-width:900px;margin:0 auto;}h1{color:#1a1a3e;border-bottom:3px solid #7c3aed;padding-bottom:10px;}.header-info{background:#f5f5f5;padding:15px;border-radius:8px;margin:20px 0;}.footer{margin-top:30px;padding-top:15px;border-top:1px solid #ddd;font-size:12px;color:#888;text-align:center;}</style></head><body>
-        <h1>🦺 Средства индивидуальной защиты</h1>
-        <div class="header-info"><p><strong>Сотрудник:</strong> ${currentPPEWorkplace.name}</p><p><strong>Должность:</strong> ${currentPPEWorkplace.position}</p><p><strong>Дата:</strong> ${new Date().toLocaleDateString('ru-RU')}</p></div>
-        <hr>${ppeText}<div class="footer"><p>Данные введены специалистом по ОТ</p></div>
-        <script>window.print();<\/script></body></html>`);
-    win.document.close();
+    
+    updatePPECardSelectionCount();
+}
+
+function addCustomPPEToCardList() {
+    const name = document.getElementById('ppeCardCustomName').value.trim();
+    const punkt = document.getElementById('ppeCardCustomPunkt').value.trim() || 'п. ___';
+    const unit = document.getElementById('ppeCardCustomUnit').value.trim() || 'Штук, год';
+    const quantity = document.getElementById('ppeCardCustomQuantity').value.trim() || '1';
+    
+    if (!name) {
+        alert('❌ Введите наименование СИЗ!');
+        return;
+    }
+    
+    const newPPE = { name, punkt, unit, quantity };
+    if (!selectedPPECardItems.some(item => item.name === name)) {
+        selectedPPECardItems.push(newPPE);
+    }
+    
+    document.getElementById('ppeCardCustomName').value = '';
+    document.getElementById('ppeCardCustomPunkt').value = '';
+    document.getElementById('ppeCardCustomUnit').value = '';
+    document.getElementById('ppeCardCustomQuantity').value = '';
+    
+    renderPPECardPPEList();
+    alert('✅ СИЗ добавлено в список');
+}
+
+function updatePPECardSelectionCount() {
+    const container = document.getElementById('ppeCardPPEList');
+    if (!container) return;
+    // Добавляем счетчик в заголовок
+    const header = document.querySelector('#ppeCardPPEList')?.previousElementSibling;
+    if (header) {
+        header.textContent = `🦺 Выберите СИЗ для выдачи (выбрано: ${selectedPPECardItems.length}):`;
+    }
+}
+
+function addPPEToCardList() {
+    // Открываем диалог для добавления своего СИЗ
+    document.getElementById('ppeCardCustomName').focus();
+}
+
+function getSelectedPPECardEmployees() {
+    const checkboxes = document.querySelectorAll('.ppe-card-staff-check:checked');
+    const all = getAllEmployees();
+    const selected = [];
+    checkboxes.forEach(cb => {
+        const snils = cb.dataset.snils;
+        const emp = all.find(e => e.snils === snils);
+        if (emp) selected.push(emp);
+    });
+    return selected;
+}
+
+function clearPPECardSelection() {
+    document.querySelectorAll('.ppe-card-staff-check').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.ppe-card-ppe-check').forEach(cb => cb.checked = false);
+    selectedPPECardItems = [];
+    renderPPECardPPEList();
+    document.getElementById('ppeCardResult').classList.add('hidden');
+    alert('✅ Выбор очищен');
 }
 
 // ============================================================
-// ДОБАВЛЕНИЕ В ПРОТОКОЛ ИЗ ШТАТКИ
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ В .DOCX
 // ============================================================
-function addSelectedToProtocol() {
-    const selected = getSelectedStaffFromView();
-    if (selected.length === 0) { alert('❌ Выберите сотрудников!'); return; }
-    const protocol = getProtocol();
-    const existing = new Set(protocol.map(e => e.snils));
-    let added = 0;
-    selected.forEach(emp => {
-        if (!existing.has(emp.snils)) { protocol.push({...emp}); existing.add(emp.snils); added++; }
-    });
-    saveProtocol(protocol);
-    renderProtocol();
-    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
-    alert(`✅ Добавлено ${added} сотрудников!`);
+async function generatePPECards() {
+    const employees = getSelectedPPECardEmployees();
+    if (employees.length === 0) {
+        alert('❌ Выберите хотя бы одного сотрудника!');
+        return;
+    }
+    
+    if (selectedPPECardItems.length === 0) {
+        alert('❌ Выберите хотя бы одно СИЗ!');
+        return;
+    }
+    
+    const manager = document.getElementById('ppeCardManager').value.trim() || '__________';
+    const managerPosition = document.getElementById('ppeCardManagerPosition').value.trim() || '__________';
+    const cardNumber = document.getElementById('ppeCardNumber').value.trim() || '';
+    const department = document.getElementById('ppeCardDepartment').value.trim() || '__________';
+    const gender = document.getElementById('ppeCardGender').value;
+    const height = document.getElementById('ppeCardHeight').value.trim() || '___';
+    const clothesSize = document.getElementById('ppeCardClothesSize').value.trim() || '___';
+    const shoeSize = document.getElementById('ppeCardShoeSize').value.trim() || '___';
+    
+    const resultDiv = document.getElementById('ppeCardResult');
+    const contentDiv = document.getElementById('ppeCardResultContent');
+    
+    // Используем библиотеку docx для создания документа
+    try {
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, BorderStyle, HeadingLevel, AlignmentType, WidthType, TableLayoutType } = docx;
+        
+        let allDocs = [];
+        
+        for (const emp of employees) {
+            // Создаем документ для каждого сотрудника
+            const doc = new Document({
+                sections: [{
+                    properties: {
+                        page: {
+                            margin: {
+                                top: 720,   // 0.5 дюйма
+                                bottom: 720,
+                                left: 720,
+                                right: 720
+                            }
+                        }
+                    },
+                    children: [
+                        // ШАПКА
+                        new Paragraph({
+                            children: [
+                                new TextRun({
+                                    text: `ЛИЧНАЯ КАРТОЧКА N ${cardNumber || '___'}`,
+                                    bold: true,
+                                    size: 28,
+                                    font: 'Times New Roman'
+                                })
+                            ],
+                            alignment: AlignmentType.CENTER,
+                            spacing: { after: 200 }
+                        }),
+                        new Paragraph({
+                            children: [
+                                new TextRun({
+                                    text: 'учета выдачи СИЗ',
+                                    bold: true,
+                                    size: 28,
+                                    font: 'Times New Roman'
+                                })
+                            ],
+                            alignment: AlignmentType.CENTER,
+                            spacing: { after: 300 }
+                        }),
+                        
+                        // ТАБЛИЦА 1 - ИНФОРМАЦИЯ О СОТРУДНИКЕ
+                        new Table({
+                            rows: [
+                                new TableRow({
+                                    children: [
+                                        new TableCell({
+                                            children: [
+                                                new Paragraph({
+                                                    children: [
+                                                        new TextRun({ text: `Фамилия ${emp.last_name}`, size: 22, font: 'Times New Roman' }),
+                                                        new TextRun({ text: '\n', size: 22 }),
+                                                        new TextRun({ text: `Имя ${emp.first_name}`, size: 22, font: 'Times New Roman' }),
+                                                        new TextRun({ text: '\n', size: 22 }),
+                                                        new TextRun({ text: `Отчество ${emp.middle_name || ''}`, size: 22, font: 'Times New Roman' }),
+                                                        new TextRun({ text: '\n', size: 22 }),
+                                                        new TextRun({ text: `Табельный номер ________`, size: 22, font: 'Times New Roman' }),
+                                                        new TextRun({ text: '\n', size: 22 }),
+                                                        new TextRun({ text: `Структурное подразделение ${department}`, size: 22, font: 'Times New Roman' }),
+                                                        new TextRun({ text: '\n', size: 22 }),
+                                                        new TextRun({ text: `Профессия (должность) ${emp.position}`, size: 22, font: 'Times New Roman' }),
+                                                        new TextRun({ text: '\n', size: 22 }),
+                                                        new TextRun({ text: 'Дата поступления на работу __________', size: 22, font: 'Times New Roman' }),
+                                                        new TextRun({ text: '\n', size: 22 }),
+                                                        new TextRun({ text: 'Дата изменения профессии (должности) или перевода в другое структурное подразделение __________', size: 22, font: 'Times New Roman' })
+                                                    ],
+                                                    spacing: { line: 280 }
+                                                })
+                                            ],
+                                            width: { size: 60, type: WidthType.PERCENTAGE }
+                                        }),
+                                        new TableCell({
+                                            children: [
+                                                new Paragraph({
+                                                    children: [
+                                                        new TextRun({ text: `Пол ${gender}`, size: 22, font: 'Times New Roman' }),
+                                                        new TextRun({ text: '\n', size: 22 }),
+                                                        new TextRun({ text: `Рост ${height}`, size: 22, font: 'Times New Roman' }),
+                                                        new TextRun({ text: '\n', size: 22 }),
+                                                        new TextRun({ text: 'Размер:', size: 22, font: 'Times New Roman', bold: true }),
+                                                        new TextRun({ text: '\n', size: 22 }),
+                                                        new TextRun({ text: `одежды ${clothesSize}`, size: 22, font: 'Times New Roman' }),
+                                                        new TextRun({ text: '\n', size: 22 }),
+                                                        new TextRun({ text: `обуви ${shoeSize}`, size: 22, font: 'Times New Roman' }),
+                                                        new TextRun({ text: '\n', size: 22 }),
+                                                        new TextRun({ text: 'головного убора ___', size: 22, font: 'Times New Roman' }),
+                                                        new TextRun({ text: '\n', size: 22 }),
+                                                        new TextRun({ text: 'СИЗОД ___', size: 22, font: 'Times New Roman' }),
+                                                        new TextRun({ text: '\n', size: 22 }),
+                                                        new TextRun({ text: 'СИЗ рук ___________', size: 22, font: 'Times New Roman' })
+                                                    ],
+                                                    spacing: { line: 280 }
+                                                })
+                                            ],
+                                            width: { size: 40, type: WidthType.PERCENTAGE }
+                                        })
+                                    ]
+                                })
+                            ],
+                            width: { size: 100, type: WidthType.PERCENTAGE },
+                            layout: TableLayoutType.FIXED
+                        }),
+                        
+                        new Paragraph({ spacing: { after: 200 } }),
+                        
+                        // ТАБЛИЦА 2 - СИЗ
+                        new Table({
+                            rows: [
+                                new TableRow({
+                                    children: [
+                                        new TableCell({
+                                            children: [
+                                                new Paragraph({
+                                                    children: [
+                                                        new TextRun({ text: 'Наименование СИЗ', bold: true, size: 22, font: 'Times New Roman' })
+                                                    ],
+                                                    alignment: AlignmentType.CENTER
+                                                })
+                                            ],
+                                            width: { size: 30, type: WidthType.PERCENTAGE }
+                                        }),
+                                        new TableCell({
+                                            children: [
+                                                new Paragraph({
+                                                    children: [
+                                                        new TextRun({ text: 'Пункт Норм', bold: true, size: 22, font: 'Times New Roman' })
+                                                    ],
+                                                    alignment: AlignmentType.CENTER
+                                                })
+                                            ],
+                                            width: { size: 25, type: WidthType.PERCENTAGE }
+                                        }),
+                                        new TableCell({
+                                            children: [
+                                                new Paragraph({
+                                                    children: [
+                                                        new TextRun({ text: 'Единица измерения, периодичность выдачи', bold: true, size: 22, font: 'Times New Roman' })
+                                                    ],
+                                                    alignment: AlignmentType.CENTER
+                                                })
+                                            ],
+                                            width: { size: 25, type: WidthType.PERCENTAGE }
+                                        }),
+                                        new TableCell({
+                                            children: [
+                                                new Paragraph({
+                                                    children: [
+                                                        new TextRun({ text: 'Количество на период', bold: true, size: 22, font: 'Times New Roman' })
+                                                    ],
+                                                    alignment: AlignmentType.CENTER
+                                                })
+                                            ],
+                                            width: { size: 20, type: WidthType.PERCENTAGE }
+                                        })
+                                    ]
+                                }),
+                                ...selectedPPECardItems.map(ppe => 
+                                    new TableRow({
+                                        children: [
+                                            new TableCell({
+                                                children: [
+                                                    new Paragraph({
+                                                        children: [
+                                                            new TextRun({ text: ppe.name, size: 20, font: 'Times New Roman' })
+                                                        ]
+                                                    })
+                                                ]
+                                            }),
+                                            new TableCell({
+                                                children: [
+                                                    new Paragraph({
+                                                        children: [
+                                                            new TextRun({ text: ppe.punkt, size: 20, font: 'Times New Roman' })
+                                                        ]
+                                                    })
+                                                ]
+                                            }),
+                                            new TableCell({
+                                                children: [
+                                                    new Paragraph({
+                                                        children: [
+                                                            new TextRun({ text: ppe.unit, size: 20, font: 'Times New Roman' })
+                                                        ]
+                                                    })
+                                                ]
+                                            }),
+                                            new TableCell({
+                                                children: [
+                                                    new Paragraph({
+                                                        children: [
+                                                            new TextRun({ text: ppe.quantity, size: 20, font: 'Times New Roman' })
+                                                        ]
+                                                    })
+                                                ]
+                                            })
+                                        ]
+                                    })
+                                )
+                            ],
+                            width: { size: 100, type: WidthType.PERCENTAGE },
+                            layout: TableLayoutType.FIXED
+                        }),
+                        
+                        new Paragraph({ spacing: { after: 300 } }),
+                        
+                        // ПОДПИСЬ
+                        new Paragraph({
+                            children: [
+                                new TextRun({
+                                    text: `Начальник ${managerPosition} __________ ${manager}`,
+                                    size: 22,
+                                    font: 'Times New Roman'
+                                })
+                            ],
+                            spacing: { before: 200, after: 100 }
+                        }),
+                        new Paragraph({
+                            children: [
+                                new TextRun({
+                                    text: '(подпись)     (фамилия, инициалы)',
+                                    size: 22,
+                                    font: 'Times New Roman'
+                                })
+                            ]
+                        }),
+                        
+                        new Paragraph({ spacing: { after: 400 } }),
+                        
+                        // ПУСТАЯ ТАБЛИЦА ДЛЯ ВЫДАЧИ
+                        new Paragraph({
+                            children: [
+                                new TextRun({
+                                    text: 'Данные о выдаче СИЗ',
+                                    bold: true,
+                                    size: 24,
+                                    font: 'Times New Roman'
+                                })
+                            ],
+                            alignment: AlignmentType.CENTER
+                        }),
+                        
+                        new Table({
+                            rows: [
+                                new TableRow({
+                                    children: [
+                                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Наименование СИЗ', bold: true, size: 18, font: 'Times New Roman' })], alignment: AlignmentType.CENTER })] }),
+                                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Модель, марка, артикул', bold: true, size: 18, font: 'Times New Roman' })], alignment: AlignmentType.CENTER })] }),
+                                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Выдано', bold: true, size: 18, font: 'Times New Roman' })], alignment: AlignmentType.CENTER })] }),
+                                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Возвращено', bold: true, size: 18, font: 'Times New Roman' })], alignment: AlignmentType.CENTER })] })
+                                    ]
+                                }),
+                                ...Array(10).fill(0).map(() => 
+                                    new TableRow({
+                                        children: [
+                                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '', size: 16, font: 'Times New Roman' })], spacing: { line: 300 } })] }),
+                                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '', size: 16, font: 'Times New Roman' })], spacing: { line: 300 } })] }),
+                                            new TableCell({ 
+                                                children: [
+                                                    new Paragraph({ 
+                                                        children: [
+                                                            new TextRun({ text: 'дата', size: 16, font: 'Times New Roman', italics: true }),
+                                                            new TextRun({ text: ' кол-во', size: 16, font: 'Times New Roman', italics: true }),
+                                                            new TextRun({ text: ' подпись', size: 16, font: 'Times New Roman', italics: true })
+                                                        ],
+                                                        spacing: { line: 250 }
+                                                    })
+                                                ]
+                                            }),
+                                            new TableCell({ 
+                                                children: [
+                                                    new Paragraph({ 
+                                                        children: [
+                                                            new TextRun({ text: 'дата', size: 16, font: 'Times New Roman', italics: true }),
+                                                            new TextRun({ text: ' кол-во', size: 16, font: 'Times New Roman', italics: true }),
+                                                            new TextRun({ text: ' подпись', size: 16, font: 'Times New Roman', italics: true })
+                                                        ],
+                                                        spacing: { line: 250 }
+                                                    })
+                                                ]
+                                            })
+                                        ]
+                                    })
+                                )
+                            ],
+                            width: { size: 100, type: WidthType.PERCENTAGE },
+                            layout: TableLayoutType.FIXED
+                        })
+                    ]
+                }]
+            });
+            
+            allDocs.push({ doc, employee: emp });
+        }
+        
+        // Генерируем все документы
+        for (const { doc, employee } of allDocs) {
+            const blob = await Packer.toBlob(doc);
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Карточка_СИЗ_${employee.last_name}_${employee.first_name}.docx`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+        
+        // Показываем результат
+        resultDiv.classList.remove('hidden');
+        contentDiv.innerHTML = `
+            <p>✅ Создано карточек: <strong>${allDocs.length}</strong></p>
+            <p>📋 Сотрудники: ${employees.map(e => `${e.last_name} ${e.first_name}`).join(', ')}</p>
+            <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
+            <p style="color:#8888aa;font-size:13px;margin-top:8px;">📁 Документы сохранены в папку "Загрузки"</p>
+        `;
+        
+    } catch (error) {
+        console.error('Ошибка генерации:', error);
+        alert('❌ Ошибка при создании документов. Проверьте консоль.');
+    }
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ XML
+// ОБРАБОТЧИК ДЛЯ КАРТОЧЕК СИЗ
 // ============================================================
-function generateXML() {
-    const orgSelect = document.getElementById('orgSelect');
-    const orgs = getOrgs();
-    const org = orgs.find(o => o.id === parseInt(orgSelect.value));
-    if (!org) { alert('❌ Выберите организацию!'); return; }
-    const protocol = getProtocol();
-    if (protocol.length === 0) { alert('❌ Нет сотрудников в протоколе!'); return; }
-    
-    const number = document.getElementById('protocolNumber').value.trim() || '01/26';
-    const date = document.getElementById('protocolDate').value || new Date().toISOString().split('T')[0];
-    
-    const programs = [];
-    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked').forEach(cb => {
-        const label = cb.closest('.program-check');
-        if (label) programs.push(label.textContent.trim());
-    });
-    if (programs.length === 0) { alert('❌ Выберите программы!'); return; }
-    
-    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<Протокол>\n';
-    xml += `  <Номер>${escXml(number)}</Номер>\n  <Дата>${escXml(date)}</Дата>\n  <Организация>${escXml(org.name)}</Организация>\n`;
-    xml += '  <Программы>\n';
-    programs.forEach(p => xml += `    <Программа>${escXml(p)}</Программа>\n`);
-    xml += '  </Программы>\n  <Сотрудники>\n';
-    protocol.forEach((emp, i) => {
-        xml += `    <Сотрудник>\n      <Номер>${i+1}</Номер>\n      <Фамилия>${escXml(emp.last_name)}</Фамилия>\n      <Имя>${escXml(emp.first_name)}</Имя>\n`;
-        xml += `      <Отчество>${escXml(emp.middle_name || '')}</Отчество>\n      <Должность>${escXml(emp.position)}</Должность>\n`;
-        xml += `      <СНИЛС>${escXml(formatSnils(emp.snils))}</СНИЛС>\n      <Результат>Пройдено</Результат>\n    </Сотрудник>\n`;
-    });
-    xml += '  </Сотрудники>\n</Протокол>';
-    
-    const resultBlock = document.getElementById('resultBlock');
-    const downloadLink = document.getElementById('downloadLink');
-    resultBlock.classList.remove('hidden');
-    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = `Протокол_${number}_${date}.xml`;
-    const preview = document.createElement('pre');
-    preview.style.cssText = 'max-height:200px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;margin-top:12px;';
-    preview.textContent = xml.substring(0, 500) + '...';
-    resultBlock.querySelector('pre')?.remove();
-    resultBlock.appendChild(preview);
-}
+document.addEventListener('DOMContentLoaded', function() {
+    // Кнопка генерации карточек СИЗ
+    const generateBtn = document.getElementById('generatePPECardsBtn');
+    if (generateBtn) {
+        generateBtn.addEventListener('click', generatePPECards);
+    }
+});
 // ============================================================
 // КАЛЕНДАРЬ
 // ============================================================
@@ -1183,7 +1424,6 @@ function markTrainingFromProtocol() {
     protocol.forEach(empFromProtocol => {
         const found = all.find(e => e.snils === empFromProtocol.snils);
         if (found) {
-            // Находим сотрудника в структуре и обновляем
             const data = getStaffData();
             for (const [dept, deptData] of Object.entries(data.departments)) {
                 const idx = deptData.employees.findIndex(e => e.snils === empFromProtocol.snils);
@@ -1283,7 +1523,6 @@ function saveEmployeeDataFromModal(snils) {
     const data = getStaffData();
     let emp = null;
     
-    // Ищем в отделах
     for (const [dept, deptData] of Object.entries(data.departments)) {
         const idx = deptData.employees.findIndex(e => e.snils === snils);
         if (idx !== -1) {
@@ -1300,7 +1539,6 @@ function saveEmployeeDataFromModal(snils) {
         }
     }
     
-    // Ищем в непривязанных
     const idx = data.unassigned.findIndex(e => e.snils === snils);
     if (idx !== -1) {
         emp = data.unassigned[idx];
@@ -2257,6 +2495,71 @@ function initTrainingPage() {
     };
     
     renderCalendar();
+    initPPECardsPage();
+}
+
+// ============================================================
+// ДОБАВЛЕНИЕ В ПРОТОКОЛ ИЗ ШТАТКИ
+// ============================================================
+function addSelectedToProtocol() {
+    const selected = getSelectedStaffFromView();
+    if (selected.length === 0) { alert('❌ Выберите сотрудников!'); return; }
+    const protocol = getProtocol();
+    const existing = new Set(protocol.map(e => e.snils));
+    let added = 0;
+    selected.forEach(emp => {
+        if (!existing.has(emp.snils)) { protocol.push({...emp}); existing.add(emp.snils); added++; }
+    });
+    saveProtocol(protocol);
+    renderProtocol();
+    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
+    alert(`✅ Добавлено ${added} сотрудников!`);
+}
+
+// ============================================================
+// ГЕНЕРАЦИЯ XML
+// ============================================================
+function generateXML() {
+    const orgSelect = document.getElementById('orgSelect');
+    const orgs = getOrgs();
+    const org = orgs.find(o => o.id === parseInt(orgSelect.value));
+    if (!org) { alert('❌ Выберите организацию!'); return; }
+    const protocol = getProtocol();
+    if (protocol.length === 0) { alert('❌ Нет сотрудников в протоколе!'); return; }
+    
+    const number = document.getElementById('protocolNumber').value.trim() || '01/26';
+    const date = document.getElementById('protocolDate').value || new Date().toISOString().split('T')[0];
+    
+    const programs = [];
+    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked').forEach(cb => {
+        const label = cb.closest('.program-check');
+        if (label) programs.push(label.textContent.trim());
+    });
+    if (programs.length === 0) { alert('❌ Выберите программы!'); return; }
+    
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<Протокол>\n';
+    xml += `  <Номер>${escXml(number)}</Номер>\n  <Дата>${escXml(date)}</Дата>\n  <Организация>${escXml(org.name)}</Организация>\n`;
+    xml += '  <Программы>\n';
+    programs.forEach(p => xml += `    <Программа>${escXml(p)}</Программа>\n`);
+    xml += '  </Программы>\n  <Сотрудники>\n';
+    protocol.forEach((emp, i) => {
+        xml += `    <Сотрудник>\n      <Номер>${i+1}</Номер>\n      <Фамилия>${escXml(emp.last_name)}</Фамилия>\n      <Имя>${escXml(emp.first_name)}</Имя>\n`;
+        xml += `      <Отчество>${escXml(emp.middle_name || '')}</Отчество>\n      <Должность>${escXml(emp.position)}</Должность>\n`;
+        xml += `      <СНИЛС>${escXml(formatSnils(emp.snils))}</СНИЛС>\n      <Результат>Пройдено</Результат>\n    </Сотрудник>\n`;
+    });
+    xml += '  </Сотрудники>\n</Протокол>';
+    
+    const resultBlock = document.getElementById('resultBlock');
+    const downloadLink = document.getElementById('downloadLink');
+    resultBlock.classList.remove('hidden');
+    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = `Протокол_${number}_${date}.xml`;
+    const preview = document.createElement('pre');
+    preview.style.cssText = 'max-height:200px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;margin-top:12px;';
+    preview.textContent = xml.substring(0, 500) + '...';
+    resultBlock.querySelector('pre')?.remove();
+    resultBlock.appendChild(preview);
 }
 
 // ============================================================
