@@ -1076,7 +1076,7 @@ function clearPPECardSelection() {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ИСПРАВЛЕННАЯ
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ПУСТЫЕ ЯЧЕЙКИ ДЛЯ РУЧНОГО ЗАПОЛНЕНИЯ
 // ============================================================
 function generatePPECardsHTML() {
     console.log('🔄 generatePPECardsHTML вызвана');
@@ -1109,22 +1109,22 @@ function generatePPECardsHTML() {
     let cardCount = 0;
     let totalPairs = Math.ceil(employees.length / 2);
     
-    // ВСЕГДА 4 СТРОКИ в таблице СИЗ (как в Word)
+    // ЛИЦЕВАЯ ТАБЛИЦА - ВСЕГДА 4 СТРОКИ, пустые ячейки для ручного заполнения
     function buildPPETable() {
         let rows = '';
-        // Сначала выводим выбранные СИЗ
+        // Сначала выводим выбранные СИЗ (только название, остальное пустое)
         selectedPPECardItems.forEach((ppe, idx) => {
             rows += `
                 <tr>
                     <td style="border:1px solid #000;padding:8px 10px;font-size:12px;height:45px;">${ppe.name}</td>
-                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;text-align:center;height:45px;">${ppe.punkt || ''}</td>
-                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;text-align:center;height:45px;">${ppe.unit || ''}</td>
-                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;text-align:center;height:45px;">${ppe.quantity || ''}</td>
+                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;text-align:center;height:45px;"></td>
+                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;text-align:center;height:45px;"></td>
+                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;text-align:center;height:45px;"></td>
                 </tr>
             `;
         });
         
-        // Добиваем до 4 строк пустыми (как в Word)
+        // Добиваем до 4 строк пустыми
         const emptyRows = 4 - selectedPPECardItems.length;
         for (let i = 0; i < emptyRows; i++) {
             rows += `
@@ -1139,7 +1139,7 @@ function generatePPECardsHTML() {
         return rows;
     }
     
-    // ОБОРОТНАЯ ТАБЛИЦА - 6 СТРОК (с названиями СИЗ в 1-й колонке)
+    // ОБОРОТНАЯ ТАБЛИЦА - 6 СТРОК (названия СИЗ в 1-й колонке)
     function buildReverseTable() {
         let rows = '';
         // Сначала строки с выбранными СИЗ (названия в 1-й колонке)
@@ -1217,7 +1217,7 @@ function generatePPECardsHTML() {
                     </tr>
                 </table>
                 
-                <!-- ТАБЛИЦА СИЗ - ВСЕГДА 4 СТРОКИ -->
+                <!-- ТАБЛИЦА СИЗ - ВСЕГДА 4 СТРОКИ, пустые ячейки для ручного заполнения -->
                 <table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #000;flex:1;">
                     <thead>
                         <tr style="background:#f0f0f0;">
@@ -1392,7 +1392,7 @@ function generatePPECardsHTML() {
                     📋 На каждом листе: сверху сотрудник А, снизу сотрудник Б
                 </p>
                 <p style="font-size:10px;color:#888;">
-                    📊 Лицевая таблица: ВСЕГДА 4 СТРОКИ
+                    📊 Лицевая таблица: ВСЕГДА 4 СТРОКИ (пустые ячейки для ручного заполнения)
                 </p>
                 <p style="font-size:10px;color:#888;">
                     📊 Оборотная таблица: ВСЕГДА 6 СТРОК (названия СИЗ подставляются автоматически)
@@ -1420,7 +1420,7 @@ function generatePPECardsHTML() {
         <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
         <p style="color:#8888aa;font-size:13px;margin-top:8px;">🖨️ Откроется новое окно для печати.</p>
         <p style="color:#8888aa;font-size:12px;">📄 Всего листов: ${totalPairs * 2} (${totalPairs} лицевых + ${totalPairs} оборотных)</p>
-        <p style="color:#8888aa;font-size:12px;">📊 Лицевая таблица: ВСЕГДА 4 СТРОКИ</p>
+        <p style="color:#8888aa;font-size:12px;">📊 Лицевая таблица: ВСЕГДА 4 СТРОКИ (пустые ячейки для ручного заполнения)</p>
         <p style="color:#8888aa;font-size:12px;">📊 Оборотная таблица: ВСЕГДА 6 СТРОК (названия СИЗ подставляются автоматически)</p>
         <p style="color:#8888aa;font-size:12px;">✂️ Разрез по горизонтали (посередине листа)</p>
     `;
