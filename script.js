@@ -1076,7 +1076,7 @@ function clearPPECardSelection() {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ИСПРАВЛЕННАЯ ПОДПИСЬ
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ПОДПИСЬ КАК В WORD
 // ============================================================
 function generatePPECardsHTML() {
     console.log('🔄 generatePPECardsHTML вызвана');
@@ -1109,7 +1109,6 @@ function generatePPECardsHTML() {
     let cardCount = 0;
     let totalPairs = Math.ceil(employees.length / 2);
     
-    // ЛИЦЕВАЯ ТАБЛИЦА - ВСЕГДА 4 СТРОКИ
     function buildPPETable() {
         let rows = '';
         selectedPPECardItems.forEach((ppe, idx) => {
@@ -1137,7 +1136,6 @@ function generatePPECardsHTML() {
         return rows;
     }
     
-    // ОБОРОТНАЯ ТАБЛИЦА - 6 СТРОК
     function buildReverseTable() {
         let rows = '';
         selectedPPECardItems.forEach((ppe, idx) => {
@@ -1177,17 +1175,14 @@ function generatePPECardsHTML() {
         return rows;
     }
     
-    // ЛИЦЕВАЯ КАРТОЧКА
     function createFaceCard(emp) {
         return `
             <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:12px 16px 10px 16px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
-                <!-- ШАПКА -->
                 <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:8px;flex-shrink:0;">
                     <div style="font-size:16px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
                     <div style="font-size:14px;font-weight:bold;">учета выдачи СИЗ</div>
                 </div>
                 
-                <!-- ИНФОРМАЦИЯ О СОТРУДНИКЕ -->
                 <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;flex-shrink:0;">
                     <tr>
                         <td style="width:55%;vertical-align:top;padding:3px 6px;border:1px solid #000;">
@@ -1213,7 +1208,6 @@ function generatePPECardsHTML() {
                     </tr>
                 </table>
                 
-                <!-- ТАБЛИЦА СИЗ -->
                 <table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #000;flex:1;">
                     <thead>
                         <tr style="background:#f0f0f0;">
@@ -1228,23 +1222,22 @@ function generatePPECardsHTML() {
                     </tbody>
                 </table>
                 
-                <!-- ПОДПИСЬ - КАК В WORD -->
+                <!-- ПОДПИСЬ КАК В WORD -->
                 <div style="margin-top:25px;font-size:12px;flex-shrink:0;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;max-width:550px;">
-                        <span>${managerPosition}</span>
-                        <span style="flex:1;text-align:center;border-bottom:1px solid #000;margin:0 8px;height:30px;"></span>
-                        <span>${manager}</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="white-space:nowrap;">${managerPosition}</span>
+                        <span style="flex:1;border-bottom:1px solid #000;height:28px;min-width:80px;"></span>
+                        <span style="white-space:nowrap;">${manager}</span>
                     </div>
-                    <div style="display:flex;justify-content:space-between;max-width:550px;margin-top:2px;">
-                        <span style="font-size:10px;padding-left:160px;">(подпись)</span>
-                        <span style="font-size:10px;padding-right:10px;">(фамилия, инициалы)</span>
+                    <div style="display:flex;justify-content:space-between;padding-left:160px;padding-right:10px;margin-top:2px;">
+                        <span style="font-size:10px;">(подпись)</span>
+                        <span style="font-size:10px;">(фамилия, инициалы)</span>
                     </div>
                 </div>
             </div>
         `;
     }
     
-    // ОБОРОТНАЯ КАРТОЧКА
     function createReverseCard(emp) {
         return `
             <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:12px 16px 10px 16px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
