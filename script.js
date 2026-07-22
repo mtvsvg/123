@@ -1076,7 +1076,7 @@ function clearPPECardSelection() {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ПУСТЫЕ ЯЧЕЙКИ ДЛЯ РУЧНОГО ЗАПОЛНЕНИЯ
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ИСПРАВЛЕННАЯ
 // ============================================================
 function generatePPECardsHTML() {
     console.log('🔄 generatePPECardsHTML вызвана');
@@ -1109,10 +1109,9 @@ function generatePPECardsHTML() {
     let cardCount = 0;
     let totalPairs = Math.ceil(employees.length / 2);
     
-    // ЛИЦЕВАЯ ТАБЛИЦА - ВСЕГДА 4 СТРОКИ, пустые ячейки для ручного заполнения
+    // ЛИЦЕВАЯ ТАБЛИЦА - ВСЕГДА 4 СТРОКИ
     function buildPPETable() {
         let rows = '';
-        // Сначала выводим выбранные СИЗ (только название, остальное пустое)
         selectedPPECardItems.forEach((ppe, idx) => {
             rows += `
                 <tr>
@@ -1124,7 +1123,6 @@ function generatePPECardsHTML() {
             `;
         });
         
-        // Добиваем до 4 строк пустыми
         const emptyRows = 4 - selectedPPECardItems.length;
         for (let i = 0; i < emptyRows; i++) {
             rows += `
@@ -1139,10 +1137,9 @@ function generatePPECardsHTML() {
         return rows;
     }
     
-    // ОБОРОТНАЯ ТАБЛИЦА - 6 СТРОК (названия СИЗ в 1-й колонке)
+    // ОБОРОТНАЯ ТАБЛИЦА - 6 СТРОК
     function buildReverseTable() {
         let rows = '';
-        // Сначала строки с выбранными СИЗ (названия в 1-й колонке)
         selectedPPECardItems.forEach((ppe, idx) => {
             rows += `
                 <tr>
@@ -1160,7 +1157,6 @@ function generatePPECardsHTML() {
             `;
         });
         
-        // Добиваем до 6 строк пустыми
         const emptyRows = 6 - selectedPPECardItems.length;
         for (let i = 0; i < emptyRows; i++) {
             rows += `
@@ -1217,7 +1213,7 @@ function generatePPECardsHTML() {
                     </tr>
                 </table>
                 
-                <!-- ТАБЛИЦА СИЗ - ВСЕГДА 4 СТРОКИ, пустые ячейки для ручного заполнения -->
+                <!-- ТАБЛИЦА СИЗ -->
                 <table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #000;flex:1;">
                     <thead>
                         <tr style="background:#f0f0f0;">
@@ -1232,10 +1228,11 @@ function generatePPECardsHTML() {
                     </tbody>
                 </table>
                 
-                <!-- ПОДПИСЬ -->
-                <div style="margin-top:10px;font-size:12px;flex-shrink:0;">
+                <!-- ПОДПИСЬ - увеличен отступ, надписи перенесены -->
+                <div style="margin-top:20px;font-size:12px;flex-shrink:0;">
                     <div>${managerPosition} __________ ${manager}</div>
-                    <div style="font-size:10px;">(подпись) (фамилия, инициалы)</div>
+                    <div style="font-size:10px;margin-top:2px;">(подпись)</div>
+                    <div style="font-size:10px;">(фамилия, инициалы)</div>
                 </div>
             </div>
         `;
@@ -1248,7 +1245,7 @@ function generatePPECardsHTML() {
                 <div style="font-weight:bold;font-size:14px;text-align:center;margin-bottom:4px;flex-shrink:0;">Данные о выдаче СИЗ</div>
                 <div style="font-size:11px;text-align:center;margin-bottom:6px;color:#666;flex-shrink:0;">${emp.last_name} ${emp.first_name}</div>
                 
-                <!-- ОБОРОТНАЯ ТАБЛИЦА - 6 СТРОК -->
+                <!-- ОБОРОТНАЯ ТАБЛИЦА -->
                 <table style="width:100%;border-collapse:collapse;font-size:9px;border:1px solid #000;flex:1;">
                     <thead>
                         <tr style="background:#f0f0f0;">
@@ -1298,8 +1295,8 @@ function generatePPECardsHTML() {
         <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
             ${createFaceCard(emp1)}
             ${emp2 ? createFaceCard(emp2).replace('top:0', 'top:50%').replace('border-bottom', 'border-top') : `<div style="position:absolute;top:50%;left:0;width:100%;height:50%;display:flex;align-items:center;justify-content:center;color:#999;font-size:20px;border-top:1px dashed #ddd;">ПУСТАЯ КАРТОЧКА</div>`}
-            <div style="position:absolute;top:50%;left:0;width:100%;height:2px;background:#ff0000;z-index:10;"></div>
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#ff0000;color:#fff;font-size:11px;padding:3px 14px;z-index:11;border-radius:4px;font-weight:bold;">✂️ РАЗРЕЗ</div>
+            <!-- ТОЛЬКО ПУНКТИР, БЕЗ НАДПИСИ -->
+            <div style="position:absolute;top:50%;left:0;width:100%;height:2px;border-top:2px dashed #ff0000;z-index:10;"></div>
         </div>
         `;
         
@@ -1308,8 +1305,8 @@ function generatePPECardsHTML() {
         <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
             ${createReverseCard(emp1)}
             ${emp2 ? createReverseCard(emp2).replace('top:0', 'top:50%').replace('border-bottom', 'border-top') : `<div style="position:absolute;top:50%;left:0;width:100%;height:50%;display:flex;align-items:center;justify-content:center;color:#999;font-size:20px;border-top:1px dashed #ddd;">ПУСТАЯ ОБОРОТНАЯ СТОРОНА</div>`}
-            <div style="position:absolute;top:50%;left:0;width:100%;height:2px;background:#ff0000;z-index:10;"></div>
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#ff0000;color:#fff;font-size:11px;padding:3px 14px;z-index:11;border-radius:4px;font-weight:bold;">✂️ РАЗРЕЗ</div>
+            <!-- ТОЛЬКО ПУНКТИР, БЕЗ НАДПИСИ -->
+            <div style="position:absolute;top:50%;left:0;width:100%;height:2px;border-top:2px dashed #ff0000;z-index:10;"></div>
         </div>
         `;
         
@@ -1345,8 +1342,8 @@ function generatePPECardsHTML() {
                     div[style*="page-break-after:always"] { 
                         page-break-after: always; 
                     }
-                    div[style*="background:#ff0000"] {
-                        background: #ccc !important;
+                    div[style*="border-top:2px dashed #ff0000"] {
+                        border-top: 1px dashed #ccc !important;
                     }
                 }
                 .no-print {
@@ -1398,7 +1395,7 @@ function generatePPECardsHTML() {
                     📊 Оборотная таблица: ВСЕГДА 6 СТРОК (названия СИЗ подставляются автоматически)
                 </p>
                 <p style="font-size:10px;color:#888;">
-                    ✂️ Разрез по горизонтали (посередине листа)
+                    ✂️ Разрез по горизонтали (посередине листа) — только пунктир
                 </p>
                 <p style="font-size:10px;color:#888;">
                     📋 Всего листов: ${totalPairs * 2}
@@ -1422,7 +1419,7 @@ function generatePPECardsHTML() {
         <p style="color:#8888aa;font-size:12px;">📄 Всего листов: ${totalPairs * 2} (${totalPairs} лицевых + ${totalPairs} оборотных)</p>
         <p style="color:#8888aa;font-size:12px;">📊 Лицевая таблица: ВСЕГДА 4 СТРОКИ (пустые ячейки для ручного заполнения)</p>
         <p style="color:#8888aa;font-size:12px;">📊 Оборотная таблица: ВСЕГДА 6 СТРОК (названия СИЗ подставляются автоматически)</p>
-        <p style="color:#8888aa;font-size:12px;">✂️ Разрез по горизонтали (посередине листа)</p>
+        <p style="color:#8888aa;font-size:12px;">✂️ Разрез по горизонтали (посередине листа) — только пунктир</p>
     `;
 }
 // ============================================================
