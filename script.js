@@ -1076,7 +1076,7 @@ function clearPPECardSelection() {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ТОЧНО КАК В WORD
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ИСПРАВЛЕННАЯ
 // ============================================================
 function generatePPECardsHTML() {
     console.log('🔄 generatePPECardsHTML вызвана');
@@ -1117,9 +1117,9 @@ function generatePPECardsHTML() {
             rows += `
                 <tr>
                     <td style="border:1px solid #000;padding:8px 10px;font-size:12px;height:45px;">${ppe.name}</td>
-                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;text-align:center;height:45px;">${ppe.punkt}</td>
-                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;text-align:center;height:45px;">${ppe.unit}</td>
-                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;text-align:center;height:45px;">${ppe.quantity}</td>
+                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;text-align:center;height:45px;">${ppe.punkt || ''}</td>
+                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;text-align:center;height:45px;">${ppe.unit || ''}</td>
+                    <td style="border:1px solid #000;padding:8px 10px;font-size:12px;text-align:center;height:45px;">${ppe.quantity || ''}</td>
                 </tr>
             `;
         });
@@ -1139,29 +1139,49 @@ function generatePPECardsHTML() {
         return rows;
     }
     
-    // ВСЕГДА 10 СТРОК на оборотной стороне
+    // ОБОРОТНАЯ ТАБЛИЦА - 6 СТРОК (с названиями СИЗ в 1-й колонке)
     function buildReverseTable() {
         let rows = '';
-        for (let r = 0; r < 10; r++) {
+        // Сначала строки с выбранными СИЗ (названия в 1-й колонке)
+        selectedPPECardItems.forEach((ppe, idx) => {
             rows += `
                 <tr>
-                    <td style="border:1px solid #000;padding:4px 6px;height:24px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:24px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:24px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:24px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:24px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:24px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:24px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:24px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:24px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:24px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:10px;font-weight:bold;">${ppe.name}</td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                </tr>
+            `;
+        });
+        
+        // Добиваем до 6 строк пустыми
+        const emptyRows = 6 - selectedPPECardItems.length;
+        for (let i = 0; i < emptyRows; i++) {
+            rows += `
+                <tr>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
+                    <td style="border:1px solid #000;padding:5px 6px;height:32px;font-size:9px;"></td>
                 </tr>
             `;
         }
         return rows;
     }
     
-    // ЛИЦЕВАЯ КАРТОЧКА - ТОЧНО КАК В WORD
+    // ЛИЦЕВАЯ КАРТОЧКА
     function createFaceCard(emp) {
         return `
             <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:12px 16px 10px 16px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
@@ -1171,7 +1191,7 @@ function generatePPECardsHTML() {
                     <div style="font-size:14px;font-weight:bold;">учета выдачи СИЗ</div>
                 </div>
                 
-                <!-- ИНФОРМАЦИЯ О СОТРУДНИКЕ - КАК В WORD -->
+                <!-- ИНФОРМАЦИЯ О СОТРУДНИКЕ -->
                 <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;flex-shrink:0;">
                     <tr>
                         <td style="width:55%;vertical-align:top;padding:3px 6px;border:1px solid #000;">
@@ -1197,7 +1217,7 @@ function generatePPECardsHTML() {
                     </tr>
                 </table>
                 
-                <!-- ТАБЛИЦА СИЗ - ВСЕГДА 4 СТРОКИ (КАК В WORD) -->
+                <!-- ТАБЛИЦА СИЗ - ВСЕГДА 4 СТРОКИ -->
                 <table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #000;flex:1;">
                     <thead>
                         <tr style="background:#f0f0f0;">
@@ -1212,7 +1232,7 @@ function generatePPECardsHTML() {
                     </tbody>
                 </table>
                 
-                <!-- ПОДПИСЬ - КАК В WORD -->
+                <!-- ПОДПИСЬ -->
                 <div style="margin-top:10px;font-size:12px;flex-shrink:0;">
                     <div>${managerPosition} __________ ${manager}</div>
                     <div style="font-size:10px;">(подпись) (фамилия, инициалы)</div>
@@ -1221,39 +1241,39 @@ function generatePPECardsHTML() {
         `;
     }
     
-    // ОБОРОТНАЯ КАРТОЧКА - ТОЧНО КАК В WORD
+    // ОБОРОТНАЯ КАРТОЧКА - 6 СТРОК
     function createReverseCard(emp) {
         return `
             <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:12px 16px 10px 16px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
                 <div style="font-weight:bold;font-size:14px;text-align:center;margin-bottom:4px;flex-shrink:0;">Данные о выдаче СИЗ</div>
                 <div style="font-size:11px;text-align:center;margin-bottom:6px;color:#666;flex-shrink:0;">${emp.last_name} ${emp.first_name}</div>
                 
-                <!-- ОБОРОТНАЯ ТАБЛИЦА - 10 СТРОК (КАК В WORD) -->
+                <!-- ОБОРОТНАЯ ТАБЛИЦА - 6 СТРОК -->
                 <table style="width:100%;border-collapse:collapse;font-size:9px;border:1px solid #000;flex:1;">
                     <thead>
                         <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:4px 5px;text-align:center;width:10%;font-size:8px;font-weight:bold;">Наименование СИЗ</th>
-                            <th style="border:1px solid #000;padding:4px 5px;text-align:center;width:12%;font-size:8px;font-weight:bold;">Модель, марка, артикул</th>
-                            <th style="border:1px solid #000;padding:4px 5px;text-align:center;width:8%;font-size:8px;font-weight:bold;">дата</th>
-                            <th style="border:1px solid #000;padding:4px 5px;text-align:center;width:8%;font-size:8px;font-weight:bold;">кол-во</th>
-                            <th style="border:1px solid #000;padding:4px 5px;text-align:center;width:10%;font-size:8px;font-weight:bold;">Лично/дозатор</th>
-                            <th style="border:1px solid #000;padding:4px 5px;text-align:center;width:10%;font-size:8px;font-weight:bold;">подпись</th>
-                            <th style="border:1px solid #000;padding:4px 5px;text-align:center;width:8%;font-size:8px;font-weight:bold;">дата</th>
-                            <th style="border:1px solid #000;padding:4px 5px;text-align:center;width:8%;font-size:8px;font-weight:bold;">кол-во</th>
-                            <th style="border:1px solid #000;padding:4px 5px;text-align:center;width:10%;font-size:8px;font-weight:bold;">Подпись</th>
-                            <th style="border:1px solid #000;padding:4px 5px;text-align:center;width:8%;font-size:8px;font-weight:bold;">Акт</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:10%;font-size:9px;font-weight:bold;">Наименование СИЗ</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:12%;font-size:9px;font-weight:bold;">Модель, марка, артикул</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:8%;font-size:9px;font-weight:bold;">дата</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:8%;font-size:9px;font-weight:bold;">кол-во</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:10%;font-size:9px;font-weight:bold;">Лично/дозатор</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:10%;font-size:9px;font-weight:bold;">подпись</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:8%;font-size:9px;font-weight:bold;">дата</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:8%;font-size:9px;font-weight:bold;">кол-во</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:10%;font-size:9px;font-weight:bold;">Подпись</th>
+                            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:8%;font-size:9px;font-weight:bold;">Акт</th>
                         </tr>
                         <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:3px 5px;text-align:center;font-size:7px;">1</th>
-                            <th style="border:1px solid #000;padding:3px 5px;text-align:center;font-size:7px;">2</th>
-                            <th style="border:1px solid #000;padding:3px 5px;text-align:center;font-size:7px;">3</th>
-                            <th style="border:1px solid #000;padding:3px 5px;text-align:center;font-size:7px;">4</th>
-                            <th style="border:1px solid #000;padding:3px 5px;text-align:center;font-size:7px;">5</th>
-                            <th style="border:1px solid #000;padding:3px 5px;text-align:center;font-size:7px;">6</th>
-                            <th style="border:1px solid #000;padding:3px 5px;text-align:center;font-size:7px;">7</th>
-                            <th style="border:1px solid #000;padding:3px 5px;text-align:center;font-size:7px;">8</th>
-                            <th style="border:1px solid #000;padding:3px 5px;text-align:center;font-size:7px;">9</th>
-                            <th style="border:1px solid #000;padding:3px 5px;text-align:center;font-size:7px;">10</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">1</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">2</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">3</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">4</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">5</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">6</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">7</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">8</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">9</th>
+                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;font-size:7px;">10</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1372,10 +1392,10 @@ function generatePPECardsHTML() {
                     📋 На каждом листе: сверху сотрудник А, снизу сотрудник Б
                 </p>
                 <p style="font-size:10px;color:#888;">
-                    📊 Таблица СИЗ: ВСЕГДА 4 СТРОКИ (как в Word)
+                    📊 Лицевая таблица: ВСЕГДА 4 СТРОКИ
                 </p>
                 <p style="font-size:10px;color:#888;">
-                    📊 Оборотная таблица: ВСЕГДА 10 СТРОК (как в Word)
+                    📊 Оборотная таблица: ВСЕГДА 6 СТРОК (названия СИЗ подставляются автоматически)
                 </p>
                 <p style="font-size:10px;color:#888;">
                     ✂️ Разрез по горизонтали (посередине листа)
@@ -1400,8 +1420,8 @@ function generatePPECardsHTML() {
         <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
         <p style="color:#8888aa;font-size:13px;margin-top:8px;">🖨️ Откроется новое окно для печати.</p>
         <p style="color:#8888aa;font-size:12px;">📄 Всего листов: ${totalPairs * 2} (${totalPairs} лицевых + ${totalPairs} оборотных)</p>
-        <p style="color:#8888aa;font-size:12px;">📊 Таблица СИЗ: ВСЕГДА 4 СТРОКИ (как в Word)</p>
-        <p style="color:#8888aa;font-size:12px;">📊 Оборотная таблица: ВСЕГДА 10 СТРОК (как в Word)</p>
+        <p style="color:#8888aa;font-size:12px;">📊 Лицевая таблица: ВСЕГДА 4 СТРОКИ</p>
+        <p style="color:#8888aa;font-size:12px;">📊 Оборотная таблица: ВСЕГДА 6 СТРОК (названия СИЗ подставляются автоматически)</p>
         <p style="color:#8888aa;font-size:12px;">✂️ Разрез по горизонтали (посередине листа)</p>
     `;
 }
