@@ -969,7 +969,6 @@ function renderPPECardPPEList() {
     
     container.innerHTML = html;
     
-    // Обработчики
     document.querySelectorAll('.ppe-card-ppe-check').forEach(cb => {
         cb.addEventListener('change', function() {
             const idx = parseInt(this.dataset.index);
@@ -1077,7 +1076,7 @@ function clearPPECardSelection() {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ПРАВИЛЬНАЯ ВЕРСИЯ (ГОРИЗОНТАЛЬНЫЙ РАЗРЕЗ)
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ПРАВИЛЬНАЯ ВЕРСИЯ (ГОРИЗОНТАЛЬНЫЙ РАЗРЕЗ, БЕЗ КОЛОНТИТУЛОВ)
 // ============================================================
 function generatePPECardsHTML() {
     console.log('🔄 generatePPECardsHTML вызвана');
@@ -1107,11 +1106,9 @@ function generatePPECardsHTML() {
     const resultDiv = document.getElementById('ppeCardResult');
     const contentDiv = document.getElementById('ppeCardResultContent');
     
-    // Разбиваем сотрудников на пары (по 2 на лист)
     let cardCount = 0;
     let totalPairs = Math.ceil(employees.length / 2);
     
-    // Функция построения таблицы СИЗ для лицевой стороны
     function buildPPETable() {
         let rows = '';
         selectedPPECardItems.forEach((ppe, idx) => {
@@ -1127,7 +1124,6 @@ function generatePPECardsHTML() {
         return rows;
     }
     
-    // Функция построения оборотной таблицы (10 строк)
     function buildReverseTable() {
         let rows = '';
         for (let r = 0; r < 10; r++) {
@@ -1149,18 +1145,14 @@ function generatePPECardsHTML() {
         return rows;
     }
     
-    // Функция создания ЛИЦЕВОЙ карточки для одного сотрудника
     function createFaceCard(emp, isLeft) {
         const borderStyle = isLeft ? 'border-right:1px dashed #999;padding-right:6px;' : 'padding-left:6px;';
         return `
             <div style="${borderStyle}">
-                <!-- ШАПКА -->
                 <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:3px;margin-bottom:4px;">
                     <div style="font-size:12px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
                     <div style="font-size:12px;font-weight:bold;">учета выдачи СИЗ</div>
                 </div>
-                
-                <!-- ИНФОРМАЦИЯ О СОТРУДНИКЕ -->
                 <table style="width:100%;border-collapse:collapse;font-size:8px;margin-bottom:3px;">
                     <tr>
                         <td style="width:55%;vertical-align:top;padding:1px;border:1px solid #000;">
@@ -1185,8 +1177,6 @@ function generatePPECardsHTML() {
                         </td>
                     </tr>
                 </table>
-                
-                <!-- ТАБЛИЦА СИЗ -->
                 <table style="width:100%;border-collapse:collapse;font-size:8px;border:1px solid #000;">
                     <thead>
                         <tr style="background:#f0f0f0;">
@@ -1200,8 +1190,6 @@ function generatePPECardsHTML() {
                         ${buildPPETable()}
                     </tbody>
                 </table>
-                
-                <!-- ПОДПИСЬ -->
                 <div style="margin-top:4px;font-size:9px;">
                     <div>${managerPosition} __________ ${manager}</div>
                     <div style="font-size:7px;">(подпись) (фамилия, инициалы)</div>
@@ -1210,15 +1198,12 @@ function generatePPECardsHTML() {
         `;
     }
     
-    // Функция создания ОБОРОТНОЙ карточки для одного сотрудника
     function createReverseCard(emp, isLeft) {
         const borderStyle = isLeft ? 'border-right:1px dashed #999;padding-right:6px;' : 'padding-left:6px;';
         return `
             <div style="${borderStyle}">
                 <div style="font-weight:bold;font-size:10px;text-align:center;margin-bottom:2px;">Данные о выдаче СИЗ</div>
                 <div style="font-size:8px;text-align:center;margin-bottom:2px;color:#666;">${emp.last_name} ${emp.first_name}</div>
-                
-                <!-- ОБОРОТНАЯ ТАБЛИЦА с колонками 1-10 -->
                 <table style="width:100%;border-collapse:collapse;font-size:6px;border:1px solid #000;">
                     <thead>
                         <tr style="background:#f0f0f0;">
@@ -1257,37 +1242,30 @@ function generatePPECardsHTML() {
     let allPagesHTML = '';
     let pairNum = 0;
     
-    // Группируем сотрудников по парам
     for (let i = 0; i < employees.length; i += 2) {
         const emp1 = employees[i];
         const emp2 = employees[i + 1] || null;
         pairNum++;
         cardCount += emp2 ? 2 : 1;
         
-        // ============================================================
         // ЛИСТ 1 - ЛИЦЕВЫЕ СТОРОНЫ (сотрудник А слева, сотрудник Б справа)
-        // ============================================================
         let facePageHTML = `
         <div style="page-break-after:always;padding:8px;font-family:'Times New Roman',Times,serif;max-width:1000px;margin:0 auto;background:#fff;color:#000;border:1px solid #999;border-radius:2px;min-height:100vh;display:flex;flex-direction:column;">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;flex:1;">
                 ${createFaceCard(emp1, true)}
                 ${emp2 ? createFaceCard(emp2, false) : `<div style="display:flex;align-items:center;justify-content:center;color:#ccc;font-size:16px;border:1px dashed #ddd;padding-left:6px;">Пустая карточка</div>`}
             </div>
-            <!-- Линия разреза по горизонтали (посередине) -->
             <div style="border-top:2px dashed #ff0000;margin:4px 0;text-align:center;font-size:8px;color:#ff0000;">✂️ ЛИНИЯ РАЗРЕЗА</div>
         </div>
         `;
         
-        // ============================================================
         // ЛИСТ 2 - ОБОРОТНЫЕ СТОРОНЫ (сотрудник А слева, сотрудник Б справа)
-        // ============================================================
         let reversePageHTML = `
         <div style="page-break-after:always;padding:8px;font-family:'Times New Roman',Times,serif;max-width:1000px;margin:0 auto;background:#fff;color:#000;border:1px solid #999;border-radius:2px;min-height:100vh;display:flex;flex-direction:column;">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;flex:1;">
                 ${createReverseCard(emp1, true)}
                 ${emp2 ? createReverseCard(emp2, false) : `<div style="display:flex;align-items:center;justify-content:center;color:#ccc;font-size:16px;border:1px dashed #ddd;padding-left:6px;">Пустая оборотная сторона</div>`}
             </div>
-            <!-- Линия разреза по горизонтали (посередине) -->
             <div style="border-top:2px dashed #ff0000;margin:4px 0;text-align:center;font-size:8px;color:#ff0000;">✂️ ЛИНИЯ РАЗРЕЗА</div>
         </div>
         `;
@@ -1295,7 +1273,6 @@ function generatePPECardsHTML() {
         allPagesHTML += facePageHTML + reversePageHTML;
     }
     
-    // Открываем в новой вкладке
     const win = window.open('', '_blank');
     if (!win) {
         alert('❌ Браузер заблокировал открытие нового окна. Разрешите всплывающие окна для этого сайта.');
@@ -1325,7 +1302,10 @@ function generatePPECardsHTML() {
                     div[style*="page-break-after:always"] { 
                         page-break-after: always; 
                     }
-                    .no-print { display: none !important; }
+                    div[style*="border-top:2px dashed #ff0000"] {
+                        border-top: 1px dashed #ccc !important;
+                        color: #ccc !important;
+                    }
                 }
                 .no-print {
                     text-align: center;
@@ -1355,13 +1335,6 @@ function generatePPECardsHTML() {
                 }
                 @media print {
                     .no-print { display: none !important; }
-                }
-                /* Скрываем красную линию разреза при печати */
-                @media print {
-                    div[style*="border-top:2px dashed #ff0000"] {
-                        border-top: 1px dashed #ccc !important;
-                        color: #ccc !important;
-                    }
                 }
             </style>
         </head>
@@ -1399,6 +1372,7 @@ function generatePPECardsHTML() {
         <p style="color:#8888aa;font-size:12px;">✂️ Разрез по горизонтали (посередине листа)</p>
     `;
 }
+
 // ============================================================
 // КАЛЕНДАРЬ
 // ============================================================
