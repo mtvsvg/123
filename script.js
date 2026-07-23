@@ -1176,68 +1176,68 @@ function generatePPECardsHTML() {
     }
     
     function createFaceCard(emp) {
-        return `
-            <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:12px 16px 10px 16px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
-                <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:8px;flex-shrink:0;">
-                    <div style="font-size:16px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
-                    <div style="font-size:14px;font-weight:bold;">учета выдачи СИЗ</div>
-                </div>
-                
-                <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;flex-shrink:0;">
-                    <tr>
-                        <td style="width:55%;vertical-align:top;padding:3px 6px;border:1px solid #000;">
-                            <div style="margin:1px 0;"><strong>Фамилия</strong> ${emp.last_name}</div>
-                            <div style="margin:1px 0;"><strong>Имя</strong> ${emp.first_name}</div>
-                            <div style="margin:1px 0;"><strong>Отчество</strong> ${emp.middle_name || ''}</div>
-                            <div style="margin:1px 0;"><strong>Табельный номер</strong> ________</div>
-                            <div style="margin:1px 0;"><strong>Структурное подразделение</strong> ${department}</div>
-                            <div style="margin:1px 0;"><strong>Профессия (должность)</strong> ${emp.position}</div>
-                            <div style="margin:1px 0;"><strong>Дата поступления на работу</strong> __________</div>
-                            <div style="margin:1px 0;"><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
-                        </td>
-                        <td style="width:45%;vertical-align:top;padding:3px 6px;border:1px solid #000;">
-                            <div style="margin:1px 0;"><strong>Пол</strong> ${gender}</div>
-                            <div style="margin:1px 0;"><strong>Рост</strong> ${height}</div>
-                            <div style="margin-top:3px;"><strong>Размер:</strong></div>
-                            <div style="padding-left:6px;margin:1px 0;"><strong>одежды</strong> ${clothesSize}</div>
-                            <div style="padding-left:6px;margin:1px 0;"><strong>обуви</strong> ${shoeSize}</div>
-                            <div style="padding-left:6px;margin:1px 0;"><strong>головного убора</strong> ___</div>
-                            <div style="margin:1px 0;"><strong>СИЗОД</strong> ___</div>
-                            <div style="margin:1px 0;"><strong>СИЗ рук</strong> ___________</div>
-                        </td>
+    return `
+        <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:12px 16px 10px 16px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
+            <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:8px;flex-shrink:0;">
+                <div style="font-size:16px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
+                <div style="font-size:14px;font-weight:bold;">учета выдачи СИЗ</div>
+            </div>
+            
+            <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;flex-shrink:0;">
+                <tr>
+                    <td style="width:55%;vertical-align:top;padding:3px 6px;border:1px solid #000;">
+                        <div style="margin:1px 0;"><strong>Фамилия</strong> ${emp.last_name}</div>
+                        <div style="margin:1px 0;"><strong>Имя</strong> ${emp.first_name}</div>
+                        <div style="margin:1px 0;"><strong>Отчество</strong> ${emp.middle_name || ''}</div>
+                        <div style="margin:1px 0;"><strong>Табельный номер</strong> ________</div>
+                        <div style="margin:1px 0;"><strong>Структурное подразделение</strong> ${department}</div>
+                        <div style="margin:1px 0;"><strong>Профессия (должность)</strong> ${emp.position}</div>
+                        <div style="margin:1px 0;"><strong>Дата поступления на работу</strong> __________</div>
+                        <div style="margin:1px 0;"><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
+                    </td>
+                    <td style="width:45%;vertical-align:top;padding:3px 6px;border:1px solid #000;">
+                        <div style="margin:1px 0;"><strong>Пол</strong> ${gender}</div>
+                        <div style="margin:1px 0;"><strong>Рост</strong> ${height}</div>
+                        <div style="margin-top:3px;"><strong>Размер:</strong></div>
+                        <div style="padding-left:6px;margin:1px 0;"><strong>одежды</strong> ${clothesSize}</div>
+                        <div style="padding-left:6px;margin:1px 0;"><strong>обуви</strong> ${shoeSize}</div>
+                        <div style="padding-left:6px;margin:1px 0;"><strong>головного убора</strong> ___</div>
+                        <div style="margin:1px 0;"><strong>СИЗОД</strong> ___</div>
+                        <div style="margin:1px 0;"><strong>СИЗ рук</strong> ___________</div>
+                    </td>
+                </tr>
+            </table>
+            
+            <table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #000;flex:1;">
+                <thead>
+                    <tr style="background:#f0f0f0;">
+                        <th style="border:1px solid #000;padding:6px 8px;text-align:center;width:32%;font-size:11px;font-weight:bold;">Наименование СИЗ</th>
+                        <th style="border:1px solid #000;padding:6px 8px;text-align:center;width:22%;font-size:11px;font-weight:bold;">Пункт Норм</th>
+                        <th style="border:1px solid #000;padding:6px 8px;text-align:center;width:26%;font-size:11px;font-weight:bold;">Единица измерения, периодичность выдачи</th>
+                        <th style="border:1px solid #000;padding:6px 8px;text-align:center;width:20%;font-size:11px;font-weight:bold;">Количество на период</th>
                     </tr>
-                </table>
-                
-                <table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #000;flex:1;">
-                    <thead>
-                        <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:6px 8px;text-align:center;width:32%;font-size:11px;font-weight:bold;">Наименование СИЗ</th>
-                            <th style="border:1px solid #000;padding:6px 8px;text-align:center;width:22%;font-size:11px;font-weight:bold;">Пункт Норм</th>
-                            <th style="border:1px solid #000;padding:6px 8px;text-align:center;width:26%;font-size:11px;font-weight:bold;">Единица измерения, периодичность выдачи</th>
-                            <th style="border:1px solid #000;padding:6px 8px;text-align:center;width:20%;font-size:11px;font-weight:bold;">Количество на период</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${buildPPETable()}
-                    </tbody>
-                </table>
-                
-                <!-- ПОДПИСЬ -->
-                <div style="margin-top:25px;font-size:12px;flex-shrink:0;width:100%;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
-                        <span style="white-space:nowrap;font-size:12px;min-width:120px;">${managerPosition}</span>
-                        <span style="flex:1;border-bottom:1px solid #000;height:30px;margin:0 10px;"></span>
-                        <span style="white-space:nowrap;font-size:12px;min-width:100px;text-align:right;">${manager}</span>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;width:100%;margin-top:2px;padding-left:10px;padding-right:10px;">
-                        <span style="font-size:10px;color:#333;min-width:120px;">(должность)</span>
-                        <span style="font-size:10px;color:#333;text-align:center;flex:1;">(подпись)</span>
-                        <span style="font-size:10px;color:#333;min-width:100px;text-align:right;">(фамилия, инициалы)</span>
-                    </div>
+                </thead>
+                <tbody>
+                    ${buildPPETable()}
+                </tbody>
+            </table>
+            
+            <!-- ПОДПИСЬ - КОРОТКАЯ ПОЛОСКА -->
+            <div style="margin-top:20px;font-size:12px;flex-shrink:0;width:100%;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="white-space:nowrap;font-size:12px;">${managerPosition}</span>
+                    <span style="display:inline-block;width:100px;border-bottom:1px solid #000;height:28px;"></span>
+                    <span style="white-space:nowrap;font-size:12px;">${manager}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:2px;padding-left:0;">
+                    <span style="font-size:10px;color:#333;min-width:120px;">(должность)</span>
+                    <span style="font-size:10px;color:#333;text-align:center;width:100px;">(подпись)</span>
+                    <span style="font-size:10px;color:#333;text-align:right;">(фамилия, инициалы)</span>
                 </div>
             </div>
-        `;
-    }
+        </div>
+    `;
+}
     
     function createReverseCard(emp) {
         return `
