@@ -288,7 +288,49 @@
 
         <div class="block">
             <h2>📋 Создание карточек</h2>
-            
+<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);align-items:center;">
+    <label style="color:#8888aa;font-size:14px;font-weight:500;">📋 Тип карточки:</label>
+    <div style="display:flex;gap:12px;">
+        <label style="color:#ccc;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+            <input type="radio" name="cardType" value="personal" checked onchange="toggleCardType()"> Личная
+        </label>
+        <label style="color:#ccc;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+            <input type="radio" name="cardType" value="duty" onchange="toggleCardType()"> Дежурная
+        </label>
+    </div>
+</div>
+            <!-- ПОЛЯ ДЛЯ ДЕЖУРНОЙ КАРТОЧКИ (скрыты по умолчанию) -->
+<div id="dutyFields" style="display:none;padding:12px;background:rgba(0,212,255,0.05);border-radius:10px;border:1px solid rgba(0,212,255,0.1);margin-bottom:12px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="color:#8888aa;font-size:12px;">Идентификатор рабочего места</label>
+            <input type="text" id="dutyWorkplaceId" placeholder="РМ-001">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="color:#8888aa;font-size:12px;">Структурное подразделение</label>
+            <input type="text" id="dutyDepartment" placeholder="Служба движения">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="color:#8888aa;font-size:12px;">ФИО ответственного</label>
+            <input type="text" id="dutyResponsibleName" placeholder="Иванов И.И.">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="color:#8888aa;font-size:12px;">Должность ответственного</label>
+            <input type="text" id="dutyResponsiblePosition" placeholder="Начальник службы движения">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;grid-column:span 2;">
+            <label style="color:#8888aa;font-size:12px;">Приказ об утверждении Норм</label>
+            <input type="text" id="dutyOrder" placeholder="Приказ № 123 от 01.01.2026">
+        </div>
+    </div>
+</div>
+
+<!-- ПОЛЯ ДЛЯ ЛИЧНОЙ КАРТОЧКИ (видимы по умолчанию) -->
+<div id="personalFields">
+    <div class="ppe-card-toolbar">
+        <!-- существующие поля для личной карточки -->
+    </div>
+</div>
             <div class="ppe-card-toolbar">
                 <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
                     <label style="color:#8888aa;font-size:12px;">Номер карточки</label>
