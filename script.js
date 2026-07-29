@@ -2658,51 +2658,94 @@ function addSelectedToProtocol() {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ XML
+// ГЕНЕРАЦИЯ XML - ФОРМАТ РЕЕСТРА (RegistrySet)
 // ============================================================
 function generateXML() {
     const orgSelect = document.getElementById('orgSelect');
     const orgs = getOrgs();
     const org = orgs.find(o => o.id === parseInt(orgSelect.value));
     if (!org) { alert('❌ Выберите организацию!'); return; }
+    
     const protocol = getProtocol();
     if (protocol.length === 0) { alert('❌ Нет сотрудников в протоколе!'); return; }
     
     const number = document.getElementById('protocolNumber').value.trim() || '01/26';
     const date = document.getElementById('protocolDate').value || new Date().toISOString().split('T')[0];
     
+    // Получаем выбранные программы
     const programs = [];
     document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked').forEach(cb => {
         const label = cb.closest('.program-check');
-        if (label) programs.push(label.textContent.trim());
+        if (label) {
+            const text = label.textContent.trim();
+            // Извлекаем название программы без номера
+            const programName = text.replace(/^\d+\.\s*/, '').trim();
+            programs.push({
+                id: parseInt(cb.value),
+                title: programName
+            });
+        }
     });
+    
     if (programs.length === 0) { alert('❌ Выберите программы!'); return; }
     
-    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<Протокол>\n';
-    xml += `  <Номер>${escXml(number)}</Номер>\n  <Дата>${escXml(date)}</Дата>\n  <Организация>${escXml(org.name)}</Организация>\n`;
-    xml += '  <Программы>\n';
-    programs.forEach(p => xml += `    <Программа>${escXml(p)}</Программа>\n`);
-    xml += '  </Программы>\n  <Сотрудники>\n';
-    protocol.forEach((emp, i) => {
-        xml += `    <Сотрудник>\n      <Номер>${i+1}</Номер>\n      <Фамилия>${escXml(emp.last_name)}</Фамилия>\n      <Имя>${escXml(emp.first_name)}</Имя>\n`;
-        xml += `      <Отчество>${escXml(emp.middle_name || '')}</Отчество>\n      <Должность>${escXml(emp.position)}</Должность>\n`;
-        xml += `      <СНИЛС>${escXml(formatSnils(emp.snils))}</СНИЛС>\n      <Результат>Пройдено</Результат>\n    </Сотрудник>\n`;
+    // Формируем XML в формате RegistrySet
+    let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+    xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
+    
+    // Для каждого сотрудника создаем запись для каждой программы
+    protocol.forEach(emp => {
+        programs.forEach(program => {
+            xml += '\t<RegistryRecord>\n';
+            
+            // Worker
+            xml += '\t\t<Worker>\n';
+            xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
+            xml += `\t\t\t<FirstName>${escXml(emp.first_name)}</FirstName>\n`;
+            xml += `\t\t\t<MiddleName>${escXml(emp.middle_name || '')}</MiddleName>\n`;
+            xml += `\t\t\t<Snils>${escXml(formatSnils(emp.snils))}</Snils>\n`;
+            xml += `\t\t\t<Position>${escXml(emp.position)}</Position>\n`;
+            xml += `\t\t\t<EmployerInn>${escXml(org.inn)}</EmployerInn>\n`;
+            xml += `\t\t\t<EmployerTitle>${escXml(org.name)}</EmployerTitle>\n`;
+            xml += '\t\t</Worker>\n';
+            
+            // Organization
+            xml += '\t\t<Organization>\n';
+            xml += `\t\t\t<Inn>${escXml(org.inn)}</Inn>\n`;
+            xml += `\t\t\t<Title>${escXml(org.name)}</Title>\n`;
+            xml += '\t\t</Organization>\n';
+            
+            // Test
+            xml += `\t\t<Test isPassed="true" learnProgramId="${program.id}">\n`;
+            xml += `\t\t\t<Date>${escXml(date)}</Date>\n`;
+            xml += `\t\t\t<ProtocolNumber>${escXml(number)}</ProtocolNumber>\n`;
+            xml += `\t\t\t<LearnProgramTitle>${escXml(program.title)}</LearnProgramTitle>\n`;
+            xml += '\t\t</Test>\n';
+            
+            xml += '\t</RegistryRecord>\n';
+        });
     });
-    xml += '  </Сотрудники>\n</Протокол>';
+    
+    xml += '</RegistrySet>';
     
     const resultBlock = document.getElementById('resultBlock');
     const downloadLink = document.getElementById('downloadLink');
     resultBlock.classList.remove('hidden');
+    
     const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
     downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = `Протокол_${number}_${date}.xml`;
+    downloadLink.download = `Реестр_${number}_${date}.xml`;
+    
     const preview = document.createElement('pre');
     preview.style.cssText = 'max-height:200px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;margin-top:12px;';
-    preview.textContent = xml.substring(0, 500) + '...';
+    preview.textContent = xml.substring(0, 800) + '...\n\n(Полный XML скачайте по ссылке выше)';
     resultBlock.querySelector('pre')?.remove();
     resultBlock.appendChild(preview);
+    
+    // Показываем количество записей
+    const totalRecords = protocol.length * programs.length;
+    alert(`✅ Создано ${totalRecords} записей (${protocol.length} сотрудников × ${programs.length} программ)`);
 }
-
 // ============================================================
 // ИНИЦИАЛИЗАЦИЯ
 // ============================================================
