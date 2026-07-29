@@ -2658,7 +2658,7 @@ function addSelectedToProtocol() {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ XML - ФОРМАТ РЕЕСТРА (RegistrySet)
+// ГЕНЕРАЦИЯ XML - ТОЧНО ПО ШАБЛОНУ EXCEL (14 КОЛОНОК)
 // ============================================================
 function generateXML() {
     const orgSelect = document.getElementById('orgSelect');
@@ -2678,7 +2678,6 @@ function generateXML() {
         const label = cb.closest('.program-check');
         if (label) {
             const text = label.textContent.trim();
-            // Извлекаем название программы без номера
             const programName = text.replace(/^\d+\.\s*/, '').trim();
             programs.push({
                 id: parseInt(cb.value),
@@ -2703,7 +2702,9 @@ function generateXML() {
             xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
             xml += `\t\t\t<FirstName>${escXml(emp.first_name)}</FirstName>\n`;
             xml += `\t\t\t<MiddleName>${escXml(emp.middle_name || '')}</MiddleName>\n`;
-            xml += `\t\t\t<Snils>${escXml(formatSnils(emp.snils))}</Snils>\n`;
+            // СНИЛС с пробелами (как в шаблоне)
+            const snilsFormatted = formatSnilsWithSpaces(emp.snils);
+            xml += `\t\t\t<Snils>${escXml(snilsFormatted)}</Snils>\n`;
             xml += `\t\t\t<Position>${escXml(emp.position)}</Position>\n`;
             xml += `\t\t\t<EmployerInn>${escXml(org.inn)}</EmployerInn>\n`;
             xml += `\t\t\t<EmployerTitle>${escXml(org.name)}</EmployerTitle>\n`;
@@ -2736,15 +2737,31 @@ function generateXML() {
     downloadLink.href = URL.createObjectURL(blob);
     downloadLink.download = `Реестр_${number}_${date}.xml`;
     
+    // Показываем превью и информацию
     const preview = document.createElement('pre');
     preview.style.cssText = 'max-height:200px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;margin-top:12px;';
-    preview.textContent = xml.substring(0, 800) + '...\n\n(Полный XML скачайте по ссылке выше)';
+    const previewText = xml.split('\n').slice(0, 15).join('\n') + '\n...\n\n' + 
+        `📊 Создано записей: ${protocol.length * programs.length}\n` +
+        `👤 Сотрудников: ${protocol.length}\n` +
+        `📚 Программ: ${programs.length}`;
+    preview.textContent = previewText;
     resultBlock.querySelector('pre')?.remove();
     resultBlock.appendChild(preview);
     
-    // Показываем количество записей
+    // Показываем статистику
     const totalRecords = protocol.length * programs.length;
     alert(`✅ Создано ${totalRecords} записей (${protocol.length} сотрудников × ${programs.length} программ)`);
+}
+
+// ============================================================
+// ФОРМАТИРОВАНИЕ СНИЛС С ПРОБЕЛАМИ (как в шаблоне)
+// ============================================================
+function formatSnilsWithSpaces(snils) {
+    if (!snils) return '';
+    const clean = snils.replace(/\D/g, '');
+    if (clean.length < 11) return snils;
+    return clean.slice(0,3) + '-' + clean.slice(3,6) + '-' + clean.slice(6,9) + ' ' + clean.slice(9,11);
+}
 }
 // ============================================================
 // ИНИЦИАЛИЗАЦИЯ
