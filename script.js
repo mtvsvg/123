@@ -912,6 +912,9 @@ function initPPECardsPage() {
     }
 }
 
+// ============================================================
+// ОТРИСОВКА СПИСКА СОТРУДНИКОВ С ПОЛЯМИ ДЛЯ КАРТОЧЕК
+// ============================================================
 function renderPPECardStaffList() {
     const container = document.getElementById('ppeCardStaffList');
     if (!container) return;
@@ -923,7 +926,7 @@ function renderPPECardStaffList() {
     }
     
     let html = '<div style="max-height:500px;overflow-y:auto;">';
-    all.forEach((emp, idx) => {
+    all.forEach((emp) => {
         // Загружаем сохранённые данные для этого сотрудника
         const savedData = JSON.parse(localStorage.getItem('ppeCardStaffData_' + emp.snils) || '{}');
         const cardNumber = savedData.cardNumber || '';
@@ -1097,7 +1100,15 @@ function getSelectedPPECardEmployees() {
     checkboxes.forEach(cb => {
         const snils = cb.dataset.snils;
         const emp = all.find(e => e.snils === snils);
-        if (emp) selected.push(emp);
+        if (emp) {
+            const cardNumber = document.querySelector(`.staff-card-number[data-snils="${snils}"]`)?.value.trim() || '';
+            const workplaceId = document.querySelector(`.staff-workplace-id[data-snils="${snils}"]`)?.value.trim() || '';
+            selected.push({
+                ...emp,
+                cardNumber: cardNumber,
+                workplaceId: workplaceId
+            });
+        }
     });
     return selected;
 }
@@ -1114,15 +1125,14 @@ function clearPPECardSelection() {
         localStorage.removeItem('ppeCardStaffData_' + emp.snils);
     });
     
+    renderPPECardStaffList();
     renderPPECardPPEList();
     document.getElementById('ppeCardResult').classList.add('hidden');
     alert('✅ Выбор очищен');
 }
-}
-}
 
 // ============================================================
-// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ЛИЧНАЯ И ДЕЖУРНАЯ (с индивидуальными номерами)
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ
 // ============================================================
 function generatePPECardsHTML() {
     console.log('🔄 generatePPECardsHTML вызвана');
@@ -1166,7 +1176,7 @@ function generatePPECardsHTML() {
     // ЛИЦЕВАЯ ТАБЛИЦА - ВСЕГДА 4 СТРОКИ
     function buildPPETable() {
         let rows = '';
-        selectedPPECardItems.forEach((ppe, idx) => {
+        selectedPPECardItems.forEach((ppe) => {
             rows += `
                 <tr>
                     <td style="border:1px solid #000;padding:6px 8px;font-size:11px;">${ppe.name}</td>
@@ -1194,7 +1204,7 @@ function generatePPECardsHTML() {
     // ОБОРОТНАЯ ТАБЛИЦА - 6 СТРОК (с названиями СИЗ в 1-й колонке)
     function buildReverseTable() {
         let rows = '';
-        selectedPPECardItems.forEach((ppe, idx) => {
+        selectedPPECardItems.forEach((ppe) => {
             rows += `
                 <tr>
                     <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;font-weight:bold;">${ppe.name}</td>
@@ -1229,10 +1239,9 @@ function generatePPECardsHTML() {
         return rows;
     }
     
-    // ЛИЦЕВАЯ КАРТОЧКА - ЛИЧНАЯ (с индивидуальным номером)
+    // ЛИЦЕВАЯ КАРТОЧКА - ЛИЧНАЯ
     function createPersonalFaceCard(emp) {
         const dept = document.getElementById('ppeCardDepartment')?.value.trim() || '';
-        // Используем номер из данных сотрудника
         const cardNumber = emp.cardNumber || '___';
         return `
             <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:10px 14px 8px 14px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
@@ -1296,9 +1305,8 @@ function generatePPECardsHTML() {
         `;
     }
     
-    // ЛИЦЕВАЯ КАРТОЧКА - ДЕЖУРНАЯ (с индивидуальным номером и ID рабочего места)
+    // ЛИЦЕВАЯ КАРТОЧКА - ДЕЖУРНАЯ
     function createDutyFaceCard(emp) {
-        // Используем номер и ID рабочего места из данных сотрудника
         const cardNumber = emp.cardNumber || '___';
         const workplaceId = emp.workplaceId || '________';
         return `
@@ -1350,7 +1358,7 @@ function generatePPECardsHTML() {
         `;
     }
     
-    // ОБОРОТНАЯ КАРТОЧКА (для обоих типов)
+    // ОБОРОТНАЯ КАРТОЧКА
     function createReverseCard(emp) {
         return `
             <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:10px 14px 8px 14px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
@@ -1392,7 +1400,6 @@ function generatePPECardsHTML() {
     let allPagesHTML = '';
     let pairNum = 0;
     
-    // Группируем сотрудников по 2 на страницу
     for (let i = 0; i < employees.length; i += 2) {
         const emp1 = employees[i];
         const emp2 = employees[i + 1] || null;
@@ -2770,7 +2777,7 @@ function addSelectedToProtocol() {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ XML - ТОЧНО ПО ШАБЛОНУ EXCEL (14 КОЛОНОК)
+// ГЕНЕРАЦИЯ XML
 // ============================================================
 function generateXML() {
     const orgSelect = document.getElementById('orgSelect');
@@ -2784,9 +2791,7 @@ function generateXML() {
     const number = document.getElementById('protocolNumber').value.trim() || '01/26';
     const date = document.getElementById('protocolDate').value || new Date().toISOString().split('T')[0];
     
-    // ============================================================
     // ПРАВИЛЬНЫЕ ПОЛНЫЕ НАЗВАНИЯ ПРОГРАММ
-    // ============================================================
     const PROGRAM_TITLES = {
         1: 'Оказание первой помощи пострадавшим',
         2: 'Использование (применение) средств индивидуальной защиты',
@@ -2798,7 +2803,6 @@ function generateXML() {
     const programs = [];
     document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked').forEach(cb => {
         const id = parseInt(cb.value);
-        // Берем полное название из справочника
         const fullTitle = PROGRAM_TITLES[id];
         if (fullTitle) {
             programs.push({
@@ -2806,7 +2810,6 @@ function generateXML() {
                 title: fullTitle
             });
         } else {
-            // Если вдруг нет в справочнике - берем из чекбокса
             const label = cb.closest('.program-check');
             if (label) {
                 const text = label.textContent.trim();
@@ -2825,30 +2828,26 @@ function generateXML() {
     let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
     xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
     
-    // Для каждого сотрудника создаем запись для каждой программы
     protocol.forEach(emp => {
         programs.forEach(program => {
             xml += '\t<RegistryRecord>\n';
             
-            // Worker
             xml += '\t\t<Worker>\n';
             xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
             xml += `\t\t\t<FirstName>${escXml(emp.first_name)}</FirstName>\n`;
             xml += `\t\t\t<MiddleName>${escXml(emp.middle_name || '')}</MiddleName>\n`;
-            const snilsFormatted = formatSnilsWithSpaces(emp.snils);
+            const snilsFormatted = formatSnils(emp.snils);
             xml += `\t\t\t<Snils>${escXml(snilsFormatted)}</Snils>\n`;
             xml += `\t\t\t<Position>${escXml(emp.position)}</Position>\n`;
             xml += `\t\t\t<EmployerInn>${escXml(org.inn)}</EmployerInn>\n`;
             xml += `\t\t\t<EmployerTitle>${escXml(org.name)}</EmployerTitle>\n`;
             xml += '\t\t</Worker>\n';
             
-            // Organization
             xml += '\t\t<Organization>\n';
             xml += `\t\t\t<Inn>${escXml(org.inn)}</Inn>\n`;
             xml += `\t\t\t<Title>${escXml(org.name)}</Title>\n`;
             xml += '\t\t</Organization>\n';
             
-            // Test
             xml += `\t\t<Test isPassed="true" learnProgramId="${program.id}">\n`;
             xml += `\t\t\t<Date>${escXml(date)}</Date>\n`;
             xml += `\t\t\t<ProtocolNumber>${escXml(number)}</ProtocolNumber>\n`;
@@ -2869,722 +2868,20 @@ function generateXML() {
     downloadLink.href = URL.createObjectURL(blob);
     downloadLink.download = `Реестр_${number}_${date}.xml`;
     
-    // Показываем превью и информацию
     const preview = document.createElement('pre');
     preview.style.cssText = 'max-height:200px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;margin-top:12px;';
-    
-    // Показываем первые несколько строк
-    const lines = xml.split('\n');
-    let previewText = '';
-    for (let i = 0; i < Math.min(20, lines.length); i++) {
-        previewText += lines[i] + '\n';
-    }
-    if (lines.length > 20) previewText += '...\n\n';
-    
-    previewText += `📊 Создано записей: ${protocol.length * programs.length}\n`;
-    previewText += `👤 Сотрудников: ${protocol.length}\n`;
-    previewText += `📚 Программ: ${programs.length}\n\n`;
-    previewText += '📋 Программы:\n';
-    programs.forEach(p => {
-        previewText += `   ${p.id}. ${p.title}\n`;
-    });
-    
+    const previewText = xml.split('\n').slice(0, 15).join('\n') + '\n...\n\n' + 
+        `📊 Создано записей: ${protocol.length * programs.length}\n` +
+        `👤 Сотрудников: ${protocol.length}\n` +
+        `📚 Программ: ${programs.length}\n\n` +
+        '📋 Программы:\n' +
+        programs.map(p => `   ${p.id}. ${p.title}`).join('\n');
     preview.textContent = previewText;
     resultBlock.querySelector('pre')?.remove();
     resultBlock.appendChild(preview);
     
     const totalRecords = protocol.length * programs.length;
     alert(`✅ Создано ${totalRecords} записей (${protocol.length} сотрудников × ${programs.length} программ)`);
-}
-
-// ============================================================
-// ФОРМАТИРОВАНИЕ СНИЛС С ПРОБЕЛАМИ (как в шаблоне)
-// ============================================================
-function formatSnilsWithSpaces(snils) {
-    if (!snils) return '';
-    const clean = snils.replace(/\D/g, '');
-    if (clean.length < 11) return snils;
-    return clean.slice(0,3) + '-' + clean.slice(3,6) + '-' + clean.slice(6,9) + ' ' + clean.slice(9,11);
-}// ============================================================
-// ГЕНЕРАЦИЯ XML - ТОЧНО ПО ШАБЛОНУ EXCEL (14 КОЛОНОК)
-// ============================================================
-function generateXML() {
-    const orgSelect = document.getElementById('orgSelect');
-    const orgs = getOrgs();
-    const org = orgs.find(o => o.id === parseInt(orgSelect.value));
-    if (!org) { alert('❌ Выберите организацию!'); return; }
-    
-    const protocol = getProtocol();
-    if (protocol.length === 0) { alert('❌ Нет сотрудников в протоколе!'); return; }
-    
-    const number = document.getElementById('protocolNumber').value.trim() || '01/26';
-    const date = document.getElementById('protocolDate').value || new Date().toISOString().split('T')[0];
-    
-    // ============================================================
-    // ПРАВИЛЬНЫЕ ПОЛНЫЕ НАЗВАНИЯ ПРОГРАММ
-    // ============================================================
-    const PROGRAM_TITLES = {
-        1: 'Оказание первой помощи пострадавшим',
-        2: 'Использование (применение) средств индивидуальной защиты',
-        3: 'Общие вопросы охраны труда и функционирования системы управления охраной труда',
-        4: 'Безопасные методы и приемы выполнения работ при воздействии вредных и (или) опасных производственных факторов, источников опасности, идентифицированных в рамках специальной оценки условий труда и оценки профессиональных рисков'
-    };
-    
-    // Получаем выбранные программы
-    const programs = [];
-    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked').forEach(cb => {
-        const id = parseInt(cb.value);
-        // Берем полное название из справочника
-        const fullTitle = PROGRAM_TITLES[id];
-        if (fullTitle) {
-            programs.push({
-                id: id,
-                title: fullTitle
-            });
-        } else {
-            // Если вдруг нет в справочнике - берем из чекбокса
-            const label = cb.closest('.program-check');
-            if (label) {
-                const text = label.textContent.trim();
-                const programName = text.replace(/^\d+\.\s*/, '').trim();
-                programs.push({
-                    id: id,
-                    title: programName
-                });
-            }
-        }
-    });
-    
-    if (programs.length === 0) { alert('❌ Выберите программы!'); return; }
-    
-    // Формируем XML в формате RegistrySet
-    let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
-    xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
-    
-    // Для каждого сотрудника создаем запись для каждой программы
-    protocol.forEach(emp => {
-        programs.forEach(program => {
-            xml += '\t<RegistryRecord>\n';
-            
-            // Worker
-            xml += '\t\t<Worker>\n';
-            xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
-            xml += `\t\t\t<FirstName>${escXml(emp.first_name)}</FirstName>\n`;
-            xml += `\t\t\t<MiddleName>${escXml(emp.middle_name || '')}</MiddleName>\n`;
-            const snilsFormatted = formatSnilsWithSpaces(emp.snils);
-            xml += `\t\t\t<Snils>${escXml(snilsFormatted)}</Snils>\n`;
-            xml += `\t\t\t<Position>${escXml(emp.position)}</Position>\n`;
-            xml += `\t\t\t<EmployerInn>${escXml(org.inn)}</EmployerInn>\n`;
-            xml += `\t\t\t<EmployerTitle>${escXml(org.name)}</EmployerTitle>\n`;
-            xml += '\t\t</Worker>\n';
-            
-            // Organization
-            xml += '\t\t<Organization>\n';
-            xml += `\t\t\t<Inn>${escXml(org.inn)}</Inn>\n`;
-            xml += `\t\t\t<Title>${escXml(org.name)}</Title>\n`;
-            xml += '\t\t</Organization>\n';
-            
-            // Test
-            xml += `\t\t<Test isPassed="true" learnProgramId="${program.id}">\n`;
-            xml += `\t\t\t<Date>${escXml(date)}</Date>\n`;
-            xml += `\t\t\t<ProtocolNumber>${escXml(number)}</ProtocolNumber>\n`;
-            xml += `\t\t\t<LearnProgramTitle>${escXml(program.title)}</LearnProgramTitle>\n`;
-            xml += '\t\t</Test>\n';
-            
-            xml += '\t</RegistryRecord>\n';
-        });
-    });
-    
-    xml += '</RegistrySet>';
-    
-    const resultBlock = document.getElementById('resultBlock');
-    const downloadLink = document.getElementById('downloadLink');
-    resultBlock.classList.remove('hidden');
-    
-    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = `Реестр_${number}_${date}.xml`;
-    
-    // Показываем превью и информацию
-    const preview = document.createElement('pre');
-    preview.style.cssText = 'max-height:200px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;margin-top:12px;';
-    
-    // Показываем первые несколько строк
-    const lines = xml.split('\n');
-    let previewText = '';
-    for (let i = 0; i < Math.min(20, lines.length); i++) {
-        previewText += lines[i] + '\n';
-    }
-    if (lines.length > 20) previewText += '...\n\n';
-    
-    previewText += `📊 Создано записей: ${protocol.length * programs.length}\n`;
-    previewText += `👤 Сотрудников: ${protocol.length}\n`;
-    previewText += `📚 Программ: ${programs.length}\n\n`;
-    previewText += '📋 Программы:\n';
-    programs.forEach(p => {
-        previewText += `   ${p.id}. ${p.title}\n`;
-    });
-    
-    preview.textContent = previewText;
-    resultBlock.querySelector('pre')?.remove();
-    resultBlock.appendChild(preview);
-    
-    const totalRecords = protocol.length * programs.length;
-    alert(`✅ Создано ${totalRecords} записей (${protocol.length} сотрудников × ${programs.length} программ)`);
-}
-
-// ============================================================
-// ФОРМАТИРОВАНИЕ СНИЛС С ПРОБЕЛАМИ (как в шаблоне)
-// ============================================================
-function formatSnilsWithSpaces(snils) {
-    if (!snils) return '';
-    const clean = snils.replace(/\D/g, '');
-    if (clean.length < 11) return snils;
-    return clean.slice(0,3) + '-' + clean.slice(3,6) + '-' + clean.slice(6,9) + ' ' + clean.slice(9,11);
-}// ============================================================
-// ГЕНЕРАЦИЯ XML - ТОЧНО ПО ШАБЛОНУ EXCEL (14 КОЛОНОК)
-// ============================================================
-function generateXML() {
-    const orgSelect = document.getElementById('orgSelect');
-    const orgs = getOrgs();
-    const org = orgs.find(o => o.id === parseInt(orgSelect.value));
-    if (!org) { alert('❌ Выберите организацию!'); return; }
-    
-    const protocol = getProtocol();
-    if (protocol.length === 0) { alert('❌ Нет сотрудников в протоколе!'); return; }
-    
-    const number = document.getElementById('protocolNumber').value.trim() || '01/26';
-    const date = document.getElementById('protocolDate').value || new Date().toISOString().split('T')[0];
-    
-    // ============================================================
-    // ПРАВИЛЬНЫЕ ПОЛНЫЕ НАЗВАНИЯ ПРОГРАММ
-    // ============================================================
-    const PROGRAM_TITLES = {
-        1: 'Оказание первой помощи пострадавшим',
-        2: 'Использование (применение) средств индивидуальной защиты',
-        3: 'Общие вопросы охраны труда и функционирования системы управления охраной труда',
-        4: 'Безопасные методы и приемы выполнения работ при воздействии вредных и (или) опасных производственных факторов, источников опасности, идентифицированных в рамках специальной оценки условий труда и оценки профессиональных рисков'
-    };
-    
-    // Получаем выбранные программы
-    const programs = [];
-    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked').forEach(cb => {
-        const id = parseInt(cb.value);
-        // Берем полное название из справочника
-        const fullTitle = PROGRAM_TITLES[id];
-        if (fullTitle) {
-            programs.push({
-                id: id,
-                title: fullTitle
-            });
-        } else {
-            // Если вдруг нет в справочнике - берем из чекбокса
-            const label = cb.closest('.program-check');
-            if (label) {
-                const text = label.textContent.trim();
-                const programName = text.replace(/^\d+\.\s*/, '').trim();
-                programs.push({
-                    id: id,
-                    title: programName
-                });
-            }
-        }
-    });
-    
-    if (programs.length === 0) { alert('❌ Выберите программы!'); return; }
-    
-    // Формируем XML в формате RegistrySet
-    let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
-    xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
-    
-    // Для каждого сотрудника создаем запись для каждой программы
-    protocol.forEach(emp => {
-        programs.forEach(program => {
-            xml += '\t<RegistryRecord>\n';
-            
-            // Worker
-            xml += '\t\t<Worker>\n';
-            xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
-            xml += `\t\t\t<FirstName>${escXml(emp.first_name)}</FirstName>\n`;
-            xml += `\t\t\t<MiddleName>${escXml(emp.middle_name || '')}</MiddleName>\n`;
-            const snilsFormatted = formatSnilsWithSpaces(emp.snils);
-            xml += `\t\t\t<Snils>${escXml(snilsFormatted)}</Snils>\n`;
-            xml += `\t\t\t<Position>${escXml(emp.position)}</Position>\n`;
-            xml += `\t\t\t<EmployerInn>${escXml(org.inn)}</EmployerInn>\n`;
-            xml += `\t\t\t<EmployerTitle>${escXml(org.name)}</EmployerTitle>\n`;
-            xml += '\t\t</Worker>\n';
-            
-            // Organization
-            xml += '\t\t<Organization>\n';
-            xml += `\t\t\t<Inn>${escXml(org.inn)}</Inn>\n`;
-            xml += `\t\t\t<Title>${escXml(org.name)}</Title>\n`;
-            xml += '\t\t</Organization>\n';
-            
-            // Test
-            xml += `\t\t<Test isPassed="true" learnProgramId="${program.id}">\n`;
-            xml += `\t\t\t<Date>${escXml(date)}</Date>\n`;
-            xml += `\t\t\t<ProtocolNumber>${escXml(number)}</ProtocolNumber>\n`;
-            xml += `\t\t\t<LearnProgramTitle>${escXml(program.title)}</LearnProgramTitle>\n`;
-            xml += '\t\t</Test>\n';
-            
-            xml += '\t</RegistryRecord>\n';
-        });
-    });
-    
-    xml += '</RegistrySet>';
-    
-    const resultBlock = document.getElementById('resultBlock');
-    const downloadLink = document.getElementById('downloadLink');
-    resultBlock.classList.remove('hidden');
-    
-    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = `Реестр_${number}_${date}.xml`;
-    
-    // Показываем превью и информацию
-    const preview = document.createElement('pre');
-    preview.style.cssText = 'max-height:200px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;margin-top:12px;';
-    
-    // Показываем первые несколько строк
-    const lines = xml.split('\n');
-    let previewText = '';
-    for (let i = 0; i < Math.min(20, lines.length); i++) {
-        previewText += lines[i] + '\n';
-    }
-    if (lines.length > 20) previewText += '...\n\n';
-    
-    previewText += `📊 Создано записей: ${protocol.length * programs.length}\n`;
-    previewText += `👤 Сотрудников: ${protocol.length}\n`;
-    previewText += `📚 Программ: ${programs.length}\n\n`;
-    previewText += '📋 Программы:\n';
-    programs.forEach(p => {
-        previewText += `   ${p.id}. ${p.title}\n`;
-    });
-    
-    preview.textContent = previewText;
-    resultBlock.querySelector('pre')?.remove();
-    resultBlock.appendChild(preview);
-    
-    const totalRecords = protocol.length * programs.length;
-    alert(`✅ Создано ${totalRecords} записей (${protocol.length} сотрудников × ${programs.length} программ)`);
-}
-
-// ============================================================
-// ФОРМАТИРОВАНИЕ СНИЛС С ПРОБЕЛАМИ (как в шаблоне)
-// ============================================================
-function formatSnilsWithSpaces(snils) {
-    if (!snils) return '';
-    const clean = snils.replace(/\D/g, '');
-    if (clean.length < 11) return snils;
-    return clean.slice(0,3) + '-' + clean.slice(3,6) + '-' + clean.slice(6,9) + ' ' + clean.slice(9,11);
-}// ============================================================
-// ГЕНЕРАЦИЯ XML - ТОЧНО ПО ШАБЛОНУ EXCEL (14 КОЛОНОК)
-// ============================================================
-function generateXML() {
-    const orgSelect = document.getElementById('orgSelect');
-    const orgs = getOrgs();
-    const org = orgs.find(o => o.id === parseInt(orgSelect.value));
-    if (!org) { alert('❌ Выберите организацию!'); return; }
-    
-    const protocol = getProtocol();
-    if (protocol.length === 0) { alert('❌ Нет сотрудников в протоколе!'); return; }
-    
-    const number = document.getElementById('protocolNumber').value.trim() || '01/26';
-    const date = document.getElementById('protocolDate').value || new Date().toISOString().split('T')[0];
-    
-    // ============================================================
-    // ПРАВИЛЬНЫЕ ПОЛНЫЕ НАЗВАНИЯ ПРОГРАММ
-    // ============================================================
-    const PROGRAM_TITLES = {
-        1: 'Оказание первой помощи пострадавшим',
-        2: 'Использование (применение) средств индивидуальной защиты',
-        3: 'Общие вопросы охраны труда и функционирования системы управления охраной труда',
-        4: 'Безопасные методы и приемы выполнения работ при воздействии вредных и (или) опасных производственных факторов, источников опасности, идентифицированных в рамках специальной оценки условий труда и оценки профессиональных рисков'
-    };
-    
-    // Получаем выбранные программы
-    const programs = [];
-    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked').forEach(cb => {
-        const id = parseInt(cb.value);
-        // Берем полное название из справочника
-        const fullTitle = PROGRAM_TITLES[id];
-        if (fullTitle) {
-            programs.push({
-                id: id,
-                title: fullTitle
-            });
-        } else {
-            // Если вдруг нет в справочнике - берем из чекбокса
-            const label = cb.closest('.program-check');
-            if (label) {
-                const text = label.textContent.trim();
-                const programName = text.replace(/^\d+\.\s*/, '').trim();
-                programs.push({
-                    id: id,
-                    title: programName
-                });
-            }
-        }
-    });
-    
-    if (programs.length === 0) { alert('❌ Выберите программы!'); return; }
-    
-    // Формируем XML в формате RegistrySet
-    let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
-    xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
-    
-    // Для каждого сотрудника создаем запись для каждой программы
-    protocol.forEach(emp => {
-        programs.forEach(program => {
-            xml += '\t<RegistryRecord>\n';
-            
-            // Worker
-            xml += '\t\t<Worker>\n';
-            xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
-            xml += `\t\t\t<FirstName>${escXml(emp.first_name)}</FirstName>\n`;
-            xml += `\t\t\t<MiddleName>${escXml(emp.middle_name || '')}</MiddleName>\n`;
-            const snilsFormatted = formatSnilsWithSpaces(emp.snils);
-            xml += `\t\t\t<Snils>${escXml(snilsFormatted)}</Snils>\n`;
-            xml += `\t\t\t<Position>${escXml(emp.position)}</Position>\n`;
-            xml += `\t\t\t<EmployerInn>${escXml(org.inn)}</EmployerInn>\n`;
-            xml += `\t\t\t<EmployerTitle>${escXml(org.name)}</EmployerTitle>\n`;
-            xml += '\t\t</Worker>\n';
-            
-            // Organization
-            xml += '\t\t<Organization>\n';
-            xml += `\t\t\t<Inn>${escXml(org.inn)}</Inn>\n`;
-            xml += `\t\t\t<Title>${escXml(org.name)}</Title>\n`;
-            xml += '\t\t</Organization>\n';
-            
-            // Test
-            xml += `\t\t<Test isPassed="true" learnProgramId="${program.id}">\n`;
-            xml += `\t\t\t<Date>${escXml(date)}</Date>\n`;
-            xml += `\t\t\t<ProtocolNumber>${escXml(number)}</ProtocolNumber>\n`;
-            xml += `\t\t\t<LearnProgramTitle>${escXml(program.title)}</LearnProgramTitle>\n`;
-            xml += '\t\t</Test>\n';
-            
-            xml += '\t</RegistryRecord>\n';
-        });
-    });
-    
-    xml += '</RegistrySet>';
-    
-    const resultBlock = document.getElementById('resultBlock');
-    const downloadLink = document.getElementById('downloadLink');
-    resultBlock.classList.remove('hidden');
-    
-    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = `Реестр_${number}_${date}.xml`;
-    
-    // Показываем превью и информацию
-    const preview = document.createElement('pre');
-    preview.style.cssText = 'max-height:200px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;margin-top:12px;';
-    
-    // Показываем первые несколько строк
-    const lines = xml.split('\n');
-    let previewText = '';
-    for (let i = 0; i < Math.min(20, lines.length); i++) {
-        previewText += lines[i] + '\n';
-    }
-    if (lines.length > 20) previewText += '...\n\n';
-    
-    previewText += `📊 Создано записей: ${protocol.length * programs.length}\n`;
-    previewText += `👤 Сотрудников: ${protocol.length}\n`;
-    previewText += `📚 Программ: ${programs.length}\n\n`;
-    previewText += '📋 Программы:\n';
-    programs.forEach(p => {
-        previewText += `   ${p.id}. ${p.title}\n`;
-    });
-    
-    preview.textContent = previewText;
-    resultBlock.querySelector('pre')?.remove();
-    resultBlock.appendChild(preview);
-    
-    const totalRecords = protocol.length * programs.length;
-    alert(`✅ Создано ${totalRecords} записей (${protocol.length} сотрудников × ${programs.length} программ)`);
-}
-
-// ============================================================
-// ФОРМАТИРОВАНИЕ СНИЛС С ПРОБЕЛАМИ (как в шаблоне)
-// ============================================================
-function formatSnilsWithSpaces(snils) {
-    if (!snils) return '';
-    const clean = snils.replace(/\D/g, '');
-    if (clean.length < 11) return snils;
-    return clean.slice(0,3) + '-' + clean.slice(3,6) + '-' + clean.slice(6,9) + ' ' + clean.slice(9,11);
-}// ============================================================
-// ГЕНЕРАЦИЯ XML - ТОЧНО ПО ШАБЛОНУ EXCEL (14 КОЛОНОК)
-// ============================================================
-function generateXML() {
-    const orgSelect = document.getElementById('orgSelect');
-    const orgs = getOrgs();
-    const org = orgs.find(o => o.id === parseInt(orgSelect.value));
-    if (!org) { alert('❌ Выберите организацию!'); return; }
-    
-    const protocol = getProtocol();
-    if (protocol.length === 0) { alert('❌ Нет сотрудников в протоколе!'); return; }
-    
-    const number = document.getElementById('protocolNumber').value.trim() || '01/26';
-    const date = document.getElementById('protocolDate').value || new Date().toISOString().split('T')[0];
-    
-    // ============================================================
-    // ПРАВИЛЬНЫЕ ПОЛНЫЕ НАЗВАНИЯ ПРОГРАММ
-    // ============================================================
-    const PROGRAM_TITLES = {
-        1: 'Оказание первой помощи пострадавшим',
-        2: 'Использование (применение) средств индивидуальной защиты',
-        3: 'Общие вопросы охраны труда и функционирования системы управления охраной труда',
-        4: 'Безопасные методы и приемы выполнения работ при воздействии вредных и (или) опасных производственных факторов, источников опасности, идентифицированных в рамках специальной оценки условий труда и оценки профессиональных рисков'
-    };
-    
-    // Получаем выбранные программы
-    const programs = [];
-    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked').forEach(cb => {
-        const id = parseInt(cb.value);
-        // Берем полное название из справочника
-        const fullTitle = PROGRAM_TITLES[id];
-        if (fullTitle) {
-            programs.push({
-                id: id,
-                title: fullTitle
-            });
-        } else {
-            // Если вдруг нет в справочнике - берем из чекбокса
-            const label = cb.closest('.program-check');
-            if (label) {
-                const text = label.textContent.trim();
-                const programName = text.replace(/^\d+\.\s*/, '').trim();
-                programs.push({
-                    id: id,
-                    title: programName
-                });
-            }
-        }
-    });
-    
-    if (programs.length === 0) { alert('❌ Выберите программы!'); return; }
-    
-    // Формируем XML в формате RegistrySet
-    let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
-    xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
-    
-    // Для каждого сотрудника создаем запись для каждой программы
-    protocol.forEach(emp => {
-        programs.forEach(program => {
-            xml += '\t<RegistryRecord>\n';
-            
-            // Worker
-            xml += '\t\t<Worker>\n';
-            xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
-            xml += `\t\t\t<FirstName>${escXml(emp.first_name)}</FirstName>\n`;
-            xml += `\t\t\t<MiddleName>${escXml(emp.middle_name || '')}</MiddleName>\n`;
-            const snilsFormatted = formatSnilsWithSpaces(emp.snils);
-            xml += `\t\t\t<Snils>${escXml(snilsFormatted)}</Snils>\n`;
-            xml += `\t\t\t<Position>${escXml(emp.position)}</Position>\n`;
-            xml += `\t\t\t<EmployerInn>${escXml(org.inn)}</EmployerInn>\n`;
-            xml += `\t\t\t<EmployerTitle>${escXml(org.name)}</EmployerTitle>\n`;
-            xml += '\t\t</Worker>\n';
-            
-            // Organization
-            xml += '\t\t<Organization>\n';
-            xml += `\t\t\t<Inn>${escXml(org.inn)}</Inn>\n`;
-            xml += `\t\t\t<Title>${escXml(org.name)}</Title>\n`;
-            xml += '\t\t</Organization>\n';
-            
-            // Test
-            xml += `\t\t<Test isPassed="true" learnProgramId="${program.id}">\n`;
-            xml += `\t\t\t<Date>${escXml(date)}</Date>\n`;
-            xml += `\t\t\t<ProtocolNumber>${escXml(number)}</ProtocolNumber>\n`;
-            xml += `\t\t\t<LearnProgramTitle>${escXml(program.title)}</LearnProgramTitle>\n`;
-            xml += '\t\t</Test>\n';
-            
-            xml += '\t</RegistryRecord>\n';
-        });
-    });
-    
-    xml += '</RegistrySet>';
-    
-    const resultBlock = document.getElementById('resultBlock');
-    const downloadLink = document.getElementById('downloadLink');
-    resultBlock.classList.remove('hidden');
-    
-    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = `Реестр_${number}_${date}.xml`;
-    
-    // Показываем превью и информацию
-    const preview = document.createElement('pre');
-    preview.style.cssText = 'max-height:200px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;margin-top:12px;';
-    
-    // Показываем первые несколько строк
-    const lines = xml.split('\n');
-    let previewText = '';
-    for (let i = 0; i < Math.min(20, lines.length); i++) {
-        previewText += lines[i] + '\n';
-    }
-    if (lines.length > 20) previewText += '...\n\n';
-    
-    previewText += `📊 Создано записей: ${protocol.length * programs.length}\n`;
-    previewText += `👤 Сотрудников: ${protocol.length}\n`;
-    previewText += `📚 Программ: ${programs.length}\n\n`;
-    previewText += '📋 Программы:\n';
-    programs.forEach(p => {
-        previewText += `   ${p.id}. ${p.title}\n`;
-    });
-    
-    preview.textContent = previewText;
-    resultBlock.querySelector('pre')?.remove();
-    resultBlock.appendChild(preview);
-    
-    const totalRecords = protocol.length * programs.length;
-    alert(`✅ Создано ${totalRecords} записей (${protocol.length} сотрудников × ${programs.length} программ)`);
-}
-
-// ============================================================
-// ФОРМАТИРОВАНИЕ СНИЛС С ПРОБЕЛАМИ (как в шаблоне)
-// ============================================================
-function formatSnilsWithSpaces(snils) {
-    if (!snils) return '';
-    const clean = snils.replace(/\D/g, '');
-    if (clean.length < 11) return snils;
-    return clean.slice(0,3) + '-' + clean.slice(3,6) + '-' + clean.slice(6,9) + ' ' + clean.slice(9,11);
-}// ============================================================
-// ГЕНЕРАЦИЯ XML - ТОЧНО ПО ШАБЛОНУ EXCEL (14 КОЛОНОК)
-// ============================================================
-function generateXML() {
-    const orgSelect = document.getElementById('orgSelect');
-    const orgs = getOrgs();
-    const org = orgs.find(o => o.id === parseInt(orgSelect.value));
-    if (!org) { alert('❌ Выберите организацию!'); return; }
-    
-    const protocol = getProtocol();
-    if (protocol.length === 0) { alert('❌ Нет сотрудников в протоколе!'); return; }
-    
-    const number = document.getElementById('protocolNumber').value.trim() || '01/26';
-    const date = document.getElementById('protocolDate').value || new Date().toISOString().split('T')[0];
-    
-    // ============================================================
-    // ПРАВИЛЬНЫЕ ПОЛНЫЕ НАЗВАНИЯ ПРОГРАММ
-    // ============================================================
-    const PROGRAM_TITLES = {
-        1: 'Оказание первой помощи пострадавшим',
-        2: 'Использование (применение) средств индивидуальной защиты',
-        3: 'Общие вопросы охраны труда и функционирования системы управления охраной труда',
-        4: 'Безопасные методы и приемы выполнения работ при воздействии вредных и (или) опасных производственных факторов, источников опасности, идентифицированных в рамках специальной оценки условий труда и оценки профессиональных рисков'
-    };
-    
-    // Получаем выбранные программы
-    const programs = [];
-    document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked').forEach(cb => {
-        const id = parseInt(cb.value);
-        // Берем полное название из справочника
-        const fullTitle = PROGRAM_TITLES[id];
-        if (fullTitle) {
-            programs.push({
-                id: id,
-                title: fullTitle
-            });
-        } else {
-            // Если вдруг нет в справочнике - берем из чекбокса
-            const label = cb.closest('.program-check');
-            if (label) {
-                const text = label.textContent.trim();
-                const programName = text.replace(/^\d+\.\s*/, '').trim();
-                programs.push({
-                    id: id,
-                    title: programName
-                });
-            }
-        }
-    });
-    
-    if (programs.length === 0) { alert('❌ Выберите программы!'); return; }
-    
-    // Формируем XML в формате RegistrySet
-    let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
-    xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
-    
-    // Для каждого сотрудника создаем запись для каждой программы
-    protocol.forEach(emp => {
-        programs.forEach(program => {
-            xml += '\t<RegistryRecord>\n';
-            
-            // Worker
-            xml += '\t\t<Worker>\n';
-            xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
-            xml += `\t\t\t<FirstName>${escXml(emp.first_name)}</FirstName>\n`;
-            xml += `\t\t\t<MiddleName>${escXml(emp.middle_name || '')}</MiddleName>\n`;
-            const snilsFormatted = formatSnilsWithSpaces(emp.snils);
-            xml += `\t\t\t<Snils>${escXml(snilsFormatted)}</Snils>\n`;
-            xml += `\t\t\t<Position>${escXml(emp.position)}</Position>\n`;
-            xml += `\t\t\t<EmployerInn>${escXml(org.inn)}</EmployerInn>\n`;
-            xml += `\t\t\t<EmployerTitle>${escXml(org.name)}</EmployerTitle>\n`;
-            xml += '\t\t</Worker>\n';
-            
-            // Organization
-            xml += '\t\t<Organization>\n';
-            xml += `\t\t\t<Inn>${escXml(org.inn)}</Inn>\n`;
-            xml += `\t\t\t<Title>${escXml(org.name)}</Title>\n`;
-            xml += '\t\t</Organization>\n';
-            
-            // Test
-            xml += `\t\t<Test isPassed="true" learnProgramId="${program.id}">\n`;
-            xml += `\t\t\t<Date>${escXml(date)}</Date>\n`;
-            xml += `\t\t\t<ProtocolNumber>${escXml(number)}</ProtocolNumber>\n`;
-            xml += `\t\t\t<LearnProgramTitle>${escXml(program.title)}</LearnProgramTitle>\n`;
-            xml += '\t\t</Test>\n';
-            
-            xml += '\t</RegistryRecord>\n';
-        });
-    });
-    
-    xml += '</RegistrySet>';
-    
-    const resultBlock = document.getElementById('resultBlock');
-    const downloadLink = document.getElementById('downloadLink');
-    resultBlock.classList.remove('hidden');
-    
-    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = `Реестр_${number}_${date}.xml`;
-    
-    // Показываем превью и информацию
-    const preview = document.createElement('pre');
-    preview.style.cssText = 'max-height:200px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;margin-top:12px;';
-    
-    // Показываем первые несколько строк
-    const lines = xml.split('\n');
-    let previewText = '';
-    for (let i = 0; i < Math.min(20, lines.length); i++) {
-        previewText += lines[i] + '\n';
-    }
-    if (lines.length > 20) previewText += '...\n\n';
-    
-    previewText += `📊 Создано записей: ${protocol.length * programs.length}\n`;
-    previewText += `👤 Сотрудников: ${protocol.length}\n`;
-    previewText += `📚 Программ: ${programs.length}\n\n`;
-    previewText += '📋 Программы:\n';
-    programs.forEach(p => {
-        previewText += `   ${p.id}. ${p.title}\n`;
-    });
-    
-    preview.textContent = previewText;
-    resultBlock.querySelector('pre')?.remove();
-    resultBlock.appendChild(preview);
-    
-    const totalRecords = protocol.length * programs.length;
-    alert(`✅ Создано ${totalRecords} записей (${protocol.length} сотрудников × ${programs.length} программ)`);
-}
-
-// ============================================================
-// ФОРМАТИРОВАНИЕ СНИЛС С ПРОБЕЛАМИ (как в шаблоне)
-// ============================================================
-function formatSnilsWithSpaces(snils) {
-    if (!snils) return '';
-    const clean = snils.replace(/\D/g, '');
-    if (clean.length < 11) return snils;
-    return clean.slice(0,3) + '-' + clean.slice(3,6) + '-' + clean.slice(6,9) + ' ' + clean.slice(9,11);
 }
 
 // ============================================================
@@ -3598,17 +2895,9 @@ function toggleCardType() {
     if (isDuty) {
         if (dutyFields) dutyFields.style.display = 'block';
         if (personalFields) personalFields.style.display = 'none';
-        const posField = document.getElementById('ppeCardManagerPosition');
-        const nameField = document.getElementById('ppeCardManager');
-        if (posField) posField.placeholder = 'Ответственное лицо';
-        if (nameField) nameField.placeholder = 'Иванов И.И.';
     } else {
         if (dutyFields) dutyFields.style.display = 'none';
         if (personalFields) personalFields.style.display = 'block';
-        const posField = document.getElementById('ppeCardManagerPosition');
-        const nameField = document.getElementById('ppeCardManager');
-        if (posField) posField.placeholder = 'Начальник службы движения';
-        if (nameField) nameField.placeholder = 'Иванов И.И.';
     }
 }
 
