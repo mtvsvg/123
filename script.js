@@ -922,20 +922,56 @@ function renderPPECardStaffList() {
         return;
     }
     
-    let html = '<div style="max-height:400px;overflow-y:auto;">';
+    let html = '<div style="max-height:500px;overflow-y:auto;">';
     all.forEach((emp, idx) => {
+        // Загружаем сохранённые данные для этого сотрудника
+        const savedData = JSON.parse(localStorage.getItem('ppeCardStaffData_' + emp.snils) || '{}');
+        const cardNumber = savedData.cardNumber || '';
+        const workplaceId = savedData.workplaceId || '';
+        const checked = savedData.checked || false;
+        
         html += `
-            <div class="employee-row">
-                <input type="checkbox" class="ppe-card-staff-check" data-snils="${emp.snils}">
-                <span class="emp-name" onclick="openEmployeeCardBySnils('${emp.snils}')">${emp.last_name} ${emp.first_name}</span>
-                <span class="emp-position">${emp.position}</span>
-                <span class="emp-snils">${formatSnils(emp.snils)}</span>
-                ${emp.department ? `<span style="color:#8888aa;font-size:12px;margin-left:auto;">${emp.department}</span>` : '<span style="color:#666;font-size:12px;margin-left:auto;">Без службы</span>'}
+            <div class="staff-item-with-fields" data-snils="${emp.snils}">
+                <div class="staff-info">
+                    <input type="checkbox" class="ppe-card-staff-check" data-snils="${emp.snils}" ${checked ? 'checked' : ''}>
+                    <span class="emp-name" onclick="openEmployeeCardBySnils('${emp.snils}')">${emp.last_name} ${emp.first_name}</span>
+                    <span class="emp-position">${emp.position}</span>
+                    <span class="emp-snils">${formatSnils(emp.snils)}</span>
+                    ${emp.department ? `<span style="color:#8888aa;font-size:11px;">${emp.department}</span>` : ''}
+                </div>
+                <div class="staff-fields">
+                    <span class="field-label">№ карточки:</span>
+                    <input type="text" class="staff-card-number" data-snils="${emp.snils}" placeholder="001" value="${cardNumber}" style="width:70px;">
+                    <span class="field-label">ID рабочего места:</span>
+                    <input type="text" class="staff-workplace-id" data-snils="${emp.snils}" placeholder="РМ-001" value="${workplaceId}" style="width:90px;">
+                </div>
             </div>
         `;
     });
     html += '</div>';
     container.innerHTML = html;
+    
+    // Сохраняем данные при изменении полей
+    document.querySelectorAll('.staff-card-number, .staff-workplace-id').forEach(input => {
+        input.addEventListener('change', function() {
+            const snils = this.dataset.snils;
+            const cardNumber = document.querySelector(`.staff-card-number[data-snils="${snils}"]`)?.value || '';
+            const workplaceId = document.querySelector(`.staff-workplace-id[data-snils="${snils}"]`)?.value || '';
+            const checked = document.querySelector(`.ppe-card-staff-check[data-snils="${snils}"]`)?.checked || false;
+            localStorage.setItem('ppeCardStaffData_' + snils, JSON.stringify({ cardNumber, workplaceId, checked }));
+        });
+    });
+    
+    // Сохраняем данные при изменении чекбокса
+    document.querySelectorAll('.ppe-card-staff-check').forEach(cb => {
+        cb.addEventListener('change', function() {
+            const snils = this.dataset.snils;
+            const cardNumber = document.querySelector(`.staff-card-number[data-snils="${snils}"]`)?.value || '';
+            const workplaceId = document.querySelector(`.staff-workplace-id[data-snils="${snils}"]`)?.value || '';
+            const checked = this.checked;
+            localStorage.setItem('ppeCardStaffData_' + snils, JSON.stringify({ cardNumber, workplaceId, checked }));
+        });
+    });
 }
 
 function renderPPECardPPEList() {
