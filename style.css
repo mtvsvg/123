@@ -1544,3 +1544,76 @@ input::placeholder, textarea::placeholder {
         color: #333 !important;
     }
 }
+/* Стили для списка сотрудников с полями */
+.staff-item-with-fields {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.staff-item-with-fields .staff-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 2;
+    min-width: 200px;
+}
+
+.staff-item-with-fields .staff-fields {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 3;
+    flex-wrap: wrap;
+}
+
+.staff-item-with-fields .staff-fields input {
+    padding: 4px 8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    color: #fff;
+    font-size: 12px;
+    min-width: 80px;
+}
+
+.staff-item-with-fields .staff-fields input::placeholder {
+    color: #666;
+}
+
+.staff-item-with-fields .staff-fields .field-label {
+    color: #8888aa;
+    font-size: 10px;
+    margin-right: 2px;
+}
+
+.staff-item-with-fields input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #7c3aed;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.staff-item-with-fields .emp-name {
+    color: #00d4ff;
+    font-size: 13px;
+    min-width: 120px;
+}
+
+.staff-item-with-fields .emp-position {
+    color: #8888aa;
+    font-size: 12px;
+}
+
+.staff-item-with-fields .emp-snils {
+    color: #666;
+    font-size: 11px;
+    min-width: 90px;
+}
