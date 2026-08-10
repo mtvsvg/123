@@ -1103,16 +1103,26 @@ function getSelectedPPECardEmployees() {
 }
 
 function clearPPECardSelection() {
+    // Очищаем чекбоксы
     document.querySelectorAll('.ppe-card-staff-check').forEach(cb => cb.checked = false);
     document.querySelectorAll('.ppe-card-ppe-check').forEach(cb => cb.checked = false);
     selectedPPECardItems = [];
+    
+    // Очищаем сохранённые данные для всех сотрудников
+    const all = getAllEmployees();
+    all.forEach(emp => {
+        localStorage.removeItem('ppeCardStaffData_' + emp.snils);
+    });
+    
     renderPPECardPPEList();
     document.getElementById('ppeCardResult').classList.add('hidden');
     alert('✅ Выбор очищен');
 }
+}
+}
 
 // ============================================================
-// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - ЛИЧНАЯ И ДЕЖУРНАЯ (с индивидуальными номерами)
 // ============================================================
 function generatePPECardsHTML() {
     console.log('🔄 generatePPECardsHTML вызвана');
@@ -1134,7 +1144,6 @@ function generatePPECardsHTML() {
     const isDuty = document.querySelector('input[name="cardType"][value="duty"]')?.checked || false;
     
     // Общие поля
-    const cardNumber = document.getElementById('ppeCardNumber').value.trim() || '___';
     const gender = document.getElementById('ppeCardGender').value || 'М';
     const height = document.getElementById('ppeCardHeight').value.trim() || '';
     const clothesSize = document.getElementById('ppeCardClothesSize').value.trim() || '';
@@ -1142,8 +1151,7 @@ function generatePPECardsHTML() {
     const manager = document.getElementById('ppeCardManager').value.trim() || '_______________';
     const managerPosition = document.getElementById('ppeCardManagerPosition').value.trim() || '_______________';
     
-    // Поля для дежурной карточки
-    const dutyWorkplaceId = document.getElementById('dutyWorkplaceId')?.value.trim() || '';
+    // Поля для дежурной карточки (общие для всех)
     const dutyDepartment = document.getElementById('dutyDepartment')?.value.trim() || '';
     const dutyResponsibleName = document.getElementById('dutyResponsibleName')?.value.trim() || '';
     const dutyResponsiblePosition = document.getElementById('dutyResponsiblePosition')?.value.trim() || '';
@@ -1221,9 +1229,11 @@ function generatePPECardsHTML() {
         return rows;
     }
     
-    // ЛИЦЕВАЯ КАРТОЧКА - ЛИЧНАЯ
+    // ЛИЦЕВАЯ КАРТОЧКА - ЛИЧНАЯ (с индивидуальным номером)
     function createPersonalFaceCard(emp) {
         const dept = document.getElementById('ppeCardDepartment')?.value.trim() || '';
+        // Используем номер из данных сотрудника
+        const cardNumber = emp.cardNumber || '___';
         return `
             <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:10px 14px 8px 14px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
                 <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:6px;flex-shrink:0;">
@@ -1286,8 +1296,11 @@ function generatePPECardsHTML() {
         `;
     }
     
-    // ЛИЦЕВАЯ КАРТОЧКА - ДЕЖУРНАЯ
+    // ЛИЦЕВАЯ КАРТОЧКА - ДЕЖУРНАЯ (с индивидуальным номером и ID рабочего места)
     function createDutyFaceCard(emp) {
+        // Используем номер и ID рабочего места из данных сотрудника
+        const cardNumber = emp.cardNumber || '___';
+        const workplaceId = emp.workplaceId || '________';
         return `
             <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:10px 14px 8px 14px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
                 <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:6px;flex-shrink:0;">
@@ -1300,7 +1313,7 @@ function generatePPECardsHTML() {
                 </div>
                 
                 <div style="font-size:10px;margin-bottom:4px;flex-shrink:0;">
-                    <div><strong>Идентификатор рабочего места, за которым закреплены дежурные СИЗ:</strong> ${dutyWorkplaceId || '________'}</div>
+                    <div><strong>Идентификатор рабочего места, за которым закреплены дежурные СИЗ:</strong> ${workplaceId}</div>
                     <div><strong>Структурное подразделение</strong> ${dutyDepartment || '________________'}</div>
                     <div><strong>Фамилия, имя, отчество (при наличии) ответственного</strong> ${dutyResponsibleName || '________________'}</div>
                     <div><strong>Профессия (должность) ответственного</strong> ${dutyResponsiblePosition || '________________'}</div>
@@ -1337,7 +1350,7 @@ function generatePPECardsHTML() {
         `;
     }
     
-    // ОБОРОТНАЯ КАРТОЧКА - БЕЗ ФИО
+    // ОБОРОТНАЯ КАРТОЧКА (для обоих типов)
     function createReverseCard(emp) {
         return `
             <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:10px 14px 8px 14px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
@@ -1484,13 +1497,10 @@ function generatePPECardsHTML() {
                     📄 Для каждой пары сотрудников: 1 лист с лицевыми сторонами + 1 лист с оборотными сторонами
                 </p>
                 <p style="font-size:10px;color:#888;">
-                    📋 На каждом листе: сверху сотрудник А, снизу сотрудник Б
+                    📋 У каждого сотрудника свой номер карточки и ID рабочего места
                 </p>
                 <p style="font-size:10px;color:#888;">
-                    📊 Лицевая таблица: ВСЕГДА 4 СТРОКИ (пустые ячейки для ручного заполнения)
-                </p>
-                <p style="font-size:10px;color:#888;">
-                    📊 Оборотная таблица: ВСЕГДА 6 СТРОК (названия СИЗ подставляются автоматически)
+                    📊 Таблица СИЗ: ВСЕГДА 4 СТРОКИ (пустые ячейки для ручного заполнения)
                 </p>
                 <p style="font-size:10px;color:#888;">
                     ✂️ Разрез по горизонтали (посередине листа) — только пунктир
@@ -1511,12 +1521,11 @@ function generatePPECardsHTML() {
     resultDiv.classList.remove('hidden');
     contentDiv.innerHTML = `
         <p>✅ Создано ${cardTypeName.toLowerCase()} карточек: <strong>${cardCount}</strong></p>
-        <p>📋 Сотрудники: ${employees.map(e => `${e.last_name} ${e.first_name}`).join(', ')}</p>
+        <p>📋 Сотрудники: ${employees.map(e => `${e.last_name} ${e.first_name} (№${e.cardNumber || '___'})`).join(', ')}</p>
         <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
         <p style="color:#8888aa;font-size:13px;margin-top:8px;">🖨️ Откроется новое окно для печати.</p>
         <p style="color:#8888aa;font-size:12px;">📄 Всего листов: ${totalPairs * 2} (${totalPairs} лицевых + ${totalPairs} оборотных)</p>
-        <p style="color:#8888aa;font-size:12px;">📊 Лицевая таблица: ВСЕГДА 4 СТРОКИ (пустые ячейки для ручного заполнения)</p>
-        <p style="color:#8888aa;font-size:12px;">📊 Оборотная таблица: ВСЕГДА 6 СТРОК (названия СИЗ подставляются автоматически)</p>
+        <p style="color:#8888aa;font-size:12px;">📋 У каждого сотрудника свой номер карточки и ID рабочего места</p>
         <p style="color:#8888aa;font-size:12px;">✂️ Разрез по горизонтали (посередине листа) — только пунктир</p>
     `;
 }
