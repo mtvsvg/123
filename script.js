@@ -927,7 +927,6 @@ function renderPPECardStaffList() {
     
     let html = '<div style="max-height:500px;overflow-y:auto;">';
     all.forEach((emp) => {
-        // Загружаем сохранённые данные для этого сотрудника
         const savedData = JSON.parse(localStorage.getItem('ppeCardStaffData_' + emp.snils) || '{}');
         const cardNumber = savedData.cardNumber || '';
         const workplaceId = savedData.workplaceId || '';
@@ -954,7 +953,6 @@ function renderPPECardStaffList() {
     html += '</div>';
     container.innerHTML = html;
     
-    // Сохраняем данные при изменении полей
     document.querySelectorAll('.staff-card-number, .staff-workplace-id').forEach(input => {
         input.addEventListener('change', function() {
             const snils = this.dataset.snils;
@@ -965,7 +963,6 @@ function renderPPECardStaffList() {
         });
     });
     
-    // Сохраняем данные при изменении чекбокса
     document.querySelectorAll('.ppe-card-staff-check').forEach(cb => {
         cb.addEventListener('change', function() {
             const snils = this.dataset.snils;
@@ -1114,12 +1111,10 @@ function getSelectedPPECardEmployees() {
 }
 
 function clearPPECardSelection() {
-    // Очищаем чекбоксы
     document.querySelectorAll('.ppe-card-staff-check').forEach(cb => cb.checked = false);
     document.querySelectorAll('.ppe-card-ppe-check').forEach(cb => cb.checked = false);
     selectedPPECardItems = [];
     
-    // Очищаем сохранённые данные для всех сотрудников
     const all = getAllEmployees();
     all.forEach(emp => {
         localStorage.removeItem('ppeCardStaffData_' + emp.snils);
@@ -1150,10 +1145,8 @@ function generatePPECardsHTML() {
         return;
     }
     
-    // Определяем тип карточки
     const isDuty = document.querySelector('input[name="cardType"][value="duty"]')?.checked || false;
     
-    // Общие поля
     const gender = document.getElementById('ppeCardGender').value || 'М';
     const height = document.getElementById('ppeCardHeight').value.trim() || '';
     const clothesSize = document.getElementById('ppeCardClothesSize').value.trim() || '';
@@ -1161,7 +1154,6 @@ function generatePPECardsHTML() {
     const manager = document.getElementById('ppeCardManager').value.trim() || '_______________';
     const managerPosition = document.getElementById('ppeCardManagerPosition').value.trim() || '_______________';
     
-    // Поля для дежурной карточки (общие для всех)
     const dutyDepartment = document.getElementById('dutyDepartment')?.value.trim() || '';
     const dutyResponsibleName = document.getElementById('dutyResponsibleName')?.value.trim() || '';
     const dutyResponsiblePosition = document.getElementById('dutyResponsiblePosition')?.value.trim() || '';
@@ -1173,7 +1165,6 @@ function generatePPECardsHTML() {
     let cardCount = 0;
     let totalPairs = Math.ceil(employees.length / 2);
     
-    // ЛИЦЕВАЯ ТАБЛИЦА - ВСЕГДА 4 СТРОКИ
     function buildPPETable() {
         let rows = '';
         selectedPPECardItems.forEach((ppe) => {
@@ -1201,7 +1192,6 @@ function generatePPECardsHTML() {
         return rows;
     }
     
-    // ОБОРОТНАЯ ТАБЛИЦА - 6 СТРОК (с названиями СИЗ в 1-й колонке)
     function buildReverseTable() {
         let rows = '';
         selectedPPECardItems.forEach((ppe) => {
@@ -1239,7 +1229,6 @@ function generatePPECardsHTML() {
         return rows;
     }
     
-    // ЛИЦЕВАЯ КАРТОЧКА - ЛИЧНАЯ
     function createPersonalFaceCard(emp) {
         const dept = document.getElementById('ppeCardDepartment')?.value.trim() || '';
         const cardNumber = emp.cardNumber || '___';
@@ -1305,7 +1294,6 @@ function generatePPECardsHTML() {
         `;
     }
     
-    // ЛИЦЕВАЯ КАРТОЧКА - ДЕЖУРНАЯ
     function createDutyFaceCard(emp) {
         const cardNumber = emp.cardNumber || '___';
         const workplaceId = emp.workplaceId || '________';
@@ -1358,7 +1346,7 @@ function generatePPECardsHTML() {
         `;
     }
     
-    // ОБОРОТНАЯ КАРТОЧКА
+    // ОБОРОТНАЯ КАРТОЧКА - С ЗАГОЛОВКАМИ "Выдано" и "Возвращено"
     function createReverseCard(emp) {
         return `
             <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:10px 14px 8px 14px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
@@ -1367,15 +1355,19 @@ function generatePPECardsHTML() {
                 <table style="width:100%;border-collapse:collapse;font-size:8px;border:1px solid #000;flex:1;">
                     <thead>
                         <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;width:11%;font-size:8px;font-weight:bold;">Наименование СИЗ</th>
-                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;width:12%;font-size:8px;font-weight:bold;">Модель, марка, артикул, класс защиты СИЗ</th>
-                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;width:8%;font-size:8px;font-weight:bold;">дата</th>
-                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;width:8%;font-size:8px;font-weight:bold;">кол-во</th>
-                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;width:10%;font-size:8px;font-weight:bold;">подпись получившего СИЗ</th>
-                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;width:8%;font-size:8px;font-weight:bold;">дата</th>
-                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;width:8%;font-size:8px;font-weight:bold;">кол-во</th>
-                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;width:10%;font-size:8px;font-weight:bold;">подпись сдавшего СИЗ</th>
-                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;width:10%;font-size:8px;font-weight:bold;">Акт (дата, номер)</th>
+                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;width:11%;font-size:8px;font-weight:bold;" rowspan="2">Наименование СИЗ</th>
+                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;width:12%;font-size:8px;font-weight:bold;" rowspan="2">Модель, марка, артикул, класс защиты СИЗ</th>
+                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;font-size:8px;font-weight:bold;" colspan="3">Выдано</th>
+                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;font-size:8px;font-weight:bold;" colspan="3">Возвращено</th>
+                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;width:10%;font-size:8px;font-weight:bold;" rowspan="2">Акт списания (дата, номер)</th>
+                        </tr>
+                        <tr style="background:#f0f0f0;">
+                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">дата</th>
+                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">кол-во</th>
+                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">подпись получившего СИЗ</th>
+                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">дата</th>
+                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">кол-во</th>
+                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">подпись сдавшего СИЗ</th>
                         </tr>
                         <tr style="background:#f0f0f0;">
                             <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">1</th>
@@ -1408,7 +1400,6 @@ function generatePPECardsHTML() {
         
         const faceCardFunc = isDuty ? createDutyFaceCard : createPersonalFaceCard;
         
-        // ЛИСТ 1 - ДВЕ ЛИЦЕВЫЕ КАРТОЧКИ
         let facePageHTML = `
         <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
             ${faceCardFunc(emp1)}
@@ -1417,7 +1408,6 @@ function generatePPECardsHTML() {
         </div>
         `;
         
-        // ЛИСТ 2 - ДВЕ ОБОРОТНЫЕ КАРТОЧКИ
         let reversePageHTML = `
         <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
             ${createReverseCard(emp1)}
@@ -1507,7 +1497,7 @@ function generatePPECardsHTML() {
                     📋 У каждого сотрудника свой номер карточки и ID рабочего места
                 </p>
                 <p style="font-size:10px;color:#888;">
-                    📊 Таблица СИЗ: ВСЕГДА 4 СТРОКИ (пустые ячейки для ручного заполнения)
+                    📊 На оборотной стороне: заголовки "Выдано" и "Возвращено"
                 </p>
                 <p style="font-size:10px;color:#888;">
                     ✂️ Разрез по горизонтали (посередине листа) — только пунктир
@@ -1532,400 +1522,9 @@ function generatePPECardsHTML() {
         <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
         <p style="color:#8888aa;font-size:13px;margin-top:8px;">🖨️ Откроется новое окно для печати.</p>
         <p style="color:#8888aa;font-size:12px;">📄 Всего листов: ${totalPairs * 2} (${totalPairs} лицевых + ${totalPairs} оборотных)</p>
-        <p style="color:#8888aa;font-size:12px;">📋 У каждого сотрудника свой номер карточки и ID рабочего места</p>
+        <p style="color:#8888aa;font-size:12px;">📊 На оборотной стороне: заголовки "Выдано" и "Возвращено"</p>
         <p style="color:#8888aa;font-size:12px;">✂️ Разрез по горизонтали (посередине листа) — только пунктир</p>
     `;
-}
-
-// ============================================================
-// КАЛЕНДАРЬ
-// ============================================================
-let currentDate = new Date();
-let selectedDate = null;
-
-function renderCalendar() {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    
-    const title = document.getElementById('calendarMonthTitle');
-    const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-    title.textContent = `${months[month]} ${year}`;
-    
-    const grid = document.getElementById('calendarGrid');
-    grid.innerHTML = `
-        <div class="weekday">Пн</div><div class="weekday">Вт</div><div class="weekday">Ср</div>
-        <div class="weekday">Чт</div><div class="weekday">Пт</div><div class="weekday">Сб</div><div class="weekday">Вс</div>
-    `;
-    
-    const firstDay = new Date(year, month, 1);
-    let startDay = firstDay.getDay();
-    if (startDay === 0) startDay = 7;
-    startDay = startDay - 1;
-    
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const daysInPrevMonth = new Date(year, month, 0).getDate();
-    
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    
-    const events = getEvents();
-    
-    for (let i = startDay - 1; i >= 0; i--) {
-        const day = daysInPrevMonth - i;
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayEvents = events.filter(e => e.date === dateStr);
-        const dayDiv = document.createElement('div');
-        dayDiv.className = 'calendar-day other-month';
-        dayDiv.innerHTML = `<span class="day-number">${day}</span>`;
-        if (dayEvents.length > 0) {
-            dayDiv.innerHTML += `<div class="day-events">${dayEvents.slice(0, 2).map(e => 
-                `<span class="event-text ${getEventStatus(e)}">${e.title}</span>`
-            ).join('')}</div>`;
-        }
-        dayDiv.onclick = () => selectDay(dateStr);
-        grid.appendChild(dayDiv);
-    }
-    
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayEvents = events.filter(e => e.date === dateStr);
-        const dayDiv = document.createElement('div');
-        dayDiv.className = 'calendar-day';
-        if (dateStr === todayStr) dayDiv.classList.add('today');
-        dayDiv.innerHTML = `<span class="day-number">${day}</span>`;
-        if (dayEvents.length > 0) {
-            dayDiv.innerHTML += `<div class="day-events">${dayEvents.slice(0, 2).map(e => 
-                `<span class="event-text ${getEventStatus(e)}">${e.title}</span>`
-            ).join('')}</div>`;
-            if (dayEvents.length > 2) {
-                dayDiv.innerHTML += `<span style="font-size:9px;color:#8888aa;">+${dayEvents.length - 2} еще</span>`;
-            }
-        }
-        dayDiv.onclick = () => selectDay(dateStr);
-        grid.appendChild(dayDiv);
-    }
-    
-    const totalDays = startDay + daysInMonth;
-    const remaining = 42 - totalDays;
-    for (let day = 1; day <= remaining; day++) {
-        const dateStr = `${year}-${String(month + 2).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayEvents = events.filter(e => e.date === dateStr);
-        const dayDiv = document.createElement('div');
-        dayDiv.className = 'calendar-day other-month';
-        dayDiv.innerHTML = `<span class="day-number">${day}</span>`;
-        if (dayEvents.length > 0) {
-            dayDiv.innerHTML += `<div class="day-events">${dayEvents.slice(0, 2).map(e => 
-                `<span class="event-text ${getEventStatus(e)}">${e.title}</span>`
-            ).join('')}</div>`;
-        }
-        dayDiv.onclick = () => selectDay(dateStr);
-        grid.appendChild(dayDiv);
-    }
-    
-    if (selectedDate) {
-        selectDay(selectedDate);
-    }
-    
-    const newEventDate = document.getElementById('newEventDate');
-    if (newEventDate) {
-        newEventDate.value = todayStr;
-    }
-}
-
-function getEventStatus(event) {
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    if (event.date < todayStr) return 'overdue';
-    if (event.date === todayStr) return 'today-event';
-    if (event.done) return 'done';
-    return 'upcoming';
-}
-
-function selectDay(dateStr) {
-    selectedDate = dateStr;
-    const events = getEvents();
-    const dayEvents = events.filter(e => e.date === dateStr);
-    const sidebar = document.getElementById('selectedDayEvents');
-    
-    if (dayEvents.length === 0) {
-        sidebar.innerHTML = `<p style="color:#666;font-size:13px;">Нет событий на ${dateStr}</p>`;
-        return;
-    }
-    
-    const dateObj = new Date(dateStr);
-    const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-    const formattedDate = `${dateObj.getDate()} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
-    
-    let html = `<p style="color:#ccc;font-size:13px;margin-bottom:8px;"><strong>${formattedDate}</strong></p>`;
-    dayEvents.forEach((event, index) => {
-        const statusClass = getEventStatus(event);
-        const statusLabel = {
-            'overdue': '🔴 Просрочено',
-            'today-event': '🟡 Сегодня',
-            'upcoming': '🟢 Предстоит',
-            'done': '✅ Выполнено'
-        };
-        html += `
-            <div class="event-item">
-                <div>
-                    <span class="event-title">${event.title}</span>
-                    <span class="event-type">${event.type || 'Событие'}</span>
-                    <span style="font-size:10px;color:#8888aa;margin-left:8px;">${statusLabel[statusClass] || ''}</span>
-                </div>
-                <button class="event-delete" onclick="deleteEvent(${index}, '${dateStr}')">✖</button>
-            </div>
-        `;
-    });
-    sidebar.innerHTML = html;
-}
-
-function changeMonth(delta) {
-    currentDate.setMonth(currentDate.getMonth() + delta);
-    renderCalendar();
-}
-
-function addEvent() {
-    const titleInput = document.getElementById('newEventTitle');
-    const typeSelect = document.getElementById('newEventType');
-    const dateInput = document.getElementById('newEventDate');
-    
-    const title = titleInput.value.trim();
-    const type = typeSelect.value;
-    const date = dateInput.value;
-    
-    if (!title) {
-        alert('❌ Введите название события!');
-        titleInput.focus();
-        return;
-    }
-    if (!date) {
-        alert('❌ Выберите дату!');
-        dateInput.focus();
-        return;
-    }
-    
-    const events = getEvents();
-    events.push({
-        id: Date.now(),
-        title: title,
-        type: type,
-        date: date,
-        done: false,
-        createdAt: new Date().toISOString()
-    });
-    saveEvents(events);
-    
-    titleInput.value = '';
-    renderCalendar();
-    selectDay(date);
-    alert('✅ Событие добавлено!');
-}
-
-function deleteEvent(index, dateStr) {
-    if (!confirm('Удалить это событие?')) return;
-    const events = getEvents();
-    const filtered = events.filter((e, i) => {
-        if (i === index && e.date === dateStr) return false;
-        return true;
-    });
-    saveEvents(filtered);
-    renderCalendar();
-    selectDay(dateStr);
-}
-
-function markTrainingFromProtocol() {
-    const protocol = getProtocol();
-    if (protocol.length === 0) {
-        alert('❌ В протоколе нет сотрудников!');
-        return;
-    }
-    
-    if (!confirm(`📅 Отметить в календаре обучение для ${protocol.length} сотрудников?`)) return;
-    
-    const all = getAllEmployees();
-    const today = new Date().toISOString().split('T')[0];
-    let updated = 0;
-    
-    protocol.forEach(empFromProtocol => {
-        const found = all.find(e => e.snils === empFromProtocol.snils);
-        if (found) {
-            const data = getStaffData();
-            for (const [dept, deptData] of Object.entries(data.departments)) {
-                const idx = deptData.employees.findIndex(e => e.snils === empFromProtocol.snils);
-                if (idx !== -1) {
-                    deptData.employees[idx].trainingDate = today;
-                    updated++;
-                    saveStaffData(data);
-                    break;
-                }
-            }
-            if (!updated) {
-                const idx = data.unassigned.findIndex(e => e.snils === empFromProtocol.snils);
-                if (idx !== -1) {
-                    data.unassigned[idx].trainingDate = today;
-                    updated++;
-                    saveStaffData(data);
-                }
-            }
-        }
-    });
-    
-    renderStaffWithDepartments();
-    
-    const events = getEvents();
-    const existing = events.filter(e => e.date === today && e.title.includes('Обучение'));
-    if (existing.length === 0 && updated > 0) {
-        events.push({
-            id: Date.now(),
-            title: `Обучение ${updated} сотрудников`,
-            type: 'Обучение',
-            date: today,
-            done: false,
-            createdAt: new Date().toISOString()
-        });
-        saveEvents(events);
-    }
-    
-    alert(`✅ Обновлено ${updated} сотрудников! Дата обучения: ${today}`);
-}
-
-// ============================================================
-// ПЕРСОНАЛЬНАЯ КАРТОЧКА СОТРУДНИКА
-// ============================================================
-function openEmployeeCardBySnils(snils) {
-    const all = getAllEmployees();
-    const emp = all.find(e => e.snils === snils);
-    if (!emp) {
-        alert('❌ Сотрудник не найден');
-        return;
-    }
-    openEmployeeCard(emp);
-}
-
-function openEmployeeCard(emp) {
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.id = 'employeeModal';
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width:550px;">
-            <div class="modal-header">
-                <h3>👤 ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</h3>
-                <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label style="color:#ccc;">Должность</label>
-                    <input type="text" value="${emp.position}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;" readonly>
-                </div>
-                <div class="form-group">
-                    <label style="color:#ccc;">📅 Дата последнего инструктажа</label>
-                    <input type="date" id="empInstructionDate" value="${emp.instructionDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
-                </div>
-                <div class="form-group">
-                    <label style="color:#ccc;">📅 Дата обучения</label>
-                    <input type="date" id="empTrainingDate" value="${emp.trainingDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
-                </div>
-                <div class="form-group">
-                    <label style="color:#ccc;">🦺 СИЗ</label>
-                    <div style="max-height:150px;overflow-y:auto;background:rgba(255,255,255,0.03);border-radius:6px;padding:8px;">
-                        ${emp.ppeItems && emp.ppeItems.length > 0 ? emp.ppeItems.map((item, i) => 
-                            `<div style="padding:6px 10px;background:rgba(76,175,80,0.1);border-radius:4px;margin-bottom:4px;color:#ccc;font-size:13px;">✅ ${item.name} (${item.type})</div>`
-                        ).join('') : '<div style="color:#666;font-size:13px;">Нет добавленных СИЗ</div>'}
-                    </div>
-                    <button onclick="openPPEModalForEmployee('${emp.snils}')" style="margin-top:8px;padding:6px 16px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);border-radius:6px;color:#b388ff;cursor:pointer;font-size:13px;">➕ Добавить СИЗ</button>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-cancel" onclick="this.closest('.modal-overlay').remove()">Закрыть</button>
-                <button class="btn-primary" onclick="saveEmployeeDataFromModal('${emp.snils}')" style="width:auto;padding:10px 24px;">💾 Сохранить</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-function saveEmployeeDataFromModal(snils) {
-    const data = getStaffData();
-    let emp = null;
-    
-    for (const [dept, deptData] of Object.entries(data.departments)) {
-        const idx = deptData.employees.findIndex(e => e.snils === snils);
-        if (idx !== -1) {
-            emp = deptData.employees[idx];
-            const instructionDate = document.getElementById('empInstructionDate')?.value || '';
-            const trainingDate = document.getElementById('empTrainingDate')?.value || '';
-            emp.instructionDate = instructionDate;
-            emp.trainingDate = trainingDate;
-            saveStaffData(data);
-            renderStaffWithDepartments();
-            document.getElementById('employeeModal')?.remove();
-            alert('✅ Данные сохранены!');
-            return;
-        }
-    }
-    
-    const idx = data.unassigned.findIndex(e => e.snils === snils);
-    if (idx !== -1) {
-        emp = data.unassigned[idx];
-        const instructionDate = document.getElementById('empInstructionDate')?.value || '';
-        const trainingDate = document.getElementById('empTrainingDate')?.value || '';
-        emp.instructionDate = instructionDate;
-        emp.trainingDate = trainingDate;
-        saveStaffData(data);
-        renderStaffWithDepartments();
-        document.getElementById('employeeModal')?.remove();
-        alert('✅ Данные сохранены!');
-    }
-}
-
-function openPPEModalForEmployee(snils) {
-    const data = getStaffData();
-    let emp = null;
-    
-    for (const [dept, deptData] of Object.entries(data.departments)) {
-        const found = deptData.employees.find(e => e.snils === snils);
-        if (found) { emp = found; break; }
-    }
-    if (!emp) {
-        emp = data.unassigned.find(e => e.snils === snils);
-    }
-    if (!emp) { alert('❌ Сотрудник не найден'); return; }
-    
-    const tempWorkplace = {
-        name: `${emp.last_name} ${emp.first_name}`,
-        position: emp.position,
-        ppeItems: emp.ppeItems || []
-    };
-    
-    currentPPEWorkplace = tempWorkplace;
-    ppeItems = tempWorkplace.ppeItems || [];
-    openPPEModal(tempWorkplace);
-    
-    const originalSave = savePPEItems;
-    savePPEItems = function() {
-        if (!currentPPEWorkplace) return;
-        if (ppeItems.length === 0) { alert('⚠️ Добавьте хотя бы одно СИЗ!'); return; }
-        
-        const data = getStaffData();
-        let target = null;
-        for (const [dept, deptData] of Object.entries(data.departments)) {
-            const found = deptData.employees.find(e => e.snils === snils);
-            if (found) { target = found; break; }
-        }
-        if (!target) {
-            target = data.unassigned.find(e => e.snils === snils);
-        }
-        if (target) {
-            target.ppeItems = ppeItems;
-            saveStaffData(data);
-        }
-        currentPPEWorkplace.ppeItems = ppeItems;
-        currentPPEWorkplace.hasPPE = true;
-        alert(`✅ Сохранено ${ppeItems.length} СИЗ!`);
-        closePPEModal();
-        savePPEItems = originalSave;
-        renderStaffWithDepartments();
-    };
 }
 
 // ============================================================
