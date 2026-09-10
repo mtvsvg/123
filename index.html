@@ -299,6 +299,18 @@
         </label>
     </div>
 </div>
+            <!-- ВЫБОР КОЛИЧЕСТВА КАРТОЧЕК НА ЛИСТЕ -->
+<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);align-items:center;">
+    <label style="color:#8888aa;font-size:14px;font-weight:500;">📄 Карточек на листе:</label>
+    <div style="display:flex;gap:12px;">
+        <label style="color:#ccc;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+            <input type="radio" name="cardsPerPage" value="1"> 1 карточка (на весь лист)
+        </label>
+        <label style="color:#ccc;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+            <input type="radio" name="cardsPerPage" value="2" checked> 2 карточки (разрез по центру)
+        </label>
+    </div>
+</div>
             <!-- ПОЛЯ ДЛЯ ДЕЖУРНОЙ КАРТОЧКИ (скрыты по умолчанию) -->
 <div id="dutyFields" style="display:none;padding:12px;background:rgba(0,212,255,0.05);border-radius:10px;border:1px solid rgba(0,212,255,0.1);margin-bottom:12px;">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
