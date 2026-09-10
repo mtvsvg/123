@@ -1244,12 +1244,10 @@ function createPersonalFaceCard(emp, fullPage) {
     const pad = fullPage ? '6px 10px' : '6px 8px';
     
     // Размеры для блока подписи
-    const signBlockWidth = fullPage ? '180px' : '120px';
+    const signColWidth = fullPage ? '200px' : '140px';
     const signLineWidth = fullPage ? '150px' : '100px';
     const signHeight = fullPage ? '35px' : '26px';
     const signFontSize = fullPage ? '11px' : '9px';
-    const labelPadLeft = fullPage ? '30px' : '20px';
-    const labelPadRight = fullPage ? '30px' : '20px';
     
     return `
         <div style="position:absolute;top:0;left:0;width:100%;height:${fullPage ? '100%' : '50%'};padding:${fullPage ? '20px 30px' : '10px 14px 8px 14px'};${fullPage ? '' : 'border-bottom:2px dashed #ff0000;'}overflow:hidden;display:flex;flex-direction:column;">
@@ -1297,28 +1295,33 @@ function createPersonalFaceCard(emp, fullPage) {
                 </tbody>
             </table>
             
-            <!-- ПОДПИСЬ - ВЫРОВНЕНА ПО ЦЕНТРУ БЛОКОВ -->
+            <!-- ПОДПИСЬ - ТОЧНОЕ ВЫРАВНИВАНИЕ ЧЕРЕЗ ТАБЛИЦУ -->
             <div style="margin-top:${fullPage ? '20px' : '10px'};font-size:${fontSize};flex-shrink:0;">
-                <table style="width:100%;border-collapse:collapse;">
+                <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+                    <colgroup>
+                        <col style="width:${signColWidth};">
+                        <col style="width:${signLineWidth};">
+                        <col style="width:${signColWidth};">
+                    </colgroup>
                     <tr>
-                        <td style="width:${signBlockWidth};vertical-align:bottom;padding:0;">
-                            <div style="text-align:center;font-size:${fontSize};padding-bottom:2px;">${managerPosition}</div>
+                        <td style="vertical-align:bottom;text-align:center;padding:0 5px;">
+                            <div style="font-size:${fontSize};padding-bottom:2px;word-wrap:break-word;">${managerPosition}</div>
                         </td>
-                        <td style="width:${signLineWidth};vertical-align:bottom;padding:0 5px;">
+                        <td style="vertical-align:bottom;text-align:center;padding:0 5px;">
                             <div style="border-bottom:1px solid #000;height:${signHeight};"></div>
                         </td>
-                        <td style="vertical-align:bottom;padding:0;">
-                            <div style="font-size:${fontSize};padding-bottom:2px;">${manager}</div>
+                        <td style="vertical-align:bottom;text-align:center;padding:0 5px;">
+                            <div style="font-size:${fontSize};padding-bottom:2px;word-wrap:break-word;">${manager}</div>
                         </td>
                     </tr>
                     <tr>
-                        <td style="text-align:center;padding:0;">
+                        <td style="text-align:center;padding:0 5px;">
                             <div style="font-size:${signFontSize};color:#333;">(должность)</div>
                         </td>
                         <td style="text-align:center;padding:0 5px;">
                             <div style="font-size:${signFontSize};color:#333;">(подпись)</div>
                         </td>
-                        <td style="text-align:center;padding:0;">
+                        <td style="text-align:center;padding:0 5px;">
                             <div style="font-size:${signFontSize};color:#333;">(фамилия, инициалы)</div>
                         </td>
                     </tr>
@@ -1341,7 +1344,7 @@ function createDutyFaceCard(emp, fullPage) {
     const pad = fullPage ? '6px 10px' : '4px 6px';
     
     // Размеры для блока подписи
-    const signBlockWidth = fullPage ? '180px' : '120px';
+    const signColWidth = fullPage ? '200px' : '140px';
     const signLineWidth = fullPage ? '150px' : '100px';
     const signHeight = fullPage ? '35px' : '26px';
     const signFontSize = fullPage ? '11px' : '9px';
@@ -1379,28 +1382,33 @@ function createDutyFaceCard(emp, fullPage) {
                 </tbody>
             </table>
             
-            <!-- ПОДПИСЬ - ВЫРОВНЕНА ПО ЦЕНТРУ БЛОКОВ -->
+            <!-- ПОДПИСЬ - ТОЧНОЕ ВЫРАВНИВАНИЕ ЧЕРЕЗ ТАБЛИЦУ -->
             <div style="margin-top:${fullPage ? '20px' : '8px'};font-size:${fontSize};flex-shrink:0;">
-                <table style="width:100%;border-collapse:collapse;">
+                <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+                    <colgroup>
+                        <col style="width:${signColWidth};">
+                        <col style="width:${signLineWidth};">
+                        <col style="width:${signColWidth};">
+                    </colgroup>
                     <tr>
-                        <td style="width:${signBlockWidth};vertical-align:bottom;padding:0;">
-                            <div style="text-align:center;font-size:${fontSize};padding-bottom:2px;">Ответственное лицо</div>
+                        <td style="vertical-align:bottom;text-align:center;padding:0 5px;">
+                            <div style="font-size:${fontSize};padding-bottom:2px;word-wrap:break-word;">Ответственное лицо</div>
                         </td>
-                        <td style="width:${signLineWidth};vertical-align:bottom;padding:0 5px;">
+                        <td style="vertical-align:bottom;text-align:center;padding:0 5px;">
                             <div style="border-bottom:1px solid #000;height:${signHeight};"></div>
                         </td>
-                        <td style="vertical-align:bottom;padding:0;">
-                            <div style="font-size:${fontSize};padding-bottom:2px;">${manager}</div>
+                        <td style="vertical-align:bottom;text-align:center;padding:0 5px;">
+                            <div style="font-size:${fontSize};padding-bottom:2px;word-wrap:break-word;">${manager}</div>
                         </td>
                     </tr>
                     <tr>
-                        <td style="text-align:center;padding:0;">
+                        <td style="text-align:center;padding:0 5px;">
                             <div style="font-size:${signFontSize};color:#333;"></div>
                         </td>
                         <td style="text-align:center;padding:0 5px;">
                             <div style="font-size:${signFontSize};color:#333;">(подпись)</div>
                         </td>
-                        <td style="text-align:center;padding:0;">
+                        <td style="text-align:center;padding:0 5px;">
                             <div style="font-size:${signFontSize};color:#333;">(фамилия, инициалы)</div>
                         </td>
                     </tr>
