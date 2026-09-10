@@ -1295,41 +1295,24 @@ function createPersonalFaceCard(emp, fullPage) {
                 </tbody>
             </table>
             
-            <!-- ПОДПИСЬ - ТОЧНОЕ ВЫРАВНИВАНИЕ ЧЕРЕЗ ТАБЛИЦУ -->
-            <div style="margin-top:${fullPage ? '20px' : '10px'};font-size:${fontSize};flex-shrink:0;">
-                <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-                    <colgroup>
-                        <col style="width:${signColWidth};">
-                        <col style="width:${signLineWidth};">
-                        <col style="width:${signColWidth};">
-                    </colgroup>
-                    <tr>
-                        <td style="vertical-align:bottom;text-align:center;padding:0 5px;">
-                            <div style="font-size:${fontSize};padding-bottom:2px;word-wrap:break-word;">${managerPosition}</div>
-                        </td>
-                        <td style="vertical-align:bottom;text-align:center;padding:0 5px;">
-                            <div style="border-bottom:1px solid #000;height:${signHeight};"></div>
-                        </td>
-                        <td style="vertical-align:bottom;text-align:center;padding:0 5px;">
-                            <div style="font-size:${fontSize};padding-bottom:2px;word-wrap:break-word;">${manager}</div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="text-align:center;padding:0 5px;">
-                            <div style="font-size:${signFontSize};color:#333;">(должность)</div>
-                        </td>
-                        <td style="text-align:center;padding:0 5px;">
-                            <div style="font-size:${signFontSize};color:#333;">(подпись)</div>
-                        </td>
-                        <td style="text-align:center;padding:0 5px;">
-                            <div style="font-size:${signFontSize};color:#333;">(фамилия, инициалы)</div>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-    `;
-}
+           <!-- ПОДПИСЬ - GRID ВЫРАВНИВАНИЕ -->
+<div style="margin-top:${fullPage ? '20px' : '10px'};font-size:${fontSize};flex-shrink:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end;">
+    <div style="text-align:center;">
+        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">${managerPosition}</div>
+        <div style="border-bottom:1px solid transparent;height:${signHeight};"></div>
+        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(должность)</div>
+    </div>
+    <div style="text-align:center;">
+        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">&nbsp;</div>
+        <div style="border-bottom:1px solid #000;height:${signHeight};"></div>
+        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(подпись)</div>
+    </div>
+    <div style="text-align:center;">
+        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">${manager}</div>
+        <div style="border-bottom:1px solid transparent;height:${signHeight};"></div>
+        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(фамилия, инициалы)</div>
+    </div>
+</div>
     
    // ЛИЦЕВАЯ КАРТОЧКА - ДЕЖУРНАЯ
 function createDutyFaceCard(emp, fullPage) {
@@ -1382,41 +1365,24 @@ function createDutyFaceCard(emp, fullPage) {
                 </tbody>
             </table>
             
-            <!-- ПОДПИСЬ - ТОЧНОЕ ВЫРАВНИВАНИЕ ЧЕРЕЗ ТАБЛИЦУ -->
-            <div style="margin-top:${fullPage ? '20px' : '8px'};font-size:${fontSize};flex-shrink:0;">
-                <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-                    <colgroup>
-                        <col style="width:${signColWidth};">
-                        <col style="width:${signLineWidth};">
-                        <col style="width:${signColWidth};">
-                    </colgroup>
-                    <tr>
-                        <td style="vertical-align:bottom;text-align:center;padding:0 5px;">
-                            <div style="font-size:${fontSize};padding-bottom:2px;word-wrap:break-word;">Ответственное лицо</div>
-                        </td>
-                        <td style="vertical-align:bottom;text-align:center;padding:0 5px;">
-                            <div style="border-bottom:1px solid #000;height:${signHeight};"></div>
-                        </td>
-                        <td style="vertical-align:bottom;text-align:center;padding:0 5px;">
-                            <div style="font-size:${fontSize};padding-bottom:2px;word-wrap:break-word;">${manager}</div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="text-align:center;padding:0 5px;">
-                            <div style="font-size:${signFontSize};color:#333;"></div>
-                        </td>
-                        <td style="text-align:center;padding:0 5px;">
-                            <div style="font-size:${signFontSize};color:#333;">(подпись)</div>
-                        </td>
-                        <td style="text-align:center;padding:0 5px;">
-                            <div style="font-size:${signFontSize};color:#333;">(фамилия, инициалы)</div>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-    `;
-}
+          <!-- ПОДПИСЬ - GRID ВЫРАВНИВАНИЕ -->
+<div style="margin-top:${fullPage ? '20px' : '8px'};font-size:${fontSize};flex-shrink:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end;">
+    <div style="text-align:center;">
+        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">Ответственное лицо</div>
+        <div style="border-bottom:1px solid transparent;height:${signHeight};"></div>
+        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">&nbsp;</div>
+    </div>
+    <div style="text-align:center;">
+        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">&nbsp;</div>
+        <div style="border-bottom:1px solid #000;height:${signHeight};"></div>
+        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(подпись)</div>
+    </div>
+    <div style="text-align:center;">
+        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">${manager}</div>
+        <div style="border-bottom:1px solid transparent;height:${signHeight};"></div>
+        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(фамилия, инициалы)</div>
+    </div>
+</div>
     
     // Универсальная таблица СИЗ для лицевой стороны (зависит от fullPage)
     function buildPPETableFull(fullPage) {
