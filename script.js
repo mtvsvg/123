@@ -1127,7 +1127,7 @@ function clearPPECardSelection() {
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - С ВЫБОРОМ КОЛИЧЕСТВА НА ЛИСТЕ
 // ============================================================
 function generatePPECardsHTML() {
     console.log('🔄 generatePPECardsHTML вызвана');
@@ -1146,6 +1146,7 @@ function generatePPECardsHTML() {
     }
     
     const isDuty = document.querySelector('input[name="cardType"][value="duty"]')?.checked || false;
+    const cardsPerPage = parseInt(document.querySelector('input[name="cardsPerPage"]:checked')?.value || '2');
     
     const gender = document.getElementById('ppeCardGender').value || 'М';
     const height = document.getElementById('ppeCardHeight').value.trim() || '';
@@ -1163,8 +1164,9 @@ function generatePPECardsHTML() {
     const contentDiv = document.getElementById('ppeCardResultContent');
     
     let cardCount = 0;
-    let totalPairs = Math.ceil(employees.length / 2);
+    let totalPages = Math.ceil(employees.length / cardsPerPage);
     
+    // ЛИЦЕВАЯ ТАБЛИЦА - 4 СТРОКИ
     function buildPPETable() {
         let rows = '';
         selectedPPECardItems.forEach((ppe) => {
@@ -1192,6 +1194,7 @@ function generatePPECardsHTML() {
         return rows;
     }
     
+    // ОБОРОТНАЯ ТАБЛИЦА - 6 СТРОК
     function buildReverseTable() {
         let rows = '';
         selectedPPECardItems.forEach((ppe) => {
@@ -1229,160 +1232,251 @@ function generatePPECardsHTML() {
         return rows;
     }
     
-    function createPersonalFaceCard(emp) {
+    // ЛИЦЕВАЯ КАРТОЧКА - ЛИЧНАЯ
+    function createPersonalFaceCard(emp, fullPage) {
         const dept = document.getElementById('ppeCardDepartment')?.value.trim() || '';
         const cardNumber = emp.cardNumber || '___';
+        
+        // Размеры в зависимости от режима
+        const fontSize = fullPage ? '13px' : '10px';
+        const titleSize = fullPage ? '20px' : '15px';
+        const subtitleSize = fullPage ? '17px' : '13px';
+        const headerFontSize = fullPage ? '13px' : '10px';
+        const pad = fullPage ? '6px 10px' : '6px 8px';
+        const rowHeight = fullPage ? '60px' : '38px';
+        
         return `
-            <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:10px 14px 8px 14px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
-                <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:6px;flex-shrink:0;">
-                    <div style="font-size:15px;font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
-                    <div style="font-size:13px;font-weight:bold;">учета выдачи СИЗ</div>
+            <div style="position:absolute;top:0;left:0;width:100%;height:${fullPage ? '100%' : '50%'};padding:${fullPage ? '20px 30px' : '10px 14px 8px 14px'};${fullPage ? '' : 'border-bottom:2px dashed #ff0000;'}overflow:hidden;display:flex;flex-direction:column;">
+                <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:${fullPage ? '10px' : '4px'};margin-bottom:${fullPage ? '12px' : '6px'};flex-shrink:0;">
+                    <div style="font-size:${titleSize};font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
+                    <div style="font-size:${subtitleSize};font-weight:bold;">учета выдачи СИЗ</div>
                 </div>
                 
-                <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:4px;flex-shrink:0;">
+                <table style="width:100%;border-collapse:collapse;font-size:${fontSize};margin-bottom:${fullPage ? '10px' : '4px'};flex-shrink:0;">
                     <tr>
-                        <td style="width:55%;vertical-align:top;padding:2px 5px;border:1px solid #000;">
-                            <div style="margin:1px 0;"><strong>Фамилия</strong> ${emp.last_name}</div>
-                            <div style="margin:1px 0;"><strong>Имя</strong> ${emp.first_name}</div>
-                            <div style="margin:1px 0;"><strong>Отчество</strong> ${emp.middle_name || ''}</div>
-                            <div style="margin:1px 0;"><strong>Табельный номер</strong> ________</div>
-                            <div style="margin:1px 0;"><strong>Структурное подразделение</strong> ${dept}</div>
-                            <div style="margin:1px 0;"><strong>Профессия (должность)</strong> ${emp.position}</div>
-                            <div style="margin:1px 0;"><strong>Дата поступления на работу</strong> __________</div>
-                            <div style="margin:1px 0;"><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
+                        <td style="width:55%;vertical-align:top;padding:${fullPage ? '6px 10px' : '2px 5px'};border:1px solid #000;">
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Фамилия</strong> ${emp.last_name}</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Имя</strong> ${emp.first_name}</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Отчество</strong> ${emp.middle_name || ''}</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Табельный номер</strong> ________</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Структурное подразделение</strong> ${dept}</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Профессия (должность)</strong> ${emp.position}</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Дата поступления на работу</strong> __________</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
                         </td>
-                        <td style="width:45%;vertical-align:top;padding:2px 5px;border:1px solid #000;">
-                            <div style="margin:1px 0;"><strong>Пол</strong> ${gender}</div>
-                            <div style="margin:1px 0;"><strong>Рост</strong> ${height}</div>
-                            <div style="margin-top:3px;"><strong>Размер:</strong></div>
-                            <div style="padding-left:6px;margin:1px 0;"><strong>одежды</strong> ${clothesSize}</div>
-                            <div style="padding-left:6px;margin:1px 0;"><strong>обуви</strong> ${shoeSize}</div>
-                            <div style="padding-left:6px;margin:1px 0;"><strong>головного убора</strong> ___</div>
-                            <div style="margin:1px 0;"><strong>СИЗОД</strong> ___</div>
-                            <div style="margin:1px 0;"><strong>СИЗ рук</strong> ___________</div>
+                        <td style="width:45%;vertical-align:top;padding:${fullPage ? '6px 10px' : '2px 5px'};border:1px solid #000;">
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Пол</strong> ${gender}</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Рост</strong> ${height}</div>
+                            <div style="margin-top:${fullPage ? '6px' : '3px'};"><strong>Размер:</strong></div>
+                            <div style="padding-left:6px;margin:${fullPage ? '3px 0' : '1px 0'};"><strong>одежды</strong> ${clothesSize}</div>
+                            <div style="padding-left:6px;margin:${fullPage ? '3px 0' : '1px 0'};"><strong>обуви</strong> ${shoeSize}</div>
+                            <div style="padding-left:6px;margin:${fullPage ? '3px 0' : '1px 0'};"><strong>головного убора</strong> ___</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>СИЗОД</strong> ___</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>СИЗ рук</strong> ___________</div>
                         </td>
                     </tr>
                 </table>
                 
-                <table style="width:100%;border-collapse:collapse;font-size:10px;border:1px solid #000;flex:1;">
+                <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:1px solid #000;flex:1;">
                     <thead>
                         <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;width:32%;font-size:10px;font-weight:bold;">Наименование СИЗ</th>
-                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;width:22%;font-size:10px;font-weight:bold;">Пункт Норм</th>
-                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;width:26%;font-size:10px;font-weight:bold;">Единица измерения, периодичность выдачи</th>
-                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;width:20%;font-size:10px;font-weight:bold;">Количество на период</th>
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:32%;font-size:${headerFontSize};font-weight:bold;">Наименование СИЗ</th>
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:22%;font-size:${headerFontSize};font-weight:bold;">Пункт Норм</th>
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:26%;font-size:${headerFontSize};font-weight:bold;">Единица измерения, периодичность выдачи</th>
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:20%;font-size:${headerFontSize};font-weight:bold;">Количество на период</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${buildPPETable()}
+                        ${buildPPETableFull(fullPage)}
                     </tbody>
                 </table>
                 
-                <div style="margin-top:10px;font-size:11px;flex-shrink:0;">
+                <div style="margin-top:${fullPage ? '20px' : '10px'};font-size:${fullPage ? '13px' : '11px'};flex-shrink:0;">
                     <div style="display:flex;align-items:center;gap:10px;">
                         <span style="white-space:nowrap;">${managerPosition}</span>
-                        <span style="display:inline-block;width:100px;border-bottom:1px solid #000;height:26px;"></span>
+                        <span style="display:inline-block;width:${fullPage ? '150px' : '100px'};border-bottom:1px solid #000;height:${fullPage ? '35px' : '26px'};"></span>
                         <span style="white-space:nowrap;">${manager}</span>
                     </div>
                     <div style="display:flex;align-items:center;gap:10px;margin-top:1px;padding-left:0;">
-                        <span style="font-size:9px;color:#333;min-width:100px;">(должность)</span>
-                        <span style="font-size:9px;color:#333;text-align:center;width:100px;">(подпись)</span>
-                        <span style="font-size:9px;color:#333;text-align:right;">(фамилия, инициалы)</span>
+                        <span style="font-size:${fullPage ? '11px' : '9px'};color:#333;min-width:${fullPage ? '130px' : '100px'};">(должность)</span>
+                        <span style="font-size:${fullPage ? '11px' : '9px'};color:#333;text-align:center;width:${fullPage ? '150px' : '100px'};">(подпись)</span>
+                        <span style="font-size:${fullPage ? '11px' : '9px'};color:#333;text-align:right;">(фамилия, инициалы)</span>
                     </div>
                 </div>
             </div>
         `;
     }
     
-    function createDutyFaceCard(emp) {
+    // ЛИЦЕВАЯ КАРТОЧКА - ДЕЖУРНАЯ
+    function createDutyFaceCard(emp, fullPage) {
         const cardNumber = emp.cardNumber || '___';
         const workplaceId = emp.workplaceId || '________';
+        
+        const fontSize = fullPage ? '12px' : '10px';
+        const titleSize = fullPage ? '16px' : '13px';
+        const subtitleSize = fullPage ? '15px' : '12px';
+        const smallSize = fullPage ? '11px' : '10px';
+        const headerFontSize = fullPage ? '13px' : '10px';
+        const pad = fullPage ? '6px 10px' : '4px 6px';
+        
         return `
-            <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:10px 14px 8px 14px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
-                <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:6px;flex-shrink:0;">
-                    <div style="font-size:12px;font-weight:bold;color:#555;">Приложение N 3</div>
-                    <div style="font-size:10px;color:#555;">к Правилам обеспечения работников средствами индивидуальной защиты</div>
-                    <div style="font-size:10px;color:#555;">и смывающими средствами, утвержденным приказом Минтруда России</div>
-                    <div style="font-size:10px;color:#555;margin-bottom:4px;">от 29 октября 2021 г. N 766н</div>
-                    <div style="font-size:13px;font-weight:bold;">КАРТОЧКА N ${cardNumber}</div>
-                    <div style="font-size:12px;font-weight:bold;">учета выдачи дежурных СИЗ</div>
+            <div style="position:absolute;top:0;left:0;width:100%;height:${fullPage ? '100%' : '50%'};padding:${fullPage ? '20px 30px' : '10px 14px 8px 14px'};${fullPage ? '' : 'border-bottom:2px dashed #ff0000;'}overflow:hidden;display:flex;flex-direction:column;">
+                <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:${fullPage ? '10px' : '4px'};margin-bottom:${fullPage ? '12px' : '6px'};flex-shrink:0;">
+                    <div style="font-size:${fullPage ? '14px' : '12px'};font-weight:bold;color:#555;">Приложение N 3</div>
+                    <div style="font-size:${smallSize};color:#555;">к Правилам обеспечения работников средствами индивидуальной защиты</div>
+                    <div style="font-size:${smallSize};color:#555;">и смывающими средствами, утвержденным приказом Минтруда России</div>
+                    <div style="font-size:${smallSize};color:#555;margin-bottom:4px;">от 29 октября 2021 г. N 766н</div>
+                    <div style="font-size:${titleSize};font-weight:bold;">КАРТОЧКА N ${cardNumber}</div>
+                    <div style="font-size:${subtitleSize};font-weight:bold;">учета выдачи дежурных СИЗ</div>
                 </div>
                 
-                <div style="font-size:10px;margin-bottom:4px;flex-shrink:0;">
-                    <div><strong>Идентификатор рабочего места, за которым закреплены дежурные СИЗ:</strong> ${workplaceId}</div>
-                    <div><strong>Структурное подразделение</strong> ${dutyDepartment || '________________'}</div>
-                    <div><strong>Фамилия, имя, отчество (при наличии) ответственного</strong> ${dutyResponsibleName || '________________'}</div>
-                    <div><strong>Профессия (должность) ответственного</strong> ${dutyResponsiblePosition || '________________'}</div>
-                    <div><strong>Предусмотрена приказом (номер и дата приказа об утверждении Норм) выдача:</strong> ${dutyOrder || '________________'}</div>
+                <div style="font-size:${fontSize};margin-bottom:${fullPage ? '10px' : '4px'};flex-shrink:0;">
+                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Идентификатор рабочего места, за которым закреплены дежурные СИЗ:</strong> ${workplaceId}</div>
+                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Структурное подразделение</strong> ${dutyDepartment || '________________'}</div>
+                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Фамилия, имя, отчество (при наличии) ответственного</strong> ${dutyResponsibleName || '________________'}</div>
+                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Профессия (должность) ответственного</strong> ${dutyResponsiblePosition || '________________'}</div>
+                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Предусмотрена приказом (номер и дата приказа об утверждении Норм) выдача:</strong> ${dutyOrder || '________________'}</div>
                 </div>
                 
-                <table style="width:100%;border-collapse:collapse;font-size:10px;border:1px solid #000;flex:1;">
+                <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:1px solid #000;flex:1;">
                     <thead>
                         <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;width:32%;font-size:10px;font-weight:bold;">Наименование СИЗ</th>
-                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;width:22%;font-size:10px;font-weight:bold;">Пункт Норм</th>
-                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;width:26%;font-size:10px;font-weight:bold;">Единица измерения, периодичность выдачи</th>
-                            <th style="border:1px solid #000;padding:4px 6px;text-align:center;width:20%;font-size:10px;font-weight:bold;">Количество на период</th>
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:32%;font-size:${headerFontSize};font-weight:bold;">Наименование СИЗ</th>
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:22%;font-size:${headerFontSize};font-weight:bold;">Пункт Норм</th>
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:26%;font-size:${headerFontSize};font-weight:bold;">Единица измерения, периодичность выдачи</th>
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:20%;font-size:${headerFontSize};font-weight:bold;">Количество на период</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${buildPPETable()}
+                        ${buildPPETableFull(fullPage)}
                     </tbody>
                 </table>
                 
-                <div style="margin-top:8px;font-size:11px;flex-shrink:0;">
+                <div style="margin-top:${fullPage ? '20px' : '8px'};font-size:${fontSize};flex-shrink:0;">
                     <div style="display:flex;align-items:center;gap:10px;">
                         <span style="white-space:nowrap;">Ответственное лицо</span>
-                        <span style="display:inline-block;width:100px;border-bottom:1px solid #000;height:26px;"></span>
+                        <span style="display:inline-block;width:${fullPage ? '150px' : '100px'};border-bottom:1px solid #000;height:${fullPage ? '35px' : '26px'};"></span>
                         <span style="white-space:nowrap;">${manager}</span>
                     </div>
                     <div style="display:flex;align-items:center;gap:10px;margin-top:1px;padding-left:0;">
-                        <span style="font-size:9px;color:#333;min-width:100px;"></span>
-                        <span style="font-size:9px;color:#333;text-align:center;width:100px;">(подпись)</span>
-                        <span style="font-size:9px;color:#333;text-align:right;">(фамилия, инициалы)</span>
+                        <span style="font-size:${fullPage ? '11px' : '9px'};color:#333;min-width:${fullPage ? '130px' : '100px'};"></span>
+                        <span style="font-size:${fullPage ? '11px' : '9px'};color:#333;text-align:center;width:${fullPage ? '150px' : '100px'};">(подпись)</span>
+                        <span style="font-size:${fullPage ? '11px' : '9px'};color:#333;text-align:right;">(фамилия, инициалы)</span>
                     </div>
                 </div>
             </div>
         `;
     }
     
-    // ОБОРОТНАЯ КАРТОЧКА - С ЗАГОЛОВКАМИ "Выдано" и "Возвращено"
-    function createReverseCard(emp) {
+    // Универсальная таблица СИЗ для лицевой стороны (зависит от fullPage)
+    function buildPPETableFull(fullPage) {
+        let rows = '';
+        const rowHeight = fullPage ? '60px' : '38px';
+        const cellPad = fullPage ? '8px 12px' : '6px 8px';
+        const fontSize = fullPage ? '12px' : '11px';
+        
+        selectedPPECardItems.forEach((ppe) => {
+            rows += `
+                <tr>
+                    <td style="border:1px solid #000;padding:${cellPad};font-size:${fontSize};height:${rowHeight};">${ppe.name}</td>
+                    <td style="border:1px solid #000;padding:${cellPad};font-size:${fontSize};text-align:center;height:${rowHeight};">${ppe.punkt || ''}</td>
+                    <td style="border:1px solid #000;padding:${cellPad};font-size:${fontSize};text-align:center;height:${rowHeight};">${ppe.unit || ''}</td>
+                    <td style="border:1px solid #000;padding:${cellPad};font-size:${fontSize};text-align:center;height:${rowHeight};">${ppe.quantity || ''}</td>
+                </tr>
+            `;
+        });
+        
+        const emptyRows = 4 - selectedPPECardItems.length;
+        for (let i = 0; i < emptyRows; i++) {
+            rows += `
+                <tr>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};"></td>
+                </tr>
+            `;
+        }
+        return rows;
+    }
+    
+    // ОБОРОТНАЯ КАРТОЧКА (с заголовками Выдано/Возвращено)
+    function createReverseCard(emp, fullPage) {
+        const headerFontSize = fullPage ? '11px' : '8px';
+        const subHeaderFontSize = fullPage ? '10px' : '7px';
+        const cellPad = fullPage ? '6px 8px' : '4px 6px';
+        const rowHeight = fullPage ? '50px' : '30px';
+        
+        // Строим таблицу
+        let rows = '';
+        selectedPPECardItems.forEach((ppe) => {
+            rows += `
+                <tr>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};font-weight:bold;">${ppe.name}</td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                </tr>
+            `;
+        });
+        
+        const emptyRows = 6 - selectedPPECardItems.length;
+        for (let i = 0; i < emptyRows; i++) {
+            rows += `
+                <tr>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                </tr>
+            `;
+        }
+        
         return `
-            <div style="position:absolute;top:0;left:0;width:100%;height:50%;padding:10px 14px 8px 14px;border-bottom:2px dashed #ff0000;overflow:hidden;display:flex;flex-direction:column;">
-                <div style="text-align:center;font-size:13px;font-weight:bold;margin-bottom:6px;flex-shrink:0;">Оборотная сторона</div>
+            <div style="position:absolute;top:0;left:0;width:100%;height:${fullPage ? '100%' : '50%'};padding:${fullPage ? '20px 30px' : '10px 14px 8px 14px'};${fullPage ? '' : 'border-bottom:2px dashed #ff0000;'}overflow:hidden;display:flex;flex-direction:column;">
+                <div style="text-align:center;font-size:${fullPage ? '16px' : '13px'};font-weight:bold;margin-bottom:${fullPage ? '12px' : '6px'};flex-shrink:0;">Оборотная сторона</div>
                 
-                <table style="width:100%;border-collapse:collapse;font-size:8px;border:1px solid #000;flex:1;">
+                <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:1px solid #000;flex:1;">
                     <thead>
                         <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;width:11%;font-size:8px;font-weight:bold;" rowspan="2">Наименование СИЗ</th>
-                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;width:12%;font-size:8px;font-weight:bold;" rowspan="2">Модель, марка, артикул, класс защиты СИЗ</th>
-                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;font-size:8px;font-weight:bold;" colspan="3">Выдано</th>
-                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;font-size:8px;font-weight:bold;" colspan="3">Возвращено</th>
-                            <th style="border:1px solid #000;padding:3px 4px;text-align:center;width:10%;font-size:8px;font-weight:bold;" rowspan="2">Акт списания (дата, номер)</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;width:11%;font-size:${headerFontSize};font-weight:bold;" rowspan="2">Наименование СИЗ</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;width:12%;font-size:${headerFontSize};font-weight:bold;" rowspan="2">Модель, марка, артикул, класс защиты СИЗ</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${headerFontSize};font-weight:bold;" colspan="3">Выдано</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${headerFontSize};font-weight:bold;" colspan="3">Возвращено</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;width:10%;font-size:${headerFontSize};font-weight:bold;" rowspan="2">Акт списания (дата, номер)</th>
                         </tr>
                         <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">дата</th>
-                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">кол-во</th>
-                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">подпись получившего СИЗ</th>
-                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">дата</th>
-                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">кол-во</th>
-                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">подпись сдавшего СИЗ</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">дата</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">кол-во</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">подпись получившего СИЗ</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">дата</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">кол-во</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">подпись сдавшего СИЗ</th>
                         </tr>
                         <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">1</th>
-                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">2</th>
-                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">3</th>
-                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">4</th>
-                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">5</th>
-                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">6</th>
-                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">7</th>
-                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">8</th>
-                            <th style="border:1px solid #000;padding:2px 4px;text-align:center;font-size:7px;">9</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">1</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">2</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">3</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">4</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">5</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">6</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">7</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">8</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">9</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${buildReverseTable()}
+                        ${rows}
                     </tbody>
                 </table>
             </div>
@@ -1390,33 +1484,61 @@ function generatePPECardsHTML() {
     }
     
     let allPagesHTML = '';
-    let pairNum = 0;
+    let cardIndex = 0;
     
-    for (let i = 0; i < employees.length; i += 2) {
-        const emp1 = employees[i];
-        const emp2 = employees[i + 1] || null;
-        pairNum++;
-        cardCount += emp2 ? 2 : 1;
-        
-        const faceCardFunc = isDuty ? createDutyFaceCard : createPersonalFaceCard;
-        
-        let facePageHTML = `
-        <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
-            ${faceCardFunc(emp1)}
-            ${emp2 ? faceCardFunc(emp2).replace('top:0', 'top:50%').replace('border-bottom', 'border-top') : `<div style="position:absolute;top:50%;left:0;width:100%;height:50%;display:flex;align-items:center;justify-content:center;color:#999;font-size:20px;border-top:1px dashed #ddd;">ПУСТАЯ КАРТОЧКА</div>`}
-            <div style="position:absolute;top:50%;left:0;width:100%;height:2px;border-top:2px dashed #ff0000;z-index:10;"></div>
-        </div>
-        `;
-        
-        let reversePageHTML = `
-        <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
-            ${createReverseCard(emp1)}
-            ${emp2 ? createReverseCard(emp2).replace('top:0', 'top:50%').replace('border-bottom', 'border-top') : `<div style="position:absolute;top:50%;left:0;width:100%;height:50%;display:flex;align-items:center;justify-content:center;color:#999;font-size:20px;border-top:1px dashed #ddd;">ПУСТАЯ ОБОРОТНАЯ СТОРОНА</div>`}
-            <div style="position:absolute;top:50%;left:0;width:100%;height:2px;border-top:2px dashed #ff0000;z-index:10;"></div>
-        </div>
-        `;
-        
-        allPagesHTML += facePageHTML + reversePageHTML;
+    if (cardsPerPage === 2) {
+        // ============================================================
+        // РЕЖИМ: 2 КАРТОЧКИ НА ЛИСТ (как было)
+        // ============================================================
+        for (let i = 0; i < employees.length; i += 2) {
+            const emp1 = employees[i];
+            const emp2 = employees[i + 1] || null;
+            cardIndex++;
+            cardCount += emp2 ? 2 : 1;
+            
+            const faceCardFunc = isDuty ? createDutyFaceCard : createPersonalFaceCard;
+            
+            let facePageHTML = `
+            <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
+                ${faceCardFunc(emp1, false)}
+                ${emp2 ? faceCardFunc(emp2, false).replace('top:0', 'top:50%').replace('border-bottom', 'border-top') : `<div style="position:absolute;top:50%;left:0;width:100%;height:50%;display:flex;align-items:center;justify-content:center;color:#999;font-size:20px;border-top:1px dashed #ddd;">ПУСТАЯ КАРТОЧКА</div>`}
+                <div style="position:absolute;top:50%;left:0;width:100%;height:2px;border-top:2px dashed #ff0000;z-index:10;"></div>
+            </div>
+            `;
+            
+            let reversePageHTML = `
+            <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
+                ${createReverseCard(emp1, false)}
+                ${emp2 ? createReverseCard(emp2, false).replace('top:0', 'top:50%').replace('border-bottom', 'border-top') : `<div style="position:absolute;top:50%;left:0;width:100%;height:50%;display:flex;align-items:center;justify-content:center;color:#999;font-size:20px;border-top:1px dashed #ddd;">ПУСТАЯ ОБОРОТНАЯ СТОРОНА</div>`}
+                <div style="position:absolute;top:50%;left:0;width:100%;height:2px;border-top:2px dashed #ff0000;z-index:10;"></div>
+            </div>
+            `;
+            
+            allPagesHTML += facePageHTML + reversePageHTML;
+        }
+    } else {
+        // ============================================================
+        // РЕЖИМ: 1 КАРТОЧКА НА ЛИСТ (на всю страницу)
+        // ============================================================
+        employees.forEach(emp => {
+            cardCount++;
+            
+            const faceCardFunc = isDuty ? createDutyFaceCard : createPersonalFaceCard;
+            
+            let facePageHTML = `
+            <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
+                ${faceCardFunc(emp, true)}
+            </div>
+            `;
+            
+            let reversePageHTML = `
+            <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
+                ${createReverseCard(emp, true)}
+            </div>
+            `;
+            
+            allPagesHTML += facePageHTML + reversePageHTML;
+        });
     }
     
     const win = window.open('', '_blank');
@@ -1426,6 +1548,7 @@ function generatePPECardsHTML() {
     }
     
     const cardTypeName = isDuty ? 'ДЕЖУРНЫХ' : 'ЛИЧНЫХ';
+    const modeText = cardsPerPage === 2 ? '2 карточки на лист' : '1 карточка на лист';
     
     win.document.write(`
         <!DOCTYPE html>
@@ -1487,11 +1610,11 @@ function generatePPECardsHTML() {
         </head>
         <body>
             <div class="no-print">
-                <h3>🖨️ Карточки ${cardTypeName} готовы к печати (${cardCount} сотрудников, ${totalPairs} пар)</h3>
+                <h3>🖨️ Карточки ${cardTypeName} готовы к печати (${cardCount} шт., ${modeText})</h3>
                 <button onclick="window.print()">🖨️ Печать</button>
                 <button class="btn-secondary" onclick="window.close()">✖ Закрыть</button>
                 <p style="font-size:11px;color:#666;margin-top:4px;">
-                    📄 Для каждой пары сотрудников: 1 лист с лицевыми сторонами + 1 лист с оборотными сторонами
+                    📄 ${modeText}
                 </p>
                 <p style="font-size:10px;color:#888;">
                     📋 У каждого сотрудника свой номер карточки и ID рабочего места
@@ -1500,10 +1623,7 @@ function generatePPECardsHTML() {
                     📊 На оборотной стороне: заголовки "Выдано" и "Возвращено"
                 </p>
                 <p style="font-size:10px;color:#888;">
-                    ✂️ Разрез по горизонтали (посередине листа) — только пунктир
-                </p>
-                <p style="font-size:10px;color:#888;">
-                    📋 Всего листов: ${totalPairs * 2}
+                    📋 Всего листов: ${totalPages * 2}
                 </p>
             </div>
             ${allPagesHTML}
@@ -1518,12 +1638,12 @@ function generatePPECardsHTML() {
     resultDiv.classList.remove('hidden');
     contentDiv.innerHTML = `
         <p>✅ Создано ${cardTypeName.toLowerCase()} карточек: <strong>${cardCount}</strong></p>
+        <p>📋 Режим: <strong>${modeText}</strong></p>
         <p>📋 Сотрудники: ${employees.map(e => `${e.last_name} ${e.first_name} (№${e.cardNumber || '___'})`).join(', ')}</p>
         <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
         <p style="color:#8888aa;font-size:13px;margin-top:8px;">🖨️ Откроется новое окно для печати.</p>
-        <p style="color:#8888aa;font-size:12px;">📄 Всего листов: ${totalPairs * 2} (${totalPairs} лицевых + ${totalPairs} оборотных)</p>
-        <p style="color:#8888aa;font-size:12px;">📊 На оборотной стороне: заголовки "Выдано" и "Возвращено"</p>
-        <p style="color:#8888aa;font-size:12px;">✂️ Разрез по горизонтали (посередине листа) — только пунктир</p>
+        <p style="color:#8888aa;font-size:12px;">📄 Всего листов: ${totalPages * 2}</p>
+        <p style="color:#8888aa;font-size:12px;">📋 Режим: ${modeText}</p>
     `;
 }
 
