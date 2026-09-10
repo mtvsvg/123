@@ -1233,140 +1233,182 @@ function generatePPECardsHTML() {
     }
     
     // ЛИЦЕВАЯ КАРТОЧКА - ЛИЧНАЯ
-    function createPersonalFaceCard(emp, fullPage) {
-        const dept = document.getElementById('ppeCardDepartment')?.value.trim() || '';
-        const cardNumber = emp.cardNumber || '___';
-        
-        // Размеры в зависимости от режима
-        const fontSize = fullPage ? '13px' : '10px';
-        const titleSize = fullPage ? '20px' : '15px';
-        const subtitleSize = fullPage ? '17px' : '13px';
-        const headerFontSize = fullPage ? '13px' : '10px';
-        const pad = fullPage ? '6px 10px' : '6px 8px';
-        const rowHeight = fullPage ? '60px' : '38px';
-        
-        return `
-            <div style="position:absolute;top:0;left:0;width:100%;height:${fullPage ? '100%' : '50%'};padding:${fullPage ? '20px 30px' : '10px 14px 8px 14px'};${fullPage ? '' : 'border-bottom:2px dashed #ff0000;'}overflow:hidden;display:flex;flex-direction:column;">
-                <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:${fullPage ? '10px' : '4px'};margin-bottom:${fullPage ? '12px' : '6px'};flex-shrink:0;">
-                    <div style="font-size:${titleSize};font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
-                    <div style="font-size:${subtitleSize};font-weight:bold;">учета выдачи СИЗ</div>
-                </div>
-                
-                <table style="width:100%;border-collapse:collapse;font-size:${fontSize};margin-bottom:${fullPage ? '10px' : '4px'};flex-shrink:0;">
+function createPersonalFaceCard(emp, fullPage) {
+    const dept = document.getElementById('ppeCardDepartment')?.value.trim() || '';
+    const cardNumber = emp.cardNumber || '___';
+    
+    const fontSize = fullPage ? '13px' : '10px';
+    const titleSize = fullPage ? '20px' : '15px';
+    const subtitleSize = fullPage ? '17px' : '13px';
+    const headerFontSize = fullPage ? '13px' : '10px';
+    const pad = fullPage ? '6px 10px' : '6px 8px';
+    
+    // Размеры для блока подписи
+    const signBlockWidth = fullPage ? '180px' : '120px';
+    const signLineWidth = fullPage ? '150px' : '100px';
+    const signHeight = fullPage ? '35px' : '26px';
+    const signFontSize = fullPage ? '11px' : '9px';
+    const labelPadLeft = fullPage ? '30px' : '20px';
+    const labelPadRight = fullPage ? '30px' : '20px';
+    
+    return `
+        <div style="position:absolute;top:0;left:0;width:100%;height:${fullPage ? '100%' : '50%'};padding:${fullPage ? '20px 30px' : '10px 14px 8px 14px'};${fullPage ? '' : 'border-bottom:2px dashed #ff0000;'}overflow:hidden;display:flex;flex-direction:column;">
+            <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:${fullPage ? '10px' : '4px'};margin-bottom:${fullPage ? '12px' : '6px'};flex-shrink:0;">
+                <div style="font-size:${titleSize};font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
+                <div style="font-size:${subtitleSize};font-weight:bold;">учета выдачи СИЗ</div>
+            </div>
+            
+            <table style="width:100%;border-collapse:collapse;font-size:${fontSize};margin-bottom:${fullPage ? '10px' : '4px'};flex-shrink:0;">
+                <tr>
+                    <td style="width:55%;vertical-align:top;padding:${fullPage ? '6px 10px' : '2px 5px'};border:1px solid #000;">
+                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Фамилия</strong> ${emp.last_name}</div>
+                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Имя</strong> ${emp.first_name}</div>
+                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Отчество</strong> ${emp.middle_name || ''}</div>
+                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Табельный номер</strong> ________</div>
+                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Структурное подразделение</strong> ${dept}</div>
+                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Профессия (должность)</strong> ${emp.position}</div>
+                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Дата поступления на работу</strong> __________</div>
+                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
+                    </td>
+                    <td style="width:45%;vertical-align:top;padding:${fullPage ? '6px 10px' : '2px 5px'};border:1px solid #000;">
+                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Пол</strong> ${gender}</div>
+                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Рост</strong> ${height}</div>
+                        <div style="margin-top:${fullPage ? '6px' : '3px'};"><strong>Размер:</strong></div>
+                        <div style="padding-left:6px;margin:${fullPage ? '3px 0' : '1px 0'};"><strong>одежды</strong> ${clothesSize}</div>
+                        <div style="padding-left:6px;margin:${fullPage ? '3px 0' : '1px 0'};"><strong>обуви</strong> ${shoeSize}</div>
+                        <div style="padding-left:6px;margin:${fullPage ? '3px 0' : '1px 0'};"><strong>головного убора</strong> ___</div>
+                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>СИЗОД</strong> ___</div>
+                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>СИЗ рук</strong> ___________</div>
+                    </td>
+                </tr>
+            </table>
+            
+            <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:1px solid #000;flex:1;">
+                <thead>
+                    <tr style="background:#f0f0f0;">
+                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:32%;font-size:${headerFontSize};font-weight:bold;">Наименование СИЗ</th>
+                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:22%;font-size:${headerFontSize};font-weight:bold;">Пункт Норм</th>
+                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:26%;font-size:${headerFontSize};font-weight:bold;">Единица измерения, периодичность выдачи</th>
+                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:20%;font-size:${headerFontSize};font-weight:bold;">Количество на период</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${buildPPETableFull(fullPage)}
+                </tbody>
+            </table>
+            
+            <!-- ПОДПИСЬ - ВЫРОВНЕНА ПО ЦЕНТРУ БЛОКОВ -->
+            <div style="margin-top:${fullPage ? '20px' : '10px'};font-size:${fontSize};flex-shrink:0;">
+                <table style="width:100%;border-collapse:collapse;">
                     <tr>
-                        <td style="width:55%;vertical-align:top;padding:${fullPage ? '6px 10px' : '2px 5px'};border:1px solid #000;">
-                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Фамилия</strong> ${emp.last_name}</div>
-                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Имя</strong> ${emp.first_name}</div>
-                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Отчество</strong> ${emp.middle_name || ''}</div>
-                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Табельный номер</strong> ________</div>
-                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Структурное подразделение</strong> ${dept}</div>
-                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Профессия (должность)</strong> ${emp.position}</div>
-                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Дата поступления на работу</strong> __________</div>
-                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
+                        <td style="width:${signBlockWidth};vertical-align:bottom;padding:0;">
+                            <div style="text-align:center;font-size:${fontSize};padding-bottom:2px;">${managerPosition}</div>
                         </td>
-                        <td style="width:45%;vertical-align:top;padding:${fullPage ? '6px 10px' : '2px 5px'};border:1px solid #000;">
-                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Пол</strong> ${gender}</div>
-                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Рост</strong> ${height}</div>
-                            <div style="margin-top:${fullPage ? '6px' : '3px'};"><strong>Размер:</strong></div>
-                            <div style="padding-left:6px;margin:${fullPage ? '3px 0' : '1px 0'};"><strong>одежды</strong> ${clothesSize}</div>
-                            <div style="padding-left:6px;margin:${fullPage ? '3px 0' : '1px 0'};"><strong>обуви</strong> ${shoeSize}</div>
-                            <div style="padding-left:6px;margin:${fullPage ? '3px 0' : '1px 0'};"><strong>головного убора</strong> ___</div>
-                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>СИЗОД</strong> ___</div>
-                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>СИЗ рук</strong> ___________</div>
+                        <td style="width:${signLineWidth};vertical-align:bottom;padding:0 5px;">
+                            <div style="border-bottom:1px solid #000;height:${signHeight};"></div>
+                        </td>
+                        <td style="vertical-align:bottom;padding:0;">
+                            <div style="font-size:${fontSize};padding-bottom:2px;">${manager}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align:center;padding:0;">
+                            <div style="font-size:${signFontSize};color:#333;">(должность)</div>
+                        </td>
+                        <td style="text-align:center;padding:0 5px;">
+                            <div style="font-size:${signFontSize};color:#333;">(подпись)</div>
+                        </td>
+                        <td style="text-align:center;padding:0;">
+                            <div style="font-size:${signFontSize};color:#333;">(фамилия, инициалы)</div>
                         </td>
                     </tr>
                 </table>
-                
-                <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:1px solid #000;flex:1;">
-                    <thead>
-                        <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:32%;font-size:${headerFontSize};font-weight:bold;">Наименование СИЗ</th>
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:22%;font-size:${headerFontSize};font-weight:bold;">Пункт Норм</th>
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:26%;font-size:${headerFontSize};font-weight:bold;">Единица измерения, периодичность выдачи</th>
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:20%;font-size:${headerFontSize};font-weight:bold;">Количество на период</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${buildPPETableFull(fullPage)}
-                    </tbody>
-                </table>
-                
-                <div style="margin-top:${fullPage ? '20px' : '10px'};font-size:${fullPage ? '13px' : '11px'};flex-shrink:0;">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span style="white-space:nowrap;">${managerPosition}</span>
-                        <span style="display:inline-block;width:${fullPage ? '150px' : '100px'};border-bottom:1px solid #000;height:${fullPage ? '35px' : '26px'};"></span>
-                        <span style="white-space:nowrap;">${manager}</span>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:10px;margin-top:1px;padding-left:0;">
-                        <span style="font-size:${fullPage ? '11px' : '9px'};color:#333;min-width:${fullPage ? '130px' : '100px'};">(должность)</span>
-                        <span style="font-size:${fullPage ? '11px' : '9px'};color:#333;text-align:center;width:${fullPage ? '150px' : '100px'};">(подпись)</span>
-                        <span style="font-size:${fullPage ? '11px' : '9px'};color:#333;text-align:right;">(фамилия, инициалы)</span>
-                    </div>
-                </div>
             </div>
-        `;
-    }
+        </div>
+    `;
+}
     
-    // ЛИЦЕВАЯ КАРТОЧКА - ДЕЖУРНАЯ
-    function createDutyFaceCard(emp, fullPage) {
-        const cardNumber = emp.cardNumber || '___';
-        const workplaceId = emp.workplaceId || '________';
-        
-        const fontSize = fullPage ? '12px' : '10px';
-        const titleSize = fullPage ? '16px' : '13px';
-        const subtitleSize = fullPage ? '15px' : '12px';
-        const smallSize = fullPage ? '11px' : '10px';
-        const headerFontSize = fullPage ? '13px' : '10px';
-        const pad = fullPage ? '6px 10px' : '4px 6px';
-        
-        return `
-            <div style="position:absolute;top:0;left:0;width:100%;height:${fullPage ? '100%' : '50%'};padding:${fullPage ? '20px 30px' : '10px 14px 8px 14px'};${fullPage ? '' : 'border-bottom:2px dashed #ff0000;'}overflow:hidden;display:flex;flex-direction:column;">
-                <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:${fullPage ? '10px' : '4px'};margin-bottom:${fullPage ? '12px' : '6px'};flex-shrink:0;">
-                    <div style="font-size:${fullPage ? '14px' : '12px'};font-weight:bold;color:#555;">Приложение N 3</div>
-                    <div style="font-size:${smallSize};color:#555;">к Правилам обеспечения работников средствами индивидуальной защиты</div>
-                    <div style="font-size:${smallSize};color:#555;">и смывающими средствами, утвержденным приказом Минтруда России</div>
-                    <div style="font-size:${smallSize};color:#555;margin-bottom:4px;">от 29 октября 2021 г. N 766н</div>
-                    <div style="font-size:${titleSize};font-weight:bold;">КАРТОЧКА N ${cardNumber}</div>
-                    <div style="font-size:${subtitleSize};font-weight:bold;">учета выдачи дежурных СИЗ</div>
-                </div>
-                
-                <div style="font-size:${fontSize};margin-bottom:${fullPage ? '10px' : '4px'};flex-shrink:0;">
-                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Идентификатор рабочего места, за которым закреплены дежурные СИЗ:</strong> ${workplaceId}</div>
-                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Структурное подразделение</strong> ${dutyDepartment || '________________'}</div>
-                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Фамилия, имя, отчество (при наличии) ответственного</strong> ${dutyResponsibleName || '________________'}</div>
-                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Профессия (должность) ответственного</strong> ${dutyResponsiblePosition || '________________'}</div>
-                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Предусмотрена приказом (номер и дата приказа об утверждении Норм) выдача:</strong> ${dutyOrder || '________________'}</div>
-                </div>
-                
-                <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:1px solid #000;flex:1;">
-                    <thead>
-                        <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:32%;font-size:${headerFontSize};font-weight:bold;">Наименование СИЗ</th>
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:22%;font-size:${headerFontSize};font-weight:bold;">Пункт Норм</th>
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:26%;font-size:${headerFontSize};font-weight:bold;">Единица измерения, периодичность выдачи</th>
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:20%;font-size:${headerFontSize};font-weight:bold;">Количество на период</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${buildPPETableFull(fullPage)}
-                    </tbody>
-                </table>
-                
-                <div style="margin-top:${fullPage ? '20px' : '8px'};font-size:${fontSize};flex-shrink:0;">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span style="white-space:nowrap;">Ответственное лицо</span>
-                        <span style="display:inline-block;width:${fullPage ? '150px' : '100px'};border-bottom:1px solid #000;height:${fullPage ? '35px' : '26px'};"></span>
-                        <span style="white-space:nowrap;">${manager}</span>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:10px;margin-top:1px;padding-left:0;">
-                        <span style="font-size:${fullPage ? '11px' : '9px'};color:#333;min-width:${fullPage ? '130px' : '100px'};"></span>
-                        <span style="font-size:${fullPage ? '11px' : '9px'};color:#333;text-align:center;width:${fullPage ? '150px' : '100px'};">(подпись)</span>
-                        <span style="font-size:${fullPage ? '11px' : '9px'};color:#333;text-align:right;">(фамилия, инициалы)</span>
-                    </div>
-                </div>
+   // ЛИЦЕВАЯ КАРТОЧКА - ДЕЖУРНАЯ
+function createDutyFaceCard(emp, fullPage) {
+    const cardNumber = emp.cardNumber || '___';
+    const workplaceId = emp.workplaceId || '________';
+    
+    const fontSize = fullPage ? '12px' : '10px';
+    const titleSize = fullPage ? '16px' : '13px';
+    const subtitleSize = fullPage ? '15px' : '12px';
+    const smallSize = fullPage ? '11px' : '10px';
+    const headerFontSize = fullPage ? '13px' : '10px';
+    const pad = fullPage ? '6px 10px' : '4px 6px';
+    
+    // Размеры для блока подписи
+    const signBlockWidth = fullPage ? '180px' : '120px';
+    const signLineWidth = fullPage ? '150px' : '100px';
+    const signHeight = fullPage ? '35px' : '26px';
+    const signFontSize = fullPage ? '11px' : '9px';
+    
+    return `
+        <div style="position:absolute;top:0;left:0;width:100%;height:${fullPage ? '100%' : '50%'};padding:${fullPage ? '20px 30px' : '10px 14px 8px 14px'};${fullPage ? '' : 'border-bottom:2px dashed #ff0000;'}overflow:hidden;display:flex;flex-direction:column;">
+            <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:${fullPage ? '10px' : '4px'};margin-bottom:${fullPage ? '12px' : '6px'};flex-shrink:0;">
+                <div style="font-size:${fullPage ? '14px' : '12px'};font-weight:bold;color:#555;">Приложение N 3</div>
+                <div style="font-size:${smallSize};color:#555;">к Правилам обеспечения работников средствами индивидуальной защиты</div>
+                <div style="font-size:${smallSize};color:#555;">и смывающими средствами, утвержденным приказом Минтруда России</div>
+                <div style="font-size:${smallSize};color:#555;margin-bottom:4px;">от 29 октября 2021 г. N 766н</div>
+                <div style="font-size:${titleSize};font-weight:bold;">КАРТОЧКА N ${cardNumber}</div>
+                <div style="font-size:${subtitleSize};font-weight:bold;">учета выдачи дежурных СИЗ</div>
             </div>
-        `;
-    }
+            
+            <div style="font-size:${fontSize};margin-bottom:${fullPage ? '10px' : '4px'};flex-shrink:0;">
+                <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Идентификатор рабочего места, за которым закреплены дежурные СИЗ:</strong> ${workplaceId}</div>
+                <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Структурное подразделение</strong> ${dutyDepartment || '________________'}</div>
+                <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Фамилия, имя, отчество (при наличии) ответственного</strong> ${dutyResponsibleName || '________________'}</div>
+                <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Профессия (должность) ответственного</strong> ${dutyResponsiblePosition || '________________'}</div>
+                <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Предусмотрена приказом (номер и дата приказа об утверждении Норм) выдача:</strong> ${dutyOrder || '________________'}</div>
+            </div>
+            
+            <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:1px solid #000;flex:1;">
+                <thead>
+                    <tr style="background:#f0f0f0;">
+                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:32%;font-size:${headerFontSize};font-weight:bold;">Наименование СИЗ</th>
+                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:22%;font-size:${headerFontSize};font-weight:bold;">Пункт Норм</th>
+                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:26%;font-size:${headerFontSize};font-weight:bold;">Единица измерения, периодичность выдачи</th>
+                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:20%;font-size:${headerFontSize};font-weight:bold;">Количество на период</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${buildPPETableFull(fullPage)}
+                </tbody>
+            </table>
+            
+            <!-- ПОДПИСЬ - ВЫРОВНЕНА ПО ЦЕНТРУ БЛОКОВ -->
+            <div style="margin-top:${fullPage ? '20px' : '8px'};font-size:${fontSize};flex-shrink:0;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr>
+                        <td style="width:${signBlockWidth};vertical-align:bottom;padding:0;">
+                            <div style="text-align:center;font-size:${fontSize};padding-bottom:2px;">Ответственное лицо</div>
+                        </td>
+                        <td style="width:${signLineWidth};vertical-align:bottom;padding:0 5px;">
+                            <div style="border-bottom:1px solid #000;height:${signHeight};"></div>
+                        </td>
+                        <td style="vertical-align:bottom;padding:0;">
+                            <div style="font-size:${fontSize};padding-bottom:2px;">${manager}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align:center;padding:0;">
+                            <div style="font-size:${signFontSize};color:#333;"></div>
+                        </td>
+                        <td style="text-align:center;padding:0 5px;">
+                            <div style="font-size:${signFontSize};color:#333;">(подпись)</div>
+                        </td>
+                        <td style="text-align:center;padding:0;">
+                            <div style="font-size:${signFontSize};color:#333;">(фамилия, инициалы)</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    `;
+}
     
     // Универсальная таблица СИЗ для лицевой стороны (зависит от fullPage)
     function buildPPETableFull(fullPage) {
