@@ -282,7 +282,43 @@
         </div>
     </div>
 </div>
+<!-- УПОЛНОМОЧЕННЫЕ ЛИЦА -->
+<div class="block">
+    <div class="block-header">
+        <h2>👤 Уполномоченные лица (подписанты)</h2>
+        <button class="btn-add" id="showPersonFormBtn">➕ Добавить</button>
+    </div>
+    <div id="personForm" class="org-form hidden" style="flex-direction:column;gap:8px;">
+        <input type="text" id="personNameInput" placeholder="ФИО с инициалами (например: Иванов И.И.)">
+        <input type="text" id="personPositionInput" placeholder="Должность (например: Специалист в области ОТ)">
+        <div style="display:flex;gap:10px;">
+            <button class="btn-save" id="savePersonBtn">Сохранить</button>
+            <button class="btn-cancel" id="cancelPersonBtn">Отмена</button>
+        </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <select id="personSelect" style="flex:1;min-width:200px;background:#1a1a3e;color:#fff;border:1px solid rgba(255,255,255,0.12);padding:10px;border-radius:8px;cursor:pointer;">
+            <option value="">-- Выберите уполномоченное лицо --</option>
+        </select>
+        <button class="btn-delete" id="deletePersonBtn" title="Удалить">🗑</button>
+    </div>
+</div>
 
+<!-- СЛУЖБЫ ОРГАНИЗАЦИИ -->
+<div class="block">
+    <div class="block-header">
+        <h2>📁 Службы организации</h2>
+        <button class="btn-add" id="showServiceFormBtn">➕ Добавить</button>
+    </div>
+    <div id="serviceForm" class="org-form hidden" style="flex-direction:column;gap:8px;">
+        <input type="text" id="serviceNameInput" placeholder="Название службы (например: Гараж)">
+        <div style="display:flex;gap:10px;">
+            <button class="btn-save" id="saveServiceBtn">Сохранить</button>
+            <button class="btn-cancel" id="cancelServiceBtn">Отмена</button>
+        </div>
+    </div>
+    <div id="serviceList" style="color:#8888aa;font-size:14px;padding:8px;">Службы не добавлены</div>
+</div>
 <!-- ============================================================ -->
 <!-- СТРАНИЦА "КАРТОЧКИ СИЗ" -->
 <!-- ============================================================ -->
