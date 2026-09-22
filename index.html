@@ -21,8 +21,6 @@
             <nav class="nav">
                 <a href="#" class="nav-link active" onclick="showPage('main')">Главная</a>
                 <a href="#" class="nav-link" onclick="showPage('training')">Обучение</a>
-                <a href="#" class="nav-link" onclick="showPage('map')">Карта</a>
-                <a href="#" class="nav-link" onclick="showPage('calendar')">📅 Календарь</a>
                 <a href="#" class="nav-link" onclick="showPage('ppeCards')">🦺 Карточки СИЗ</a>
                 <a href="#" class="nav-link" onclick="showPage('med')">🩺 Медосмотры</a>
                 <a href="#" class="nav-link" onclick="showPage('risks')">Оценка рисков</a>
@@ -72,14 +70,14 @@
                     <p>Автоматически формируйте листы ознакомления с инструкциями, СОУТ и профрисками.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🗺️</div>
-                    <h3>Карта цеха</h3>
-                    <p>Визуализируйте рабочие места, расставляйте сотрудников и оценивайте риски.</p>
-                </div>
-                <div class="feature-card">
                     <div class="feature-icon">🦺</div>
                     <h3>Карточки СИЗ</h3>
-                    <p>Создавайте личные карточки учета выдачи СИЗ в формате HTML для печати.</p>
+                    <p>Личные и дежурные карточки учета выдачи СИЗ для печати.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🩺</div>
+                    <h3>Медосмотры</h3>
+                    <p>Направления на медосмотр (29н) и психосвидетельствование (342н).</p>
                 </div>
             </div>
         </div>
@@ -94,9 +92,8 @@
             <div class="footer-links">
                 <a href="#" onclick="showPage('main')">Главная</a>
                 <a href="#" onclick="showPage('training')">Обучение</a>
-                <a href="#" onclick="showPage('map')">Карта</a>
-                <a href="#" onclick="showPage('calendar')">Календарь</a>
                 <a href="#" onclick="showPage('ppeCards')">Карточки СИЗ</a>
+                <a href="#" onclick="showPage('med')">Медосмотры</a>
                 <a href="#" onclick="showPage('risks')">Оценка рисков</a>
                 <a href="#" onclick="showPage('analytics')">Аналитика</a>
             </div>
@@ -115,23 +112,24 @@
             <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
         </div>
 
+        <!-- ОРГАНИЗАЦИЯ -->
         <div class="block">
             <div class="block-header">
                 <h2>🏢 Организация</h2>
                 <button class="btn-add" id="showOrgFormBtn">➕ Добавить</button>
             </div>
             <div id="orgForm" class="org-form hidden" style="flex-direction:column;gap:8px;">
-    <input type="text" id="orgNameInput" placeholder="Название организации">
-    <input type="text" id="orgInnInput" placeholder="ИНН">
-    <input type="text" id="orgEmailInput" placeholder="Email">
-    <input type="text" id="orgPhoneInput" placeholder="Телефон">
-    <input type="text" id="orgOkvedInput" placeholder="ОКВЭД (например 49.31)">
-    <input type="text" id="orgAddressInput" placeholder="Юридический адрес">
-    <div style="display:flex;gap:10px;">
-        <button class="btn-save" id="saveOrgBtn">Сохранить</button>
-        <button class="btn-cancel" id="cancelOrgBtn">Отмена</button>
-    </div>
-</div>
+                <input type="text" id="orgNameInput" placeholder="Название организации">
+                <input type="text" id="orgInnInput" placeholder="ИНН">
+                <input type="text" id="orgEmailInput" placeholder="Email">
+                <input type="text" id="orgPhoneInput" placeholder="Телефон">
+                <input type="text" id="orgOkvedInput" placeholder="ОКВЭД (например 49.31)">
+                <input type="text" id="orgAddressInput" placeholder="Юридический адрес">
+                <div style="display:flex;gap:10px;">
+                    <button class="btn-save" id="saveOrgBtn">Сохранить</button>
+                    <button class="btn-cancel" id="cancelOrgBtn">Отмена</button>
+                </div>
+            </div>
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                 <select id="orgSelect" class="org-select" style="flex:1;min-width:200px;background:#1a1a3e;color:#fff;border:1px solid rgba(255,255,255,0.12);padding:10px;border-radius:8px;font-size:14px;cursor:pointer;">
                     <option value="">-- Выберите организацию --</option>
@@ -140,12 +138,51 @@
             </div>
         </div>
 
+        <!-- УПОЛНОМОЧЕННЫЕ ЛИЦА -->
+        <div class="block">
+            <div class="block-header">
+                <h2>👤 Уполномоченные лица (подписанты)</h2>
+                <button class="btn-add" id="showPersonFormBtn">➕ Добавить</button>
+            </div>
+            <div id="personForm" class="org-form hidden" style="flex-direction:column;gap:8px;">
+                <input type="text" id="personNameInput" placeholder="ФИО с инициалами (например: Иванов И.И.)">
+                <input type="text" id="personPositionInput" placeholder="Должность (например: Специалист в области ОТ)">
+                <div style="display:flex;gap:10px;">
+                    <button class="btn-save" id="savePersonBtn">Сохранить</button>
+                    <button class="btn-cancel" id="cancelPersonBtn">Отмена</button>
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <select id="personSelect" style="flex:1;min-width:200px;background:#1a1a3e;color:#fff;border:1px solid rgba(255,255,255,0.12);padding:10px;border-radius:8px;cursor:pointer;">
+                    <option value="">-- Выберите уполномоченное лицо --</option>
+                </select>
+                <button class="btn-delete" id="deletePersonBtn" title="Удалить">🗑</button>
+            </div>
+        </div>
+
+        <!-- СЛУЖБЫ -->
+        <div class="block">
+            <div class="block-header">
+                <h2>📁 Службы организации</h2>
+                <button class="btn-add" id="showServiceFormBtn">➕ Добавить</button>
+            </div>
+            <div id="serviceForm" class="org-form hidden" style="flex-direction:column;gap:8px;">
+                <input type="text" id="serviceNameInput" placeholder="Название службы (например: Гараж)">
+                <div style="display:flex;gap:10px;">
+                    <button class="btn-save" id="saveServiceBtn">Сохранить</button>
+                    <button class="btn-cancel" id="cancelServiceBtn">Отмена</button>
+                </div>
+            </div>
+            <div id="serviceList" style="color:#8888aa;font-size:14px;padding:8px;">Службы не добавлены</div>
+        </div>
+
         <div class="tab">
             <button class="active" onclick="showTab('staff')">📋 Штатное расписание</button>
             <button onclick="showTab('protocol')">📝 Протокол</button>
             <button onclick="showTab('familiarization')">📋 Ознакомление</button>
         </div>
 
+        <!-- ШТАТНОЕ РАСПИСАНИЕ -->
         <div id="tabStaff">
             <div class="block">
                 <div class="block-header">
@@ -166,6 +203,7 @@
             </div>
         </div>
 
+        <!-- ПРОТОКОЛ -->
         <div id="tabProtocol" class="hidden">
             <div class="block">
                 <h2>📝 Протокол</h2>
@@ -180,8 +218,8 @@
                     </div>
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 16px 0;">
-                    <label class="program-check"><input type="checkbox" value="1" checked> 1. Оказание первой помощи</label>
-                    <label class="program-check"><input type="checkbox" value="2"> 2. Использование СИЗ</label>
+                    <label class="program-check"><input type="checkbox" value="1" checked> 1. Оказание первой помощи пострадавшим</label>
+                    <label class="program-check"><input type="checkbox" value="2"> 2. Использование (применение) СИЗ</label>
                     <label class="program-check"><input type="checkbox" value="3"> 3. Общие вопросы охраны труда</label>
                     <label class="program-check"><input type="checkbox" value="4"> 4. Безопасные методы и приемы работ</label>
                 </div>
@@ -192,7 +230,6 @@
                 </div>
                 <div id="protocolContainer"><p style="color:#6a6a8a;text-align:center;padding:20px;">В протоколе пока нет сотрудников.</p></div>
                 <button class="btn-generate" id="generateBtn" style="margin-top:16px;">⚡ Создать XML</button>
-                <button class="btn-add" onclick="markTrainingFromProtocol()" style="margin-top:12px;width:100%;padding:12px;background:rgba(76,175,80,0.15);border:1px solid rgba(76,175,80,0.3);border-radius:8px;color:#4caf50;cursor:pointer;font-size:14px;font-weight:500;">📅 Отметить обучение в календаре</button>
                 <div id="resultBlock" class="result-block hidden">
                     <h3>✅ XML готов!</h3>
                     <a id="downloadLink" href="#" download>📥 Скачать XML</a>
@@ -201,6 +238,7 @@
             </div>
         </div>
 
+        <!-- ОЗНАКОМЛЕНИЕ -->
         <div id="tabFamiliarization" class="hidden">
             <div class="block">
                 <h2>📋 Лист ознакомления с нормативными актами</h2>
@@ -282,43 +320,6 @@
         </div>
     </div>
 </div>
-<!-- УПОЛНОМОЧЕННЫЕ ЛИЦА -->
-<div class="block">
-    <div class="block-header">
-        <h2>👤 Уполномоченные лица (подписанты)</h2>
-        <button class="btn-add" id="showPersonFormBtn">➕ Добавить</button>
-    </div>
-    <div id="personForm" class="org-form hidden" style="flex-direction:column;gap:8px;">
-        <input type="text" id="personNameInput" placeholder="ФИО с инициалами (например: Иванов И.И.)">
-        <input type="text" id="personPositionInput" placeholder="Должность (например: Специалист в области ОТ)">
-        <div style="display:flex;gap:10px;">
-            <button class="btn-save" id="savePersonBtn">Сохранить</button>
-            <button class="btn-cancel" id="cancelPersonBtn">Отмена</button>
-        </div>
-    </div>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <select id="personSelect" style="flex:1;min-width:200px;background:#1a1a3e;color:#fff;border:1px solid rgba(255,255,255,0.12);padding:10px;border-radius:8px;cursor:pointer;">
-            <option value="">-- Выберите уполномоченное лицо --</option>
-        </select>
-        <button class="btn-delete" id="deletePersonBtn" title="Удалить">🗑</button>
-    </div>
-</div>
-
-<!-- СЛУЖБЫ ОРГАНИЗАЦИИ -->
-<div class="block">
-    <div class="block-header">
-        <h2>📁 Службы организации</h2>
-        <button class="btn-add" id="showServiceFormBtn">➕ Добавить</button>
-    </div>
-    <div id="serviceForm" class="org-form hidden" style="flex-direction:column;gap:8px;">
-        <input type="text" id="serviceNameInput" placeholder="Название службы (например: Гараж)">
-        <div style="display:flex;gap:10px;">
-            <button class="btn-save" id="saveServiceBtn">Сохранить</button>
-            <button class="btn-cancel" id="cancelServiceBtn">Отмена</button>
-        </div>
-    </div>
-    <div id="serviceList" style="color:#8888aa;font-size:14px;padding:8px;">Службы не добавлены</div>
-</div>
 <!-- ============================================================ -->
 <!-- СТРАНИЦА "КАРТОЧКИ СИЗ" -->
 <!-- ============================================================ -->
@@ -331,99 +332,92 @@
 
         <div class="block">
             <h2>📋 Создание карточек</h2>
-<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);align-items:center;">
-    <label style="color:#8888aa;font-size:14px;font-weight:500;">📋 Тип карточки:</label>
-    <div style="display:flex;gap:12px;">
-        <label style="color:#ccc;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;">
-            <input type="radio" name="cardType" value="personal" checked onchange="toggleCardType()"> Личная
-        </label>
-        <label style="color:#ccc;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;">
-            <input type="radio" name="cardType" value="duty" onchange="toggleCardType()"> Дежурная
-        </label>
-    </div>
-</div>
-            <!-- ВЫБОР КОЛИЧЕСТВА КАРТОЧЕК НА ЛИСТЕ -->
-<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);align-items:center;">
-    <label style="color:#8888aa;font-size:14px;font-weight:500;">📄 Карточек на листе:</label>
-    <div style="display:flex;gap:12px;">
-        <label style="color:#ccc;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;">
-            <input type="radio" name="cardsPerPage" value="1"> 1 карточка (на весь лист)
-        </label>
-        <label style="color:#ccc;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;">
-            <input type="radio" name="cardsPerPage" value="2" checked> 2 карточки (разрез по центру)
-        </label>
-    </div>
-</div>
-            <!-- ПОЛЯ ДЛЯ ДЕЖУРНОЙ КАРТОЧКИ (скрыты по умолчанию) -->
-<div id="dutyFields" style="display:none;padding:12px;background:rgba(0,212,255,0.05);border-radius:10px;border:1px solid rgba(0,212,255,0.1);margin-bottom:12px;">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div style="display:flex;flex-direction:column;gap:4px;">
-            <label style="color:#8888aa;font-size:12px;">Идентификатор рабочего места</label>
-            <input type="text" id="dutyWorkplaceId" placeholder="РМ-001">
-        </div>
-        <div style="display:flex;flex-direction:column;gap:4px;">
-            <label style="color:#8888aa;font-size:12px;">Структурное подразделение</label>
-            <input type="text" id="dutyDepartment" placeholder="Служба движения">
-        </div>
-        <div style="display:flex;flex-direction:column;gap:4px;">
-            <label style="color:#8888aa;font-size:12px;">ФИО ответственного</label>
-            <input type="text" id="dutyResponsibleName" placeholder="Иванов И.И.">
-        </div>
-        <div style="display:flex;flex-direction:column;gap:4px;">
-            <label style="color:#8888aa;font-size:12px;">Должность ответственного</label>
-            <input type="text" id="dutyResponsiblePosition" placeholder="Начальник службы движения">
-        </div>
-        <div style="display:flex;flex-direction:column;gap:4px;grid-column:span 2;">
-            <label style="color:#8888aa;font-size:12px;">Приказ об утверждении Норм</label>
-            <input type="text" id="dutyOrder" placeholder="Приказ № 123 от 01.01.2026">
-        </div>
-    </div>
-</div>
-
-<!-- ПОЛЯ ДЛЯ ЛИЧНОЙ КАРТОЧКИ (видимы по умолчанию) -->
-<div id="personalFields">
-    <div class="ppe-card-toolbar">
-        <!-- существующие поля для личной карточки -->
-    </div>
-</div>
-            <div class="ppe-card-toolbar">
-                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-                    <label style="color:#8888aa;font-size:12px;">Номер карточки</label>
-                    <input type="text" id="ppeCardNumber" placeholder="001">
-                </div>
-                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-                    <label style="color:#8888aa;font-size:12px;">Структурное подразделение</label>
-                    <input type="text" id="ppeCardDepartment" placeholder="Служба движения">
-                </div>
-                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-                    <label style="color:#8888aa;font-size:12px;">Должность руководителя</label>
-                    <input type="text" id="ppeCardManagerPosition" placeholder="Начальник службы движения">
-                </div>
-                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-                    <label style="color:#8888aa;font-size:12px;">ФИО руководителя</label>
-                    <input type="text" id="ppeCardManager" placeholder="Иванов И.И.">
+            
+            <!-- ТИП КАРТОЧКИ -->
+            <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);align-items:center;">
+                <label style="color:#8888aa;font-size:14px;font-weight:500;">📋 Тип карточки:</label>
+                <div style="display:flex;gap:12px;">
+                    <label style="color:#ccc;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                        <input type="radio" name="cardType" value="personal" checked onchange="toggleCardType()"> Личная
+                    </label>
+                    <label style="color:#ccc;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                        <input type="radio" name="cardType" value="duty" onchange="toggleCardType()"> Дежурная
+                    </label>
                 </div>
             </div>
             
-            <div class="ppe-card-toolbar" style="border-top:1px solid rgba(255,255,255,0.06);">
-                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-                    <label style="color:#8888aa;font-size:12px;">Пол</label>
-                    <select id="ppeCardGender">
-                        <option value="М">М</option>
-                        <option value="Ж">Ж</option>
-                    </select>
+            <!-- КОЛИЧЕСТВО КАРТОЧЕК НА ЛИСТЕ -->
+            <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);align-items:center;">
+                <label style="color:#8888aa;font-size:14px;font-weight:500;">📄 Карточек на листе:</label>
+                <div style="display:flex;gap:12px;">
+                    <label style="color:#ccc;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                        <input type="radio" name="cardsPerPage" value="1"> 1 карточка (на весь лист)
+                    </label>
+                    <label style="color:#ccc;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                        <input type="radio" name="cardsPerPage" value="2" checked> 2 карточки (разрез по центру)
+                    </label>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-                    <label style="color:#8888aa;font-size:12px;">Рост (см)</label>
-                    <input type="text" id="ppeCardHeight" placeholder="175">
+            </div>
+            
+            <!-- ПОЛЯ ДЛЯ ДЕЖУРНОЙ КАРТОЧКИ -->
+            <div id="dutyFields" style="display:none;padding:12px;background:rgba(0,212,255,0.05);border-radius:10px;border:1px solid rgba(0,212,255,0.1);margin-bottom:12px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                        <label style="color:#8888aa;font-size:12px;">Структурное подразделение</label>
+                        <input type="text" id="dutyDepartment" placeholder="Служба движения" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                        <label style="color:#8888aa;font-size:12px;">ФИО ответственного</label>
+                        <input type="text" id="dutyResponsibleName" placeholder="Иванов И.И." style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                        <label style="color:#8888aa;font-size:12px;">Должность ответственного</label>
+                        <input type="text" id="dutyResponsiblePosition" placeholder="Начальник службы движения" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                        <label style="color:#8888aa;font-size:12px;">Приказ об утверждении Норм</label>
+                        <input type="text" id="dutyOrder" placeholder="Приказ № 123 от 01.01.2026" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+                    </div>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-                    <label style="color:#8888aa;font-size:12px;">Размер одежды</label>
-                    <input type="text" id="ppeCardClothesSize" placeholder="48">
+            </div>
+            
+            <!-- ПОЛЯ ДЛЯ ЛИЧНОЙ КАРТОЧКИ -->
+            <div id="personalFields">
+                <div class="ppe-card-toolbar">
+                    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                        <label style="color:#8888aa;font-size:12px;">Структурное подразделение</label>
+                        <input type="text" id="ppeCardDepartment" placeholder="Служба движения">
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                        <label style="color:#8888aa;font-size:12px;">Должность руководителя</label>
+                        <input type="text" id="ppeCardManagerPosition" placeholder="Начальник службы движения">
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                        <label style="color:#8888aa;font-size:12px;">ФИО руководителя</label>
+                        <input type="text" id="ppeCardManager" placeholder="Иванов И.И.">
+                    </div>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-                    <label style="color:#8888aa;font-size:12px;">Размер обуви</label>
-                    <input type="text" id="ppeCardShoeSize" placeholder="42">
+                
+                <div class="ppe-card-toolbar" style="border-top:1px solid rgba(255,255,255,0.06);">
+                    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                        <label style="color:#8888aa;font-size:12px;">Пол</label>
+                        <select id="ppeCardGender">
+                            <option value="М">М</option>
+                            <option value="Ж">Ж</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                        <label style="color:#8888aa;font-size:12px;">Рост (см)</label>
+                        <input type="text" id="ppeCardHeight" placeholder="175">
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                        <label style="color:#8888aa;font-size:12px;">Размер одежды</label>
+                        <input type="text" id="ppeCardClothesSize" placeholder="48">
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                        <label style="color:#8888aa;font-size:12px;">Размер обуви</label>
+                        <input type="text" id="ppeCardShoeSize" placeholder="42">
+                    </div>
                 </div>
             </div>
             
@@ -437,7 +431,6 @@
             <div style="margin-bottom:12px;padding:16px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
                 <p style="color:#8888aa;font-size:14px;margin-bottom:8px;">🦺 Выберите СИЗ для выдачи (выбрано: 0):</p>
                 <div id="ppeCardPPEList" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
-                <button class="btn-add" onclick="addPPEToCardList()" style="margin-top:8px;">➕ Добавить СИЗ</button>
             </div>
             
             <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
@@ -453,179 +446,6 @@
     </div>
 </div>
 
-<!-- ============================================================ -->
-<!-- СТРАНИЦА "КАЛЕНДАРЬ" -->
-<!-- ============================================================ -->
-<div id="calendarPage" class="page hidden">
-    <div class="container">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-            <h1 style="font-size:28px;font-weight:700;background:linear-gradient(135deg,#00d4ff,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">📅 Календарь событий</h1>
-            <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
-        </div>
-        <div class="calendar-container">
-            <div class="calendar-header">
-                <button class="calendar-nav-btn" onclick="changeMonth(-1)">◀ Предыдущий</button>
-                <h2 id="calendarMonthTitle">Январь 2026</h2>
-                <button class="calendar-nav-btn" onclick="changeMonth(1)">Следующий ▶</button>
-            </div>
-            <div class="calendar-grid" id="calendarGrid">
-                <div class="weekday">Пн</div><div class="weekday">Вт</div><div class="weekday">Ср</div>
-                <div class="weekday">Чт</div><div class="weekday">Пт</div><div class="weekday">Сб</div><div class="weekday">Вс</div>
-            </div>
-            <div class="calendar-legend">
-                <span><span class="dot overdue"></span> Просрочено</span>
-                <span><span class="dot today-event"></span> Сегодня</span>
-                <span><span class="dot upcoming"></span> Предстоит</span>
-                <span><span class="dot done"></span> Выполнено</span>
-            </div>
-            <div class="calendar-events-sidebar" id="calendarEventsSidebar">
-                <h4>📋 События на выбранный день</h4>
-                <div id="selectedDayEvents"><p style="color:#666;font-size:13px;">Выберите день</p></div>
-            </div>
-            <div class="calendar-add-event">
-                <input type="text" id="newEventTitle" placeholder="Название события">
-                <select id="newEventType">
-                    <option value="Инструктаж">Инструктаж</option>
-                    <option value="Обучение">Обучение</option>
-                    <option value="Перезарядка СИЗ">Перезарядка СИЗ</option>
-                    <option value="Другое">Другое</option>
-                </select>
-                <input type="date" id="newEventDate">
-                <button onclick="addEvent()">➕ Добавить</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ============================================================ -->
-<!-- СТРАНИЦА "КАРТА" -->
-<!-- ============================================================ -->
-<div id="mapPage" class="page hidden">
-    <div class="container" style="max-width:1600px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-            <h1 style="font-size:28px;font-weight:700;background:linear-gradient(135deg,#00d4ff,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🗺️ Карта цеха</h1>
-            <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
-        </div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:14px;border:1px solid rgba(255,255,255,0.06);">
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                <label style="color:#8888aa;font-size:13px;">Участок:</label>
-                <select id="workshopSelect" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 12px;color:#fff;font-size:14px;min-width:120px;"></select>
-                <button class="btn-add" onclick="addNewWorkshop()">➕ Новый участок</button>
-                <button class="btn-add" id="editWorkshopBtn">✏️ Редактировать</button>
-                <button class="btn-add" onclick="deleteWorkshop()">🗑 Удалить участок</button>
-            </div>
-        </div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:14px;border:1px solid rgba(255,255,255,0.06);">
-            <button class="btn-add" id="addWorkerPlaceBtn">👤 Рабочее место</button>
-            <button class="btn-add" id="addEvacuationBtn">🚪 Выход</button>
-            <button class="btn-add" id="addFireExtinguisherBtn">🧯 Огнетушитель</button>
-            <button class="btn-add" id="addEvacuationRouteBtn">➡️ Путь эвакуации</button>
-            <button class="btn-add" id="deleteSelectedBtn" style="background:rgba(255,70,70,0.2);color:#ff6b6b;">🗑 Удалить</button>
-            <button class="btn-add" onclick="clearMap()">🗑 Очистить</button>
-            <button class="btn-primary" id="saveMapBtn" style="width:auto;padding:8px 20px;">💾 Сохранить</button>
-        </div>
-        <div id="mapInfo" style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;gap:20px;flex-wrap:wrap;">
-            <span style="color:#8888aa;font-size:13px;">📐 Участок: <strong id="workshopSize" style="color:#fff;">не задан</strong></span>
-            <span style="color:#8888aa;font-size:13px;">👤 Рабочие места: <strong id="workerCount" style="color:#fff;">0</strong></span>
-            <span style="color:#8888aa;font-size:13px;">🚪 Выходы: <strong id="evacuationCount" style="color:#4caf50;">0</strong></span>
-            <span style="color:#8888aa;font-size:13px;">🧯 Огнетушители: <strong id="fireExtinguisherCount" style="color:#ff1744;">0</strong></span>
-            <span style="color:#8888aa;font-size:13px;">💡 Режим: <strong id="mapMode" style="color:#00d4ff;">Просмотр</strong></span>
-        </div>
-        <div style="position:relative;background:rgba(255,255,255,0.02);border-radius:14px;border:1px solid rgba(255,255,255,0.06);overflow:hidden;width:100%;">
-            <canvas id="mapCanvas" style="width:100%;height:auto;display:block;cursor:crosshair;background:radial-gradient(ellipse at center,#141430 0%,#0a0a1a 100%);"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- ============================================================ -->
-<!-- МОДАЛЬНЫЕ ОКНА -->
-<!-- ============================================================ -->
-<div id="ppeModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width:950px;width:95%;max-height:85vh;overflow-y:auto;">
-        <div class="modal-header">
-            <h3>🦺 Средства индивидуальной защиты</h3>
-            <button class="modal-close" onclick="closePPEModal()">✖</button>
-        </div>
-        <div class="modal-body">
-            <div id="ppeLoading" style="text-align:center;padding:20px;color:#8888aa;">⏳ Загрузка...</div>
-            <div id="ppeContent" style="display:none;">
-                <div style="background:rgba(124,58,237,0.1);padding:12px;border-radius:8px;margin-bottom:16px;border:1px solid rgba(124,58,237,0.2);">
-                    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-                        <span style="color:#ccc;">👤 <strong id="ppeEmployeeName" style="color:#fff;">Сотрудник</strong></span>
-                        <span style="color:#ccc;">💼 <strong id="ppePosition" style="color:#fff;">Должность</strong></span>
-                    </div>
-                </div>
-                <div id="ppeList"></div>
-            </div>
-            <div id="ppeError" style="display:none;text-align:center;padding:20px;color:#ff6b6b;">❌ Ошибка</div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-cancel" onclick="closePPEModal()">Закрыть</button>
-            <button class="btn-primary" onclick="exportPPE()" style="width:auto;padding:10px 24px;">📥 Экспорт PDF</button>
-        </div>
-    </div>
-</div>
-
-<div id="fireExtinguisherModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width:500px;">
-        <div class="modal-header"><h3>🧯 Добавление огнетушителя</h3><button class="modal-close" onclick="closeFireExtinguisherModal()">✖</button></div>
-        <div class="modal-body">
-            <div class="form-group"><label style="color:#ccc;">Тип</label>
-                <select id="feTypeSelect" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
-                    <option value="ОП">ОП (порошковый)</option><option value="ОУ">ОУ (углекислотный)</option>
-                    <option value="ОВ">ОВ (водный)</option><option value="ОХ">ОХ (хладоновый)</option>
-                    <option value="ОПУ">ОПУ (порошковый универсальный)</option>
-                </select>
-            </div>
-            <div class="form-group"><label style="color:#ccc;">Объем</label>
-                <select id="feVolumeSelect" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
-                    <option value="2">2</option><option value="5" selected>5</option><option value="10">10</option><option value="20">20</option><option value="50">50</option>
-                </select>
-            </div>
-            <div class="form-group"><label style="color:#ccc;">Марка</label><input type="text" id="feModelInput" placeholder="ОП-5" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;"></div>
-            <div class="form-group"><label style="color:#ccc;">Дата изготовления</label><input type="date" id="feDateInput" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;"></div>
-            <div class="form-group"><label style="color:#ccc;">Дата перезарядки</label><input type="date" id="feNextDateInput" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;" readonly>
-            <div style="font-size:12px;color:#4caf50;margin-top:4px;" id="feNextLabel">✅ Рассчитывается автоматически</div></div>
-        </div>
-        <div class="modal-footer"><button class="btn-cancel" onclick="closeFireExtinguisherModal()">Отмена</button><button class="btn-primary" id="saveFireExtinguisherBtn" style="width:auto;padding:10px 24px;">➕ Добавить</button></div>
-    </div>
-</div>
-
-<div id="workshopModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width:400px;">
-        <div class="modal-header"><h3>✏️ Редактирование участка</h3><button class="modal-close" onclick="closeWorkshopModal()">✖</button></div>
-        <div class="modal-body">
-            <div class="form-group"><label style="color:#ccc;">Название</label><input type="text" id="workshopNameInput" placeholder="Цех №1" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;"></div>
-            <div class="form-group"><label style="color:#ccc;">Длина (м)</label><input type="number" id="workshopLengthInput" placeholder="30" min="1" value="30" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;"></div>
-            <div class="form-group"><label style="color:#ccc;">Ширина (м)</label><input type="number" id="workshopWidthInput" placeholder="20" min="1" value="20" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;"></div>
-        </div>
-        <div class="modal-footer"><button class="btn-cancel" onclick="closeWorkshopModal()">Отмена</button><button class="btn-primary" id="saveWorkshopBtn" style="width:auto;padding:10px 24px;">Сохранить</button></div>
-    </div>
-</div>
-
-<div id="workplaceModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width:400px;">
-        <div class="modal-header"><h3>👤 Добавление рабочего места</h3><button class="modal-close" onclick="closeWorkplaceModal()">✖</button></div>
-        <div class="modal-body">
-            <div class="form-group"><label style="color:#ccc;">Название</label><input type="text" id="workplaceNameInput" placeholder="Токарный станок №3" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;"></div>
-            <div class="form-group"><label style="color:#ccc;">Должность</label><input type="text" id="workplacePositionInput" placeholder="Токарь" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;"></div>
-            <div class="form-group"><label style="color:#ccc;">Размер зоны</label><input type="number" id="workplaceZoneInput" value="50" min="10" max="100" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;"></div>
-        </div>
-        <div class="modal-footer"><button class="btn-cancel" onclick="closeWorkplaceModal()">Отмена</button><button class="btn-primary" id="saveWorkplaceBtn" style="width:auto;padding:10px 24px;">Добавить</button></div>
-    </div>
-</div>
-
-<!-- ============================================================ -->
-<!-- СТРАНИЦЫ В РАЗРАБОТКЕ -->
-<!-- ============================================================ -->
-<div id="risksPage" class="page hidden">
-    <div class="container" style="text-align:center;padding:60px 20px;">
-        <div style="font-size:80px;margin-bottom:20px;">🧠</div>
-        <h2 style="font-size:28px;margin-bottom:12px;">Оценка рисков</h2>
-        <p style="color:#8888aa;font-size:18px;max-width:600px;margin:0 auto 24px;">В разработке</p>
-        <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
-    </div>
-</div>
 <!-- ============================================================ -->
 <!-- СТРАНИЦА "МЕДОСМОТРЫ" -->
 <!-- ============================================================ -->
@@ -645,9 +465,7 @@
         <div id="medTabMed">
             <div class="block">
                 <h2>🏢 Организация работодателя</h2>
-                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
-                    <select id="medOrgSelect" style="flex:1;min-width:200px;background:#1a1a3e;color:#fff;border:1px solid rgba(255,255,255,0.12);padding:10px;border-radius:8px;"></select>
-                </div>
+                <select id="medOrgSelect" style="width:100%;padding:10px;background:#1a1a3e;color:#fff;border:1px solid rgba(255,255,255,0.12);border-radius:8px;margin-bottom:10px;"></select>
                 <h2>🏥 Медицинская организация</h2>
                 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                     <select id="medMedOrgSelect" style="flex:1;min-width:200px;background:#1a1a3e;color:#fff;border:1px solid rgba(255,255,255,0.12);padding:10px;border-radius:8px;"></select>
@@ -685,8 +503,8 @@
         <div id="medTabPsycho" class="hidden">
             <div class="block">
                 <h2>🏢 Организация работодателя</h2>
-                <select id="psychoOrgSelect" style="width:100%;min-width:200px;background:#1a1a3e;color:#fff;border:1px solid rgba(255,255,255,0.12);padding:10px;border-radius:8px;"></select>
-                <h2 style="margin-top:15px;">🏥 Медицинская организация</h2>
+                <select id="psychoOrgSelect" style="width:100%;padding:10px;background:#1a1a3e;color:#fff;border:1px solid rgba(255,255,255,0.12);border-radius:8px;margin-bottom:10px;"></select>
+                <h2>🏥 Медицинская организация</h2>
                 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                     <select id="psychoMedOrgSelect" style="flex:1;min-width:200px;background:#1a1a3e;color:#fff;border:1px solid rgba(255,255,255,0.12);padding:10px;border-radius:8px;"></select>
                     <button class="btn-add" onclick="openAddMedOrgModal()">➕ Добавить медорганизацию</button>
@@ -709,8 +527,9 @@
         </div>
     </div>
 </div>
-
+<!-- ============================================================ -->
 <!-- МОДАЛЬНОЕ ОКНО: ДОБАВЛЕНИЕ МЕДОРГАНИЗАЦИИ -->
+<!-- ============================================================ -->
 <div id="addMedOrgModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width:500px;">
         <div class="modal-header"><h3>🏥 Добавить медорганизацию</h3><button class="modal-close" onclick="closeAddMedOrgModal()">✖</button></div>
@@ -723,6 +542,48 @@
         <div class="modal-footer"><button class="btn-cancel" onclick="closeAddMedOrgModal()">Отмена</button><button class="btn-primary" onclick="saveNewMedOrg()">💾 Сохранить</button></div>
     </div>
 </div>
+
+<!-- ============================================================ -->
+<!-- МОДАЛЬНОЕ ОКНО: СИЗ (для карты) -->
+<!-- ============================================================ -->
+<div id="ppeModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width:950px;width:95%;max-height:85vh;overflow-y:auto;">
+        <div class="modal-header">
+            <h3>🦺 Средства индивидуальной защиты</h3>
+            <button class="modal-close" onclick="closePPEModal()">✖</button>
+        </div>
+        <div class="modal-body">
+            <div id="ppeLoading" style="text-align:center;padding:20px;color:#8888aa;">⏳ Загрузка...</div>
+            <div id="ppeContent" style="display:none;">
+                <div style="background:rgba(124,58,237,0.1);padding:12px;border-radius:8px;margin-bottom:16px;border:1px solid rgba(124,58,237,0.2);">
+                    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                        <span style="color:#ccc;">👤 <strong id="ppeEmployeeName" style="color:#fff;">Сотрудник</strong></span>
+                        <span style="color:#ccc;">💼 <strong id="ppePosition" style="color:#fff;">Должность</strong></span>
+                    </div>
+                </div>
+                <div id="ppeList"></div>
+            </div>
+            <div id="ppeError" style="display:none;text-align:center;padding:20px;color:#ff6b6b;">❌ Ошибка</div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closePPEModal()">Закрыть</button>
+            <button class="btn-primary" onclick="exportPPE()" style="width:auto;padding:10px 24px;">📥 Экспорт PDF</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- СТРАНИЦЫ В РАЗРАБОТКЕ -->
+<!-- ============================================================ -->
+<div id="risksPage" class="page hidden">
+    <div class="container" style="text-align:center;padding:60px 20px;">
+        <div style="font-size:80px;margin-bottom:20px;">🧠</div>
+        <h2 style="font-size:28px;margin-bottom:12px;">Оценка рисков</h2>
+        <p style="color:#8888aa;font-size:18px;max-width:600px;margin:0 auto 24px;">В разработке</p>
+        <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
+    </div>
+</div>
+
 <div id="analyticsPage" class="page hidden">
     <div class="container" style="text-align:center;padding:60px 20px;">
         <div style="font-size:80px;margin-bottom:20px;">📊</div>
@@ -732,9 +593,6 @@
     </div>
 </div>
 
-<!-- ============================================================ -->
-<!-- ПОДКЛЮЧЕНИЕ SCRIPT.JS (В КОНЦЕ) -->
-<!-- ============================================================ -->
 <script src="script.js"></script>
 
 </body>
