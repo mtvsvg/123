@@ -76,15 +76,14 @@ function getOrgs() { return JSON.parse(localStorage.getItem('organizations') || 
 function saveOrgs(orgs) { localStorage.setItem('organizations', JSON.stringify(orgs)); }
 function getMedOrgs() { return JSON.parse(localStorage.getItem('medOrganizations') || '[]'); }
 function saveMedOrgs(orgs) { localStorage.setItem('medOrganizations', JSON.stringify(orgs)); }
-function getProtocol() { return JSON.parse(localStorage.getItem('protocol') || '[]'); }
-function saveProtocol(protocol) { localStorage.setItem('protocol', JSON.stringify(protocol)); }
-function getEvents() { return JSON.parse(localStorage.getItem('calendarEvents') || '[]'); }
-function saveEvents(events) { localStorage.setItem('calendarEvents', JSON.stringify(events)); }
 function getPersons() { return JSON.parse(localStorage.getItem('authorizedPersons') || '[]'); }
 function savePersons(persons) { localStorage.setItem('authorizedPersons', JSON.stringify(persons)); }
 function getServices() { return JSON.parse(localStorage.getItem('orgServices') || '[]'); }
 function saveServices(services) { localStorage.setItem('orgServices', JSON.stringify(services)); }
-
+function getProtocol() { return JSON.parse(localStorage.getItem('protocol') || '[]'); }
+function saveProtocol(protocol) { localStorage.setItem('protocol', JSON.stringify(protocol)); }
+function getEvents() { return JSON.parse(localStorage.getItem('calendarEvents') || '[]'); }
+function saveEvents(events) { localStorage.setItem('calendarEvents', JSON.stringify(events)); }
 // ============================================================
 // ШТАТНОЕ РАСПИСАНИЕ
 // ============================================================
@@ -175,11 +174,13 @@ function renderStaffWithDepartments() {
     
     if (allCount === 0) {
         container.innerHTML = '<p style="color:#6a6a8a;text-align:center;padding:20px;">Нет загруженных сотрудников. Нажмите "Загрузить файл".</p>';
-        document.getElementById('staffTotalCount').textContent = 'Всего: 0';
+        const totalEl = document.getElementById('staffTotalCount');
+        if (totalEl) totalEl.textContent = 'Всего: 0';
         return;
     }
     
-    document.getElementById('staffTotalCount').textContent = `Всего: ${allCount}`;
+    const totalEl = document.getElementById('staffTotalCount');
+    if (totalEl) totalEl.textContent = `Всего: ${allCount}`;
     
     let html = '';
     
@@ -413,9 +414,8 @@ function escXml(str) {
     if (!str) return ''; 
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); 
 }
-
 // ============================================================
-// ОРГАНИЗАЦИИ
+// ОРГАНИЗАЦИИ (РАБОТОДАТЕЛИ)
 // ============================================================
 function renderOrgs() {
     const select = document.getElementById('orgSelect');
@@ -447,6 +447,124 @@ function renderOrgs() {
 function selectOrg(id) { 
     localStorage.setItem('currentOrgId', id); 
 }
+
+// ============================================================
+// УПОЛНОМОЧЕННЫЕ ЛИЦА (ПОДПИСАНТЫ)
+// ============================================================
+function renderPersons() {
+    const select = document.getElementById('personSelect');
+    if (!select) return;
+    const persons = getPersons();
+    select.innerHTML = '<option value="">-- Выберите уполномоченное лицо --</option>';
+    persons.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.name} — ${p.position}`;
+        select.appendChild(opt);
+    });
+}
+
+function initPersonForm() {
+    const showBtn = document.getElementById('showPersonFormBtn');
+    const saveBtn = document.getElementById('savePersonBtn');
+    const cancelBtn = document.getElementById('cancelPersonBtn');
+    const deleteBtn = document.getElementById('deletePersonBtn');
+    
+    if (showBtn) showBtn.onclick = function() {
+        document.getElementById('personForm').classList.remove('hidden');
+    };
+    if (cancelBtn) cancelBtn.onclick = function() {
+        document.getElementById('personForm').classList.add('hidden');
+    };
+    if (saveBtn) saveBtn.onclick = function() {
+        const name = document.getElementById('personNameInput').value.trim();
+        const position = document.getElementById('personPositionInput').value.trim();
+        if (!name || !position) { alert('Заполните ФИО и должность'); return; }
+        const persons = getPersons();
+        persons.push({ id: Date.now(), name, position });
+        savePersons(persons);
+        renderPersons();
+        document.getElementById('personForm').classList.add('hidden');
+        document.getElementById('personNameInput').value = '';
+        document.getElementById('personPositionInput').value = '';
+        alert('✅ Уполномоченное лицо добавлено');
+    };
+    if (deleteBtn) deleteBtn.onclick = function() {
+        const id = parseInt(document.getElementById('personSelect').value);
+        if (!id) { alert('Выберите лицо'); return; }
+        if (!confirm('Удалить?')) return;
+        let persons = getPersons();
+        persons = persons.filter(p => p.id !== id);
+        savePersons(persons);
+        renderPersons();
+        alert('✅ Удалено');
+    };
+}
+
+function getSelectedPersonName() {
+    const select = document.getElementById('personSelect');
+    if (!select || !select.value) return '';
+    const persons = getPersons();
+    const p = persons.find(x => x.id == select.value);
+    return p ? p.name : '';
+}
+
+function getSelectedPersonPosition() {
+    const select = document.getElementById('personSelect');
+    if (!select || !select.value) return '';
+    const persons = getPersons();
+    const p = persons.find(x => x.id == select.value);
+    return p ? p.position : '';
+}
+
+// ============================================================
+// СЛУЖБЫ ОРГАНИЗАЦИИ
+// ============================================================
+function renderServices() {
+    const container = document.getElementById('serviceList');
+    if (!container) return;
+    const services = getServices();
+    if (services.length === 0) {
+        container.innerHTML = '<span style="color:#8888aa;">Службы не добавлены</span>';
+        return;
+    }
+    container.innerHTML = services.map(s => 
+        `<span style="display:inline-block;background:rgba(124,58,237,0.15);color:#b388ff;padding:4px 10px;border-radius:6px;margin:3px;font-size:13px;">${s.name} <span style="cursor:pointer;color:#ff6b6b;margin-left:6px;" onclick="deleteService(${s.id})">✖</span></span>`
+    ).join('');
+}
+
+function deleteService(id) {
+    if (!confirm('Удалить службу?')) return;
+    let services = getServices();
+    services = services.filter(s => s.id !== id);
+    saveServices(services);
+    renderServices();
+}
+
+function initServiceForm() {
+    const showBtn = document.getElementById('showServiceFormBtn');
+    const saveBtn = document.getElementById('saveServiceBtn');
+    const cancelBtn = document.getElementById('cancelServiceBtn');
+    
+    if (showBtn) showBtn.onclick = function() {
+        document.getElementById('serviceForm').classList.remove('hidden');
+    };
+    if (cancelBtn) cancelBtn.onclick = function() {
+        document.getElementById('serviceForm').classList.add('hidden');
+    };
+    if (saveBtn) saveBtn.onclick = function() {
+        const name = document.getElementById('serviceNameInput').value.trim();
+        if (!name) { alert('Введите название службы'); return; }
+        const services = getServices();
+        services.push({ id: Date.now(), name });
+        saveServices(services);
+        renderServices();
+        document.getElementById('serviceForm').classList.add('hidden');
+        document.getElementById('serviceNameInput').value = '';
+        alert('✅ Служба добавлена');
+    };
+}
+
 // ============================================================
 // ВКЛАДКИ
 // ============================================================
@@ -1104,7 +1222,8 @@ function updatePPECardSelectionCount() {
 }
 
 function addPPEToCardList() {
-    document.getElementById('ppeCardCustomName').focus();
+    const el = document.getElementById('ppeCardCustomName');
+    if (el) el.focus();
 }
 
 function getSelectedPPECardEmployees() {
@@ -1139,7 +1258,8 @@ function clearPPECardSelection() {
     
     renderPPECardStaffList();
     renderPPECardPPEList();
-    document.getElementById('ppeCardResult').classList.add('hidden');
+    const res = document.getElementById('ppeCardResult');
+    if (res) res.classList.add('hidden');
     alert('✅ Выбор очищен');
 }
 // ============================================================
@@ -1595,398 +1715,6 @@ function toggleCardType() {
     }
 }
 // ============================================================
-// КАЛЕНДАРЬ
-// ============================================================
-let currentDate = new Date();
-let selectedDate = null;
-
-function renderCalendar() {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    
-    const title = document.getElementById('calendarMonthTitle');
-    const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-    if (title) title.textContent = `${months[month]} ${year}`;
-    
-    const grid = document.getElementById('calendarGrid');
-    if (!grid) return;
-    grid.innerHTML = `
-        <div class="weekday">Пн</div><div class="weekday">Вт</div><div class="weekday">Ср</div>
-        <div class="weekday">Чт</div><div class="weekday">Пт</div><div class="weekday">Сб</div><div class="weekday">Вс</div>
-    `;
-    
-    const firstDay = new Date(year, month, 1);
-    let startDay = firstDay.getDay();
-    if (startDay === 0) startDay = 7;
-    startDay = startDay - 1;
-    
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const daysInPrevMonth = new Date(year, month, 0).getDate();
-    
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    
-    const events = getEvents();
-    
-    for (let i = startDay - 1; i >= 0; i--) {
-        const day = daysInPrevMonth - i;
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayEvents = events.filter(e => e.date === dateStr);
-        const dayDiv = document.createElement('div');
-        dayDiv.className = 'calendar-day other-month';
-        dayDiv.innerHTML = `<span class="day-number">${day}</span>`;
-        if (dayEvents.length > 0) {
-            dayDiv.innerHTML += `<div class="day-events">${dayEvents.slice(0, 2).map(e => 
-                `<span class="event-text ${getEventStatus(e)}">${e.title}</span>`
-            ).join('')}</div>`;
-        }
-        dayDiv.onclick = () => selectDay(dateStr);
-        grid.appendChild(dayDiv);
-    }
-    
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayEvents = events.filter(e => e.date === dateStr);
-        const dayDiv = document.createElement('div');
-        dayDiv.className = 'calendar-day';
-        if (dateStr === todayStr) dayDiv.classList.add('today');
-        dayDiv.innerHTML = `<span class="day-number">${day}</span>`;
-        if (dayEvents.length > 0) {
-            dayDiv.innerHTML += `<div class="day-events">${dayEvents.slice(0, 2).map(e => 
-                `<span class="event-text ${getEventStatus(e)}">${e.title}</span>`
-            ).join('')}</div>`;
-            if (dayEvents.length > 2) {
-                dayDiv.innerHTML += `<span style="font-size:9px;color:#8888aa;">+${dayEvents.length - 2} еще</span>`;
-            }
-        }
-        dayDiv.onclick = () => selectDay(dateStr);
-        grid.appendChild(dayDiv);
-    }
-    
-    const totalDays = startDay + daysInMonth;
-    const remaining = 42 - totalDays;
-    for (let day = 1; day <= remaining; day++) {
-        const dateStr = `${year}-${String(month + 2).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayEvents = events.filter(e => e.date === dateStr);
-        const dayDiv = document.createElement('div');
-        dayDiv.className = 'calendar-day other-month';
-        dayDiv.innerHTML = `<span class="day-number">${day}</span>`;
-        if (dayEvents.length > 0) {
-            dayDiv.innerHTML += `<div class="day-events">${dayEvents.slice(0, 2).map(e => 
-                `<span class="event-text ${getEventStatus(e)}">${e.title}</span>`
-            ).join('')}</div>`;
-        }
-        dayDiv.onclick = () => selectDay(dateStr);
-        grid.appendChild(dayDiv);
-    }
-    
-    if (selectedDate) {
-        selectDay(selectedDate);
-    }
-    
-    const newEventDate = document.getElementById('newEventDate');
-    if (newEventDate) {
-        newEventDate.value = todayStr;
-    }
-}
-
-function getEventStatus(event) {
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    if (event.date < todayStr) return 'overdue';
-    if (event.date === todayStr) return 'today-event';
-    if (event.done) return 'done';
-    return 'upcoming';
-}
-
-function selectDay(dateStr) {
-    selectedDate = dateStr;
-    const events = getEvents();
-    const dayEvents = events.filter(e => e.date === dateStr);
-    const sidebar = document.getElementById('selectedDayEvents');
-    if (!sidebar) return;
-    
-    if (dayEvents.length === 0) {
-        sidebar.innerHTML = `<p style="color:#666;font-size:13px;">Нет событий на ${dateStr}</p>`;
-        return;
-    }
-    
-    const dateObj = new Date(dateStr);
-    const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-    const formattedDate = `${dateObj.getDate()} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
-    
-    let html = `<p style="color:#ccc;font-size:13px;margin-bottom:8px;"><strong>${formattedDate}</strong></p>`;
-    dayEvents.forEach((event, index) => {
-        const statusClass = getEventStatus(event);
-        const statusLabel = {
-            'overdue': '🔴 Просрочено',
-            'today-event': '🟡 Сегодня',
-            'upcoming': '🟢 Предстоит',
-            'done': '✅ Выполнено'
-        };
-        html += `
-            <div class="event-item">
-                <div>
-                    <span class="event-title">${event.title}</span>
-                    <span class="event-type">${event.type || 'Событие'}</span>
-                    <span style="font-size:10px;color:#8888aa;margin-left:8px;">${statusLabel[statusClass] || ''}</span>
-                </div>
-                <button class="event-delete" onclick="deleteEvent(${index}, '${dateStr}')">✖</button>
-            </div>
-        `;
-    });
-    sidebar.innerHTML = html;
-}
-
-function changeMonth(delta) {
-    currentDate.setMonth(currentDate.getMonth() + delta);
-    renderCalendar();
-}
-
-function addEvent() {
-    const titleInput = document.getElementById('newEventTitle');
-    const typeSelect = document.getElementById('newEventType');
-    const dateInput = document.getElementById('newEventDate');
-    
-    const title = titleInput.value.trim();
-    const type = typeSelect.value;
-    const date = dateInput.value;
-    
-    if (!title) {
-        alert('❌ Введите название события!');
-        titleInput.focus();
-        return;
-    }
-    if (!date) {
-        alert('❌ Выберите дату!');
-        dateInput.focus();
-        return;
-    }
-    
-    const events = getEvents();
-    events.push({
-        id: Date.now(),
-        title: title,
-        type: type,
-        date: date,
-        done: false,
-        createdAt: new Date().toISOString()
-    });
-    saveEvents(events);
-    
-    titleInput.value = '';
-    renderCalendar();
-    selectDay(date);
-    alert('✅ Событие добавлено!');
-}
-
-function deleteEvent(index, dateStr) {
-    if (!confirm('Удалить это событие?')) return;
-    const events = getEvents();
-    const filtered = events.filter((e, i) => {
-        if (i === index && e.date === dateStr) return false;
-        return true;
-    });
-    saveEvents(filtered);
-    renderCalendar();
-    selectDay(dateStr);
-}
-
-function markTrainingFromProtocol() {
-    const protocol = getProtocol();
-    if (protocol.length === 0) {
-        alert('❌ В протоколе нет сотрудников!');
-        return;
-    }
-    
-    if (!confirm(`📅 Отметить в календаре обучение для ${protocol.length} сотрудников?`)) return;
-    
-    const all = getAllEmployees();
-    const today = new Date().toISOString().split('T')[0];
-    let updated = 0;
-    
-    protocol.forEach(empFromProtocol => {
-        const found = all.find(e => e.snils === empFromProtocol.snils);
-        if (found) {
-            const data = getStaffData();
-            for (const [dept, deptData] of Object.entries(data.departments)) {
-                const idx = deptData.employees.findIndex(e => e.snils === empFromProtocol.snils);
-                if (idx !== -1) {
-                    deptData.employees[idx].trainingDate = today;
-                    updated++;
-                    saveStaffData(data);
-                    break;
-                }
-            }
-            if (!updated) {
-                const idx = data.unassigned.findIndex(e => e.snils === empFromProtocol.snils);
-                if (idx !== -1) {
-                    data.unassigned[idx].trainingDate = today;
-                    updated++;
-                    saveStaffData(data);
-                }
-            }
-        }
-    });
-    
-    renderStaffWithDepartments();
-    
-    const events = getEvents();
-    const existing = events.filter(e => e.date === today && e.title.includes('Обучение'));
-    if (existing.length === 0 && updated > 0) {
-        events.push({
-            id: Date.now(),
-            title: `Обучение ${updated} сотрудников`,
-            type: 'Обучение',
-            date: today,
-            done: false,
-            createdAt: new Date().toISOString()
-        });
-        saveEvents(events);
-    }
-    
-    alert(`✅ Обновлено ${updated} сотрудников! Дата обучения: ${today}`);
-}
-
-// ============================================================
-// ПЕРСОНАЛЬНАЯ КАРТОЧКА СОТРУДНИКА
-// ============================================================
-function openEmployeeCardBySnils(snils) {
-    const all = getAllEmployees();
-    const emp = all.find(e => e.snils === snils);
-    if (!emp) {
-        alert('❌ Сотрудник не найден');
-        return;
-    }
-    openEmployeeCard(emp);
-}
-
-function openEmployeeCard(emp) {
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.id = 'employeeModal';
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width:550px;">
-            <div class="modal-header">
-                <h3>👤 ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</h3>
-                <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label style="color:#ccc;">Должность</label>
-                    <input type="text" value="${emp.position}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;" readonly>
-                </div>
-                <div class="form-group">
-                    <label style="color:#ccc;">📅 Дата последнего инструктажа</label>
-                    <input type="date" id="empInstructionDate" value="${emp.instructionDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
-                </div>
-                <div class="form-group">
-                    <label style="color:#ccc;">📅 Дата обучения</label>
-                    <input type="date" id="empTrainingDate" value="${emp.trainingDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
-                </div>
-                <div class="form-group">
-                    <label style="color:#ccc;">🦺 СИЗ</label>
-                    <div style="max-height:150px;overflow-y:auto;background:rgba(255,255,255,0.03);border-radius:6px;padding:8px;">
-                        ${emp.ppeItems && emp.ppeItems.length > 0 ? emp.ppeItems.map((item, i) => 
-                            `<div style="padding:6px 10px;background:rgba(76,175,80,0.1);border-radius:4px;margin-bottom:4px;color:#ccc;font-size:13px;">✅ ${item.name} (${item.type})</div>`
-                        ).join('') : '<div style="color:#666;font-size:13px;">Нет добавленных СИЗ</div>'}
-                    </div>
-                    <button onclick="openPPEModalForEmployee('${emp.snils}')" style="margin-top:8px;padding:6px 16px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);border-radius:6px;color:#b388ff;cursor:pointer;font-size:13px;">➕ Добавить СИЗ</button>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-cancel" onclick="this.closest('.modal-overlay').remove()">Закрыть</button>
-                <button class="btn-primary" onclick="saveEmployeeDataFromModal('${emp.snils}')" style="width:auto;padding:10px 24px;">💾 Сохранить</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-function saveEmployeeDataFromModal(snils) {
-    const data = getStaffData();
-    let emp = null;
-    
-    for (const [dept, deptData] of Object.entries(data.departments)) {
-        const idx = deptData.employees.findIndex(e => e.snils === snils);
-        if (idx !== -1) {
-            emp = deptData.employees[idx];
-            const instructionDate = document.getElementById('empInstructionDate')?.value || '';
-            const trainingDate = document.getElementById('empTrainingDate')?.value || '';
-            emp.instructionDate = instructionDate;
-            emp.trainingDate = trainingDate;
-            saveStaffData(data);
-            renderStaffWithDepartments();
-            document.getElementById('employeeModal')?.remove();
-            alert('✅ Данные сохранены!');
-            return;
-        }
-    }
-    
-    const idx = data.unassigned.findIndex(e => e.snils === snils);
-    if (idx !== -1) {
-        emp = data.unassigned[idx];
-        const instructionDate = document.getElementById('empInstructionDate')?.value || '';
-        const trainingDate = document.getElementById('empTrainingDate')?.value || '';
-        emp.instructionDate = instructionDate;
-        emp.trainingDate = trainingDate;
-        saveStaffData(data);
-        renderStaffWithDepartments();
-        document.getElementById('employeeModal')?.remove();
-        alert('✅ Данные сохранены!');
-    }
-}
-
-function openPPEModalForEmployee(snils) {
-    const data = getStaffData();
-    let emp = null;
-    
-    for (const [dept, deptData] of Object.entries(data.departments)) {
-        const found = deptData.employees.find(e => e.snils === snils);
-        if (found) { emp = found; break; }
-    }
-    if (!emp) {
-        emp = data.unassigned.find(e => e.snils === snils);
-    }
-    if (!emp) { alert('❌ Сотрудник не найден'); return; }
-    
-    const tempWorkplace = {
-        name: `${emp.last_name} ${emp.first_name}`,
-        position: emp.position,
-        ppeItems: emp.ppeItems || []
-    };
-    
-    currentPPEWorkplace = tempWorkplace;
-    ppeItems = tempWorkplace.ppeItems || [];
-    openPPEModal(tempWorkplace);
-    
-    const originalSave = savePPEItems;
-    savePPEItems = function() {
-        if (!currentPPEWorkplace) return;
-        if (ppeItems.length === 0) { alert('⚠️ Добавьте хотя бы одно СИЗ!'); return; }
-        
-        const data = getStaffData();
-        let target = null;
-        for (const [dept, deptData] of Object.entries(data.departments)) {
-            const found = deptData.employees.find(e => e.snils === snils);
-            if (found) { target = found; break; }
-        }
-        if (!target) {
-            target = data.unassigned.find(e => e.snils === snils);
-        }
-        if (target) {
-            target.ppeItems = ppeItems;
-            saveStaffData(data);
-        }
-        currentPPEWorkplace.ppeItems = ppeItems;
-        currentPPEWorkplace.hasPPE = true;
-        alert(`✅ Сохранено ${ppeItems.length} СИЗ!`);
-        closePPEModal();
-        savePPEItems = originalSave;
-        renderStaffWithDepartments();
-    };
-}
-// ============================================================
 // РАЗДЕЛ "МЕДОСМОТРЫ" - ВИДЫ ДЕЯТЕЛЬНОСТИ ПО ПРИКАЗУ №342н
 // ============================================================
 const PSYCHO_ACTIVITIES = [
@@ -2022,7 +1750,6 @@ function initMedPage() {
 }
 
 function renderMedOrgSelects() {
-    // Работодатели
     const orgSelect = document.getElementById('medOrgSelect');
     if (orgSelect) {
         const orgs = getOrgs();
@@ -2036,7 +1763,6 @@ function renderMedOrgSelects() {
         const currentOrgId = localStorage.getItem('currentOrgId');
         if (currentOrgId) orgSelect.value = currentOrgId;
     }
-    // Для психо
     const psychoOrgSelect = document.getElementById('psychoOrgSelect');
     if (psychoOrgSelect) {
         const orgs = getOrgs();
@@ -2050,7 +1776,6 @@ function renderMedOrgSelects() {
         const currentOrgId = localStorage.getItem('currentOrgId');
         if (currentOrgId) psychoOrgSelect.value = currentOrgId;
     }
-    // Медорганизации
     const medOrgSelect = document.getElementById('medMedOrgSelect');
     if (medOrgSelect) {
         const medOrgs = getMedOrgs();
@@ -2102,6 +1827,9 @@ function renderMedEmployeeList(mode = 'med') {
         return;
     }
     
+    const services = getServices();
+    const servicesOptions = services.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+    
     let html = '<div style="max-height:500px;overflow-y:auto;">';
     all.forEach(emp => {
         const savedMed = JSON.parse(localStorage.getItem(`medData_${emp.snils}`) || '{}');
@@ -2113,27 +1841,21 @@ function renderMedEmployeeList(mode = 'med') {
             const birthDate = savedMed.birthDate || emp.birthDate || '';
             const gender = savedMed.gender || emp.gender || '';
             const policy = savedMed.policy || emp.policyNumber || '';
+            const service = savedMed.service || emp.department || '';
             
             html += `
-                <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);">
+                <div data-snils="${emp.snils}" style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);">
                     <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
                         <input type="checkbox" class="med-check" data-snils="${emp.snils}" ${checked ? 'checked' : ''} style="width:18px;height:18px;accent-color:#7c3aed;">
                         <span class="emp-name" style="color:#00d4ff;font-size:14px;">${emp.last_name} ${emp.first_name}</span>
                         <span style="color:#8888aa;font-size:13px;">${emp.position}</span>
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 2fr;gap:8px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 2fr;gap:8px;">
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Дата рождения</label>
                             <input type="date" class="med-birth-date" data-snils="${emp.snils}" value="${birthDate}" style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
                         </div>
                         <div>
-                                                <div>
-                            <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Служба</label>
-                            <select class="med-service" data-snils="${emp.snils}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
-                                <option value="">--</option>
-                                ${getServices().map(s => `<option value="${s.name}" ${emp.department === s.name ? 'selected' : ''}>${s.name}</option>`).join('')}
-                            </select>
-                        </div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Пол</label>
                             <select class="med-gender" data-snils="${emp.snils}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
                                 <option value="">--</option>
@@ -2144,6 +1866,13 @@ function renderMedEmployeeList(mode = 'med') {
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">№ полиса</label>
                             <input type="text" class="med-policy" data-snils="${emp.snils}" value="${policy}" placeholder="1234 5678..." style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Служба</label>
+                            <select class="med-service" data-snils="${emp.snils}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                                <option value="">--</option>
+                                ${services.map(s => `<option value="${s.name}" ${service === s.name ? 'selected' : ''}>${s.name}</option>`).join('')}
+                            </select>
                         </div>
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Вредные факторы (Приказ №29н)</label>
@@ -2160,27 +1889,21 @@ function renderMedEmployeeList(mode = 'med') {
             const birthDate = savedPsycho.birthDate || emp.birthDate || '';
             const gender = savedPsycho.gender || emp.gender || '';
             const regAddress = savedPsycho.regAddress || emp.registrationAddress || '';
+            const service = savedPsycho.service || emp.department || '';
             
             const activityOptions = PSYCHO_ACTIVITIES.map(a => 
                 `<option value="${a.id}" ${activityId == a.id ? 'selected' : ''}>${a.id}. ${a.title.substring(0, 60)}${a.title.length > 60 ? '...' : ''}</option>`
             ).join('');
             
             html += `
-                <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);">
+                <div data-snils="${emp.snils}" style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);">
                     <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
                         <input type="checkbox" class="psycho-check" data-snils="${emp.snils}" ${checked ? 'checked' : ''} style="width:18px;height:18px;accent-color:#7c3aed;">
                         <span class="emp-name" style="color:#00d4ff;font-size:14px;">${emp.last_name} ${emp.first_name}</span>
                         <span style="color:#8888aa;font-size:13px;">${emp.position}</span>
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 2fr;gap:8px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 2fr;gap:8px;">
                         <div>
-                                                <div>
-                            <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Служба</label>
-                            <select class="med-service" data-snils="${emp.snils}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
-                                <option value="">--</option>
-                                ${getServices().map(s => `<option value="${s.name}" ${emp.department === s.name ? 'selected' : ''}>${s.name}</option>`).join('')}
-                            </select>
-                        </div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Дата рождения</label>
                             <input type="date" class="psycho-birth-date" data-snils="${emp.snils}" value="${birthDate}" style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
                         </div>
@@ -2195,6 +1918,13 @@ function renderMedEmployeeList(mode = 'med') {
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Адрес регистрации</label>
                             <input type="text" class="psycho-address" data-snils="${emp.snils}" value="${regAddress}" placeholder="г. ..., ул. ..." style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Служба</label>
+                            <select class="psycho-service" data-snils="${emp.snils}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                                <option value="">--</option>
+                                ${services.map(s => `<option value="${s.name}" ${service === s.name ? 'selected' : ''}>${s.name}</option>`).join('')}
+                            </select>
                         </div>
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Вид деятельности (Приказ №342н)</label>
@@ -2212,13 +1942,13 @@ function renderMedEmployeeList(mode = 'med') {
     container.innerHTML = html;
     
     if (mode === 'med') {
-        container.querySelectorAll('.med-check, .med-birth-date, .med-gender, .med-policy, .med-factors').forEach(el => {
+        container.querySelectorAll('.med-check, .med-birth-date, .med-gender, .med-policy, .med-factors, .med-service').forEach(el => {
             el.addEventListener('change', saveMedData);
             el.addEventListener('input', saveMedData);
         });
     }
     if (mode === 'psycho') {
-        container.querySelectorAll('.psycho-check, .psycho-birth-date, .psycho-gender, .psycho-address, .psycho-activity').forEach(el => {
+        container.querySelectorAll('.psycho-check, .psycho-birth-date, .psycho-gender, .psycho-address, .psycho-activity, .psycho-service').forEach(el => {
             el.addEventListener('change', savePsychoData);
             el.addEventListener('input', savePsychoData);
         });
@@ -2234,7 +1964,7 @@ function saveMedData() {
     const factors = document.querySelector(`.med-factors[data-snils="${snils}"]`)?.value || '';
     const service = document.querySelector(`.med-service[data-snils="${snils}"]`)?.value || '';
     
-    localStorage.setItem(`medData_${snils}`, JSON.stringify({ checked, birthDate, gender, policy, factors }));
+    localStorage.setItem(`medData_${snils}`, JSON.stringify({ checked, birthDate, gender, policy, factors, service }));
     
     const data = getStaffData();
     let found = false;
@@ -2245,6 +1975,7 @@ function saveMedData() {
             deptData.employees[idx].gender = gender;
             deptData.employees[idx].policyNumber = policy;
             deptData.employees[idx].medFactors = factors;
+            deptData.employees[idx].department = service;
             found = true;
             break;
         }
@@ -2256,6 +1987,7 @@ function saveMedData() {
             data.unassigned[idx].gender = gender;
             data.unassigned[idx].policyNumber = policy;
             data.unassigned[idx].medFactors = factors;
+            data.unassigned[idx].department = service;
         }
     }
     saveStaffData(data);
@@ -2268,9 +2000,9 @@ function savePsychoData() {
     const gender = document.querySelector(`.psycho-gender[data-snils="${snils}"]`)?.value || '';
     const regAddress = document.querySelector(`.psycho-address[data-snils="${snils}"]`)?.value || '';
     const activityId = document.querySelector(`.psycho-activity[data-snils="${snils}"]`)?.value || '';
-    const service = document.querySelector(`.med-service[data-snils="${snils}"]`)?.value || '';
+    const service = document.querySelector(`.psycho-service[data-snils="${snils}"]`)?.value || '';
     
-    localStorage.setItem(`psychoData_${snils}`, JSON.stringify({ checked, birthDate, gender, regAddress, activityId }));
+    localStorage.setItem(`psychoData_${snils}`, JSON.stringify({ checked, birthDate, gender, regAddress, activityId, service }));
     
     const data = getStaffData();
     let found = false;
@@ -2281,6 +2013,7 @@ function savePsychoData() {
             deptData.employees[idx].gender = gender;
             deptData.employees[idx].registrationAddress = regAddress;
             deptData.employees[idx].psychoActivity = activityId;
+            deptData.employees[idx].department = service;
             found = true;
             break;
         }
@@ -2292,9 +2025,24 @@ function savePsychoData() {
             data.unassigned[idx].gender = gender;
             data.unassigned[idx].registrationAddress = regAddress;
             data.unassigned[idx].psychoActivity = activityId;
+            data.unassigned[idx].department = service;
         }
     }
     saveStaffData(data);
+}
+
+function filterMedEmployees(mode) {
+    const input = document.getElementById(mode === 'med' ? 'medSearchInput' : 'psychoSearchInput');
+    const query = (input?.value || '').toLowerCase().trim();
+    const container = document.getElementById(mode === 'med' ? 'medEmployeeList' : 'psychoEmployeeList');
+    if (!container) return;
+    
+    const items = container.querySelectorAll('[data-snils]');
+    items.forEach(item => {
+        const nameEl = item.querySelector('.emp-name');
+        const name = (nameEl?.textContent || '').toLowerCase();
+        item.style.display = (query === '' || name.includes(query)) ? '' : 'none';
+    });
 }
 
 function generateMedDirections() {
@@ -2327,6 +2075,7 @@ function generateMedDirections() {
         const gender = savedMed.gender || emp.gender || '';
         const policy = savedMed.policy || emp.policyNumber || '';
         const factors = savedMed.factors || emp.medFactors || '';
+        const service = savedMed.service || emp.department || '';
         
         count++;
         
@@ -2356,7 +2105,7 @@ function generateMedDirections() {
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;width:35%;"><strong>Ф.И.О. работника:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</td></tr>
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Дата рождения:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${formatDate(birthDate)}</td></tr>
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Пол работника:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${gender}</td></tr>
-                <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Наименование структурного подразделения:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${emp.department || ''}</td></tr>
+                <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Наименование структурного подразделения:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${service}</td></tr>
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Наименование должности:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${emp.position}</td></tr>
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Вредные и (или) опасные факторы, виды работ (Приказ № 29н):</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${factors}</td></tr>
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>№ страхового полиса и (или) ДМС:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${policy}</td></tr>
@@ -2367,7 +2116,7 @@ function generateMedDirections() {
                 <div style="border-bottom:1px solid #000;height:30px;margin-top:5px;"></div>
             </div>
             
-                        <div style="margin-top:60px;font-size:12pt;">
+            <div style="margin-top:60px;font-size:12pt;">
                 <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
                     <colgroup>
                         <col style="width:40%;">
@@ -2386,6 +2135,7 @@ function generateMedDirections() {
                 </table>
                 <div style="margin-top:40px;font-size:12pt;text-align:center;">М.П.</div>
             </div>
+        </div>
         `;
     });
     
@@ -2420,6 +2170,7 @@ function generatePsychoDirections() {
         const gender = savedPsycho.gender || emp.gender || '';
         const regAddress = savedPsycho.regAddress || emp.registrationAddress || '';
         const activityId = savedPsycho.activityId || emp.psychoActivity || '';
+        const service = savedPsycho.service || emp.department || '';
         
         const activity = PSYCHO_ACTIVITIES.find(a => a.id == activityId);
         if (!activity) { alert(`❌ Для ${emp.last_name} не выбран вид деятельности!`); return; }
@@ -2454,7 +2205,7 @@ function generatePsychoDirections() {
             
             <div style="font-size:11pt;margin-bottom:10px;">
                 <div><strong>Наименование структурного подразделения работодателя, в котором работник осуществляет отдельный вид (виды) деятельности:</strong></div>
-                <div style="margin-top:3px;">${emp.department || '(заполняется при наличии)'}</div>
+                <div style="margin-top:3px;">${service || '(заполняется при наличии)'}</div>
             </div>
             
             <div style="font-size:11pt;margin-bottom:20px;">
@@ -2475,7 +2226,7 @@ function generatePsychoDirections() {
                 <strong>Дата выдачи направления работнику:</strong> ${formatDate(directionDate)}
             </div>
             
-                        <table style="width:100%;border-collapse:collapse;font-size:11pt;margin-top:40px;table-layout:fixed;">
+            <table style="width:100%;border-collapse:collapse;font-size:11pt;margin-top:40px;table-layout:fixed;">
                 <colgroup>
                     <col style="width:40%;">
                     <col style="width:60%;">
@@ -2599,86 +2350,6 @@ function saveNewMedOrg() {
     
     alert('✅ Медорганизация добавлена!');
 }
-
-// ============================================================
-// ИНИЦИАЛИЗАЦИЯ
-// ============================================================
-function initTrainingPage() {
-    renderOrgs();
-    renderStaffWithDepartments();
-    renderProtocol();
-    fillFamEmployeeSelect();
-    
-    const showOrgFormBtn = document.getElementById('showOrgFormBtn');
-    if (showOrgFormBtn) showOrgFormBtn.onclick = function() {
-        document.getElementById('orgForm').classList.remove('hidden');
-    };
-    const saveOrgBtn = document.getElementById('saveOrgBtn');
-    if (saveOrgBtn) saveOrgBtn.onclick = function() {
-        const name = document.getElementById('orgNameInput').value.trim();
-        const inn = document.getElementById('orgInnInput').value.trim();
-        const email = document.getElementById('orgEmailInput')?.value.trim() || '';
-        const phone = document.getElementById('orgPhoneInput')?.value.trim() || '';
-        const okved = document.getElementById('orgOkvedInput')?.value.trim() || '';
-        const address = document.getElementById('orgAddressInput')?.value.trim() || '';
-        
-        if (!name || !inn) { alert('Заполните название и ИНН'); return; }
-        
-        const orgs = getOrgs();
-        orgs.push({ id: Date.now(), name, inn, email, phone, okved, address });
-        saveOrgs(orgs);
-        renderOrgs();
-        document.getElementById('orgForm').classList.add('hidden');
-        document.getElementById('orgNameInput').value = '';
-        document.getElementById('orgInnInput').value = '';
-        if (document.getElementById('orgEmailInput')) document.getElementById('orgEmailInput').value = '';
-        if (document.getElementById('orgPhoneInput')) document.getElementById('orgPhoneInput').value = '';
-        if (document.getElementById('orgOkvedInput')) document.getElementById('orgOkvedInput').value = '';
-        if (document.getElementById('orgAddressInput')) document.getElementById('orgAddressInput').value = '';
-        alert('✅ Организация добавлена');
-    };
-    const cancelOrgBtn = document.getElementById('cancelOrgBtn');
-    if (cancelOrgBtn) cancelOrgBtn.onclick = function() {
-        document.getElementById('orgForm').classList.add('hidden');
-    };
-    const deleteOrgBtn = document.getElementById('deleteOrgBtn');
-    if (deleteOrgBtn) deleteOrgBtn.onclick = function() {
-        const id = parseInt(document.getElementById('orgSelect').value);
-        if (!id) { alert('Выберите организацию'); return; }
-        if (!confirm('Удалить?')) return;
-        let orgs = getOrgs();
-        orgs = orgs.filter(o => o.id !== id);
-        saveOrgs(orgs);
-        renderOrgs();
-        alert('✅ Удалено');
-    };
-    const generateBtn = document.getElementById('generateBtn');
-    if (generateBtn) generateBtn.onclick = generateXML;
-    const addSelectedBtn = document.getElementById('addSelectedBtn');
-    if (addSelectedBtn) addSelectedBtn.onclick = addSelectedToProtocol;
-    const staffImportBtn = document.getElementById('staffImportBtn');
-    if (staffImportBtn) staffImportBtn.onclick = importStaffFile;
-    const generateFamBtn = document.getElementById('generateFamBtn');
-    if (generateFamBtn) generateFamBtn.onclick = generateFamiliarization;
-    const printFamBtn = document.getElementById('printFamBtn');
-    if (printFamBtn) printFamBtn.onclick = function() {
-        const content = document.getElementById('famContent');
-        if (!content.innerHTML) { alert('Сначала сформируйте лист'); return; }
-        const win = window.open('', '_blank');
-        win.document.write(`<!DOCTYPE html><html><head><title>Лист ознакомления</title>
-            <style>body{font-family:Arial;padding:40px;color:#222;max-width:1000px;margin:0 auto;}*{print-color-adjust:exact;}@media print{body{padding:20px;}}</style>
-        </head><body>${content.innerHTML}<script>window.print();window.close();<\/script></body></html>`);
-        win.document.close();
-    };
-    
-    renderCalendar();
-    initPPECardsPage();
-    initPersonForm();
-    renderPersons();
-    initServiceForm();
-    renderServices();
-}
-
 // ============================================================
 // ГЕНЕРАЦИЯ XML - ФОРМАТ РЕЕСТРА
 // ============================================================
@@ -2758,125 +2429,110 @@ function generateXML() {
     
     alert(`✅ Создано ${protocol.length * programs.length} записей`);
 }
-// ============================================================
-// УПОЛНОМОЧЕННЫЕ ЛИЦА
-// ============================================================
-function renderPersons() {
-    const select = document.getElementById('personSelect');
-    if (!select) return;
-    const persons = getPersons();
-    select.innerHTML = '<option value="">-- Выберите уполномоченное лицо --</option>';
-    persons.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = `${p.name} — ${p.position}`;
-        select.appendChild(opt);
-    });
-}
 
-function initPersonForm() {
-    const showBtn = document.getElementById('showPersonFormBtn');
-    const saveBtn = document.getElementById('savePersonBtn');
-    const cancelBtn = document.getElementById('cancelPersonBtn');
-    const deleteBtn = document.getElementById('deletePersonBtn');
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================================
+function initTrainingPage() {
+    renderOrgs();
+    renderStaffWithDepartments();
+    renderProtocol();
+    fillFamEmployeeSelect();
+    renderPersons();
+    renderServices();
+    initPersonForm();
+    initServiceForm();
     
-    if (showBtn) showBtn.onclick = () => document.getElementById('personForm').classList.remove('hidden');
-    if (cancelBtn) cancelBtn.onclick = () => document.getElementById('personForm').classList.add('hidden');
-    if (saveBtn) saveBtn.onclick = function() {
-        const name = document.getElementById('personNameInput').value.trim();
-        const position = document.getElementById('personPositionInput').value.trim();
-        if (!name || !position) { alert('Заполните ФИО и должность'); return; }
-        const persons = getPersons();
-        persons.push({ id: Date.now(), name, position });
-        savePersons(persons);
-        renderPersons();
-        document.getElementById('personForm').classList.add('hidden');
-        document.getElementById('personNameInput').value = '';
-        document.getElementById('personPositionInput').value = '';
-        alert('✅ Уполномоченное лицо добавлено');
+    const showOrgFormBtn = document.getElementById('showOrgFormBtn');
+    if (showOrgFormBtn) showOrgFormBtn.onclick = function() {
+        document.getElementById('orgForm').classList.remove('hidden');
     };
-    if (deleteBtn) deleteBtn.onclick = function() {
-        const id = parseInt(document.getElementById('personSelect').value);
-        if (!id) { alert('Выберите лицо'); return; }
+    const saveOrgBtn = document.getElementById('saveOrgBtn');
+    if (saveOrgBtn) saveOrgBtn.onclick = function() {
+        const name = document.getElementById('orgNameInput').value.trim();
+        const inn = document.getElementById('orgInnInput').value.trim();
+        const email = document.getElementById('orgEmailInput')?.value.trim() || '';
+        const phone = document.getElementById('orgPhoneInput')?.value.trim() || '';
+        const okved = document.getElementById('orgOkvedInput')?.value.trim() || '';
+        const address = document.getElementById('orgAddressInput')?.value.trim() || '';
+        
+        if (!name || !inn) { alert('Заполните название и ИНН'); return; }
+        
+        const orgs = getOrgs();
+        orgs.push({ id: Date.now(), name, inn, email, phone, okved, address });
+        saveOrgs(orgs);
+        renderOrgs();
+        document.getElementById('orgForm').classList.add('hidden');
+        document.getElementById('orgNameInput').value = '';
+        document.getElementById('orgInnInput').value = '';
+        if (document.getElementById('orgEmailInput')) document.getElementById('orgEmailInput').value = '';
+        if (document.getElementById('orgPhoneInput')) document.getElementById('orgPhoneInput').value = '';
+        if (document.getElementById('orgOkvedInput')) document.getElementById('orgOkvedInput').value = '';
+        if (document.getElementById('orgAddressInput')) document.getElementById('orgAddressInput').value = '';
+        alert('✅ Организация добавлена');
+    };
+    const cancelOrgBtn = document.getElementById('cancelOrgBtn');
+    if (cancelOrgBtn) cancelOrgBtn.onclick = function() {
+        document.getElementById('orgForm').classList.add('hidden');
+    };
+    const deleteOrgBtn = document.getElementById('deleteOrgBtn');
+    if (deleteOrgBtn) deleteOrgBtn.onclick = function() {
+        const id = parseInt(document.getElementById('orgSelect').value);
+        if (!id) { alert('Выберите организацию'); return; }
         if (!confirm('Удалить?')) return;
-        let persons = getPersons();
-        persons = persons.filter(p => p.id !== id);
-        savePersons(persons);
-        renderPersons();
+        let orgs = getOrgs();
+        orgs = orgs.filter(o => o.id !== id);
+        saveOrgs(orgs);
+        renderOrgs();
         alert('✅ Удалено');
     };
-}
-
-// ============================================================
-// СЛУЖБЫ
-// ============================================================
-function renderServices() {
-    const container = document.getElementById('serviceList');
-    if (!container) return;
-    const services = getServices();
-    if (services.length === 0) {
-        container.innerHTML = '<span style="color:#8888aa;">Службы не добавлены</span>';
-        return;
-    }
-    container.innerHTML = services.map(s => 
-        `<span style="display:inline-block;background:rgba(124,58,237,0.15);color:#b388ff;padding:4px 10px;border-radius:6px;margin:3px;font-size:13px;">${s.name} <span style="cursor:pointer;color:#ff6b6b;margin-left:6px;" onclick="deleteService(${s.id})">✖</span></span>`
-    ).join('');
-}
-
-function deleteService(id) {
-    if (!confirm('Удалить службу?')) return;
-    let services = getServices();
-    services = services.filter(s => s.id !== id);
-    saveServices(services);
-    renderServices();
-}
-
-function initServiceForm() {
-    const showBtn = document.getElementById('showServiceFormBtn');
-    const saveBtn = document.getElementById('saveServiceBtn');
-    const cancelBtn = document.getElementById('cancelServiceBtn');
-    
-    if (showBtn) showBtn.onclick = () => document.getElementById('serviceForm').classList.remove('hidden');
-    if (cancelBtn) cancelBtn.onclick = () => document.getElementById('serviceForm').classList.add('hidden');
-    if (saveBtn) saveBtn.onclick = function() {
-        const name = document.getElementById('serviceNameInput').value.trim();
-        if (!name) { alert('Введите название службы'); return; }
-        const services = getServices();
-        services.push({ id: Date.now(), name });
-        saveServices(services);
-        renderServices();
-        document.getElementById('serviceForm').classList.add('hidden');
-        document.getElementById('serviceNameInput').value = '';
-        alert('✅ Служба добавлена');
+    const generateBtn = document.getElementById('generateBtn');
+    if (generateBtn) generateBtn.onclick = generateXML;
+    const addSelectedBtn = document.getElementById('addSelectedBtn');
+    if (addSelectedBtn) addSelectedBtn.onclick = addSelectedToProtocol;
+    const staffImportBtn = document.getElementById('staffImportBtn');
+    if (staffImportBtn) staffImportBtn.onclick = importStaffFile;
+    const generateFamBtn = document.getElementById('generateFamBtn');
+    if (generateFamBtn) generateFamBtn.onclick = generateFamiliarization;
+    const printFamBtn = document.getElementById('printFamBtn');
+    if (printFamBtn) printFamBtn.onclick = function() {
+        const content = document.getElementById('famContent');
+        if (!content.innerHTML) { alert('Сначала сформируйте лист'); return; }
+        const win = window.open('', '_blank');
+        win.document.write(`<!DOCTYPE html><html><head><title>Лист ознакомления</title>
+            <style>body{font-family:Arial;padding:40px;color:#222;max-width:1000px;margin:0 auto;}*{print-color-adjust:exact;}@media print{body{padding:20px;}}</style>
+        </head><body>${content.innerHTML}<script>window.print();window.close();<\/script></body></html>`);
+        win.document.close();
     };
+    
+    initPPECardsPage();
 }
 
 // ============================================================
-// ПОИСК ПО ФАМИЛИИ
+// ДОБАВЛЕНИЕ В ПРОТОКОЛ ИЗ ШТАТКИ
 // ============================================================
-function filterMedEmployees(mode) {
-    const input = document.getElementById(mode === 'med' ? 'medSearchInput' : 'psychoSearchInput');
-    const query = (input?.value || '').toLowerCase().trim();
-    const container = document.getElementById(mode === 'med' ? 'medEmployeeList' : 'psychoEmployeeList');
-    if (!container) return;
-    
-    const items = container.querySelectorAll('[data-snils]');
-    items.forEach(item => {
-        const nameEl = item.querySelector('.emp-name');
-        const name = (nameEl?.textContent || '').toLowerCase();
-        if (query === '' || name.includes(query)) {
-            item.style.display = '';
-        } else {
-            item.style.display = 'none';
-        }
+function addSelectedToProtocol() {
+    const selected = getSelectedStaffFromView();
+    if (selected.length === 0) { alert('❌ Выберите сотрудников!'); return; }
+    const protocol = getProtocol();
+    const existing = new Set(protocol.map(e => e.snils));
+    let added = 0;
+    selected.forEach(emp => {
+        if (!existing.has(emp.snils)) { protocol.push({...emp}); existing.add(emp.snils); added++; }
     });
+    saveProtocol(protocol);
+    renderProtocol();
+    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
+    alert(`✅ Добавлено ${added} сотрудников!`);
 }
+
 // ============================================================
 // DOM READY
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Загрузка...');
-    document.getElementById('mainPage').style.display = 'block';
+    const mainPage = document.getElementById('mainPage');
+    if (mainPage) mainPage.style.display = 'block';
     document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
     document.querySelectorAll('.nav-link').forEach(link => {
         if (link.textContent.trim() === 'Главная') link.classList.add('active');
@@ -2884,18 +2540,3 @@ document.addEventListener('DOMContentLoaded', function() {
     initTrainingPage();
     console.log('✅ Готово!');
 });
-function getSelectedPersonName() {
-    const select = document.getElementById('personSelect');
-    if (!select || !select.value) return '';
-    const persons = getPersons();
-    const p = persons.find(x => x.id == select.value);
-    return p ? p.name : '';
-}
-
-function getSelectedPersonPosition() {
-    const select = document.getElementById('personSelect');
-    if (!select || !select.value) return '';
-    const persons = getPersons();
-    const p = persons.find(x => x.id == select.value);
-    return p ? p.position : '';
-}
