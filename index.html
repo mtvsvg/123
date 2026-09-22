@@ -675,6 +675,7 @@
 
             <div class="block">
                 <h2>👤 Выберите сотрудников</h2>
+                <input type="text" id="medSearchInput" placeholder="🔍 Поиск по фамилии..." oninput="filterMedEmployees('med')" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;margin-bottom:10px;">
                 <div id="medEmployeeList"><p style="color:#6a6a8a;text-align:center;padding:20px;">Нет сотрудников.</p></div>
                 <button class="btn-primary" onclick="generateMedDirections()" style="margin-top:16px;width:auto;padding:12px 32px;">🖨️ Сформировать направления</button>
             </div>
@@ -701,6 +702,7 @@
 
             <div class="block">
                 <h2>👤 Выберите сотрудников и вид деятельности</h2>
+                <input type="text" id="psychoSearchInput" placeholder="🔍 Поиск по фамилии..." oninput="filterMedEmployees('psycho')" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;margin-bottom:10px;">
                 <div id="psychoEmployeeList"><p style="color:#6a6a8a;text-align:center;padding:20px;">Нет сотрудников.</p></div>
                 <button class="btn-primary" onclick="generatePsychoDirections()" style="margin-top:16px;width:auto;padding:12px 32px;">🖨️ Сформировать направления</button>
             </div>
