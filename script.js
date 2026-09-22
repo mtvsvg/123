@@ -44,6 +44,14 @@ function showPage(page) {
             if (link.textContent.trim() === 'Карточки СИЗ') link.classList.add('active'); 
         });
         initPPECardsPage();
+    } else if (page === 'med') {
+        const el = document.getElementById('medPage');
+        if (el) el.classList.remove('hidden');
+        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(link => { 
+            if (link.textContent.trim() === 'Медосмотры') link.classList.add('active'); 
+        });
+        initMedPage();
     } else if (page === 'risks') {
         const el = document.getElementById('risksPage');
         if (el) el.classList.remove('hidden');
@@ -66,6 +74,8 @@ function showPage(page) {
 // ============================================================
 function getOrgs() { return JSON.parse(localStorage.getItem('organizations') || '[]'); }
 function saveOrgs(orgs) { localStorage.setItem('organizations', JSON.stringify(orgs)); }
+function getMedOrgs() { return JSON.parse(localStorage.getItem('medOrganizations') || '[]'); }
+function saveMedOrgs(orgs) { localStorage.setItem('medOrganizations', JSON.stringify(orgs)); }
 function getProtocol() { return JSON.parse(localStorage.getItem('protocol') || '[]'); }
 function saveProtocol(protocol) { localStorage.setItem('protocol', JSON.stringify(protocol)); }
 function getEvents() { return JSON.parse(localStorage.getItem('calendarEvents') || '[]'); }
@@ -386,6 +396,15 @@ function formatSnils(snils) {
     return clean.slice(0,3) + '-' + clean.slice(3,6) + '-' + clean.slice(6,9) + ' ' + clean.slice(9,11); 
 }
 
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+        return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    }
+    return dateStr;
+}
+
 function escXml(str) { 
     if (!str) return ''; 
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); 
@@ -424,7 +443,6 @@ function renderOrgs() {
 function selectOrg(id) { 
     localStorage.setItem('currentOrgId', id); 
 }
-
 // ============================================================
 // ВКЛАДКИ
 // ============================================================
@@ -671,7 +689,6 @@ function generateFamiliarization() {
         result.classList.remove('hidden');
     }
 }
-
 // ============================================================
 // СПИСОК ТИПОВ СИЗ
 // ============================================================
@@ -883,7 +900,6 @@ function exportPPE() {
 // ============================================================
 let selectedPPECardItems = [];
 
-// ШАБЛОНЫ СИЗ
 const PPE_CARD_TEMPLATES = [
     { name: 'Жилет сигнальный повышенной видимости' },
     { name: 'Перчатки для защиты от механических воздействий' },
@@ -912,9 +928,6 @@ function initPPECardsPage() {
     }
 }
 
-// ============================================================
-// ОТРИСОВКА СПИСКА СОТРУДНИКОВ С ПОЛЯМИ ДЛЯ КАРТОЧЕК
-// ============================================================
 function renderPPECardStaffList() {
     const container = document.getElementById('ppeCardStaffList');
     if (!container) return;
@@ -1125,7 +1138,6 @@ function clearPPECardSelection() {
     document.getElementById('ppeCardResult').classList.add('hidden');
     alert('✅ Выбор очищен');
 }
-
 // ============================================================
 // ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - С ВЫБОРОМ КОЛИЧЕСТВА НА ЛИСТЕ
 // ============================================================
@@ -1166,225 +1178,7 @@ function generatePPECardsHTML() {
     let cardCount = 0;
     let totalPages = Math.ceil(employees.length / cardsPerPage);
     
-    // ЛИЦЕВАЯ ТАБЛИЦА - 4 СТРОКИ
-    function buildPPETable() {
-        let rows = '';
-        selectedPPECardItems.forEach((ppe) => {
-            rows += `
-                <tr>
-                    <td style="border:1px solid #000;padding:6px 8px;font-size:11px;">${ppe.name}</td>
-                    <td style="border:1px solid #000;padding:6px 8px;font-size:11px;text-align:center;">${ppe.punkt || ''}</td>
-                    <td style="border:1px solid #000;padding:6px 8px;font-size:11px;text-align:center;">${ppe.unit || ''}</td>
-                    <td style="border:1px solid #000;padding:6px 8px;font-size:11px;text-align:center;">${ppe.quantity || ''}</td>
-                </tr>
-            `;
-        });
-        
-        const emptyRows = 4 - selectedPPECardItems.length;
-        for (let i = 0; i < emptyRows; i++) {
-            rows += `
-                <tr>
-                    <td style="border:1px solid #000;padding:6px 8px;height:38px;"></td>
-                    <td style="border:1px solid #000;padding:6px 8px;height:38px;"></td>
-                    <td style="border:1px solid #000;padding:6px 8px;height:38px;"></td>
-                    <td style="border:1px solid #000;padding:6px 8px;height:38px;"></td>
-                </tr>
-            `;
-        }
-        return rows;
-    }
-    
-    // ОБОРОТНАЯ ТАБЛИЦА - 6 СТРОК
-    function buildReverseTable() {
-        let rows = '';
-        selectedPPECardItems.forEach((ppe) => {
-            rows += `
-                <tr>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;font-weight:bold;">${ppe.name}</td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                </tr>
-            `;
-        });
-        
-        const emptyRows = 6 - selectedPPECardItems.length;
-        for (let i = 0; i < emptyRows; i++) {
-            rows += `
-                <tr>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                    <td style="border:1px solid #000;padding:4px 6px;height:30px;font-size:9px;"></td>
-                </tr>
-            `;
-        }
-        return rows;
-    }
-    
-    // ЛИЦЕВАЯ КАРТОЧКА - ЛИЧНАЯ
-function createPersonalFaceCard(emp, fullPage) {
-    const dept = document.getElementById('ppeCardDepartment')?.value.trim() || '';
-    const cardNumber = emp.cardNumber || '___';
-    
-    const fontSize = fullPage ? '13px' : '10px';
-    const titleSize = fullPage ? '20px' : '15px';
-    const subtitleSize = fullPage ? '17px' : '13px';
-    const headerFontSize = fullPage ? '13px' : '10px';
-    const pad = fullPage ? '6px 10px' : '6px 8px';
-    
-    // Размеры для блока подписи
-    const signColWidth = fullPage ? '200px' : '140px';
-    const signLineWidth = fullPage ? '150px' : '100px';
-    const signHeight = fullPage ? '35px' : '26px';
-    const signFontSize = fullPage ? '11px' : '9px';
-    
-    return `
-        <div style="position:absolute;top:0;left:0;width:100%;height:${fullPage ? '100%' : '50%'};padding:${fullPage ? '20px 30px' : '10px 14px 8px 14px'};${fullPage ? '' : 'border-bottom:2px dashed #ff0000;'}overflow:hidden;display:flex;flex-direction:column;">
-            <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:${fullPage ? '10px' : '4px'};margin-bottom:${fullPage ? '12px' : '6px'};flex-shrink:0;">
-                <div style="font-size:${titleSize};font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
-                <div style="font-size:${subtitleSize};font-weight:bold;">учета выдачи СИЗ</div>
-            </div>
-            
-            <table style="width:100%;border-collapse:collapse;font-size:${fontSize};margin-bottom:${fullPage ? '10px' : '4px'};flex-shrink:0;">
-                <tr>
-                    <td style="width:55%;vertical-align:top;padding:${fullPage ? '6px 10px' : '2px 5px'};border:1px solid #000;">
-                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Фамилия</strong> ${emp.last_name}</div>
-                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Имя</strong> ${emp.first_name}</div>
-                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Отчество</strong> ${emp.middle_name || ''}</div>
-                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Табельный номер</strong> ________</div>
-                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Структурное подразделение</strong> ${dept}</div>
-                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Профессия (должность)</strong> ${emp.position}</div>
-                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Дата поступления на работу</strong> __________</div>
-                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
-                    </td>
-                    <td style="width:45%;vertical-align:top;padding:${fullPage ? '6px 10px' : '2px 5px'};border:1px solid #000;">
-                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Пол</strong> ${gender}</div>
-                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Рост</strong> ${height}</div>
-                        <div style="margin-top:${fullPage ? '6px' : '3px'};"><strong>Размер:</strong></div>
-                        <div style="padding-left:6px;margin:${fullPage ? '3px 0' : '1px 0'};"><strong>одежды</strong> ${clothesSize}</div>
-                        <div style="padding-left:6px;margin:${fullPage ? '3px 0' : '1px 0'};"><strong>обуви</strong> ${shoeSize}</div>
-                        <div style="padding-left:6px;margin:${fullPage ? '3px 0' : '1px 0'};"><strong>головного убора</strong> ___</div>
-                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>СИЗОД</strong> ___</div>
-                        <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>СИЗ рук</strong> ___________</div>
-                    </td>
-                </tr>
-            </table>
-            
-            <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:1px solid #000;flex:1;">
-                <thead>
-                    <tr style="background:#f0f0f0;">
-                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:32%;font-size:${headerFontSize};font-weight:bold;">Наименование СИЗ</th>
-                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:22%;font-size:${headerFontSize};font-weight:bold;">Пункт Норм</th>
-                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:26%;font-size:${headerFontSize};font-weight:bold;">Единица измерения, периодичность выдачи</th>
-                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:20%;font-size:${headerFontSize};font-weight:bold;">Количество на период</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${buildPPETableFull(fullPage)}
-                </tbody>
-            </table>
-            
-           <!-- ПОДПИСЬ - GRID ВЫРАВНИВАНИЕ -->
-<div style="margin-top:${fullPage ? '20px' : '10px'};font-size:${fontSize};flex-shrink:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end;">
-    <div style="text-align:center;">
-        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">${managerPosition}</div>
-        <div style="border-bottom:1px solid transparent;height:${signHeight};"></div>
-        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(должность)</div>
-    </div>
-    <div style="text-align:center;">
-        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">&nbsp;</div>
-        <div style="border-bottom:1px solid #000;height:${signHeight};"></div>
-        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(подпись)</div>
-    </div>
-    <div style="text-align:center;">
-        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">${manager}</div>
-        <div style="border-bottom:1px solid transparent;height:${signHeight};"></div>
-        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(фамилия, инициалы)</div>
-    </div>
-</div>
-    
-   // ЛИЦЕВАЯ КАРТОЧКА - ДЕЖУРНАЯ
-function createDutyFaceCard(emp, fullPage) {
-    const cardNumber = emp.cardNumber || '___';
-    const workplaceId = emp.workplaceId || '________';
-    
-    const fontSize = fullPage ? '12px' : '10px';
-    const titleSize = fullPage ? '16px' : '13px';
-    const subtitleSize = fullPage ? '15px' : '12px';
-    const smallSize = fullPage ? '11px' : '10px';
-    const headerFontSize = fullPage ? '13px' : '10px';
-    const pad = fullPage ? '6px 10px' : '4px 6px';
-    
-    // Размеры для блока подписи
-    const signColWidth = fullPage ? '200px' : '140px';
-    const signLineWidth = fullPage ? '150px' : '100px';
-    const signHeight = fullPage ? '35px' : '26px';
-    const signFontSize = fullPage ? '11px' : '9px';
-    
-    return `
-        <div style="position:absolute;top:0;left:0;width:100%;height:${fullPage ? '100%' : '50%'};padding:${fullPage ? '20px 30px' : '10px 14px 8px 14px'};${fullPage ? '' : 'border-bottom:2px dashed #ff0000;'}overflow:hidden;display:flex;flex-direction:column;">
-            <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:${fullPage ? '10px' : '4px'};margin-bottom:${fullPage ? '12px' : '6px'};flex-shrink:0;">
-                <div style="font-size:${fullPage ? '14px' : '12px'};font-weight:bold;color:#555;">Приложение N 3</div>
-                <div style="font-size:${smallSize};color:#555;">к Правилам обеспечения работников средствами индивидуальной защиты</div>
-                <div style="font-size:${smallSize};color:#555;">и смывающими средствами, утвержденным приказом Минтруда России</div>
-                <div style="font-size:${smallSize};color:#555;margin-bottom:4px;">от 29 октября 2021 г. N 766н</div>
-                <div style="font-size:${titleSize};font-weight:bold;">КАРТОЧКА N ${cardNumber}</div>
-                <div style="font-size:${subtitleSize};font-weight:bold;">учета выдачи дежурных СИЗ</div>
-            </div>
-            
-            <div style="font-size:${fontSize};margin-bottom:${fullPage ? '10px' : '4px'};flex-shrink:0;">
-                <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Идентификатор рабочего места, за которым закреплены дежурные СИЗ:</strong> ${workplaceId}</div>
-                <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Структурное подразделение</strong> ${dutyDepartment || '________________'}</div>
-                <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Фамилия, имя, отчество (при наличии) ответственного</strong> ${dutyResponsibleName || '________________'}</div>
-                <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Профессия (должность) ответственного</strong> ${dutyResponsiblePosition || '________________'}</div>
-                <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Предусмотрена приказом (номер и дата приказа об утверждении Норм) выдача:</strong> ${dutyOrder || '________________'}</div>
-            </div>
-            
-            <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:1px solid #000;flex:1;">
-                <thead>
-                    <tr style="background:#f0f0f0;">
-                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:32%;font-size:${headerFontSize};font-weight:bold;">Наименование СИЗ</th>
-                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:22%;font-size:${headerFontSize};font-weight:bold;">Пункт Норм</th>
-                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:26%;font-size:${headerFontSize};font-weight:bold;">Единица измерения, периодичность выдачи</th>
-                        <th style="border:1px solid #000;padding:${pad};text-align:center;width:20%;font-size:${headerFontSize};font-weight:bold;">Количество на период</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${buildPPETableFull(fullPage)}
-                </tbody>
-            </table>
-            
-          <!-- ПОДПИСЬ - GRID ВЫРАВНИВАНИЕ -->
-<div style="margin-top:${fullPage ? '20px' : '8px'};font-size:${fontSize};flex-shrink:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end;">
-    <div style="text-align:center;">
-        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">Ответственное лицо</div>
-        <div style="border-bottom:1px solid transparent;height:${signHeight};"></div>
-        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">&nbsp;</div>
-    </div>
-    <div style="text-align:center;">
-        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">&nbsp;</div>
-        <div style="border-bottom:1px solid #000;height:${signHeight};"></div>
-        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(подпись)</div>
-    </div>
-    <div style="text-align:center;">
-        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">${manager}</div>
-        <div style="border-bottom:1px solid transparent;height:${signHeight};"></div>
-        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(фамилия, инициалы)</div>
-    </div>
-</div>
-    
-    // Универсальная таблица СИЗ для лицевой стороны (зависит от fullPage)
+    // Универсальная таблица СИЗ для лицевой стороны
     function buildPPETableFull(fullPage) {
         let rows = '';
         const rowHeight = fullPage ? '60px' : '38px';
@@ -1416,6 +1210,156 @@ function createDutyFaceCard(emp, fullPage) {
         return rows;
     }
     
+    // ЛИЦЕВАЯ КАРТОЧКА - ЛИЧНАЯ
+    function createPersonalFaceCard(emp, fullPage) {
+        const dept = document.getElementById('ppeCardDepartment')?.value.trim() || '';
+        const cardNumber = emp.cardNumber || '___';
+        
+        const fontSize = fullPage ? '13px' : '10px';
+        const titleSize = fullPage ? '20px' : '15px';
+        const subtitleSize = fullPage ? '17px' : '13px';
+        const headerFontSize = fullPage ? '13px' : '10px';
+        const pad = fullPage ? '6px 10px' : '6px 8px';
+        
+        const signHeight = fullPage ? '35px' : '26px';
+        const signFontSize = fullPage ? '11px' : '9px';
+        
+        return `
+            <div style="position:absolute;top:0;left:0;width:100%;height:${fullPage ? '100%' : '50%'};padding:${fullPage ? '20px 30px' : '10px 14px 8px 14px'};${fullPage ? '' : 'border-bottom:2px dashed #ff0000;'}overflow:hidden;display:flex;flex-direction:column;">
+                <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:${fullPage ? '10px' : '4px'};margin-bottom:${fullPage ? '12px' : '6px'};flex-shrink:0;">
+                    <div style="font-size:${titleSize};font-weight:bold;">ЛИЧНАЯ КАРТОЧКА N ${cardNumber}</div>
+                    <div style="font-size:${subtitleSize};font-weight:bold;">учета выдачи СИЗ</div>
+                </div>
+                
+                <table style="width:100%;border-collapse:collapse;font-size:${fontSize};margin-bottom:${fullPage ? '10px' : '4px'};flex-shrink:0;">
+                    <tr>
+                        <td style="width:55%;vertical-align:top;padding:${fullPage ? '6px 10px' : '2px 5px'};border:1px solid #000;">
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Фамилия</strong> ${emp.last_name}</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Имя</strong> ${emp.first_name}</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Отчество</strong> ${emp.middle_name || ''}</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Табельный номер</strong> ________</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Структурное подразделение</strong> ${dept}</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Профессия (должность)</strong> ${emp.position}</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Дата поступления на работу</strong> __________</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
+                        </td>
+                        <td style="width:45%;vertical-align:top;padding:${fullPage ? '6px 10px' : '2px 5px'};border:1px solid #000;">
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Пол</strong> ${gender}</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Рост</strong> ${height}</div>
+                            <div style="margin-top:${fullPage ? '6px' : '3px'};"><strong>Размер:</strong></div>
+                            <div style="padding-left:6px;margin:${fullPage ? '3px 0' : '1px 0'};"><strong>одежды</strong> ${clothesSize}</div>
+                            <div style="padding-left:6px;margin:${fullPage ? '3px 0' : '1px 0'};"><strong>обуви</strong> ${shoeSize}</div>
+                            <div style="padding-left:6px;margin:${fullPage ? '3px 0' : '1px 0'};"><strong>головного убора</strong> ___</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>СИЗОД</strong> ___</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>СИЗ рук</strong> ___________</div>
+                        </td>
+                    </tr>
+                </table>
+                
+                <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:1px solid #000;flex:1;">
+                    <thead>
+                        <tr style="background:#f0f0f0;">
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:32%;font-size:${headerFontSize};font-weight:bold;">Наименование СИЗ</th>
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:22%;font-size:${headerFontSize};font-weight:bold;">Пункт Норм</th>
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:26%;font-size:${headerFontSize};font-weight:bold;">Единица измерения, периодичность выдачи</th>
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:20%;font-size:${headerFontSize};font-weight:bold;">Количество на период</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${buildPPETableFull(fullPage)}
+                    </tbody>
+                </table>
+                
+                <div style="margin-top:${fullPage ? '20px' : '10px'};font-size:${fontSize};flex-shrink:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end;">
+                    <div style="text-align:center;">
+                        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">${managerPosition}</div>
+                        <div style="border-bottom:1px solid transparent;height:${signHeight};"></div>
+                        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(должность)</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">&nbsp;</div>
+                        <div style="border-bottom:1px solid #000;height:${signHeight};"></div>
+                        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(подпись)</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">${manager}</div>
+                        <div style="border-bottom:1px solid transparent;height:${signHeight};"></div>
+                        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(фамилия, инициалы)</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // ЛИЦЕВАЯ КАРТОЧКА - ДЕЖУРНАЯ
+    function createDutyFaceCard(emp, fullPage) {
+        const cardNumber = emp.cardNumber || '___';
+        const workplaceId = emp.workplaceId || '________';
+        
+        const fontSize = fullPage ? '12px' : '10px';
+        const titleSize = fullPage ? '16px' : '13px';
+        const subtitleSize = fullPage ? '15px' : '12px';
+        const smallSize = fullPage ? '11px' : '10px';
+        const headerFontSize = fullPage ? '13px' : '10px';
+        const pad = fullPage ? '6px 10px' : '4px 6px';
+        
+        const signHeight = fullPage ? '35px' : '26px';
+        const signFontSize = fullPage ? '11px' : '9px';
+        
+        return `
+            <div style="position:absolute;top:0;left:0;width:100%;height:${fullPage ? '100%' : '50%'};padding:${fullPage ? '20px 30px' : '10px 14px 8px 14px'};${fullPage ? '' : 'border-bottom:2px dashed #ff0000;'}overflow:hidden;display:flex;flex-direction:column;">
+                <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:${fullPage ? '10px' : '4px'};margin-bottom:${fullPage ? '12px' : '6px'};flex-shrink:0;">
+                    <div style="font-size:${fullPage ? '14px' : '12px'};font-weight:bold;color:#555;">Приложение N 3</div>
+                    <div style="font-size:${smallSize};color:#555;">к Правилам обеспечения работников средствами индивидуальной защиты</div>
+                    <div style="font-size:${smallSize};color:#555;">и смывающими средствами, утвержденным приказом Минтруда России</div>
+                    <div style="font-size:${smallSize};color:#555;margin-bottom:4px;">от 29 октября 2021 г. N 766н</div>
+                    <div style="font-size:${titleSize};font-weight:bold;">КАРТОЧКА N ${cardNumber}</div>
+                    <div style="font-size:${subtitleSize};font-weight:bold;">учета выдачи дежурных СИЗ</div>
+                </div>
+                
+                <div style="font-size:${fontSize};margin-bottom:${fullPage ? '10px' : '4px'};flex-shrink:0;">
+                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Идентификатор рабочего места, за которым закреплены дежурные СИЗ:</strong> ${workplaceId}</div>
+                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Структурное подразделение</strong> ${dutyDepartment || '________________'}</div>
+                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Фамилия, имя, отчество (при наличии) ответственного</strong> ${dutyResponsibleName || '________________'}</div>
+                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Профессия (должность) ответственного</strong> ${dutyResponsiblePosition || '________________'}</div>
+                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Предусмотрена приказом (номер и дата приказа об утверждении Норм) выдача:</strong> ${dutyOrder || '________________'}</div>
+                </div>
+                
+                <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:1px solid #000;flex:1;">
+                    <thead>
+                        <tr style="background:#f0f0f0;">
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:32%;font-size:${headerFontSize};font-weight:bold;">Наименование СИЗ</th>
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:22%;font-size:${headerFontSize};font-weight:bold;">Пункт Норм</th>
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:26%;font-size:${headerFontSize};font-weight:bold;">Единица измерения, периодичность выдачи</th>
+                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:20%;font-size:${headerFontSize};font-weight:bold;">Количество на период</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${buildPPETableFull(fullPage)}
+                    </tbody>
+                </table>
+                
+                <div style="margin-top:${fullPage ? '20px' : '8px'};font-size:${fontSize};flex-shrink:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end;">
+                    <div style="text-align:center;">
+                        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">Ответственное лицо</div>
+                        <div style="border-bottom:1px solid transparent;height:${signHeight};"></div>
+                        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">&nbsp;</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">&nbsp;</div>
+                        <div style="border-bottom:1px solid #000;height:${signHeight};"></div>
+                        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(подпись)</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">${manager}</div>
+                        <div style="border-bottom:1px solid transparent;height:${signHeight};"></div>
+                        <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(фамилия, инициалы)</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
     // ОБОРОТНАЯ КАРТОЧКА (с заголовками Выдано/Возвращено)
     function createReverseCard(emp, fullPage) {
         const headerFontSize = fullPage ? '11px' : '8px';
@@ -1423,7 +1367,6 @@ function createDutyFaceCard(emp, fullPage) {
         const cellPad = fullPage ? '6px 8px' : '4px 6px';
         const rowHeight = fullPage ? '50px' : '30px';
         
-        // Строим таблицу
         let rows = '';
         selectedPPECardItems.forEach((ppe) => {
             rows += `
@@ -1503,9 +1446,6 @@ function createDutyFaceCard(emp, fullPage) {
     let cardIndex = 0;
     
     if (cardsPerPage === 2) {
-        // ============================================================
-        // РЕЖИМ: 2 КАРТОЧКИ НА ЛИСТ (как было)
-        // ============================================================
         for (let i = 0; i < employees.length; i += 2) {
             const emp1 = employees[i];
             const emp2 = employees[i + 1] || null;
@@ -1533,9 +1473,6 @@ function createDutyFaceCard(emp, fullPage) {
             allPagesHTML += facePageHTML + reversePageHTML;
         }
     } else {
-        // ============================================================
-        // РЕЖИМ: 1 КАРТОЧКА НА ЛИСТ (на всю страницу)
-        // ============================================================
         employees.forEach(emp => {
             cardCount++;
             
@@ -1573,25 +1510,13 @@ function createDutyFaceCard(emp, fullPage) {
             <title>Карточки учета СИЗ</title>
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { 
-                    font-family: 'Times New Roman', Times, serif; 
-                    background: #f0f0f0; 
-                    padding: 0; 
-                    margin: 0;
-                }
-                @page {
-                    size: A4 portrait;
-                    margin: 0;
-                }
+                body { font-family: 'Times New Roman', Times, serif; background: #f0f0f0; padding: 0; margin: 0; }
+                @page { size: A4 portrait; margin: 0; }
                 @media print {
                     body { background: #fff; padding: 0; margin: 0; }
                     .no-print { display: none; }
-                    div[style*="page-break-after:always"] { 
-                        page-break-after: always; 
-                    }
-                    div[style*="border-top:2px dashed #ff0000"] {
-                        border-top: 1px dashed #ccc !important;
-                    }
+                    div[style*="page-break-after:always"] { page-break-after: always; }
+                    div[style*="border-top:2px dashed #ff0000"] { border-top: 1px dashed #ccc !important; }
                 }
                 .no-print {
                     text-align: center;
@@ -1613,15 +1538,9 @@ function createDutyFaceCard(emp, fullPage) {
                     font-weight: 600;
                     cursor: pointer;
                 }
-                .no-print button:hover {
-                    transform: scale(1.02);
-                }
-                .no-print .btn-secondary {
-                    background: #666;
-                }
-                @media print {
-                    .no-print { display: none !important; }
-                }
+                .no-print button:hover { transform: scale(1.02); }
+                .no-print .btn-secondary { background: #666; }
+                @media print { .no-print { display: none !important; } }
             </style>
         </head>
         <body>
@@ -1629,18 +1548,10 @@ function createDutyFaceCard(emp, fullPage) {
                 <h3>🖨️ Карточки ${cardTypeName} готовы к печати (${cardCount} шт., ${modeText})</h3>
                 <button onclick="window.print()">🖨️ Печать</button>
                 <button class="btn-secondary" onclick="window.close()">✖ Закрыть</button>
-                <p style="font-size:11px;color:#666;margin-top:4px;">
-                    📄 ${modeText}
-                </p>
-                <p style="font-size:10px;color:#888;">
-                    📋 У каждого сотрудника свой номер карточки и ID рабочего места
-                </p>
-                <p style="font-size:10px;color:#888;">
-                    📊 На оборотной стороне: заголовки "Выдано" и "Возвращено"
-                </p>
-                <p style="font-size:10px;color:#888;">
-                    📋 Всего листов: ${totalPages * 2}
-                </p>
+                <p style="font-size:11px;color:#666;margin-top:4px;">📄 ${modeText}</p>
+                <p style="font-size:10px;color:#888;">📋 У каждого сотрудника свой номер карточки и ID рабочего места</p>
+                <p style="font-size:10px;color:#888;">📊 На оборотной стороне: заголовки "Выдано" и "Возвращено"</p>
+                <p style="font-size:10px;color:#888;">📋 Всего листов: ${totalPages * 2}</p>
             </div>
             ${allPagesHTML}
             <script>
@@ -1664,855 +1575,1071 @@ function createDutyFaceCard(emp, fullPage) {
 }
 
 // ============================================================
-// КАРТА (сокращённая версия)
+// ПЕРЕКЛЮЧЕНИЕ ТИПА КАРТОЧКИ
 // ============================================================
-let mapData = {
-    workshops: [],
-    currentWorkshop: 0,
-    evacuationPoints: [],
-    fireExtinguishers: [],
-    evacuationRoutes: []
-};
-let mapMode = 'view';
-let mapInited = false;
-let tempObjectPos = null;
-let tempObjectType = null;
-let isDragging = false;
-let dragTarget = null;
-let dragTargetType = null;
-let dragOffsetX = 0, dragOffsetY = 0;
-let isResizing = false;
-let resizeCorner = '';
-let resizeStartX = 0, resizeStartY = 0;
-let resizeStartW = 0, resizeStartH = 0;
-let resizeStartXpos = 0, resizeStartYpos = 0;
-let selectedObjectIndex = -1;
-let selectedObjectType = null;
-let tempRoutePoints = [];
-
-function initMapPage() {
-    console.log('🗺️ Карта инициализируется');
-    if (mapInited) return;
-    const canvas = document.getElementById('mapCanvas');
-    if (!canvas) { console.error('Canvas не найден!'); return; }
-    canvas.width = 4000;
-    canvas.height = 2000;
-    mapInited = true;
+function toggleCardType() {
+    const isDuty = document.querySelector('input[name="cardType"][value="duty"]')?.checked || false;
+    const dutyFields = document.getElementById('dutyFields');
+    const personalFields = document.getElementById('personalFields');
     
-    const saved = localStorage.getItem('mapData');
-    if (saved) {
-        try {
-            const parsed = JSON.parse(saved);
-            if (parsed.workshops && parsed.workshops.length > 0) {
-                mapData = parsed;
-                if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
-                if (!mapData.fireExtinguishers) mapData.fireExtinguishers = [];
-                if (!mapData.evacuationRoutes) mapData.evacuationRoutes = [];
-            }
-        } catch(e) {}
+    if (isDuty) {
+        if (dutyFields) dutyFields.style.display = 'block';
+        if (personalFields) personalFields.style.display = 'none';
+    } else {
+        if (dutyFields) dutyFields.style.display = 'none';
+        if (personalFields) personalFields.style.display = 'block';
     }
-    
-    if (mapData.workshops.length === 0) {
-        mapData.workshops.push({
-            id: Date.now(),
-            name: 'Основной цех',
-            length: 30,
-            width: 20,
-            x: 50,
-            y: 50,
-            w: 3900,
-            h: 1900,
-            workplaces: []
-        });
-        mapData.currentWorkshop = 0;
-        mapData.evacuationPoints = [];
-        mapData.fireExtinguishers = [];
-        mapData.evacuationRoutes = [];
-    }
-    
-    setupMapButtons();
-    setupCanvasEvents();
-    updateWorkshopSelect();
-    updateInfo();
-    drawMap();
-    console.log('✅ Карта готова');
 }
+// ============================================================
+// КАЛЕНДАРЬ
+// ============================================================
+let currentDate = new Date();
+let selectedDate = null;
 
-function setupMapButtons() {
-    const editBtn = document.getElementById('editWorkshopBtn');
-    if (editBtn) editBtn.onclick = openWorkshopModal;
+function renderCalendar() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
     
-    const addWorkerBtn = document.getElementById('addWorkerPlaceBtn');
-    if (addWorkerBtn) addWorkerBtn.onclick = function() {
-        if (!getCurrentWorkshop()) { alert('Сначала создайте участок'); return; }
-        mapMode = 'addWorkplace';
-        document.getElementById('mapMode').textContent = 'Кликните на карту для добавления рабочего места';
-        document.getElementById('mapMode').style.color = '#ff6b6b';
-        document.getElementById('mapCanvas').style.cursor = 'crosshair';
-    };
+    const title = document.getElementById('calendarMonthTitle');
+    const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+    if (title) title.textContent = `${months[month]} ${year}`;
     
-    const addEvacBtn = document.getElementById('addEvacuationBtn');
-    if (addEvacBtn) addEvacBtn.onclick = function() {
-        if (!getCurrentWorkshop()) { alert('Сначала создайте участок'); return; }
-        mapMode = 'addEvacuation';
-        document.getElementById('mapMode').textContent = 'Кликните на карту для добавления выхода';
-        document.getElementById('mapMode').style.color = '#4caf50';
-        document.getElementById('mapCanvas').style.cursor = 'crosshair';
-    };
+    const grid = document.getElementById('calendarGrid');
+    if (!grid) return;
+    grid.innerHTML = `
+        <div class="weekday">Пн</div><div class="weekday">Вт</div><div class="weekday">Ср</div>
+        <div class="weekday">Чт</div><div class="weekday">Пт</div><div class="weekday">Сб</div><div class="weekday">Вс</div>
+    `;
     
-    const addFeBtn = document.getElementById('addFireExtinguisherBtn');
-    if (addFeBtn) addFeBtn.onclick = function() {
-        if (!getCurrentWorkshop()) { alert('Сначала создайте участок'); return; }
-        mapMode = 'addFireExtinguisher';
-        document.getElementById('mapMode').textContent = 'Кликните на карту для добавления огнетушителя';
-        document.getElementById('mapMode').style.color = '#ff1744';
-        document.getElementById('mapCanvas').style.cursor = 'crosshair';
-    };
+    const firstDay = new Date(year, month, 1);
+    let startDay = firstDay.getDay();
+    if (startDay === 0) startDay = 7;
+    startDay = startDay - 1;
     
-    const addRouteBtn = document.getElementById('addEvacuationRouteBtn');
-    if (addRouteBtn) addRouteBtn.onclick = function() {
-        if (!getCurrentWorkshop()) { alert('Сначала создайте участок'); return; }
-        mapMode = 'addEvacuationRoute';
-        tempRoutePoints = [];
-        document.getElementById('mapMode').textContent = 'Кликните точки маршрута эвакуации';
-        document.getElementById('mapMode').style.color = '#ffc107';
-        document.getElementById('mapCanvas').style.cursor = 'crosshair';
-    };
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
     
-    const saveBtn = document.getElementById('saveMapBtn');
-    if (saveBtn) saveBtn.onclick = function() { saveMap(); alert('✅ Карта сохранена!'); };
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     
-    const deleteBtn = document.getElementById('deleteSelectedBtn');
-    if (deleteBtn) deleteBtn.onclick = deleteSelectedObject;
+    const events = getEvents();
     
-    const clearBtn = document.querySelector('.btn-add[onclick="clearMap()"]');
-    if (clearBtn) clearBtn.onclick = clearMap;
-    
-    const workshopSelect = document.getElementById('workshopSelect');
-    if (workshopSelect) workshopSelect.onchange = function() {
-        mapData.currentWorkshop = parseInt(this.value);
-        updateInfo();
-        drawMap();
-        saveMap();
-    };
-    
-    const saveWorkshopBtn = document.getElementById('saveWorkshopBtn');
-    if (saveWorkshopBtn) saveWorkshopBtn.onclick = saveWorkshop;
-    
-    const saveWorkplaceBtn = document.getElementById('saveWorkplaceBtn');
-    if (saveWorkplaceBtn) saveWorkplaceBtn.onclick = saveWorkplace;
-    
-    const saveFeBtn = document.getElementById('saveFireExtinguisherBtn');
-    if (saveFeBtn) saveFeBtn.onclick = saveFireExtinguisher;
-    
-    const feDateInput = document.getElementById('feDateInput');
-    if (feDateInput) {
-        feDateInput.onchange = function() {
-            const nextDateInput = document.getElementById('feNextDateInput');
-            const typeSelect = document.getElementById('feTypeSelect');
-            if (nextDateInput && this.value && typeSelect) {
-                const date = new Date(this.value);
-                const type = typeSelect.value;
-                let years = 5;
-                if (type === 'ОУ') years = 10;
-                else if (type === 'ОВ') years = 1;
-                else if (type === 'ОХ') years = 10;
-                else if (type === 'ОПУ') years = 5;
-                date.setFullYear(date.getFullYear() + years);
-                nextDateInput.value = date.toISOString().split('T')[0];
-                document.getElementById('feNextLabel').textContent = `✅ Перезарядка через ${years} лет (${date.toISOString().split('T')[0]})`;
-            }
-        };
+    for (let i = startDay - 1; i >= 0; i--) {
+        const day = daysInPrevMonth - i;
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayEvents = events.filter(e => e.date === dateStr);
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'calendar-day other-month';
+        dayDiv.innerHTML = `<span class="day-number">${day}</span>`;
+        if (dayEvents.length > 0) {
+            dayDiv.innerHTML += `<div class="day-events">${dayEvents.slice(0, 2).map(e => 
+                `<span class="event-text ${getEventStatus(e)}">${e.title}</span>`
+            ).join('')}</div>`;
+        }
+        dayDiv.onclick = () => selectDay(dateStr);
+        grid.appendChild(dayDiv);
     }
     
-    const feTypeSelect = document.getElementById('feTypeSelect');
-    if (feTypeSelect) {
-        feTypeSelect.onchange = function() {
-            const dateInput = document.getElementById('feDateInput');
-            if (dateInput && dateInput.value) {
-                dateInput.dispatchEvent(new Event('change'));
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayEvents = events.filter(e => e.date === dateStr);
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'calendar-day';
+        if (dateStr === todayStr) dayDiv.classList.add('today');
+        dayDiv.innerHTML = `<span class="day-number">${day}</span>`;
+        if (dayEvents.length > 0) {
+            dayDiv.innerHTML += `<div class="day-events">${dayEvents.slice(0, 2).map(e => 
+                `<span class="event-text ${getEventStatus(e)}">${e.title}</span>`
+            ).join('')}</div>`;
+            if (dayEvents.length > 2) {
+                dayDiv.innerHTML += `<span style="font-size:9px;color:#8888aa;">+${dayEvents.length - 2} еще</span>`;
             }
-        };
+        }
+        dayDiv.onclick = () => selectDay(dateStr);
+        grid.appendChild(dayDiv);
+    }
+    
+    const totalDays = startDay + daysInMonth;
+    const remaining = 42 - totalDays;
+    for (let day = 1; day <= remaining; day++) {
+        const dateStr = `${year}-${String(month + 2).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayEvents = events.filter(e => e.date === dateStr);
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'calendar-day other-month';
+        dayDiv.innerHTML = `<span class="day-number">${day}</span>`;
+        if (dayEvents.length > 0) {
+            dayDiv.innerHTML += `<div class="day-events">${dayEvents.slice(0, 2).map(e => 
+                `<span class="event-text ${getEventStatus(e)}">${e.title}</span>`
+            ).join('')}</div>`;
+        }
+        dayDiv.onclick = () => selectDay(dateStr);
+        grid.appendChild(dayDiv);
+    }
+    
+    if (selectedDate) {
+        selectDay(selectedDate);
+    }
+    
+    const newEventDate = document.getElementById('newEventDate');
+    if (newEventDate) {
+        newEventDate.value = todayStr;
     }
 }
 
-function getCurrentWorkshop() {
-    return mapData.workshops[mapData.currentWorkshop] || null;
+function getEventStatus(event) {
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    if (event.date < todayStr) return 'overdue';
+    if (event.date === todayStr) return 'today-event';
+    if (event.done) return 'done';
+    return 'upcoming';
 }
 
-function updateWorkshopSelect() {
-    const select = document.getElementById('workshopSelect');
-    if (!select) return;
-    select.innerHTML = '';
-    mapData.workshops.forEach((ws, index) => {
-        const opt = document.createElement('option');
-        opt.value = index;
-        opt.textContent = ws.name || `Участок ${index + 1}`;
-        if (index === mapData.currentWorkshop) opt.selected = true;
-        select.appendChild(opt);
-    });
-}
-
-function updateInfo() {
-    const ws = getCurrentWorkshop();
-    document.getElementById('workshopSize').textContent = ws ? ws.name : 'не задан';
-    document.getElementById('workerCount').textContent = ws ? ws.workplaces.length : 0;
-    document.getElementById('evacuationCount').textContent = mapData.evacuationPoints ? mapData.evacuationPoints.length : 0;
-    document.getElementById('fireExtinguisherCount').textContent = mapData.fireExtinguishers ? mapData.fireExtinguishers.length : 0;
-}
-
-function getCanvasCoords(e) {
-    const canvas = document.getElementById('mapCanvas');
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    return {
-        x: (e.clientX - rect.left) * (canvas.width / rect.width),
-        y: (e.clientY - rect.top) * (canvas.height / rect.height)
-    };
-}
-
-function drawMap() {
-    const canvas = document.getElementById('mapCanvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+function selectDay(dateStr) {
+    selectedDate = dateStr;
+    const events = getEvents();
+    const dayEvents = events.filter(e => e.date === dateStr);
+    const sidebar = document.getElementById('selectedDayEvents');
+    if (!sidebar) return;
     
-    const ws = getCurrentWorkshop();
-    if (!ws) return;
-    
-    ctx.fillStyle = '#0a0a1a';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-    ctx.lineWidth = 0.5;
-    for (let i = 0; i < canvas.width; i += 50) {
-        ctx.beginPath();
-        ctx.moveTo(i, 0);
-        ctx.lineTo(i, canvas.height);
-        ctx.stroke();
-    }
-    for (let i = 0; i < canvas.height; i += 50) {
-        ctx.beginPath();
-        ctx.moveTo(0, i);
-        ctx.lineTo(canvas.width, i);
-        ctx.stroke();
-    }
-    
-    ctx.fillStyle = 'rgba(74,158,255,0.05)';
-    ctx.fillRect(ws.x, ws.y, ws.w, ws.h);
-    ctx.strokeStyle = '#4a9eff';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5,5]);
-    ctx.strokeRect(ws.x, ws.y, ws.w, ws.h);
-    ctx.setLineDash([]);
-    ctx.fillStyle = 'rgba(74,158,255,0.6)';
-    ctx.font = '28px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(`🏭 ${ws.name} (${ws.length}×${ws.width} м)`, ws.x + ws.w/2, ws.y + 55);
-    
-    const cornerSize = 20;
-    [[ws.x, ws.y], [ws.x+ws.w, ws.y], [ws.x, ws.y+ws.h], [ws.x+ws.w, ws.y+ws.h]].forEach(([cx, cy]) => {
-        ctx.fillStyle = 'rgba(74,158,255,0.9)';
-        ctx.fillRect(cx - cornerSize/2, cy - cornerSize/2, cornerSize, cornerSize);
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(cx - cornerSize/2, cy - cornerSize/2, cornerSize, cornerSize);
-    });
-    
-    if (mapData.evacuationRoutes) {
-        mapData.evacuationRoutes.forEach(route => {
-            if (route.points && route.points.length >= 2) {
-                ctx.beginPath();
-                ctx.moveTo(route.points[0].x, route.points[0].y);
-                for (let i = 1; i < route.points.length; i++) {
-                    ctx.lineTo(route.points[i].x, route.points[i].y);
-                }
-                ctx.strokeStyle = '#4caf50';
-                ctx.lineWidth = 4;
-                ctx.setLineDash([10,6]);
-                ctx.shadowColor = 'rgba(76,175,80,0.3)';
-                ctx.shadowBlur = 10;
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-                ctx.setLineDash([]);
-                const last = route.points[route.points.length-1];
-                const prev = route.points[route.points.length-2];
-                const angle = Math.atan2(last.y - prev.y, last.x - prev.x);
-                ctx.fillStyle = '#4caf50';
-                ctx.beginPath();
-                ctx.moveTo(last.x, last.y);
-                ctx.lineTo(last.x - 18*Math.cos(angle-0.5), last.y - 18*Math.sin(angle-0.5));
-                ctx.lineTo(last.x - 18*Math.cos(angle+0.5), last.y - 18*Math.sin(angle+0.5));
-                ctx.closePath();
-                ctx.fill();
-                if (route.name) {
-                    const midX = (route.points[0].x + route.points[route.points.length-1].x) / 2;
-                    const midY = (route.points[0].y + route.points[route.points.length-1].y) / 2 - 20;
-                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-                    ctx.fillRect(midX - 80, midY - 14, 160, 28);
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 15px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(route.name, midX, midY);
-                    ctx.textBaseline = 'alphabetic';
-                }
-            }
-        });
-    }
-    
-    if (mapData.fireExtinguishers) {
-        mapData.fireExtinguishers.forEach(fe => {
-            const x = fe.x - 22, y = fe.y - 32;
-            ctx.shadowColor = 'rgba(255,23,68,0.4)';
-            ctx.shadowBlur = 25;
-            ctx.fillStyle = '#ff1744';
-            ctx.fillRect(x+4, y+6, 36, 44);
-            ctx.fillRect(x+10, y, 24, 12);
-            ctx.fillStyle = '#b71c1c';
-            ctx.fillRect(x+16, y-6, 12, 10);
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 9px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('ОГНЕТ', x+22, y+26);
-            ctx.fillText('УШИТЕЛЬ', x+22, y+38);
-            ctx.textBaseline = 'alphabetic';
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 10px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(fe.model || 'ОП-5', x+22, y+58);
-        });
-    }
-    
-    if (mapData.evacuationPoints) {
-        mapData.evacuationPoints.forEach(ep => {
-            const ew = 120, eh = 60;
-            const ex = ep.x - ew/2, ey = ep.y - eh/2;
-            ctx.fillStyle = '#2e7d32';
-            ctx.shadowColor = 'rgba(46,125,50,0.4)';
-            ctx.shadowBlur = 30;
-            ctx.fillRect(ex, ey, ew, eh);
-            ctx.shadowBlur = 0;
-            ctx.strokeStyle = '#4caf50';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(ex, ey, ew, eh);
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 22px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('🚪 ВЫХОД', ep.x, ep.y);
-            ctx.textBaseline = 'alphabetic';
-            if (ep.name) {
-                ctx.fillStyle = 'rgba(255,255,255,0.6)';
-                ctx.font = 'bold 13px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(ep.name, ep.x, ep.y + 35);
-            }
-        });
-    }
-    
-    if (ws.workplaces) {
-        ws.workplaces.forEach(wp => {
-            const zone = wp.zone || 60;
-            const x = wp.x - zone/2, y = wp.y - zone/2;
-            ctx.fillStyle = 'rgba(255,193,7,0.25)';
-            ctx.fillRect(x, y, zone, zone);
-            ctx.strokeStyle = 'rgba(255,193,7,0.7)';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x, y, zone, zone);
-            const color = wp.hasPPE ? '#4caf50' : '#ff6b6b';
-            ctx.fillStyle = color;
-            ctx.shadowColor = `${color}40`;
-            ctx.shadowBlur = 30;
-            ctx.beginPath();
-            ctx.arc(wp.x, wp.y - 36, 30, 0, Math.PI*2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            ctx.fillRect(wp.x - 22, wp.y - 12, 44, 52);
-            ctx.fillRect(wp.x - 36, wp.y + 36, 20, 32);
-            ctx.fillRect(wp.x + 16, wp.y + 36, 20, 32);
-            ctx.fillRect(wp.x - 44, wp.y + 4, 16, 28);
-            ctx.fillRect(wp.x + 28, wp.y + 4, 16, 28);
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.font = 'bold 18px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(wp.name.substring(0,20), wp.x, wp.y + 120);
-            if (wp.position) {
-                ctx.fillStyle = 'rgba(255,255,255,0.5)';
-                ctx.font = '14px sans-serif';
-                ctx.fillText(wp.position.substring(0,25), wp.x, wp.y + 156);
-            }
-            if (wp.hasPPE) {
-                ctx.font = '22px sans-serif';
-                ctx.fillText('🦺', wp.x + 80, wp.y - 56);
-            }
-        });
-    }
-}
-
-function setupCanvasEvents() {
-    const canvas = document.getElementById('mapCanvas');
-    if (!canvas) return;
-    
-    canvas.addEventListener('click', function(e) {
-        const coords = getCanvasCoords(e);
-        const ws = getCurrentWorkshop();
-        if (!ws) return;
-        
-        if (coords.x < ws.x || coords.x > ws.x + ws.w || coords.y < ws.y || coords.y > ws.y + ws.h) {
-            if (mapMode === 'view') {
-                selectedObjectIndex = -1;
-                selectedObjectType = null;
-                drawMap();
-            }
-            return;
-        }
-        
-        if (mapMode === 'addWorkplace') {
-            openWorkplaceModal(coords.x, coords.y);
-            return;
-        }
-        if (mapMode === 'addEvacuation') {
-            const name = prompt('Название выхода:', 'Выход ' + ((mapData.evacuationPoints?.length || 0) + 1));
-            if (name !== null) {
-                if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
-                mapData.evacuationPoints.push({ x: coords.x, y: coords.y, name: name.trim() || 'Выход', id: Date.now() });
-                updateInfo(); drawMap(); saveMap();
-                mapMode = 'view';
-                document.getElementById('mapMode').textContent = 'Просмотр';
-                document.getElementById('mapMode').style.color = '#00d4ff';
-                canvas.style.cursor = 'default';
-            }
-            return;
-        }
-        if (mapMode === 'addFireExtinguisher') {
-            tempObjectPos = { x: coords.x, y: coords.y };
-            document.getElementById('fireExtinguisherModal').classList.remove('hidden');
-            const now = new Date();
-            document.getElementById('feDateInput').value = now.toISOString().split('T')[0];
-            const typeSelect = document.getElementById('feTypeSelect');
-            const type = typeSelect ? typeSelect.value : 'ОП';
-            let years = 5;
-            if (type === 'ОУ') years = 10;
-            else if (type === 'ОВ') years = 1;
-            else if (type === 'ОХ') years = 10;
-            else if (type === 'ОПУ') years = 5;
-            now.setFullYear(now.getFullYear() + years);
-            document.getElementById('feNextDateInput').value = now.toISOString().split('T')[0];
-            document.getElementById('feNextLabel').textContent = `✅ Перезарядка через ${years} лет (${now.toISOString().split('T')[0]})`;
-            return;
-        }
-        if (mapMode === 'addEvacuationRoute') {
-            tempRoutePoints.push({ x: coords.x, y: coords.y });
-            drawMap();
-            const ctx = canvas.getContext('2d');
-            tempRoutePoints.forEach((p, i) => {
-                ctx.fillStyle = i === 0 ? '#4caf50' : '#ffc107';
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 8, 0, Math.PI*2);
-                ctx.fill();
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 12px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(i+1, p.x, p.y);
-                ctx.textBaseline = 'alphabetic';
-            });
-            if (tempRoutePoints.length >= 2) {
-                const name = prompt('Название пути эвакуации:', 'Путь ' + ((mapData.evacuationRoutes?.length || 0) + 1));
-                if (name !== null && name.trim() !== '') {
-                    if (!mapData.evacuationRoutes) mapData.evacuationRoutes = [];
-                    mapData.evacuationRoutes.push({ points: [...tempRoutePoints], name: name.trim(), color: '#4caf50', id: Date.now() });
-                    tempRoutePoints = [];
-                    updateInfo(); drawMap(); saveMap();
-                } else {
-                    tempRoutePoints = [];
-                    drawMap();
-                }
-                mapMode = 'view';
-                document.getElementById('mapMode').textContent = 'Просмотр';
-                document.getElementById('mapMode').style.color = '#00d4ff';
-                canvas.style.cursor = 'default';
-            } else {
-                alert('🔄 Кликните вторую точку');
-            }
-            return;
-        }
-        
-        if (mapMode === 'view') {
-            let found = false;
-            if (ws.workplaces) {
-                for (let i = ws.workplaces.length - 1; i >= 0; i--) {
-                    if (Math.hypot(coords.x - ws.workplaces[i].x, coords.y - ws.workplaces[i].y) < 40) {
-                        selectedObjectIndex = i; selectedObjectType = 'workplace'; found = true; break;
-                    }
-                }
-            }
-            if (!found && mapData.evacuationPoints) {
-                for (let i = mapData.evacuationPoints.length - 1; i >= 0; i--) {
-                    if (Math.hypot(coords.x - mapData.evacuationPoints[i].x, coords.y - mapData.evacuationPoints[i].y) < 50) {
-                        selectedObjectIndex = i; selectedObjectType = 'evacuation'; found = true; break;
-                    }
-                }
-            }
-            if (!found && mapData.fireExtinguishers) {
-                for (let i = mapData.fireExtinguishers.length - 1; i >= 0; i--) {
-                    if (Math.hypot(coords.x - mapData.fireExtinguishers[i].x, coords.y - mapData.fireExtinguishers[i].y) < 35) {
-                        selectedObjectIndex = i; selectedObjectType = 'fireExtinguisher'; found = true; break;
-                    }
-                }
-            }
-            if (!found && mapData.evacuationRoutes) {
-                for (let i = mapData.evacuationRoutes.length - 1; i >= 0; i--) {
-                    const route = mapData.evacuationRoutes[i];
-                    if (route.points) {
-                        for (let j = 0; j < route.points.length - 1; j++) {
-                            const p1 = route.points[j], p2 = route.points[j+1];
-                            const d = distanceToSegment(coords.x, coords.y, p1.x, p1.y, p2.x, p2.y);
-                            if (d < 15) {
-                                selectedObjectIndex = i; selectedObjectType = 'route'; found = true; break;
-                            }
-                        }
-                    }
-                    if (found) break;
-                }
-            }
-            if (!found) { selectedObjectIndex = -1; selectedObjectType = null; }
-            drawMap();
-        }
-    });
-    
-    canvas.addEventListener('dblclick', function(e) {
-        const coords = getCanvasCoords(e);
-        const ws = getCurrentWorkshop();
-        if (!ws || !ws.workplaces || mapMode !== 'view') return;
-        for (let i = 0; i < ws.workplaces.length; i++) {
-            if (Math.hypot(coords.x - ws.workplaces[i].x, coords.y - ws.workplaces[i].y) < 40) {
-                const wp = ws.workplaces[i];
-                if (!wp.position) { alert('⚠️ Укажите должность!'); return; }
-                selectedObjectIndex = i;
-                selectedObjectType = 'workplace';
-                drawMap();
-                openPPEModal(wp);
-                return;
-            }
-        }
-    });
-    
-    canvas.addEventListener('mousedown', function(e) {
-        const coords = getCanvasCoords(e);
-        const ws = getCurrentWorkshop();
-        if (!ws || mapMode !== 'view') return;
-        
-        for (let i = ws.workplaces.length - 1; i >= 0; i--) {
-            if (Math.hypot(coords.x - ws.workplaces[i].x, coords.y - ws.workplaces[i].y) < 40) {
-                isDragging = true; dragTarget = i; dragTargetType = 'workplace';
-                dragOffsetX = coords.x - ws.workplaces[i].x; dragOffsetY = coords.y - ws.workplaces[i].y;
-                canvas.style.cursor = 'grabbing'; return;
-            }
-        }
-        for (let i = mapData.evacuationPoints.length - 1; i >= 0; i--) {
-            if (Math.hypot(coords.x - mapData.evacuationPoints[i].x, coords.y - mapData.evacuationPoints[i].y) < 50) {
-                isDragging = true; dragTarget = i; dragTargetType = 'evacuation';
-                dragOffsetX = coords.x - mapData.evacuationPoints[i].x; dragOffsetY = coords.y - mapData.evacuationPoints[i].y;
-                canvas.style.cursor = 'grabbing'; return;
-            }
-        }
-        for (let i = mapData.fireExtinguishers.length - 1; i >= 0; i--) {
-            if (Math.hypot(coords.x - mapData.fireExtinguishers[i].x, coords.y - mapData.fireExtinguishers[i].y) < 35) {
-                isDragging = true; dragTarget = i; dragTargetType = 'fireExtinguisher';
-                dragOffsetX = coords.x - mapData.fireExtinguishers[i].x; dragOffsetY = coords.y - mapData.fireExtinguishers[i].y;
-                canvas.style.cursor = 'grabbing'; return;
-            }
-        }
-    });
-    
-    canvas.addEventListener('mousemove', function(e) {
-        const coords = getCanvasCoords(e);
-        const ws = getCurrentWorkshop();
-        if (!ws) return;
-        
-        if (isDragging && dragTarget !== null && dragTargetType) {
-            if (dragTargetType === 'workplace' && ws.workplaces[dragTarget]) {
-                const wp = ws.workplaces[dragTarget];
-                wp.x = Math.max(ws.x+20, Math.min(ws.x+ws.w-20, coords.x - dragOffsetX));
-                wp.y = Math.max(ws.y+20, Math.min(ws.y+ws.h-20, coords.y - dragOffsetY));
-                drawMap(); return;
-            }
-            if (dragTargetType === 'evacuation' && mapData.evacuationPoints[dragTarget]) {
-                const ep = mapData.evacuationPoints[dragTarget];
-                ep.x = Math.max(ws.x+20, Math.min(ws.x+ws.w-20, coords.x - dragOffsetX));
-                ep.y = Math.max(ws.y+20, Math.min(ws.y+ws.h-20, coords.y - dragOffsetY));
-                drawMap(); return;
-            }
-            if (dragTargetType === 'fireExtinguisher' && mapData.fireExtinguishers[dragTarget]) {
-                const fe = mapData.fireExtinguishers[dragTarget];
-                fe.x = Math.max(ws.x+20, Math.min(ws.x+ws.w-20, coords.x - dragOffsetX));
-                fe.y = Math.max(ws.y+20, Math.min(ws.y+ws.h-20, coords.y - dragOffsetY));
-                drawMap(); return;
-            }
-        }
-        
-        let cursor = 'default';
-        if (ws.workplaces) {
-            for (let wp of ws.workplaces) {
-                if (Math.hypot(coords.x - wp.x, coords.y - wp.y) < 40) { cursor = 'grab'; break; }
-            }
-        }
-        if (cursor === 'default' && mapData.evacuationPoints) {
-            for (let ep of mapData.evacuationPoints) {
-                if (Math.hypot(coords.x - ep.x, coords.y - ep.y) < 50) { cursor = 'grab'; break; }
-            }
-        }
-        if (cursor === 'default' && mapData.fireExtinguishers) {
-            for (let fe of mapData.fireExtinguishers) {
-                if (Math.hypot(coords.x - fe.x, coords.y - fe.y) < 35) { cursor = 'grab'; break; }
-            }
-        }
-        canvas.style.cursor = cursor;
-    });
-    
-    canvas.addEventListener('mouseup', function() {
-        if (isDragging) {
-            isDragging = false; dragTarget = null; dragTargetType = null;
-            canvas.style.cursor = 'default';
-            saveMap();
-        }
-        if (isResizing) {
-            isResizing = false;
-            canvas.style.cursor = 'default';
-            saveMap();
-        }
-    });
-    canvas.addEventListener('mouseleave', function() {
-        if (isDragging) {
-            isDragging = false; dragTarget = null; dragTargetType = null;
-            canvas.style.cursor = 'default';
-            saveMap();
-        }
-        if (isResizing) {
-            isResizing = false;
-            canvas.style.cursor = 'default';
-            saveMap();
-        }
-    });
-}
-
-function distanceToSegment(px, py, x1, y1, x2, y2) {
-    const dx = x2 - x1, dy = y2 - y1;
-    const lenSq = dx*dx + dy*dy;
-    if (lenSq === 0) return Math.hypot(px - x1, py - y1);
-    let t = ((px - x1)*dx + (py - y1)*dy) / lenSq;
-    t = Math.max(0, Math.min(1, t));
-    return Math.hypot(px - x1 - t*dx, py - y1 - t*dy);
-}
-
-function deleteSelectedObject() {
-    if (selectedObjectIndex < 0 || !selectedObjectType) {
-        alert('Сначала выберите объект (кликните на него)');
+    if (dayEvents.length === 0) {
+        sidebar.innerHTML = `<p style="color:#666;font-size:13px;">Нет событий на ${dateStr}</p>`;
         return;
     }
-    let msg = '';
-    if (selectedObjectType === 'workplace') {
-        const ws = getCurrentWorkshop();
-        if (!ws || !ws.workplaces[selectedObjectIndex]) return;
-        msg = `Удалить рабочее место "${ws.workplaces[selectedObjectIndex].name}"?`;
-    } else if (selectedObjectType === 'evacuation') {
-        if (!mapData.evacuationPoints[selectedObjectIndex]) return;
-        msg = `Удалить выход "${mapData.evacuationPoints[selectedObjectIndex].name}"?`;
-    } else if (selectedObjectType === 'fireExtinguisher') {
-        if (!mapData.fireExtinguishers[selectedObjectIndex]) return;
-        msg = `Удалить огнетушитель "${mapData.fireExtinguishers[selectedObjectIndex].model}"?`;
-    } else if (selectedObjectType === 'route') {
-        if (!mapData.evacuationRoutes[selectedObjectIndex]) return;
-        msg = `Удалить путь "${mapData.evacuationRoutes[selectedObjectIndex].name}"?`;
-    }
-    if (!confirm(msg)) return;
-    if (selectedObjectType === 'workplace') {
-        const ws = getCurrentWorkshop();
-        ws.workplaces.splice(selectedObjectIndex, 1);
-    } else if (selectedObjectType === 'evacuation') {
-        mapData.evacuationPoints.splice(selectedObjectIndex, 1);
-    } else if (selectedObjectType === 'fireExtinguisher') {
-        mapData.fireExtinguishers.splice(selectedObjectIndex, 1);
-    } else if (selectedObjectType === 'route') {
-        mapData.evacuationRoutes.splice(selectedObjectIndex, 1);
-    }
-    selectedObjectIndex = -1;
-    selectedObjectType = null;
-    updateInfo();
-    drawMap();
-    saveMap();
-    alert('✅ Удалено');
-}
-
-function openFireExtinguisherModal() {
-    document.getElementById('fireExtinguisherModal').classList.remove('hidden');
-}
-
-function closeFireExtinguisherModal() {
-    document.getElementById('fireExtinguisherModal').classList.add('hidden');
-    tempObjectPos = null;
-    mapMode = 'view';
-    document.getElementById('mapMode').textContent = 'Просмотр';
-    document.getElementById('mapMode').style.color = '#00d4ff';
-    document.getElementById('mapCanvas').style.cursor = 'default';
-}
-
-function saveFireExtinguisher() {
-    if (!tempObjectPos) { alert('Ошибка'); return; }
-    const type = document.getElementById('feTypeSelect').value;
-    const volume = document.getElementById('feVolumeSelect').value;
-    const model = document.getElementById('feModelInput').value.trim() || `${type}-${volume}`;
-    const date = document.getElementById('feDateInput').value;
-    const nextDate = document.getElementById('feNextDateInput').value;
-    if (!mapData.fireExtinguishers) mapData.fireExtinguishers = [];
-    mapData.fireExtinguishers.push({
-        x: tempObjectPos.x, y: tempObjectPos.y,
-        type, volume, model, date, nextDate, id: Date.now()
+    
+    const dateObj = new Date(dateStr);
+    const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    const formattedDate = `${dateObj.getDate()} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+    
+    let html = `<p style="color:#ccc;font-size:13px;margin-bottom:8px;"><strong>${formattedDate}</strong></p>`;
+    dayEvents.forEach((event, index) => {
+        const statusClass = getEventStatus(event);
+        const statusLabel = {
+            'overdue': '🔴 Просрочено',
+            'today-event': '🟡 Сегодня',
+            'upcoming': '🟢 Предстоит',
+            'done': '✅ Выполнено'
+        };
+        html += `
+            <div class="event-item">
+                <div>
+                    <span class="event-title">${event.title}</span>
+                    <span class="event-type">${event.type || 'Событие'}</span>
+                    <span style="font-size:10px;color:#8888aa;margin-left:8px;">${statusLabel[statusClass] || ''}</span>
+                </div>
+                <button class="event-delete" onclick="deleteEvent(${index}, '${dateStr}')">✖</button>
+            </div>
+        `;
     });
-    closeFireExtinguisherModal();
-    updateInfo();
-    drawMap();
-    saveMap();
-    alert('✅ Огнетушитель добавлен!');
+    sidebar.innerHTML = html;
 }
 
-function openWorkshopModal() {
-    const ws = getCurrentWorkshop();
-    if (!ws) { alert('Сначала создайте участок'); return; }
-    document.getElementById('workshopModal').classList.remove('hidden');
-    document.getElementById('workshopNameInput').value = ws.name || '';
-    document.getElementById('workshopLengthInput').value = ws.length || 30;
-    document.getElementById('workshopWidthInput').value = ws.width || 20;
+function changeMonth(delta) {
+    currentDate.setMonth(currentDate.getMonth() + delta);
+    renderCalendar();
 }
 
-function closeWorkshopModal() {
-    document.getElementById('workshopModal').classList.add('hidden');
-}
-
-function saveWorkshop() {
-    const ws = getCurrentWorkshop();
-    if (!ws) return;
-    ws.name = document.getElementById('workshopNameInput').value.trim() || 'Участок';
-    ws.length = parseInt(document.getElementById('workshopLengthInput').value) || 30;
-    ws.width = parseInt(document.getElementById('workshopWidthInput').value) || 20;
-    closeWorkshopModal();
-    updateWorkshopSelect();
-    updateInfo();
-    drawMap();
-    saveMap();
-}
-
-function openWorkplaceModal(x, y) {
-    tempObjectPos = { x, y };
-    document.getElementById('workplaceModal').classList.remove('hidden');
-    document.getElementById('workplaceNameInput').value = '';
-    document.getElementById('workplacePositionInput').value = '';
-    document.getElementById('workplaceZoneInput').value = 50;
-}
-
-function closeWorkplaceModal() {
-    document.getElementById('workplaceModal').classList.add('hidden');
-    tempObjectPos = null;
-    mapMode = 'view';
-    document.getElementById('mapMode').textContent = 'Просмотр';
-    document.getElementById('mapMode').style.color = '#00d4ff';
-    document.getElementById('mapCanvas').style.cursor = 'default';
-}
-
-function saveWorkplace() {
-    if (!tempObjectPos) { alert('Ошибка'); return; }
-    const ws = getCurrentWorkshop();
-    if (!ws) { alert('Участок не найден'); return; }
-    const name = document.getElementById('workplaceNameInput').value.trim() || 'Рабочее место ' + (ws.workplaces.length + 1);
-    const position = document.getElementById('workplacePositionInput').value.trim() || '';
-    const zone = parseInt(document.getElementById('workplaceZoneInput').value) || 50;
-    ws.workplaces.push({
-        x: tempObjectPos.x, y: tempObjectPos.y,
-        name, position, zone,
-        id: Date.now(), hasPPE: false, ppeItems: [], ppeSource: null
-    });
-    closeWorkplaceModal();
-    updateInfo();
-    drawMap();
-    saveMap();
-    alert('✅ Рабочее место добавлено!');
-}
-
-function addNewWorkshop() {
-    const name = prompt('Название участка:', 'Участок ' + (mapData.workshops.length + 1));
-    if (!name) return;
-    mapData.workshops.push({
-        id: Date.now(), name, length: 30, width: 20,
-        x: 50, y: 50, w: 3900, h: 1900, workplaces: []
-    });
-    mapData.currentWorkshop = mapData.workshops.length - 1;
-    if (!mapData.evacuationPoints) mapData.evacuationPoints = [];
-    if (!mapData.fireExtinguishers) mapData.fireExtinguishers = [];
-    if (!mapData.evacuationRoutes) mapData.evacuationRoutes = [];
-    updateWorkshopSelect();
-    updateInfo();
-    drawMap();
-    saveMap();
-}
-
-function deleteWorkshop() {
-    if (mapData.workshops.length <= 1) { alert('Нельзя удалить единственный участок'); return; }
-    if (!confirm('Удалить участок?')) return;
-    mapData.workshops.splice(mapData.currentWorkshop, 1);
-    if (mapData.currentWorkshop >= mapData.workshops.length) {
-        mapData.currentWorkshop = mapData.workshops.length - 1;
+function addEvent() {
+    const titleInput = document.getElementById('newEventTitle');
+    const typeSelect = document.getElementById('newEventType');
+    const dateInput = document.getElementById('newEventDate');
+    
+    const title = titleInput.value.trim();
+    const type = typeSelect.value;
+    const date = dateInput.value;
+    
+    if (!title) {
+        alert('❌ Введите название события!');
+        titleInput.focus();
+        return;
     }
-    updateWorkshopSelect();
-    updateInfo();
-    drawMap();
-    saveMap();
-}
-
-function saveMap() {
-    localStorage.setItem('mapData', JSON.stringify(mapData));
-}
-
-function clearMap() {
-    if (!confirm('Очистить участок?')) return;
-    const ws = getCurrentWorkshop();
-    if (ws) {
-        ws.workplaces = [];
-        mapData.evacuationPoints = [];
-        mapData.fireExtinguishers = [];
-        mapData.evacuationRoutes = [];
-        selectedObjectIndex = -1;
-        selectedObjectType = null;
-        tempRoutePoints = [];
-        updateInfo();
-        drawMap();
-        saveMap();
+    if (!date) {
+        alert('❌ Выберите дату!');
+        dateInput.focus();
+        return;
     }
+    
+    const events = getEvents();
+    events.push({
+        id: Date.now(),
+        title: title,
+        type: type,
+        date: date,
+        done: false,
+        createdAt: new Date().toISOString()
+    });
+    saveEvents(events);
+    
+    titleInput.value = '';
+    renderCalendar();
+    selectDay(date);
+    alert('✅ Событие добавлено!');
 }
 
-// ============================================================
-// ДОБАВЛЕНИЕ В ПРОТОКОЛ ИЗ ШТАТКИ
-// ============================================================
-function addSelectedToProtocol() {
-    const selected = getSelectedStaffFromView();
-    if (selected.length === 0) { alert('❌ Выберите сотрудников!'); return; }
+function deleteEvent(index, dateStr) {
+    if (!confirm('Удалить это событие?')) return;
+    const events = getEvents();
+    const filtered = events.filter((e, i) => {
+        if (i === index && e.date === dateStr) return false;
+        return true;
+    });
+    saveEvents(filtered);
+    renderCalendar();
+    selectDay(dateStr);
+}
+
+function markTrainingFromProtocol() {
     const protocol = getProtocol();
-    const existing = new Set(protocol.map(e => e.snils));
-    let added = 0;
-    selected.forEach(emp => {
-        if (!existing.has(emp.snils)) { protocol.push({...emp}); existing.add(emp.snils); added++; }
+    if (protocol.length === 0) {
+        alert('❌ В протоколе нет сотрудников!');
+        return;
+    }
+    
+    if (!confirm(`📅 Отметить в календаре обучение для ${protocol.length} сотрудников?`)) return;
+    
+    const all = getAllEmployees();
+    const today = new Date().toISOString().split('T')[0];
+    let updated = 0;
+    
+    protocol.forEach(empFromProtocol => {
+        const found = all.find(e => e.snils === empFromProtocol.snils);
+        if (found) {
+            const data = getStaffData();
+            for (const [dept, deptData] of Object.entries(data.departments)) {
+                const idx = deptData.employees.findIndex(e => e.snils === empFromProtocol.snils);
+                if (idx !== -1) {
+                    deptData.employees[idx].trainingDate = today;
+                    updated++;
+                    saveStaffData(data);
+                    break;
+                }
+            }
+            if (!updated) {
+                const idx = data.unassigned.findIndex(e => e.snils === empFromProtocol.snils);
+                if (idx !== -1) {
+                    data.unassigned[idx].trainingDate = today;
+                    updated++;
+                    saveStaffData(data);
+                }
+            }
+        }
     });
-    saveProtocol(protocol);
-    renderProtocol();
-    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
-    alert(`✅ Добавлено ${added} сотрудников!`);
+    
+    renderStaffWithDepartments();
+    
+    const events = getEvents();
+    const existing = events.filter(e => e.date === today && e.title.includes('Обучение'));
+    if (existing.length === 0 && updated > 0) {
+        events.push({
+            id: Date.now(),
+            title: `Обучение ${updated} сотрудников`,
+            type: 'Обучение',
+            date: today,
+            done: false,
+            createdAt: new Date().toISOString()
+        });
+        saveEvents(events);
+    }
+    
+    alert(`✅ Обновлено ${updated} сотрудников! Дата обучения: ${today}`);
 }
 
 // ============================================================
-// ГЕНЕРАЦИЯ XML
+// ПЕРСОНАЛЬНАЯ КАРТОЧКА СОТРУДНИКА
+// ============================================================
+function openEmployeeCardBySnils(snils) {
+    const all = getAllEmployees();
+    const emp = all.find(e => e.snils === snils);
+    if (!emp) {
+        alert('❌ Сотрудник не найден');
+        return;
+    }
+    openEmployeeCard(emp);
+}
+
+function openEmployeeCard(emp) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'employeeModal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:550px;">
+            <div class="modal-header">
+                <h3>👤 ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</h3>
+                <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label style="color:#ccc;">Должность</label>
+                    <input type="text" value="${emp.position}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;" readonly>
+                </div>
+                <div class="form-group">
+                    <label style="color:#ccc;">📅 Дата последнего инструктажа</label>
+                    <input type="date" id="empInstructionDate" value="${emp.instructionDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                </div>
+                <div class="form-group">
+                    <label style="color:#ccc;">📅 Дата обучения</label>
+                    <input type="date" id="empTrainingDate" value="${emp.trainingDate || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                </div>
+                <div class="form-group">
+                    <label style="color:#ccc;">🦺 СИЗ</label>
+                    <div style="max-height:150px;overflow-y:auto;background:rgba(255,255,255,0.03);border-radius:6px;padding:8px;">
+                        ${emp.ppeItems && emp.ppeItems.length > 0 ? emp.ppeItems.map((item, i) => 
+                            `<div style="padding:6px 10px;background:rgba(76,175,80,0.1);border-radius:4px;margin-bottom:4px;color:#ccc;font-size:13px;">✅ ${item.name} (${item.type})</div>`
+                        ).join('') : '<div style="color:#666;font-size:13px;">Нет добавленных СИЗ</div>'}
+                    </div>
+                    <button onclick="openPPEModalForEmployee('${emp.snils}')" style="margin-top:8px;padding:6px 16px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);border-radius:6px;color:#b388ff;cursor:pointer;font-size:13px;">➕ Добавить СИЗ</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="this.closest('.modal-overlay').remove()">Закрыть</button>
+                <button class="btn-primary" onclick="saveEmployeeDataFromModal('${emp.snils}')" style="width:auto;padding:10px 24px;">💾 Сохранить</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function saveEmployeeDataFromModal(snils) {
+    const data = getStaffData();
+    let emp = null;
+    
+    for (const [dept, deptData] of Object.entries(data.departments)) {
+        const idx = deptData.employees.findIndex(e => e.snils === snils);
+        if (idx !== -1) {
+            emp = deptData.employees[idx];
+            const instructionDate = document.getElementById('empInstructionDate')?.value || '';
+            const trainingDate = document.getElementById('empTrainingDate')?.value || '';
+            emp.instructionDate = instructionDate;
+            emp.trainingDate = trainingDate;
+            saveStaffData(data);
+            renderStaffWithDepartments();
+            document.getElementById('employeeModal')?.remove();
+            alert('✅ Данные сохранены!');
+            return;
+        }
+    }
+    
+    const idx = data.unassigned.findIndex(e => e.snils === snils);
+    if (idx !== -1) {
+        emp = data.unassigned[idx];
+        const instructionDate = document.getElementById('empInstructionDate')?.value || '';
+        const trainingDate = document.getElementById('empTrainingDate')?.value || '';
+        emp.instructionDate = instructionDate;
+        emp.trainingDate = trainingDate;
+        saveStaffData(data);
+        renderStaffWithDepartments();
+        document.getElementById('employeeModal')?.remove();
+        alert('✅ Данные сохранены!');
+    }
+}
+
+function openPPEModalForEmployee(snils) {
+    const data = getStaffData();
+    let emp = null;
+    
+    for (const [dept, deptData] of Object.entries(data.departments)) {
+        const found = deptData.employees.find(e => e.snils === snils);
+        if (found) { emp = found; break; }
+    }
+    if (!emp) {
+        emp = data.unassigned.find(e => e.snils === snils);
+    }
+    if (!emp) { alert('❌ Сотрудник не найден'); return; }
+    
+    const tempWorkplace = {
+        name: `${emp.last_name} ${emp.first_name}`,
+        position: emp.position,
+        ppeItems: emp.ppeItems || []
+    };
+    
+    currentPPEWorkplace = tempWorkplace;
+    ppeItems = tempWorkplace.ppeItems || [];
+    openPPEModal(tempWorkplace);
+    
+    const originalSave = savePPEItems;
+    savePPEItems = function() {
+        if (!currentPPEWorkplace) return;
+        if (ppeItems.length === 0) { alert('⚠️ Добавьте хотя бы одно СИЗ!'); return; }
+        
+        const data = getStaffData();
+        let target = null;
+        for (const [dept, deptData] of Object.entries(data.departments)) {
+            const found = deptData.employees.find(e => e.snils === snils);
+            if (found) { target = found; break; }
+        }
+        if (!target) {
+            target = data.unassigned.find(e => e.snils === snils);
+        }
+        if (target) {
+            target.ppeItems = ppeItems;
+            saveStaffData(data);
+        }
+        currentPPEWorkplace.ppeItems = ppeItems;
+        currentPPEWorkplace.hasPPE = true;
+        alert(`✅ Сохранено ${ppeItems.length} СИЗ!`);
+        closePPEModal();
+        savePPEItems = originalSave;
+        renderStaffWithDepartments();
+    };
+}
+// ============================================================
+// РАЗДЕЛ "МЕДОСМОТРЫ" - ВИДЫ ДЕЯТЕЛЬНОСТИ ПО ПРИКАЗУ №342н
+// ============================================================
+const PSYCHO_ACTIVITIES = [
+    { id: 1, title: 'Деятельность, связанная с управлением транспортными средствами или управлением движением транспортных средств по профессиям и должностям согласно перечню работ, профессий, должностей, непосредственно связанных с управлением транспортными средствами или управлением движением транспортных средств' },
+    { id: 2, title: 'Деятельность, связанная с производством, транспортировкой, хранением и применением взрывчатых материалов и веществ' },
+    { id: 3, title: 'Деятельность в области использования атомной энергии, осуществляемая работниками объектов использования атомной энергии при наличии у них разрешений, выдаваемых органами Федеральной службы по экологическому, технологическому и атомному надзору' },
+    { id: 4, title: 'Деятельность, связанная с оборотом оружия' },
+    { id: 5, title: 'Деятельность, связанная с проведением аварийно-спасательных работ, а также с работой, выполняемой пожарной охраной при тушении пожаров' },
+    { id: 6, title: 'Деятельность, непосредственно связанная с управлением подъемными механизмами (кранами), подлежащими учету в органах Федеральной службы по экологическому, технологическому и атомному надзору' },
+    { id: 7, title: 'Деятельность по непосредственному забору, очистке и распределению воды питьевых нужд систем централизованного водоснабжения' },
+    { id: 8, title: 'Педагогическая деятельность в организациях, осуществляющих образовательную деятельность' },
+    { id: 9, title: 'Деятельность по присмотру и уходу за детьми' },
+    { id: 11, title: 'Деятельность в сфере электроэнергетики, связанная с организацией и осуществлением монтажа, наладки, технического обслуживания, ремонта, управления режимом работы электроустановок' },
+    { id: 12, title: 'Деятельность в сфере теплоснабжения, связанная с организацией и осуществлением монтажа, наладки, технического обслуживания, ремонта, управления режимом работы объектов теплоснабжения' },
+    { id: 13, title: 'Деятельность, непосредственно связанная с обслуживанием оборудования, работающего под избыточным давлением более 0,07 МПа и подлежащего учету в органах Федеральной службы по экологическому, технологическому и атомному надзору: пара, газа (в газообразном, сжиженном состоянии); воды при температуре более 115 °С; иных жидкостей при температуре, превышающей температуру их кипения при избыточном давлении 0,07 МПа' },
+    { id: 14, title: 'Деятельность, непосредственно связанная с диспетчеризацией производственных процессов в химической (нефтехимической) промышленности, включая деятельность операторов производственного оборудования в химической (нефтехимической) промышленности (при производстве химических веществ 1 и 2 классов опасности)' },
+    { id: 15, title: 'Деятельность, связанная с добычей угля подземным способом' },
+    { id: 16, title: 'Деятельность, связанная с эксплуатацией, ремонтом скважин и установок при переработке высокосернистой нефти, очистке нефти и газа от сероводорода, очистке нефтеналивных судов, цистерн, резервуаров, добычей и обработкой озокерита, экстракционноозокеритовым производством' },
+    { id: 17, title: 'Деятельность, непосредственно связанная с контактами с возбудителями инфекционных заболеваний - патогенными микроорганизмами I и II группы патогенности, возбудителями особо опасных инфекций, а также с биологическими токсинами (микробного, растительного и животного происхождения) или с доступом к указанным субстанциям' }
+];
+
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ РАЗДЕЛА "МЕДОСМОТРЫ"
+// ============================================================
+function initMedPage() {
+    renderMedOrgSelects();
+    const today = new Date().toISOString().split('T')[0];
+    const medDate = document.getElementById('medDate');
+    const psychoDate = document.getElementById('psychoDate');
+    if (medDate && !medDate.value) medDate.value = today;
+    if (psychoDate && !psychoDate.value) psychoDate.value = today;
+    showMedTab('med');
+}
+
+function renderMedOrgSelects() {
+    // Работодатели
+    const orgSelect = document.getElementById('medOrgSelect');
+    if (orgSelect) {
+        const orgs = getOrgs();
+        orgSelect.innerHTML = '<option value="">-- Выберите организацию --</option>';
+        orgs.forEach(org => {
+            const opt = document.createElement('option');
+            opt.value = org.id;
+            opt.textContent = `${org.name} (${org.inn})`;
+            orgSelect.appendChild(opt);
+        });
+        const currentOrgId = localStorage.getItem('currentOrgId');
+        if (currentOrgId) orgSelect.value = currentOrgId;
+    }
+    // Для психо
+    const psychoOrgSelect = document.getElementById('psychoOrgSelect');
+    if (psychoOrgSelect) {
+        const orgs = getOrgs();
+        psychoOrgSelect.innerHTML = '<option value="">-- Выберите организацию --</option>';
+        orgs.forEach(org => {
+            const opt = document.createElement('option');
+            opt.value = org.id;
+            opt.textContent = `${org.name} (${org.inn})`;
+            psychoOrgSelect.appendChild(opt);
+        });
+        const currentOrgId = localStorage.getItem('currentOrgId');
+        if (currentOrgId) psychoOrgSelect.value = currentOrgId;
+    }
+    // Медорганизации
+    const medOrgSelect = document.getElementById('medMedOrgSelect');
+    if (medOrgSelect) {
+        const medOrgs = getMedOrgs();
+        medOrgSelect.innerHTML = '<option value="">-- Выберите медорганизацию --</option>';
+        medOrgs.forEach(org => {
+            const opt = document.createElement('option');
+            opt.value = org.id;
+            opt.textContent = `${org.name}${org.ogrn ? ' (ОГРН: ' + org.ogrn + ')' : ''}`;
+            medOrgSelect.appendChild(opt);
+        });
+    }
+    const psychoMedOrgSelect = document.getElementById('psychoMedOrgSelect');
+    if (psychoMedOrgSelect) {
+        const medOrgs = getMedOrgs();
+        psychoMedOrgSelect.innerHTML = '<option value="">-- Выберите медорганизацию --</option>';
+        medOrgs.forEach(org => {
+            const opt = document.createElement('option');
+            opt.value = org.id;
+            opt.textContent = `${org.name}${org.ogrn ? ' (ОГРН: ' + org.ogrn + ')' : ''}`;
+            psychoMedOrgSelect.appendChild(opt);
+        });
+    }
+}
+
+function showMedTab(name) {
+    document.querySelectorAll('#medPage .tab button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#medPage [id^="medTab"]').forEach(t => t.classList.add('hidden'));
+    
+    if (name === 'med') {
+        const el = document.getElementById('medTabMed');
+        if (el) el.classList.remove('hidden');
+        document.querySelector('#medPage .tab button:nth-child(1)')?.classList.add('active');
+        renderMedEmployeeList('med');
+    } else if (name === 'psycho') {
+        const el = document.getElementById('medTabPsycho');
+        if (el) el.classList.remove('hidden');
+        document.querySelector('#medPage .tab button:nth-child(2)')?.classList.add('active');
+        renderMedEmployeeList('psycho');
+    }
+}
+
+function renderMedEmployeeList(mode = 'med') {
+    const container = document.getElementById(mode === 'med' ? 'medEmployeeList' : 'psychoEmployeeList');
+    if (!container) return;
+    const all = getAllEmployees();
+    
+    if (all.length === 0) {
+        container.innerHTML = '<p style="color:#6a6a8a;text-align:center;padding:20px;">Нет загруженных сотрудников.</p>';
+        return;
+    }
+    
+    let html = '<div style="max-height:500px;overflow-y:auto;">';
+    all.forEach(emp => {
+        const savedMed = JSON.parse(localStorage.getItem(`medData_${emp.snils}`) || '{}');
+        const savedPsycho = JSON.parse(localStorage.getItem(`psychoData_${emp.snils}`) || '{}');
+        
+        if (mode === 'med') {
+            const factors = savedMed.factors || emp.medFactors || '';
+            const checked = savedMed.checked || false;
+            const birthDate = savedMed.birthDate || emp.birthDate || '';
+            const gender = savedMed.gender || emp.gender || '';
+            const policy = savedMed.policy || emp.policyNumber || '';
+            
+            html += `
+                <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);">
+                    <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+                        <input type="checkbox" class="med-check" data-snils="${emp.snils}" ${checked ? 'checked' : ''} style="width:18px;height:18px;accent-color:#7c3aed;">
+                        <span class="emp-name" style="color:#00d4ff;font-size:14px;">${emp.last_name} ${emp.first_name}</span>
+                        <span style="color:#8888aa;font-size:13px;">${emp.position}</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 2fr;gap:8px;">
+                        <div>
+                            <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Дата рождения</label>
+                            <input type="date" class="med-birth-date" data-snils="${emp.snils}" value="${birthDate}" style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Пол</label>
+                            <select class="med-gender" data-snils="${emp.snils}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                                <option value="">--</option>
+                                <option value="М" ${gender === 'М' ? 'selected' : ''}>М</option>
+                                <option value="Ж" ${gender === 'Ж' ? 'selected' : ''}>Ж</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">№ полиса</label>
+                            <input type="text" class="med-policy" data-snils="${emp.snils}" value="${policy}" placeholder="1234 5678..." style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Вредные факторы (Приказ №29н)</label>
+                            <input type="text" class="med-factors" data-snils="${emp.snils}" value="${factors}" placeholder="4.3.1, 4.3.2, 18.1" style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        if (mode === 'psycho') {
+            const activityId = savedPsycho.activityId || emp.psychoActivity || '';
+            const checked = savedPsycho.checked || false;
+            const birthDate = savedPsycho.birthDate || emp.birthDate || '';
+            const gender = savedPsycho.gender || emp.gender || '';
+            const regAddress = savedPsycho.regAddress || emp.registrationAddress || '';
+            
+            const activityOptions = PSYCHO_ACTIVITIES.map(a => 
+                `<option value="${a.id}" ${activityId == a.id ? 'selected' : ''}>${a.id}. ${a.title.substring(0, 60)}${a.title.length > 60 ? '...' : ''}</option>`
+            ).join('');
+            
+            html += `
+                <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);">
+                    <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+                        <input type="checkbox" class="psycho-check" data-snils="${emp.snils}" ${checked ? 'checked' : ''} style="width:18px;height:18px;accent-color:#7c3aed;">
+                        <span class="emp-name" style="color:#00d4ff;font-size:14px;">${emp.last_name} ${emp.first_name}</span>
+                        <span style="color:#8888aa;font-size:13px;">${emp.position}</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 2fr;gap:8px;">
+                        <div>
+                            <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Дата рождения</label>
+                            <input type="date" class="psycho-birth-date" data-snils="${emp.snils}" value="${birthDate}" style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Пол</label>
+                            <select class="psycho-gender" data-snils="${emp.snils}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                                <option value="">--</option>
+                                <option value="М" ${gender === 'М' ? 'selected' : ''}>М</option>
+                                <option value="Ж" ${gender === 'Ж' ? 'selected' : ''}>Ж</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Адрес регистрации</label>
+                            <input type="text" class="psycho-address" data-snils="${emp.snils}" value="${regAddress}" placeholder="г. ..., ул. ..." style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Вид деятельности (Приказ №342н)</label>
+                            <select class="psycho-activity" data-snils="${emp.snils}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                                <option value="">-- Выберите вид --</option>
+                                ${activityOptions}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+    html += '</div>';
+    container.innerHTML = html;
+    
+    if (mode === 'med') {
+        container.querySelectorAll('.med-check, .med-birth-date, .med-gender, .med-policy, .med-factors').forEach(el => {
+            el.addEventListener('change', saveMedData);
+            el.addEventListener('input', saveMedData);
+        });
+    }
+    if (mode === 'psycho') {
+        container.querySelectorAll('.psycho-check, .psycho-birth-date, .psycho-gender, .psycho-address, .psycho-activity').forEach(el => {
+            el.addEventListener('change', savePsychoData);
+            el.addEventListener('input', savePsychoData);
+        });
+    }
+}
+
+function saveMedData() {
+    const snils = this.dataset.snils;
+    const checked = document.querySelector(`.med-check[data-snils="${snils}"]`)?.checked || false;
+    const birthDate = document.querySelector(`.med-birth-date[data-snils="${snils}"]`)?.value || '';
+    const gender = document.querySelector(`.med-gender[data-snils="${snils}"]`)?.value || '';
+    const policy = document.querySelector(`.med-policy[data-snils="${snils}"]`)?.value || '';
+    const factors = document.querySelector(`.med-factors[data-snils="${snils}"]`)?.value || '';
+    
+    localStorage.setItem(`medData_${snils}`, JSON.stringify({ checked, birthDate, gender, policy, factors }));
+    
+    const data = getStaffData();
+    let found = false;
+    for (const [dept, deptData] of Object.entries(data.departments)) {
+        const idx = deptData.employees.findIndex(e => e.snils === snils);
+        if (idx !== -1) {
+            deptData.employees[idx].birthDate = birthDate;
+            deptData.employees[idx].gender = gender;
+            deptData.employees[idx].policyNumber = policy;
+            deptData.employees[idx].medFactors = factors;
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        const idx = data.unassigned.findIndex(e => e.snils === snils);
+        if (idx !== -1) {
+            data.unassigned[idx].birthDate = birthDate;
+            data.unassigned[idx].gender = gender;
+            data.unassigned[idx].policyNumber = policy;
+            data.unassigned[idx].medFactors = factors;
+        }
+    }
+    saveStaffData(data);
+}
+
+function savePsychoData() {
+    const snils = this.dataset.snils;
+    const checked = document.querySelector(`.psycho-check[data-snils="${snils}"]`)?.checked || false;
+    const birthDate = document.querySelector(`.psycho-birth-date[data-snils="${snils}"]`)?.value || '';
+    const gender = document.querySelector(`.psycho-gender[data-snils="${snils}"]`)?.value || '';
+    const regAddress = document.querySelector(`.psycho-address[data-snils="${snils}"]`)?.value || '';
+    const activityId = document.querySelector(`.psycho-activity[data-snils="${snils}"]`)?.value || '';
+    
+    localStorage.setItem(`psychoData_${snils}`, JSON.stringify({ checked, birthDate, gender, regAddress, activityId }));
+    
+    const data = getStaffData();
+    let found = false;
+    for (const [dept, deptData] of Object.entries(data.departments)) {
+        const idx = deptData.employees.findIndex(e => e.snils === snils);
+        if (idx !== -1) {
+            deptData.employees[idx].birthDate = birthDate;
+            deptData.employees[idx].gender = gender;
+            deptData.employees[idx].registrationAddress = regAddress;
+            deptData.employees[idx].psychoActivity = activityId;
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        const idx = data.unassigned.findIndex(e => e.snils === snils);
+        if (idx !== -1) {
+            data.unassigned[idx].birthDate = birthDate;
+            data.unassigned[idx].gender = gender;
+            data.unassigned[idx].registrationAddress = regAddress;
+            data.unassigned[idx].psychoActivity = activityId;
+        }
+    }
+    saveStaffData(data);
+}
+
+function generateMedDirections() {
+    const orgId = document.getElementById('medOrgSelect')?.value;
+    const medOrgId = document.getElementById('medMedOrgSelect')?.value;
+    const directionType = document.getElementById('medDirectionType')?.value || 'ПРЕДВАРИТЕЛЬНЫЙ';
+    const directionNumber = document.getElementById('medDirectionNumber')?.value || '___';
+    const directionDate = document.getElementById('medDate')?.value || new Date().toISOString().split('T')[0];
+    
+    if (!orgId) { alert('❌ Выберите организацию!'); return; }
+    if (!medOrgId) { alert('❌ Выберите медицинскую организацию!'); return; }
+    
+    const org = getOrgs().find(o => o.id === parseInt(orgId));
+    const medOrg = getMedOrgs().find(o => o.id === parseInt(medOrgId));
+    if (!org || !medOrg) { alert('❌ Организация не найдена!'); return; }
+    
+    const checkboxes = document.querySelectorAll('.med-check:checked');
+    if (checkboxes.length === 0) { alert('❌ Выберите хотя бы одного сотрудника!'); return; }
+    
+    let allDirectionsHTML = '';
+    let count = 0;
+    
+    checkboxes.forEach(cb => {
+        const snils = cb.dataset.snils;
+        const emp = getAllEmployees().find(e => e.snils === snils);
+        if (!emp) return;
+        
+        const savedMed = JSON.parse(localStorage.getItem(`medData_${snils}`) || '{}');
+        const birthDate = savedMed.birthDate || emp.birthDate || '';
+        const gender = savedMed.gender || emp.gender || '';
+        const policy = savedMed.policy || emp.policyNumber || '';
+        const factors = savedMed.factors || emp.medFactors || '';
+        
+        count++;
+        
+        allDirectionsHTML += `
+        <div style="page-break-after:always;padding:20px 30px;font-family:'Times New Roman',Times,serif;font-size:12pt;color:#000;background:#fff;width:100%;min-height:297mm;box-sizing:border-box;position:relative;">
+            <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:20px;">
+                <div style="font-size:14pt;font-weight:bold;">${org.name}</div>
+                <div style="font-size:10pt;color:#555;">${org.email || ''}${org.email && org.phone ? ', ' : ''}${org.phone || ''}</div>
+                ${org.okved ? `<div style="font-size:10pt;color:#555;">ОКВЭД ${org.okved}</div>` : ''}
+            </div>
+            
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="font-size:12pt;font-weight:bold;">${medOrg.name}</div>
+                <div style="font-size:10pt;color:#555;">${medOrg.address || ''}${medOrg.ogrn ? ', ОГРН ' + medOrg.ogrn : ''}</div>
+                ${medOrg.phone ? `<div style="font-size:10pt;color:#555;">тел. ${medOrg.phone}</div>` : ''}
+            </div>
+            
+            <div style="display:flex;justify-content:space-between;margin-bottom:20px;font-size:12pt;">
+                <div><strong>Дата выдачи:</strong> ${formatDate(directionDate)}</div>
+                <div><strong>№:</strong> ${directionNumber}</div>
+            </div>
+            
+            <div style="text-align:center;font-size:14pt;font-weight:bold;margin:30px 0 20px;">Направление на медицинский осмотр</div>
+            <div style="text-align:center;font-size:12pt;font-weight:bold;margin-bottom:30px;">${directionType}</div>
+            
+            <table style="width:100%;border-collapse:collapse;font-size:11pt;margin-bottom:20px;">
+                <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;width:35%;"><strong>Ф.И.О. работника:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</td></tr>
+                <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Дата рождения:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${formatDate(birthDate)}</td></tr>
+                <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Пол работника:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${gender}</td></tr>
+                <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Наименование структурного подразделения:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${emp.department || ''}</td></tr>
+                <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Наименование должности:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${emp.position}</td></tr>
+                <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Вредные и (или) опасные факторы, виды работ (Приказ № 29н):</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${factors}</td></tr>
+                <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>№ страхового полиса и (или) ДМС:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${policy}</td></tr>
+            </table>
+            
+            <div style="margin-bottom:40px;font-size:11pt;">
+                <div><strong>Сведения о заключениях предварительного/периодического МО, выданных ранее:</strong></div>
+                <div style="border-bottom:1px solid #000;height:30px;margin-top:5px;"></div>
+            </div>
+            
+            <div style="margin-top:60px;font-size:12pt;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr>
+                        <td style="width:50%;vertical-align:bottom;padding-bottom:5px;">
+                            <div style="border-bottom:1px solid #000;height:30px;"></div>
+                            <div style="font-size:10pt;text-align:center;margin-top:3px;">Уполномоченный работник (подпись)</div>
+                        </td>
+                        <td style="width:50%;vertical-align:bottom;padding-bottom:5px;padding-left:20px;">
+                            <div style="font-size:11pt;">${org.representative || '________________________'}</div>
+                            <div style="font-size:10pt;color:#555;">${org.representativePosition || 'Ф.И.О., должность'}</div>
+                        </td>
+                    </tr>
+                </table>
+                <div style="margin-top:40px;font-size:12pt;text-align:center;">М.П.</div>
+            </div>
+        </div>
+        `;
+    });
+    
+    openPrintWindow(allDirectionsHTML, `Направления на медосмотр (${count} шт.)`);
+}
+
+function generatePsychoDirections() {
+    const orgId = document.getElementById('psychoOrgSelect')?.value;
+    const medOrgId = document.getElementById('psychoMedOrgSelect')?.value;
+    const directionDate = document.getElementById('psychoDate')?.value || new Date().toISOString().split('T')[0];
+    
+    if (!orgId) { alert('❌ Выберите организацию!'); return; }
+    if (!medOrgId) { alert('❌ Выберите медицинскую организацию!'); return; }
+    
+    const org = getOrgs().find(o => o.id === parseInt(orgId));
+    const medOrg = getMedOrgs().find(o => o.id === parseInt(medOrgId));
+    if (!org || !medOrg) { alert('❌ Организация не найдена!'); return; }
+    
+    const checkboxes = document.querySelectorAll('.psycho-check:checked');
+    if (checkboxes.length === 0) { alert('❌ Выберите хотя бы одного сотрудника!'); return; }
+    
+    let allDirectionsHTML = '';
+    let count = 0;
+    
+    checkboxes.forEach(cb => {
+        const snils = cb.dataset.snils;
+        const emp = getAllEmployees().find(e => e.snils === snils);
+        if (!emp) return;
+        
+        const savedPsycho = JSON.parse(localStorage.getItem(`psychoData_${snils}`) || '{}');
+        const birthDate = savedPsycho.birthDate || emp.birthDate || '';
+        const gender = savedPsycho.gender || emp.gender || '';
+        const regAddress = savedPsycho.regAddress || emp.registrationAddress || '';
+        const activityId = savedPsycho.activityId || emp.psychoActivity || '';
+        
+        const activity = PSYCHO_ACTIVITIES.find(a => a.id == activityId);
+        if (!activity) { alert(`❌ Для ${emp.last_name} не выбран вид деятельности!`); return; }
+        
+        count++;
+        
+        allDirectionsHTML += `
+        <div style="page-break-after:always;padding:20px 30px;font-family:'Times New Roman',Times,serif;font-size:11pt;color:#000;background:#fff;width:100%;min-height:297mm;box-sizing:border-box;position:relative;">
+            <div style="text-align:center;font-size:10pt;color:#555;margin-bottom:20px;">
+                <div style="font-weight:bold;">ОБРАЗЕЦ</div>
+                <div>(подготовлен на основании положений Приказа Минздрава РФ от 20.05.2022 №342н)</div>
+            </div>
+            
+            <div style="text-align:center;font-size:14pt;font-weight:bold;margin:20px 0 30px;">Направление на обязательное психиатрическое освидетельствование</div>
+            
+            <table style="width:100%;border-collapse:collapse;font-size:11pt;margin-bottom:20px;">
+                <tr><td style="padding:4px 0;width:35%;"><strong>Наименование работодателя:</strong></td><td style="padding:4px 0;">${org.name}</td></tr>
+                <tr><td style="padding:4px 0;"><strong>Адрес электронной почты, контактный номер телефона:</strong></td><td style="padding:4px 0;">${org.email || ''}${org.email && org.phone ? ', ' : ''}${org.phone || ''}</td></tr>
+                <tr><td style="padding:4px 0;"><strong>ОКВЭД:</strong></td><td style="padding:4px 0;">${org.okved || '___'}</td></tr>
+            </table>
+            
+            <table style="width:100%;border-collapse:collapse;font-size:11pt;margin-bottom:20px;">
+                <tr><td style="padding:4px 0;width:35%;"><strong>Наименование медицинской организации:</strong></td><td style="padding:4px 0;">${medOrg.name}</td></tr>
+                <tr><td style="padding:4px 0;"><strong>Фактический адрес местонахождения:</strong></td><td style="padding:4px 0;">${medOrg.address || ''}${medOrg.ogrn ? ', ОГРН ' + medOrg.ogrn : ''}</td></tr>
+            </table>
+            
+            <table style="width:100%;border-collapse:collapse;font-size:11pt;margin-bottom:20px;">
+                <tr><td style="padding:4px 0;width:35%;"><strong>Ф.И.О. работника:</strong></td><td style="padding:4px 0;">${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</td></tr>
+                <tr><td style="padding:4px 0;"><strong>Дата рождения:</strong></td><td style="padding:4px 0;">${formatDate(birthDate)} <strong style="margin-left:20px;">Пол:</strong> ${gender}</td></tr>
+                <tr><td style="padding:4px 0;"><strong>Адрес регистрации:</strong></td><td style="padding:4px 0;">${regAddress}</td></tr>
+            </table>
+            
+            <div style="font-size:11pt;margin-bottom:10px;">
+                <div><strong>Наименование структурного подразделения работодателя, в котором работник осуществляет отдельный вид (виды) деятельности:</strong></div>
+                <div style="margin-top:3px;">${emp.department || '(заполняется при наличии)'}</div>
+            </div>
+            
+            <div style="font-size:11pt;margin-bottom:20px;">
+                <div><strong>Наименование должности (профессии):</strong> ${emp.position}</div>
+            </div>
+            
+            <div style="font-size:11pt;margin-bottom:30px;">
+                <div><strong>Вид (виды) деятельности осуществляемый в соответствии с Приложением №2 к Приказу Министерства здравоохранения РФ от 20.05.2022 г. № 342н:</strong></div>
+                <div style="margin-top:5px;padding:5px;border-bottom:1px solid #000;">${activity.id}. ${activity.title}</div>
+            </div>
+            
+            <div style="margin-bottom:30px;font-size:11pt;">
+                <div><strong>Сведения о заключениях, выданных по результатам обязательных предварительных и (или) периодических медицинских осмотров работников, предусмотренных ст. 220 ТК РФ (при наличии):</strong></div>
+                <div style="border-bottom:1px solid #000;height:25px;margin-top:5px;"></div>
+            </div>
+            
+            <div style="font-size:11pt;margin-bottom:20px;">
+                <strong>Дата выдачи направления работнику:</strong> ${formatDate(directionDate)}
+            </div>
+            
+            <table style="width:100%;border-collapse:collapse;font-size:11pt;margin-top:40px;">
+                <tr>
+                    <td style="width:50%;vertical-align:bottom;padding-bottom:5px;">
+                        <div style="border-bottom:1px solid #000;height:30px;"></div>
+                        <div style="font-size:10pt;text-align:center;margin-top:3px;">(подпись)</div>
+                    </td>
+                    <td style="width:50%;vertical-align:bottom;padding-bottom:5px;padding-left:20px;">
+                        <div style="font-size:11pt;">${org.representative || '________________________'}</div>
+                        <div style="font-size:10pt;color:#555;">${org.representativePosition || 'Ф.И.О., должность работодателя (его представителя)'}</div>
+                    </td>
+                </tr>
+            </table>
+            
+            <div style="margin-top:30px;font-size:11pt;">
+                <strong>Дата формирования направления:</strong> ${formatDate(directionDate)}
+            </div>
+            
+            <div style="margin-top:40px;font-size:12pt;text-align:center;">М.П.</div>
+        </div>
+        `;
+    });
+    
+    openPrintWindow(allDirectionsHTML, `Направления на психосвидетельствование (${count} шт.)`);
+}
+
+function openPrintWindow(html, title) {
+    const win = window.open('', '_blank');
+    if (!win) {
+        alert('❌ Браузер заблокировал открытие нового окна. Разрешите всплывающие окна.');
+        return;
+    }
+    
+    win.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>${title}</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { font-family: 'Times New Roman', Times, serif; background: #f0f0f0; padding: 0; margin: 0; }
+                @page { size: A4 portrait; margin: 0; }
+                @media print {
+                    body { background: #fff; padding: 0; margin: 0; }
+                    .no-print { display: none; }
+                    div[style*="page-break-after:always"] { page-break-after: always; }
+                }
+                .no-print {
+                    text-align: center;
+                    padding: 15px;
+                    background: #fff;
+                    position: sticky;
+                    top: 0;
+                    z-index: 100;
+                    border-bottom: 2px solid #7c3aed;
+                }
+                .no-print button {
+                    padding: 8px 24px;
+                    margin: 0 8px;
+                    background: linear-gradient(135deg, #7c3aed, #00d4ff);
+                    border: none;
+                    border-radius: 8px;
+                    color: #fff;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+                .no-print button:hover { transform: scale(1.02); }
+                .no-print .btn-secondary { background: #666; }
+                @media print { .no-print { display: none !important; } }
+            </style>
+        </head>
+        <body>
+            <div class="no-print">
+                <h3>🖨️ ${title}</h3>
+                <button onclick="window.print()">🖨️ Печать</button>
+                <button class="btn-secondary" onclick="window.close()">✖ Закрыть</button>
+                <p style="font-size:11px;color:#666;margin-top:4px;">📄 Один лист А4 на одно направление</p>
+            </div>
+            ${html}
+            <script>
+                setTimeout(() => window.print(), 1500);
+            <\/script>
+        </body>
+        </html>
+    `);
+    win.document.close();
+}
+
+function openAddMedOrgModal() {
+    const modal = document.getElementById('addMedOrgModal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeAddMedOrgModal() {
+    const modal = document.getElementById('addMedOrgModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function saveNewMedOrg() {
+    const name = document.getElementById('newMedOrgName')?.value.trim();
+    const address = document.getElementById('newMedOrgAddress')?.value.trim();
+    const ogrn = document.getElementById('newMedOrgOgrn')?.value.trim();
+    const phone = document.getElementById('newMedOrgPhone')?.value.trim();
+    
+    if (!name) { alert('❌ Введите название медорганизации!'); return; }
+    
+    const medOrgs = getMedOrgs();
+    medOrgs.push({ id: Date.now(), name, address, ogrn, phone });
+    saveMedOrgs(medOrgs);
+    
+    renderMedOrgSelects();
+    closeAddMedOrgModal();
+    
+    document.getElementById('newMedOrgName').value = '';
+    document.getElementById('newMedOrgAddress').value = '';
+    document.getElementById('newMedOrgOgrn').value = '';
+    document.getElementById('newMedOrgPhone').value = '';
+    
+    alert('✅ Медорганизация добавлена!');
+}
+
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================================
+function initTrainingPage() {
+    renderOrgs();
+    renderStaffWithDepartments();
+    renderProtocol();
+    fillFamEmployeeSelect();
+    
+    const showOrgFormBtn = document.getElementById('showOrgFormBtn');
+    if (showOrgFormBtn) showOrgFormBtn.onclick = function() {
+        document.getElementById('orgForm').classList.remove('hidden');
+    };
+    const saveOrgBtn = document.getElementById('saveOrgBtn');
+    if (saveOrgBtn) saveOrgBtn.onclick = function() {
+        const name = document.getElementById('orgNameInput').value.trim();
+        const inn = document.getElementById('orgInnInput').value.trim();
+        if (!name || !inn) { alert('Заполните все поля'); return; }
+        const orgs = getOrgs();
+        orgs.push({ id: Date.now(), name, inn });
+        saveOrgs(orgs);
+        renderOrgs();
+        document.getElementById('orgForm').classList.add('hidden');
+        document.getElementById('orgNameInput').value = '';
+        document.getElementById('orgInnInput').value = '';
+        alert('✅ Организация добавлена');
+    };
+    const cancelOrgBtn = document.getElementById('cancelOrgBtn');
+    if (cancelOrgBtn) cancelOrgBtn.onclick = function() {
+        document.getElementById('orgForm').classList.add('hidden');
+    };
+    const deleteOrgBtn = document.getElementById('deleteOrgBtn');
+    if (deleteOrgBtn) deleteOrgBtn.onclick = function() {
+        const id = parseInt(document.getElementById('orgSelect').value);
+        if (!id) { alert('Выберите организацию'); return; }
+        if (!confirm('Удалить?')) return;
+        let orgs = getOrgs();
+        orgs = orgs.filter(o => o.id !== id);
+        saveOrgs(orgs);
+        renderOrgs();
+        alert('✅ Удалено');
+    };
+    const generateBtn = document.getElementById('generateBtn');
+    if (generateBtn) generateBtn.onclick = generateXML;
+    const addSelectedBtn = document.getElementById('addSelectedBtn');
+    if (addSelectedBtn) addSelectedBtn.onclick = addSelectedToProtocol;
+    const staffImportBtn = document.getElementById('staffImportBtn');
+    if (staffImportBtn) staffImportBtn.onclick = importStaffFile;
+    const generateFamBtn = document.getElementById('generateFamBtn');
+    if (generateFamBtn) generateFamBtn.onclick = generateFamiliarization;
+    const printFamBtn = document.getElementById('printFamBtn');
+    if (printFamBtn) printFamBtn.onclick = function() {
+        const content = document.getElementById('famContent');
+        if (!content.innerHTML) { alert('Сначала сформируйте лист'); return; }
+        const win = window.open('', '_blank');
+        win.document.write(`<!DOCTYPE html><html><head><title>Лист ознакомления</title>
+            <style>body{font-family:Arial;padding:40px;color:#222;max-width:1000px;margin:0 auto;}*{print-color-adjust:exact;}@media print{body{padding:20px;}}</style>
+        </head><body>${content.innerHTML}<script>window.print();window.close();<\/script></body></html>`);
+        win.document.close();
+    };
+    
+    renderCalendar();
+    initPPECardsPage();
+}
+
+// ============================================================
+// ГЕНЕРАЦИЯ XML - ФОРМАТ РЕЕСТРА
 // ============================================================
 function generateXML() {
     const orgSelect = document.getElementById('orgSelect');
@@ -2526,7 +2653,6 @@ function generateXML() {
     const number = document.getElementById('protocolNumber').value.trim() || '01/26';
     const date = document.getElementById('protocolDate').value || new Date().toISOString().split('T')[0];
     
-    // ПРАВИЛЬНЫЕ ПОЛНЫЕ НАЗВАНИЯ ПРОГРАММ
     const PROGRAM_TITLES = {
         1: 'Оказание первой помощи пострадавшим',
         2: 'Использование (применение) средств индивидуальной защиты',
@@ -2534,61 +2660,41 @@ function generateXML() {
         4: 'Безопасные методы и приемы выполнения работ при воздействии вредных и (или) опасных производственных факторов, источников опасности, идентифицированных в рамках специальной оценки условий труда и оценки профессиональных рисков'
     };
     
-    // Получаем выбранные программы
     const programs = [];
     document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]:checked').forEach(cb => {
         const id = parseInt(cb.value);
         const fullTitle = PROGRAM_TITLES[id];
         if (fullTitle) {
-            programs.push({
-                id: id,
-                title: fullTitle
-            });
-        } else {
-            const label = cb.closest('.program-check');
-            if (label) {
-                const text = label.textContent.trim();
-                const programName = text.replace(/^\d+\.\s*/, '').trim();
-                programs.push({
-                    id: id,
-                    title: programName
-                });
-            }
+            programs.push({ id: id, title: fullTitle });
         }
     });
     
     if (programs.length === 0) { alert('❌ Выберите программы!'); return; }
     
-    // Формируем XML в формате RegistrySet
     let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
     xml += '<RegistrySet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
     
     protocol.forEach(emp => {
         programs.forEach(program => {
             xml += '\t<RegistryRecord>\n';
-            
             xml += '\t\t<Worker>\n';
             xml += `\t\t\t<LastName>${escXml(emp.last_name)}</LastName>\n`;
             xml += `\t\t\t<FirstName>${escXml(emp.first_name)}</FirstName>\n`;
             xml += `\t\t\t<MiddleName>${escXml(emp.middle_name || '')}</MiddleName>\n`;
-            const snilsFormatted = formatSnils(emp.snils);
-            xml += `\t\t\t<Snils>${escXml(snilsFormatted)}</Snils>\n`;
+            xml += `\t\t\t<Snils>${escXml(formatSnils(emp.snils))}</Snils>\n`;
             xml += `\t\t\t<Position>${escXml(emp.position)}</Position>\n`;
             xml += `\t\t\t<EmployerInn>${escXml(org.inn)}</EmployerInn>\n`;
             xml += `\t\t\t<EmployerTitle>${escXml(org.name)}</EmployerTitle>\n`;
             xml += '\t\t</Worker>\n';
-            
             xml += '\t\t<Organization>\n';
             xml += `\t\t\t<Inn>${escXml(org.inn)}</Inn>\n`;
             xml += `\t\t\t<Title>${escXml(org.name)}</Title>\n`;
             xml += '\t\t</Organization>\n';
-            
             xml += `\t\t<Test isPassed="true" learnProgramId="${program.id}">\n`;
             xml += `\t\t\t<Date>${escXml(date)}</Date>\n`;
             xml += `\t\t\t<ProtocolNumber>${escXml(number)}</ProtocolNumber>\n`;
             xml += `\t\t\t<LearnProgramTitle>${escXml(program.title)}</LearnProgramTitle>\n`;
             xml += '\t\t</Test>\n';
-            
             xml += '\t</RegistryRecord>\n';
         });
     });
@@ -2605,91 +2711,11 @@ function generateXML() {
     
     const preview = document.createElement('pre');
     preview.style.cssText = 'max-height:200px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;margin-top:12px;';
-    const previewText = xml.split('\n').slice(0, 15).join('\n') + '\n...\n\n' + 
-        `📊 Создано записей: ${protocol.length * programs.length}\n` +
-        `👤 Сотрудников: ${protocol.length}\n` +
-        `📚 Программ: ${programs.length}\n\n` +
-        '📋 Программы:\n' +
-        programs.map(p => `   ${p.id}. ${p.title}`).join('\n');
-    preview.textContent = previewText;
+    preview.textContent = xml.substring(0, 500) + '...';
     resultBlock.querySelector('pre')?.remove();
     resultBlock.appendChild(preview);
     
-    const totalRecords = protocol.length * programs.length;
-    alert(`✅ Создано ${totalRecords} записей (${protocol.length} сотрудников × ${programs.length} программ)`);
-}
-
-// ============================================================
-// ПЕРЕКЛЮЧЕНИЕ ТИПА КАРТОЧКИ
-// ============================================================
-function toggleCardType() {
-    const isDuty = document.querySelector('input[name="cardType"][value="duty"]')?.checked || false;
-    const dutyFields = document.getElementById('dutyFields');
-    const personalFields = document.getElementById('personalFields');
-    
-    if (isDuty) {
-        if (dutyFields) dutyFields.style.display = 'block';
-        if (personalFields) personalFields.style.display = 'none';
-    } else {
-        if (dutyFields) dutyFields.style.display = 'none';
-        if (personalFields) personalFields.style.display = 'block';
-    }
-}
-
-// ============================================================
-// ИНИЦИАЛИЗАЦИЯ
-// ============================================================
-function initTrainingPage() {
-    renderOrgs();
-    renderStaffWithDepartments();
-    renderProtocol();
-    fillFamEmployeeSelect();
-    
-    document.getElementById('showOrgFormBtn').onclick = function() {
-        document.getElementById('orgForm').classList.remove('hidden');
-    };
-    document.getElementById('saveOrgBtn').onclick = function() {
-        const name = document.getElementById('orgNameInput').value.trim();
-        const inn = document.getElementById('orgInnInput').value.trim();
-        if (!name || !inn) { alert('Заполните все поля'); return; }
-        const orgs = getOrgs();
-        orgs.push({ id: Date.now(), name, inn });
-        saveOrgs(orgs);
-        renderOrgs();
-        document.getElementById('orgForm').classList.add('hidden');
-        document.getElementById('orgNameInput').value = '';
-        document.getElementById('orgInnInput').value = '';
-        alert('✅ Организация добавлена');
-    };
-    document.getElementById('cancelOrgBtn').onclick = function() {
-        document.getElementById('orgForm').classList.add('hidden');
-    };
-    document.getElementById('deleteOrgBtn').onclick = function() {
-        const id = parseInt(document.getElementById('orgSelect').value);
-        if (!id) { alert('Выберите организацию'); return; }
-        if (!confirm('Удалить?')) return;
-        let orgs = getOrgs();
-        orgs = orgs.filter(o => o.id !== id);
-        saveOrgs(orgs);
-        renderOrgs();
-        alert('✅ Удалено');
-    };
-    document.getElementById('generateBtn').onclick = generateXML;
-    document.getElementById('addSelectedBtn').onclick = addSelectedToProtocol;
-    document.getElementById('staffImportBtn').onclick = importStaffFile;
-    document.getElementById('generateFamBtn').onclick = generateFamiliarization;
-    document.getElementById('printFamBtn').onclick = function() {
-        const content = document.getElementById('famContent');
-        if (!content.innerHTML) { alert('Сначала сформируйте лист'); return; }
-        const win = window.open('', '_blank');
-        win.document.write(`<!DOCTYPE html><html><head><title>Лист ознакомления</title>
-            <style>body{font-family:Arial;padding:40px;color:#222;max-width:1000px;margin:0 auto;}*{print-color-adjust:exact;}@media print{body{padding:20px;}}</style>
-        </head><body>${content.innerHTML}<script>window.print();window.close();<\/script></body></html>`);
-        win.document.close();
-    };
-    
-    renderCalendar();
-    initPPECardsPage();
+    alert(`✅ Создано ${protocol.length * programs.length} записей`);
 }
 
 // ============================================================
