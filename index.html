@@ -120,12 +120,18 @@
                 <h2>🏢 Организация</h2>
                 <button class="btn-add" id="showOrgFormBtn">➕ Добавить</button>
             </div>
-            <div id="orgForm" class="org-form hidden">
-                <input type="text" id="orgNameInput" placeholder="Название организации">
-                <input type="text" id="orgInnInput" placeholder="ИНН">
-                <button class="btn-save" id="saveOrgBtn">Сохранить</button>
-                <button class="btn-cancel" id="cancelOrgBtn">Отмена</button>
-            </div>
+            <div id="orgForm" class="org-form hidden" style="flex-direction:column;gap:8px;">
+    <input type="text" id="orgNameInput" placeholder="Название организации">
+    <input type="text" id="orgInnInput" placeholder="ИНН">
+    <input type="text" id="orgEmailInput" placeholder="Email">
+    <input type="text" id="orgPhoneInput" placeholder="Телефон">
+    <input type="text" id="orgOkvedInput" placeholder="ОКВЭД (например 49.31)">
+    <input type="text" id="orgAddressInput" placeholder="Юридический адрес">
+    <div style="display:flex;gap:10px;">
+        <button class="btn-save" id="saveOrgBtn">Сохранить</button>
+        <button class="btn-cancel" id="cancelOrgBtn">Отмена</button>
+    </div>
+</div>
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                 <select id="orgSelect" class="org-select" style="flex:1;min-width:200px;background:#1a1a3e;color:#fff;border:1px solid rgba(255,255,255,0.12);padding:10px;border-radius:8px;font-size:14px;cursor:pointer;">
                     <option value="">-- Выберите организацию --</option>
