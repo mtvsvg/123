@@ -341,78 +341,82 @@ function smartParse(content) {
     const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
     const employees = [];
     lines.forEach(line => {
-        let trimmed = line.trim();
-        if (!trimmed) return;
-        trimmed = trimmed.replace(/\t/g, ' ');
-        trimmed = trimmed.replace(/\s+/g, ' ');
-        trimmed = trimmed.trim();
-        const result = parseLine(trimmed);
+        const result = parseLine(line);
         if (result) employees.push(result);
     });
+    console.log('📊 Распознано сотрудников:', employees.length);
     return employees;
 }
 
 function parseLine(line) {
-    // Разбиваем по табуляции (ваш файл использует именно её)
-    let parts = line.split(/\t+/).map(p => p.trim()).filter(p => p.length > 0);
+    // Убираем пробелы по краям и разбиваем по табуляции ИЛИ 2+ пробелам
+    const trimmed = line.trim();
+    if (!trimmed) return null;
     
-    // Если табуляции нет — по 2+ пробелам
-    if (parts.length < 3) {
-        parts = line.split(/\s{2,}/).map(p => p.trim()).filter(p => p.length > 0);
+    // Разбиваем: сначала пробуем по табуляции
+    let parts = trimmed.split(/\t+/).map(p => p.trim()).filter(p => p.length > 0);
+    
+    // Если табуляция не сработала — по 2+ пробелам
+    if (parts.length < 5) {
+        parts = trimmed.split(/\s{2,}/).map(p => p.trim()).filter(p => p.length > 0);
     }
     
-    // Если всё ещё мало — не сможем разобрать
-    if (parts.length < 5) return null;
+    // Если и это не помогло — по одинарным пробелам (но тогда ФИО не соберётся)
+    if (parts.length < 5) {
+        console.warn('⚠️ Строка не разбилась на 5+ частей:', trimmed);
+        return null;
+    }
+    
+    console.log('🔍 Разобрана строка на', parts.length, 'частей:', parts);
     
     // ФИКСИРОВАННЫЙ ПОРЯДОК:
-    // 0 = ФИО
-    // 1 = Подразделение
-    // 2 = Должность
-    // 3 = Полис
-    // 4 = Дата рождения
-    // 5 = Пол
-    // 6 = Вредные факторы (необязательно)
+    // parts[0] = ФИО (Батурин Владимир Александрович)
+    // parts[1] = Подразделение (Администрация)
+    // parts[2] = Должность (Научный руководитель)
+    // parts[3] = Полис (2651 8408 3900 0749)
+    // parts[4] = Дата рождения (12.08.1951)
+    // parts[5] = Пол (м)
+    // parts[6] = Вредные факторы (необязательно)
     
-    // --- ФИО ---
+    // Разбиваем ФИО на слова
     const nameWords = parts[0].split(/\s+/).filter(w => w.length > 0);
+    
+    if (nameWords.length < 2) {
+        console.warn('⚠️ ФИО содержит меньше 2 слов:', parts[0]);
+        return null;
+    }
+    
     const last_name = nameWords[0] || '';
     const first_name = nameWords[1] || '';
     const middle_name = nameWords[2] || '';
-    
-    // --- Подразделение ---
     const department = parts[1] || '';
-    
-    // --- Должность ---
     const position = parts[2] || '';
     
-    // --- Полис (16 цифр) ---
+    // Полис — очищаем от пробелов
     let policy = '';
     if (parts[3]) {
-        const clean = parts[3].replace(/\s/g, '');
-        if (/^\d{16}$/.test(clean)) policy = clean;
+        policy = parts[3].replace(/\s/g, '');
     }
     
-    // --- Дата рождения ---
+    // Дата рождения
     let birthDate = '';
-    if (parts[4] && /^\d{1,2}\.\d{1,2}\.\d{4}$/.test(parts[4])) {
-        birthDate = parts[4];
+    if (parts[4]) {
+        birthDate = parts[4].trim();
     }
     
-    // --- Пол ---
+    // Пол
     let gender = '';
     if (parts[5]) {
         const g = parts[5].trim().toLowerCase();
-        if (g === 'м') gender = 'М';
-        else if (g === 'ж') gender = 'Ж';
+        if (g === 'м' || g === 'м.') gender = 'М';
+        else if (g === 'ж' || g === 'ж.') gender = 'Ж';
     }
     
-    // --- Вредные факторы ---
+    // Вредные факторы (если есть 7-я часть)
     let factors = '';
     if (parts[6]) {
         factors = parts[6].trim();
     }
-    
-    if (!last_name || !first_name) return null;
     
     return {
         last_name: last_name,
