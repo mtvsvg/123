@@ -2092,7 +2092,7 @@ function filterMedEmployees(mode) {
     });
 }
 
-function generateMedDirections() {
+const service = emp.department || '';
     const orgId = document.getElementById('medOrgSelect')?.value;
     const medOrgId = document.getElementById('medMedOrgSelect')?.value;
     const directionType = document.getElementById('medDirectionType')?.value || 'ПРЕДВАРИТЕЛЬНЫЙ';
