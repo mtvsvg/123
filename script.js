@@ -361,7 +361,6 @@ function parseLine(line) {
         parts = line.split(/\s{2,}/).map(p => p.trim()).filter(p => p.length > 0);
     }
     
-    // Если и этого нет — работаем как со строкой с одинарными пробелами
     if (parts.length < 3) {
         parts = [line];
     }
@@ -371,17 +370,18 @@ function parseLine(line) {
     let birthDate = '';
     let gender = '';
     let factors = '';
+    let department = '';
     let nameParts = [];
     let positionParts = [];
     
-    parts.forEach(part => {
+    // Определяем индексы по позициям (парсер ожидает 7 частей)
+    // Порядок: ФИО | ПОДРАЗДЕЛЕНИЕ | ДОЛЖНОСТЬ | ПОЛИС | ДАТА | ПОЛ | ФАКТОРЫ
+    
+    parts.forEach((part, idx) => {
         const trimmed = part.trim();
         if (!trimmed) return;
         
         // ПОЛИС — 16 цифр с пробелами или без
-        if (/^\d{4}\s?\d{4}\s?\d{4}\s?\d{4}$/.test(trimmed.replace(/\s/g, '').length === 16 ? trimmed : '')) {
-            // fallback ниже
-        }
         if (/^\d{4}\s?\d{4}\s?\d{4}\s?\d{4}$/.test(trimmed)) {
             policy = trimmed.replace(/\s/g, '');
             return;
@@ -393,15 +393,14 @@ function parseLine(line) {
             return;
         }
         
-        // ПОЛ — одиночная м/ж (строчная или прописная)
+        // ПОЛ — одиночная м/ж
         if (/^(м|ж|М|Ж)$/i.test(trimmed)) {
             gender = trimmed.toUpperCase() === 'М' ? 'М' : 'Ж';
             return;
         }
         
-        // ВРЕДНЫЕ ФАКТОРЫ — 2.4.2. или 18, 18.1. или 4.3.1, 4.3.2
-        // Признак: только цифры, точки, запятые и пробелы
-        if (/^[\d.,\s]+$/.test(trimmed) && /\d/.test(trimmed)) {
+        // ВРЕДНЫЕ ФАКТОРЫ — только цифры, точки, запятые
+        if (/^[\d.,\s]+$/.test(trimmed) && /\d/.test(trimmed) && !/^\d{4}\s/.test(trimmed)) {
             factors = trimmed;
             return;
         }
@@ -412,17 +411,33 @@ function parseLine(line) {
             return;
         }
         
-        // Остались ФИО или Должность
+        // Остались: ФИО, ПОДРАЗДЕЛЕНИЕ, ДОЛЖНОСТЬ
         const words = trimmed.split(/\s+/).filter(w => w.length > 0);
         if (words.length === 0) return;
         
-        // Проверяем — ФИО это или должность
-        // ФИО: все слова с заглавной русской буквы (Иванов Иван Иванович)
-        const allNames = words.every(w => /^[А-ЯЁ][а-яё\-]+$/.test(w));
+        // Проверяем — это ФИО?
+        // ФИО: 2-3 слова, каждое с заглавной русской буквы (Иванов Иван Иванович)
+        // Но должность тоже может начинаться с заглавной (Технолог)
+        const allCapitalized = words.every(w => /^[А-ЯЁ][а-яё\-]*$/.test(w));
+        const isNameLike = allCapitalized && words.length >= 2 && words.length <= 3;
         
-        if (allNames && nameParts.length === 0 && words.length >= 2) {
+        // Проверяем — это должность? (содержит ключевые слова должностей)
+        const positionKeywords = ['инженер','техник','механик','специалист','мастер','бригадир','директор','менеджер','бухгалтер','экономист','юрист','конструктор','технолог','электрик','сварщик','токарь','фрезеровщик','слесарь','водитель','грузчик','кладовщик','уборщик','охранник','программист','администратор','начальник','заведующий','главный','ведущий','старший','младший','помощник','заместитель','швея','вышивальщица','раскройщик','комплектовщик','упаковщик','контролер','наладчик','оператор','машинист','крановщик','стропальщик','электромонтер','диспетчер','фельдшер','медицинская','сестра','кассир','сторож','вахтер','маляр','ремонтировщик','научный','руководитель','сотрудник','лаборант','микробиолог','экспедитор','разряда','отдела','разряда'];
+        const lower = trimmed.toLowerCase();
+        const isPosition = positionKeywords.some(kw => lower.includes(kw));
+        
+        // Определяем по индексу в строке (позиционный подход для вашего формата)
+        if (idx === 0 && nameParts.length === 0) {
+            // Первое поле = ФИО
             nameParts = words.slice(0, 3);
+        } else if (isPosition || (words.length > 3)) {
+            // Это должность
+            positionParts.push(trimmed);
+        } else if (!department) {
+            // Это подразделение
+            department = trimmed;
         } else {
+            // Если что-то не распознали — добавим к должности
             positionParts.push(trimmed);
         }
     });
@@ -434,6 +449,7 @@ function parseLine(line) {
         first_name: nameParts[1] || '',
         middle_name: nameParts[2] || '',
         position: positionParts.join(' ') || '',
+        department: department || '',
         snils: snils || '',
         policyNumber: policy || '',
         birthDate: birthDate || '',
