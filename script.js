@@ -353,72 +353,112 @@ function smartParse(content) {
 }
 
 function parseLine(line) {
-    // ЖЁСТКО РАЗБИВАЕМ ПО ТАБУЛЯЦИИ
-    let parts = line.split('\t').map(p => p.trim()).filter(p => p.length > 0);
+    // Убираем лишние пробелы по краям
+    line = line.trim();
+    if (!line) return null;
     
-    // Если табуляции нет — пробуем 2+ пробела
-    if (parts.length < 3) {
-        parts = line.split(/\s{2,}/).map(p => p.trim()).filter(p => p.length > 0);
-    }
+    // ШАГ 1. Извлекаем все "якоря" — они легко узнаваемы
     
-    // Если всё ещё мало — не сможем разобрать
-    if (parts.length < 5) {
-        console.warn('Не удалось разбить строку:', line);
-        return null;
-    }
-    
-    // ФИКСИРОВАННЫЕ ПОЗИЦИИ:
-    // 0 = ФИО
-    // 1 = Подразделение
-    // 2 = Должность
-    // 3 = Полис
-    // 4 = Дата рождения
-    // 5 = Пол
-    // 6 = Вредные факторы (необязательно)
-    
-    // --- ФИО ---
-    const nameParts = parts[0].split(/\s+/).filter(w => w.length > 0);
-    const last_name = nameParts[0] || '';
-    const first_name = nameParts[1] || '';
-    const middle_name = nameParts[2] || '';
-    
-    // --- Подразделение ---
-    const department = parts[1] || '';
-    
-    // --- Должность ---
-    const position = parts[2] || '';
-    
-    // --- Полис ---
     let policy = '';
-    if (parts[3]) {
-        const clean = parts[3].replace(/\s/g, '');
-        if (/^\d{16}$/.test(clean)) {
-            policy = clean;
+    let birthDate = '';
+    let gender = '';
+    let factors = '';
+    let snils = '';
+    
+    // ПОЛИС — 16 цифр (с пробелами или без)
+    let policyMatch = line.match(/\d{4}\s?\d{4}\s?\d{4}\s?\d{4}/);
+    if (policyMatch) {
+        policy = policyMatch[0].replace(/\s/g, '');
+        line = line.replace(policyMatch[0], '|');
+    }
+    
+    // ДАТА РОЖДЕНИЯ — ДД.ММ.ГГГГ
+    let dateMatch = line.match(/\d{1,2}\.\d{1,2}\.\d{4}/);
+    if (dateMatch) {
+        birthDate = dateMatch[0];
+        line = line.replace(dateMatch[0], '|');
+    }
+    
+    // ПОЛ — одиночная м/ж (окружённая | или началом/концом)
+    let genderMatch = line.match(/(?:^\||\|)\s*(м|ж|М|Ж)\s*(?:\||$)/);
+    if (genderMatch) {
+        gender = genderMatch[1].toUpperCase() === 'М' ? 'М' : 'Ж';
+        line = line.replace(genderMatch[0], '|');
+    }
+    
+    // ВРЕДНЫЕ ФАКТОРЫ — числа с точками (например 2.4.2. или 18.1.)
+    // Ищем только если после разделителя
+    let factorsMatch = line.match(/(?:\||^)\s*(\d+(?:\.\d+)+\.?(?:\s*,?\s*\d+(?:\.\d+)+\.?)*)\s*(?:\||$)/);
+    if (factorsMatch) {
+        factors = factorsMatch[1].trim();
+        line = line.replace(factorsMatch[0], '|');
+    }
+    
+    // СНИЛС — 11 цифр с дефисами
+    let snilsMatch = line.match(/\d{3}[- ]?\d{3}[- ]?\d{3}[- ]?\d{2}/);
+    if (snilsMatch && !policy) {
+        snils = snilsMatch[0].replace(/[\s-]/g, '');
+        line = line.replace(snilsMatch[0], '|');
+    }
+    
+    // ШАГ 2. Разбиваем остатки по разделителям: |, табуляция, 2+ пробела
+    let textParts = line.split(/[|\t]+|\s{2,}/).map(p => p.trim()).filter(p => p.length > 0);
+    
+    // Если частей мало — пробуем по одинарным пробелам
+    if (textParts.length < 3) {
+        textParts = line.split(/\s+/).filter(p => p.length > 0);
+    }
+    
+    // ШАГ 3. Определяем ФИО, подразделение, должность
+    let last_name = '';
+    let first_name = '';
+    let middle_name = '';
+    let department = '';
+    let position = '';
+    
+    // ФИО — ищем 2-3 слова с заглавной буквы подряд
+    for (let i = 0; i < textParts.length; i++) {
+        const words = textParts[i].split(/\s+/).filter(w => w.length > 0);
+        
+        // Проверяем — это ФИО?
+        const nameWords = [];
+        for (const w of words) {
+            if (/^[А-ЯЁ][а-яё\-]{1,25}$/.test(w)) {
+                nameWords.push(w);
+            } else {
+                break;
+            }
+        }
+        
+        if (nameWords.length >= 2 && nameWords.length <= 3 && last_name === '') {
+            last_name = nameWords[0];
+            first_name = nameWords[1];
+            middle_name = nameWords[2] || '';
+            
+            // Если остались слова после ФИО в этой же части — это начало должности
+            const rest = words.slice(nameWords.length).join(' ');
+            if (rest) {
+                position = rest;
+            }
+            continue;
+        }
+        
+        // Если это не ФИО и подразделение ещё не найдено — это подразделение
+        if (!department && last_name) {
+            department = textParts[i];
+            continue;
+        }
+        
+        // Остальное — должность
+        if (!position) {
+            position = textParts[i];
+        } else {
+            position += ' ' + textParts[i];
         }
     }
     
-    // --- Дата рождения ---
-    let birthDate = '';
-    if (parts[4] && /^\d{1,2}[.\/]\d{1,2}[.\/]\d{4}$/.test(parts[4])) {
-        birthDate = parts[4].replace(/\//g, '.');
-    }
-    
-    // --- Пол ---
-    let gender = '';
-    if (parts[5]) {
-        const g = parts[5].trim().toLowerCase();
-        if (g === 'м' || g === 'муж' || g === 'мужской') gender = 'М';
-        else if (g === 'ж' || g === 'жен' || g === 'женский') gender = 'Ж';
-    }
-    
-    // --- Вредные факторы ---
-    let factors = '';
-    if (parts[6]) {
-        factors = parts[6].trim();
-    }
-    
     if (!last_name || !first_name) {
-        console.warn('ФИО не распознано:', line);
+        console.warn('❌ Не удалось распознать ФИО в строке:', line);
         return null;
     }
     
@@ -428,7 +468,7 @@ function parseLine(line) {
         middle_name: middle_name,
         department: department,
         position: position,
-        snils: '',
+        snils: snils,
         policyNumber: policy,
         birthDate: birthDate,
         gender: gender,
