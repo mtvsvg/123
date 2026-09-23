@@ -353,95 +353,74 @@ function smartParse(content) {
 }
 
 function parseLine(line) {
-    // Разбиваем по табуляции
-    let parts = line.split(/\t+/).map(p => p.trim()).filter(p => p.length > 0);
+    // ЖЁСТКО РАЗБИВАЕМ ПО ТАБУЛЯЦИИ
+    let parts = line.split('\t').map(p => p.trim()).filter(p => p.length > 0);
     
-    // Если табуляции нет — разбиваем по 2+ пробелам
+    // Если табуляции нет — пробуем 2+ пробела
     if (parts.length < 3) {
         parts = line.split(/\s{2,}/).map(p => p.trim()).filter(p => p.length > 0);
     }
     
-    // Если всё ещё мало — по одинарным пробелам (крайний случай)
-    if (parts.length < 3) {
-        parts = [line];
+    // Если всё ещё мало — не сможем разобрать
+    if (parts.length < 5) {
+        console.warn('Не удалось разбить строку:', line);
+        return null;
     }
     
-    let last_name = '';
-    let first_name = '';
-    let middle_name = '';
-    let department = '';
-    let position = '';
+    // ФИКСИРОВАННЫЕ ПОЗИЦИИ:
+    // 0 = ФИО
+    // 1 = Подразделение
+    // 2 = Должность
+    // 3 = Полис
+    // 4 = Дата рождения
+    // 5 = Пол
+    // 6 = Вредные факторы (необязательно)
+    
+    // --- ФИО ---
+    const nameParts = parts[0].split(/\s+/).filter(w => w.length > 0);
+    const last_name = nameParts[0] || '';
+    const first_name = nameParts[1] || '';
+    const middle_name = nameParts[2] || '';
+    
+    // --- Подразделение ---
+    const department = parts[1] || '';
+    
+    // --- Должность ---
+    const position = parts[2] || '';
+    
+    // --- Полис ---
     let policy = '';
-    let birthDate = '';
-    let gender = '';
-    let snils = '';
-    let factors = '';
-    
-    // Определяем по позициям и содержимому каждой части
-    let nameSet = false;
-    let departmentSet = false;
-    let positionSet = false;
-    
-    for (let i = 0; i < parts.length; i++) {
-        const part = parts[i].trim();
-        if (!part) continue;
-        
-        // 1. Проверяем — это ПОЛИС? (16 цифр с пробелами)
-        if (/^\d{4}\s?\d{4}\s?\d{4}\s?\d{4}$/.test(part)) {
-            policy = part.replace(/\s/g, '');
-            continue;
-        }
-        
-        // 2. Проверяем — это ДАТА РОЖДЕНИЯ?
-        if (/^\d{1,2}[.\/]\d{1,2}[.\/]\d{4}$/.test(part)) {
-            birthDate = part.replace(/\//g, '.');
-            continue;
-        }
-        
-        // 3. Проверяем — это ПОЛ? (одна буква м/ж)
-        if (/^(м|ж|М|Ж)$/.test(part)) {
-            gender = part.toUpperCase() === 'М' ? 'М' : 'Ж';
-            continue;
-        }
-        
-        // 4. Проверяем — это ВРЕДНЫЕ ФАКТОРЫ? (только цифры, точки, запятые)
-        if (/^[\d.,\s]+$/.test(part) && /\d/.test(part) && !/^\d{4}\s?\d{4}/.test(part)) {
-            factors = part;
-            continue;
-        }
-        
-        // 5. Проверяем — это СНИЛС? (11 цифр с дефисами)
-        if (/^\d{3}[- ]?\d{3}[- ]?\d{3}[- ]?\d{2}$/.test(part)) {
-            snils = part.replace(/[\s-]/g, '');
-            continue;
-        }
-        
-        // 6. Осталось: ФИО, ПОДРАЗДЕЛЕНИЕ или ДОЛЖНОСТЬ
-        const words = part.split(/\s+/).filter(w => w.length > 0);
-        
-        // ФИО — 2-3 слова, каждое начинается с заглавной русской буквы
-        // НО должность может тоже подойти под это правило (например "Водитель")
-        // Поэтому используем порядок: первый непонятный = ФИО, второй = Подразделение, третий = Должность
-        
-        if (!nameSet && words.length >= 2 && words.length <= 3 && 
-            words.every(w => /^[А-ЯЁ][а-яё\-]+$/.test(w))) {
-            // Это ФИО
-            last_name = words[0] || '';
-            first_name = words[1] || '';
-            middle_name = words[2] || '';
-            nameSet = true;
-        } else if (!departmentSet) {
-            // Это подразделение
-            department = part;
-            departmentSet = true;
-        } else if (!positionSet) {
-            // Это должность
-            position = part;
-            positionSet = true;
+    if (parts[3]) {
+        const clean = parts[3].replace(/\s/g, '');
+        if (/^\d{16}$/.test(clean)) {
+            policy = clean;
         }
     }
     
-    if (!last_name || !first_name) return null;
+    // --- Дата рождения ---
+    let birthDate = '';
+    if (parts[4] && /^\d{1,2}[.\/]\d{1,2}[.\/]\d{4}$/.test(parts[4])) {
+        birthDate = parts[4].replace(/\//g, '.');
+    }
+    
+    // --- Пол ---
+    let gender = '';
+    if (parts[5]) {
+        const g = parts[5].trim().toLowerCase();
+        if (g === 'м' || g === 'муж' || g === 'мужской') gender = 'М';
+        else if (g === 'ж' || g === 'жен' || g === 'женский') gender = 'Ж';
+    }
+    
+    // --- Вредные факторы ---
+    let factors = '';
+    if (parts[6]) {
+        factors = parts[6].trim();
+    }
+    
+    if (!last_name || !first_name) {
+        console.warn('ФИО не распознано:', line);
+        return null;
+    }
     
     return {
         last_name: last_name,
@@ -449,7 +428,7 @@ function parseLine(line) {
         middle_name: middle_name,
         department: department,
         position: position,
-        snils: snils,
+        snils: '',
         policyNumber: policy,
         birthDate: birthDate,
         gender: gender,
