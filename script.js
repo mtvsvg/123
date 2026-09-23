@@ -353,99 +353,121 @@ function smartParse(content) {
 }
 
 function parseLine(line) {
-    let snils = ''; 
+    // РАЗБИВАЕМ СТРОКУ ПО ТАБУЛЯЦИИ (или нескольким пробелам)
+    let parts = line.split(/\t+/).map(p => p.trim()).filter(p => p.length > 0);
+    
+    // Если табуляции нет — пробуем разбить по 2+ пробелам
+    if (parts.length < 3) {
+        parts = line.split(/\s{2,}/).map(p => p.trim()).filter(p => p.length > 0);
+    }
+    
+    // Если всё равно мало частей — работаем со всей строкой как раньше
+    if (parts.length < 3) {
+        parts = [line];
+    }
+    
+    let snils = '';
     let policy = '';
     let birthDate = '';
     let gender = '';
     let factors = '';
+    let nameParts = [];
+    let positionParts = [];
     
-    // 1. Ищем полис ОМС — 16 цифр с возможными пробелами
-    let policyMatch16 = line.match(/\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}/);
-    if (policyMatch16) {
-        policy = policyMatch16[0].replace(/\s/g, '');
-        line = line.replace(policyMatch16[0], '').trim();
-    }
+    // Обрабатываем каждую часть
+    parts.forEach(part => {
+        const trimmed = part.trim();
+        if (!trimmed) return;
+        
+        // 1. Полис ОМС — 16 цифр с пробелами
+        if (/^\d{4}\s?\d{4}\s?\d{4}\s?\d{4}$/.test(trimmed)) {
+            policy = trimmed.replace(/\s/g, '');
+            return;
+        }
+        
+        // 2. СНИЛС — 11 цифр с дефисами
+        if (/^\d{3}[- ]?\d{3}[- ]?\d{3}[- ]?\d{2}$/.test(trimmed) && !policy) {
+            snils = trimmed.replace(/[\s-]/g, '');
+            return;
+        }
+        
+        // 3. Дата рождения ДД.ММ.ГГГГ
+        if (/^\d{1,2}[.\/]\d{1,2}[.\/]\d{4}$/.test(trimmed)) {
+            birthDate = trimmed.replace(/\//g, '.');
+            return;
+        }
+        
+        // 4. Пол — одиночная буква м/ж/М/Ж
+        if (/^(м|ж|М|Ж|муж|жен|мужской|женский)$/i.test(trimmed)) {
+            const g = trimmed.toLowerCase();
+            gender = (g === 'м' || g === 'муж' || g === 'мужской') ? 'М' : 'Ж';
+            return;
+        }
+        
+        // 5. Вредные факторы — числа с точками (2.4.2., 18.1., 4.3.1)
+        // Может быть "2.4.2." или "18, 18.1." или "4.3.1, 4.3.2"
+        if (/^\d+(?:[.,]\s*\d+)*\.?$/.test(trimmed)) {
+            factors = trimmed.replace(/\s+/g, ' ');
+            return;
+        }
+        
+        // 6. ФИО или Должность — определяем по словам
+        const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+        const commonPositions = ['инженер','техник','механик','специалист','мастер','бригадир','директор','менеджер','бухгалтер','экономист','юрист','конструктор','технолог','электрик','сварщик','токарь','фрезеровщик','слесарь','водитель','грузчик','кладовщик','уборщик','охранник','программист','администратор','начальник','заведующий','главный','ведущий','старший','младший','помощник','заместитель','швея','вышивальщица','раскройщик','комплектовщик','упаковщик','контролер','наладчик','оператор','машинист','крановщик','стропальщик','троллейбуса','автобуса','трамвая','отк','спец','мех','энерг','снабж','электромонтер','диспетчер','фельдшер','медицинская','сестра','кассир','сторож','вахтер','аккумуляторщик','маляр','обмотчик','ремонтировщик','разр','отдела','научный','руководитель','сотрудник','лаборант','микробиолог','экспедитор','разряда'];
+        
+        // Проверяем — это ФИО или должность?
+        let isNameField = true;
+        for (const w of words) {
+            const lower = w.toLowerCase();
+            const isPosition = commonPositions.some(pos => lower === pos || lower.includes(pos) || pos.includes(lower));
+            if (isPosition) {
+                isNameField = false;
+                break;
+            }
+        }
+        
+        if (isNameField && nameParts.length === 0) {
+            // Это ФИО
+            words.forEach(w => {
+                if (/^[А-ЯЁ][а-яё]{1,25}$/.test(w) || /^[A-Z][a-z]{1,25}$/.test(w)) {
+                    nameParts.push(w);
+                }
+            });
+        } else {
+            // Это должность
+            positionParts.push(trimmed);
+        }
+    });
     
-    // 2. Ищем СНИЛС — 11 цифр с дефисами или пробелами
-    let snilsMatch = line.match(/\d{3}[- ]?\d{3}[- ]?\d{3}[- ]?\d{2}/);
-    if (snilsMatch) {
-        snils = snilsMatch[0].replace(/[\s-]/g, '');
-        line = line.replace(snilsMatch[0], '').trim();
-    }
-    
-    // 3. Если полис не нашли как 16 цифр — попробуем 11 цифр (старый формат)
-    if (!policy) {
-        let policyMatch11 = line.match(/\d{4}\s\d{4}\s\d{4}/);
-        if (policyMatch11) {
-            policy = policyMatch11[0].replace(/\s/g, '');
-            line = line.replace(policyMatch11[0], '').trim();
+    // Если после разбора по табуляции ФИО не нашли — пробуем старый способ
+    if (nameParts.length < 2) {
+        const allWords = line.replace(/\t/g, ' ').split(/\s+/).filter(w => w.length > 0);
+        nameParts = [];
+        positionParts = [];
+        for (const w of allWords) {
+            const lower = w.toLowerCase();
+            const isName = /^[А-ЯЁ][а-яё]{1,25}$/.test(w);
+            const isNumber = /^\d/.test(w);
+            const isDate = /^\d{1,2}\.\d{1,2}\.\d{4}$/.test(w);
+            if (isName && !isNumber && !isDate && nameParts.length < 3) {
+                nameParts.push(w);
+            }
         }
     }
     
-    // 4. Ищем дату рождения (формат ДД.ММ.ГГГГ или ДД/ММ/ГГГГ)
-    let dateMatch = line.match(/\d{1,2}[.\/]\d{1,2}[.\/]\d{4}/);
-    if (dateMatch) {
-        birthDate = dateMatch[0].replace(/\//g, '.');
-        line = line.replace(dateMatch[0], '').trim();
-    }
-    
-    // 5. Ищем пол (м / ж / М / Ж / муж / жен)
-    let genderMatch = line.match(/(?:^|\s)(м|ж|М|Ж|муж|жен)(?:\s|$)/i);
-    if (genderMatch) {
-        const g = genderMatch[1].toLowerCase();
-        gender = (g === 'м' || g === 'муж') ? 'М' : 'Ж';
-        line = line.replace(genderMatch[0], ' ').trim();
-    }
-    
-    // 6. Ищем вредные факторы (формат 1.2.3. или 4.3.1)
-    let factorsMatch = line.match(/\d+(?:\.\d+)+\.?/g);
-    if (factorsMatch) {
-        factors = factorsMatch.join(', ');
-        factorsMatch.forEach(f => {
-            line = line.replace(f, '').trim();
-        });
-    }
-    
-    // 7. Разбираем оставшиеся слова на ФИО и должность
-    const words = line.split(/\s+/).filter(w => w.length > 0);
-    if (words.length < 2) return null;
-    
-    const commonPositions = ['инженер','техник','механик','специалист','мастер','бригадир','директор','менеджер','бухгалтер','экономист','юрист','конструктор','технолог','электрик','сварщик','токарь','фрезеровщик','слесарь','водитель','грузчик','кладовщик','уборщик','охранник','программист','администратор','начальник','заведующий','главный','ведущий','старший','младший','помощник','заместитель','швея','вышивальщица','раскройщик','комплектовщик','упаковщик','контролер','наладчик','оператор','машинист','крановщик','стропальщик','троллейбуса','автобуса','трамвая','отк','спец','мех','энерг','снабж','электромонтер','диспетчер','фельдшер','медицинская','сестра','кассир','сторож','вахтер','аккумуляторщик','маляр','обмотчик','ремонтировщик','разр','отдела','научный','руководитель'];
-    
-    let nameParts = [], positionParts = [], i = 0;
-    while (i < words.length) { 
-        const w = words[i]; 
-        const lower = w.toLowerCase(); 
-        const isName = /^[А-ЯЁ][а-яё]{1,19}$/.test(w) || /^[A-Z][a-z]{1,19}$/.test(w); 
-        const isPosition = commonPositions.some(pos => lower === pos || lower.includes(pos) || pos.includes(lower)); 
-        if (isName && !isPosition && nameParts.length < 3) { 
-            nameParts.push(w); 
-            i++; 
-        } else { 
-            positionParts.push(w); 
-            i++; 
-        } 
-    }
-    if (nameParts.length < 2) { 
-        const firstThree = words.slice(0, Math.min(3, words.length)); 
-        if (firstThree.length >= 2) { 
-            nameParts = firstThree; 
-            positionParts = words.slice(firstThree.length); 
-        } 
-    }
     if (nameParts.length < 2) return null;
     
-    return { 
-        last_name: nameParts[0] || '', 
-        first_name: nameParts[1] || '', 
-        middle_name: nameParts[2] || '', 
-        position: positionParts.join(' ') || '', 
-        snils: snils || '', 
+    return {
+        last_name: nameParts[0] || '',
+        first_name: nameParts[1] || '',
+        middle_name: nameParts[2] || '',
+        position: positionParts.join(' ') || '',
+        snils: snils || '',
         policyNumber: policy || '',
         birthDate: birthDate || '',
         gender: gender || '',
         medFactors: factors || '',
-        is_passed: true 
+        is_passed: true
     };
 }
 
