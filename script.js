@@ -1908,10 +1908,18 @@ function renderMedEmployeeList(mode = 'med') {
                         </div>
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Служба</label>
-                            <select class="med-service" data-snils="${emp.snils}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
-                                <option value="">--</option>
-                                ${services.map(s => `<option value="${s.name}" ${service === s.name ? 'selected' : ''}>${s.name}</option>`).join('')}
-                            </select>
+                            <select class="med-service" data-snils="${emp.snils}" style="...">
+    <option value="">--</option>
+    ${(() => {
+        const allServices = services.map(s => s.name);
+        if (service && !allServices.includes(service)) {
+            allServices.unshift(service);
+        }
+        return allServices.map(name => 
+            `<option value="${name}" ${service === name ? 'selected' : ''}>${name}${!services.some(s => s.name === name) && name ? ' (из штатки)' : ''}</option>`
+        ).join('');
+    })()}
+</select>
                         </div>
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Вредные факторы (Приказ №29н)</label>
