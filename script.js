@@ -20,22 +20,6 @@ function showPage(page) {
             if (link.textContent.trim() === 'Обучение') link.classList.add('active'); 
         });
         initTrainingPage();
-    } else if (page === 'map') {
-        const el = document.getElementById('mapPage');
-        if (el) el.classList.remove('hidden');
-        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-        document.querySelectorAll('.nav-link').forEach(link => { 
-            if (link.textContent.trim() === 'Карта') link.classList.add('active'); 
-        });
-        setTimeout(initMapPage, 50);
-    } else if (page === 'calendar') {
-        const el = document.getElementById('calendarPage');
-        if (el) el.classList.remove('hidden');
-        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-        document.querySelectorAll('.nav-link').forEach(link => { 
-            if (link.textContent.trim() === 'Календарь') link.classList.add('active'); 
-        });
-        renderCalendar();
     } else if (page === 'ppeCards') {
         const el = document.getElementById('ppeCardsPage');
         if (el) el.classList.remove('hidden');
@@ -82,8 +66,6 @@ function getServices() { return JSON.parse(localStorage.getItem('orgServices') |
 function saveServices(services) { localStorage.setItem('orgServices', JSON.stringify(services)); }
 function getProtocol() { return JSON.parse(localStorage.getItem('protocol') || '[]'); }
 function saveProtocol(protocol) { localStorage.setItem('protocol', JSON.stringify(protocol)); }
-function getEvents() { return JSON.parse(localStorage.getItem('calendarEvents') || '[]'); }
-function saveEvents(events) { localStorage.setItem('calendarEvents', JSON.stringify(events)); }
 // ============================================================
 // ШТАТНОЕ РАСПИСАНИЕ
 // ============================================================
@@ -335,7 +317,7 @@ function importStaffFile() {
 }
 
 // ============================================================
-// ПАРСЕР ШТАТНОГО РАСПИСАНИЯ
+// ПАРСЕР ШТАТНОГО РАСПИСАНИЯ (формат: ФИО | Подразделение | Должность | Полис | Дата | Пол | Факторы)
 // ============================================================
 function smartParse(content) {
     const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
@@ -344,47 +326,34 @@ function smartParse(content) {
         const result = parseLine(line);
         if (result) employees.push(result);
     });
-    console.log('📊 Распознано сотрудников:', employees.length);
     return employees;
 }
 
 function parseLine(line) {
-    // Убираем пробелы по краям и разбиваем по табуляции ИЛИ 2+ пробелам
     const trimmed = line.trim();
     if (!trimmed) return null;
     
-    // Разбиваем: сначала пробуем по табуляции
+    // Разбиваем по табуляции
     let parts = trimmed.split(/\t+/).map(p => p.trim()).filter(p => p.length > 0);
     
-    // Если табуляция не сработала — по 2+ пробелам
+    // Если табуляции нет — по 2+ пробелам
     if (parts.length < 5) {
         parts = trimmed.split(/\s{2,}/).map(p => p.trim()).filter(p => p.length > 0);
     }
     
-    // Если и это не помогло — по одинарным пробелам (но тогда ФИО не соберётся)
-    if (parts.length < 5) {
-        console.warn('⚠️ Строка не разбилась на 5+ частей:', trimmed);
-        return null;
-    }
-    
-    console.log('🔍 Разобрана строка на', parts.length, 'частей:', parts);
+    if (parts.length < 5) return null;
     
     // ФИКСИРОВАННЫЙ ПОРЯДОК:
-    // parts[0] = ФИО (Батурин Владимир Александрович)
-    // parts[1] = Подразделение (Администрация)
-    // parts[2] = Должность (Научный руководитель)
-    // parts[3] = Полис (2651 8408 3900 0749)
-    // parts[4] = Дата рождения (12.08.1951)
-    // parts[5] = Пол (м)
-    // parts[6] = Вредные факторы (необязательно)
+    // 0 = ФИО
+    // 1 = Подразделение
+    // 2 = Должность
+    // 3 = Полис
+    // 4 = Дата рождения
+    // 5 = Пол
+    // 6 = Вредные факторы (необязательно)
     
-    // Разбиваем ФИО на слова
     const nameWords = parts[0].split(/\s+/).filter(w => w.length > 0);
-    
-    if (nameWords.length < 2) {
-        console.warn('⚠️ ФИО содержит меньше 2 слов:', parts[0]);
-        return null;
-    }
+    if (nameWords.length < 2) return null;
     
     const last_name = nameWords[0] || '';
     const first_name = nameWords[1] || '';
@@ -392,19 +361,12 @@ function parseLine(line) {
     const department = parts[1] || '';
     const position = parts[2] || '';
     
-    // Полис — очищаем от пробелов
     let policy = '';
-    if (parts[3]) {
-        policy = parts[3].replace(/\s/g, '');
-    }
+    if (parts[3]) policy = parts[3].replace(/\s/g, '');
     
-    // Дата рождения
     let birthDate = '';
-    if (parts[4]) {
-        birthDate = parts[4].trim();
-    }
+    if (parts[4]) birthDate = parts[4].trim();
     
-    // Пол
     let gender = '';
     if (parts[5]) {
         const g = parts[5].trim().toLowerCase();
@@ -412,11 +374,8 @@ function parseLine(line) {
         else if (g === 'ж' || g === 'ж.') gender = 'Ж';
     }
     
-    // Вредные факторы (если есть 7-я часть)
     let factors = '';
-    if (parts[6]) {
-        factors = parts[6].trim();
-    }
+    if (parts[6]) factors = parts[6].trim();
     
     return {
         last_name: last_name,
@@ -454,24 +413,26 @@ function escXml(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); 
 }
 // ============================================================
-// ОРГАНИЗАЦИИ (РАБОТОДАТЕЛИ)
+// ОРГАНИЗАЦИИ
 // ============================================================
 function renderOrgs() {
     const select = document.getElementById('orgSelect');
-    if (!select) return;
-    const orgs = getOrgs();
-    select.innerHTML = '<option value="">-- Выберите организацию --</option>';
-    orgs.forEach(org => {
-        const opt = document.createElement('option');
-        opt.value = org.id;
-        opt.textContent = `${org.name} (${org.inn})`;
-        select.appendChild(opt);
-    });
-    const currentOrgId = localStorage.getItem('currentOrgId');
-    if (currentOrgId) select.value = currentOrgId;
+    if (select) {
+        const orgs = getOrgs();
+        select.innerHTML = '<option value="">-- Выберите организацию --</option>';
+        orgs.forEach(org => {
+            const opt = document.createElement('option');
+            opt.value = org.id;
+            opt.textContent = `${org.name} (${org.inn})`;
+            select.appendChild(opt);
+        });
+        const currentOrgId = localStorage.getItem('currentOrgId');
+        if (currentOrgId) select.value = currentOrgId;
+    }
     
     const famOrgSelect = document.getElementById('famOrgSelect');
     if (famOrgSelect) {
+        const orgs = getOrgs();
         famOrgSelect.innerHTML = '<option value="">-- Выберите организацию --</option>';
         orgs.forEach(org => {
             const opt = document.createElement('option');
@@ -479,6 +440,7 @@ function renderOrgs() {
             opt.textContent = org.name;
             famOrgSelect.appendChild(opt);
         });
+        const currentOrgId = localStorage.getItem('currentOrgId');
         if (currentOrgId) famOrgSelect.value = currentOrgId;
     }
 }
@@ -488,7 +450,7 @@ function selectOrg(id) {
 }
 
 // ============================================================
-// УПОЛНОМОЧЕННЫЕ ЛИЦА (ПОДПИСАНТЫ)
+// УПОЛНОМОЧЕННЫЕ ЛИЦА
 // ============================================================
 function renderPersons() {
     const select = document.getElementById('personSelect');
@@ -678,6 +640,21 @@ function getSelectedPrograms() {
     return programs; 
 }
 
+function addSelectedToProtocol() {
+    const selected = getSelectedStaffFromView();
+    if (selected.length === 0) { alert('❌ Выберите сотрудников!'); return; }
+    const protocol = getProtocol();
+    const existing = new Set(protocol.map(e => e.snils));
+    let added = 0;
+    selected.forEach(emp => {
+        if (!existing.has(emp.snils)) { protocol.push({...emp}); existing.add(emp.snils); added++; }
+    });
+    saveProtocol(protocol);
+    renderProtocol();
+    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
+    alert(`✅ Добавлено ${added} сотрудников!`);
+}
+
 // ============================================================
 // ОЗНАКОМЛЕНИЕ
 // ============================================================
@@ -735,7 +712,6 @@ function generateFamiliarization() {
     const docLabels = document.querySelectorAll('.doc-check');
     const docs = [];
     let soutNumber = '';
-    let riskPosition = '';
     
     docLabels.forEach(label => {
         const checkbox = label.querySelector('input[type="checkbox"]');
@@ -746,9 +722,6 @@ function generateFamiliarization() {
             let docName = nameInput ? nameInput.value.trim() : checkbox.value;
             if (soutInput && docName === 'Специальная оценка условий труда') {
                 soutNumber = soutInput.value.trim();
-            }
-            if (docName === 'Оценка профессиональных рисков') {
-                riskPosition = emp.position;
             }
             docs.push(docName);
         }
@@ -784,10 +757,8 @@ function generateFamiliarization() {
             <div style="padding:30px;background:linear-gradient(145deg, #ffffff 0%, #f5f5ff 100%);color:#1a1a3e;border-radius:12px;max-width:1000px;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,0.15);border:1px solid rgba(124,58,237,0.15);">
                 
                 <div style="text-align:center;border-bottom:3px solid #7c3aed;padding-bottom:16px;margin-bottom:20px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-                        <div style="font-size:14px;color:#555;text-align:left;">
-                            ${orgName ? `<strong>${orgName}</strong>` : ''}
-                        </div>
+                    <div style="font-size:14px;color:#555;text-align:left;">
+                        ${orgName ? `<strong>${orgName}</strong>` : ''}
                     </div>
                     <h2 style="font-size:22px;color:#1a1a3e;margin:12px 0 4px 0;letter-spacing:1px;">ЛИСТ ОЗНАКОМЛЕНИЯ</h2>
                     <p style="font-size:14px;color:#666;margin:0;">с нормативными актами по охране труда</p>
@@ -884,17 +855,18 @@ function openPPEModal(wp) {
     const loading = document.getElementById('ppeLoading');
     const content = document.getElementById('ppeContent');
     const error = document.getElementById('ppeError');
-    const list = document.getElementById('ppeList');
     
     if (!modal) return;
     
-    loading.style.display = 'none';
-    content.style.display = 'block';
-    error.style.display = 'none';
+    if (loading) loading.style.display = 'none';
+    if (content) content.style.display = 'block';
+    if (error) error.style.display = 'none';
     modal.classList.remove('hidden');
     
-    document.getElementById('ppeEmployeeName').textContent = wp.name || 'Сотрудник';
-    document.getElementById('ppePosition').textContent = wp.position || 'Должность не указана';
+    const nameEl = document.getElementById('ppeEmployeeName');
+    const posEl = document.getElementById('ppePosition');
+    if (nameEl) nameEl.textContent = wp.name || 'Сотрудник';
+    if (posEl) posEl.textContent = wp.position || 'Должность не указана';
     
     renderPPEList();
 }
@@ -903,9 +875,9 @@ function renderPPEList() {
     const list = document.getElementById('ppeList');
     if (!list) return;
     
-    const typeOptions = PPE_TYPES.map(t => {
-        return `<option value="${t}" style="color:#fff;background:#1a1a3e;padding:8px;">${t}</option>`;
-    }).join('');
+    const typeOptions = PPE_TYPES.map(t => 
+        `<option value="${t}" style="color:#fff;background:#1a1a3e;padding:8px;">${t}</option>`
+    ).join('');
     
     let html = `
         <div style="background:rgba(0,212,255,0.08);padding:10px 14px;border-radius:8px;margin-bottom:14px;border:1px solid rgba(0,212,255,0.15);">
@@ -1023,15 +995,13 @@ function savePPEItems() {
     if (ppeItems.length === 0) { alert('⚠️ Добавьте хотя бы одно СИЗ!'); return; }
     currentPPEWorkplace.ppeItems = ppeItems;
     currentPPEWorkplace.hasPPE = true;
-    currentPPEWorkplace.ppeSource = 'Введено вручную';
-    saveMap();
-    drawMap();
     alert(`✅ Сохранено ${ppeItems.length} СИЗ!`);
     closePPEModal();
 }
 
 function closePPEModal() {
-    document.getElementById('ppeModal').classList.add('hidden');
+    const modal = document.getElementById('ppeModal');
+    if (modal) modal.classList.add('hidden');
     currentPPEWorkplace = null;
     ppeItems = [];
 }
@@ -1048,16 +1018,17 @@ function exportPPE() {
         </div>`;
     });
     const win = window.open('', '_blank');
-    win.document.write(`<!DOCTYPE html><html><head><title>СИЗ</title><style>body{font-family:Arial;padding:40px;color:#333;max-width:900px;margin:0 auto;}h1{color:#1a1a3e;border-bottom:3px solid #7c3aed;padding-bottom:10px;}.header-info{background:#f5f5f5;padding:15px;border-radius:8px;margin:20px 0;}.footer{margin-top:30px;padding-top:15px;border-top:1px solid #ddd;font-size:12px;color:#888;text-align:center;}</style></head><body>
+    win.document.write(`<!DOCTYPE html><html><head><title>СИЗ</title><style>body{font-family:Arial;padding:40px;color:#333;max-width:900px;margin:0 auto;}h1{color:#1a1a3e;border-bottom:3px solid #7c3aed;padding-bottom:10px;}</style></head><body>
         <h1>🦺 Средства индивидуальной защиты</h1>
-        <div class="header-info"><p><strong>Сотрудник:</strong> ${currentPPEWorkplace.name}</p><p><strong>Должность:</strong> ${currentPPEWorkplace.position}</p><p><strong>Дата:</strong> ${new Date().toLocaleDateString('ru-RU')}</p></div>
-        <hr>${ppeText}<div class="footer"><p>Данные введены специалистом по ОТ</p></div>
+        <p><strong>Сотрудник:</strong> ${currentPPEWorkplace.name}</p>
+        <p><strong>Должность:</strong> ${currentPPEWorkplace.position}</p>
+        <hr>${ppeText}
         <script>window.print();<\/script></body></html>`);
     win.document.close();
 }
 
 // ============================================================
-// КАРТОЧКИ СИЗ - ОСНОВНАЯ ФУНКЦИОНАЛЬНОСТЬ
+// КАРТОЧКИ СИЗ - ШАБЛОНЫ
 // ============================================================
 let selectedPPECardItems = [];
 
@@ -1083,7 +1054,6 @@ function initPPECardsPage() {
     const generateBtn = document.getElementById('generatePPECardsBtn');
     if (generateBtn) {
         generateBtn.onclick = function() {
-            console.log('🔄 Кнопка генерации нажата');
             generatePPECardsHTML();
         };
     }
@@ -1205,27 +1175,6 @@ function renderPPECardPPEList() {
         });
     });
     
-    document.querySelectorAll('.ppe-punkt-input, .ppe-unit-input, .ppe-quantity-input').forEach(input => {
-        input.addEventListener('change', function() {
-            const container = this.closest('.ppe-item-select');
-            const cb = container.querySelector('.ppe-card-ppe-check');
-            if (cb && cb.checked) {
-                const idx = parseInt(cb.dataset.index);
-                const ppe = PPE_CARD_TEMPLATES[idx];
-                const punktInput = container.querySelector('.ppe-punkt-input');
-                const unitInput = container.querySelector('.ppe-unit-input');
-                const quantityInput = container.querySelector('.ppe-quantity-input');
-                
-                const existing = selectedPPECardItems.find(item => item.name === ppe.name);
-                if (existing) {
-                    existing.punkt = punktInput ? punktInput.value.trim() || 'п. ___' : 'п. ___';
-                    existing.unit = unitInput ? unitInput.value.trim() || 'Штук, год' : 'Штук, год';
-                    existing.quantity = quantityInput ? quantityInput.value.trim() || '1' : '1';
-                }
-            }
-        });
-    });
-    
     updatePPECardSelectionCount();
 }
 
@@ -1235,10 +1184,7 @@ function addCustomPPEToCardList() {
     const unit = document.getElementById('ppeCardCustomUnit').value.trim() || 'Штук, год';
     const quantity = document.getElementById('ppeCardCustomQuantity').value.trim() || '1';
     
-    if (!name) {
-        alert('❌ Введите наименование СИЗ!');
-        return;
-    }
+    if (!name) { alert('❌ Введите наименование СИЗ!'); return; }
     
     if (!selectedPPECardItems.some(item => item.name === name)) {
         selectedPPECardItems.push({ name, punkt, unit, quantity });
@@ -1275,11 +1221,7 @@ function getSelectedPPECardEmployees() {
         if (emp) {
             const cardNumber = document.querySelector(`.staff-card-number[data-snils="${snils}"]`)?.value.trim() || '';
             const workplaceId = document.querySelector(`.staff-workplace-id[data-snils="${snils}"]`)?.value.trim() || '';
-            selected.push({
-                ...emp,
-                cardNumber: cardNumber,
-                workplaceId: workplaceId
-            });
+            selected.push({ ...emp, cardNumber, workplaceId });
         }
     });
     return selected;
@@ -1301,14 +1243,18 @@ function clearPPECardSelection() {
     if (res) res.classList.add('hidden');
     alert('✅ Выбор очищен');
 }
+
+function openEmployeeCardBySnils(snils) {
+    const all = getAllEmployees();
+    const emp = all.find(e => e.snils === snils);
+    if (!emp) { alert('❌ Сотрудник не найден'); return; }
+    alert(`👤 ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}\n💼 ${emp.position}\n📁 ${emp.department || 'Без службы'}`);
+}
 // ============================================================
-// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ - С ВЫБОРОМ КОЛИЧЕСТВА НА ЛИСТЕ
+// ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ
 // ============================================================
 function generatePPECardsHTML() {
-    console.log('🔄 generatePPECardsHTML вызвана');
-    
     const employees = getSelectedPPECardEmployees();
-    console.log('👤 Выбрано сотрудников:', employees.length);
     
     if (employees.length === 0) {
         alert('❌ Выберите хотя бы одного сотрудника!');
@@ -1341,7 +1287,6 @@ function generatePPECardsHTML() {
     let cardCount = 0;
     let totalPages = Math.ceil(employees.length / cardsPerPage);
     
-    // Универсальная таблица СИЗ для лицевой стороны
     function buildPPETableFull(fullPage) {
         let rows = '';
         const rowHeight = fullPage ? '60px' : '38px';
@@ -1373,7 +1318,6 @@ function generatePPECardsHTML() {
         return rows;
     }
     
-    // ЛИЦЕВАЯ КАРТОЧКА - ЛИЧНАЯ
     function createPersonalFaceCard(emp, fullPage) {
         const dept = document.getElementById('ppeCardDepartment')?.value.trim() || '';
         const cardNumber = emp.cardNumber || '___';
@@ -1383,7 +1327,6 @@ function generatePPECardsHTML() {
         const subtitleSize = fullPage ? '17px' : '13px';
         const headerFontSize = fullPage ? '13px' : '10px';
         const pad = fullPage ? '6px 10px' : '6px 8px';
-        
         const signHeight = fullPage ? '35px' : '26px';
         const signFontSize = fullPage ? '11px' : '9px';
         
@@ -1401,7 +1344,7 @@ function generatePPECardsHTML() {
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Имя</strong> ${emp.first_name}</div>
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Отчество</strong> ${emp.middle_name || ''}</div>
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Табельный номер</strong> ________</div>
-                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Структурное подразделение</strong> ${dept}</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Структурное подразделение</strong> ${dept || emp.department || ''}</div>
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Профессия (должность)</strong> ${emp.position}</div>
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Дата поступления на работу</strong> __________</div>
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
@@ -1454,7 +1397,6 @@ function generatePPECardsHTML() {
         `;
     }
     
-    // ЛИЦЕВАЯ КАРТОЧКА - ДЕЖУРНАЯ
     function createDutyFaceCard(emp, fullPage) {
         const cardNumber = emp.cardNumber || '___';
         const workplaceId = emp.workplaceId || '________';
@@ -1465,7 +1407,6 @@ function generatePPECardsHTML() {
         const smallSize = fullPage ? '11px' : '10px';
         const headerFontSize = fullPage ? '13px' : '10px';
         const pad = fullPage ? '6px 10px' : '4px 6px';
-        
         const signHeight = fullPage ? '35px' : '26px';
         const signFontSize = fullPage ? '11px' : '9px';
         
@@ -1482,7 +1423,7 @@ function generatePPECardsHTML() {
                 
                 <div style="font-size:${fontSize};margin-bottom:${fullPage ? '10px' : '4px'};flex-shrink:0;">
                     <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Идентификатор рабочего места, за которым закреплены дежурные СИЗ:</strong> ${workplaceId}</div>
-                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Структурное подразделение</strong> ${dutyDepartment || '________________'}</div>
+                    <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Структурное подразделение</strong> ${dutyDepartment || emp.department || '________________'}</div>
                     <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Фамилия, имя, отчество (при наличии) ответственного</strong> ${dutyResponsibleName || '________________'}</div>
                     <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Профессия (должность) ответственного</strong> ${dutyResponsiblePosition || '________________'}</div>
                     <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Предусмотрена приказом (номер и дата приказа об утверждении Норм) выдача:</strong> ${dutyOrder || '________________'}</div>
@@ -1523,7 +1464,6 @@ function generatePPECardsHTML() {
         `;
     }
     
-    // ОБОРОТНАЯ КАРТОЧКА (с заголовками Выдано/Возвращено)
     function createReverseCard(emp, fullPage) {
         const headerFontSize = fullPage ? '11px' : '8px';
         const subHeaderFontSize = fullPage ? '10px' : '7px';
@@ -1572,29 +1512,18 @@ function generatePPECardsHTML() {
                     <thead>
                         <tr style="background:#f0f0f0;">
                             <th style="border:1px solid #000;padding:${cellPad};text-align:center;width:11%;font-size:${headerFontSize};font-weight:bold;" rowspan="2">Наименование СИЗ</th>
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;width:12%;font-size:${headerFontSize};font-weight:bold;" rowspan="2">Модель, марка, артикул, класс защиты СИЗ</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;width:12%;font-size:${headerFontSize};font-weight:bold;" rowspan="2">Модель, марка, артикул</th>
                             <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${headerFontSize};font-weight:bold;" colspan="3">Выдано</th>
                             <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${headerFontSize};font-weight:bold;" colspan="3">Возвращено</th>
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;width:10%;font-size:${headerFontSize};font-weight:bold;" rowspan="2">Акт списания (дата, номер)</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;width:10%;font-size:${headerFontSize};font-weight:bold;" rowspan="2">Акт списания</th>
                         </tr>
                         <tr style="background:#f0f0f0;">
                             <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">дата</th>
                             <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">кол-во</th>
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">подпись получившего СИЗ</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">подпись</th>
                             <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">дата</th>
                             <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">кол-во</th>
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">подпись сдавшего СИЗ</th>
-                        </tr>
-                        <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">1</th>
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">2</th>
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">3</th>
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">4</th>
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">5</th>
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">6</th>
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">7</th>
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">8</th>
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">9</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">подпись</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1606,13 +1535,11 @@ function generatePPECardsHTML() {
     }
     
     let allPagesHTML = '';
-    let cardIndex = 0;
     
     if (cardsPerPage === 2) {
         for (let i = 0; i < employees.length; i += 2) {
             const emp1 = employees[i];
             const emp2 = employees[i + 1] || null;
-            cardIndex++;
             cardCount += emp2 ? 2 : 1;
             
             const faceCardFunc = isDuty ? createDutyFaceCard : createPersonalFaceCard;
@@ -1628,7 +1555,7 @@ function generatePPECardsHTML() {
             let reversePageHTML = `
             <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
                 ${createReverseCard(emp1, false)}
-                ${emp2 ? createReverseCard(emp2, false).replace('top:0', 'top:50%').replace('border-bottom', 'border-top') : `<div style="position:absolute;top:50%;left:0;width:100%;height:50%;display:flex;align-items:center;justify-content:center;color:#999;font-size:20px;border-top:1px dashed #ddd;">ПУСТАЯ ОБОРОТНАЯ СТОРОНА</div>`}
+                ${emp2 ? createReverseCard(emp2, false).replace('top:0', 'top:50%').replace('border-bottom', 'border-top') : `<div style="position:absolute;top:50%;left:0;width:100%;height:50%;display:flex;align-items:center;justify-content:center;color:#999;font-size:20px;border-top:1px dashed #ddd;">ПУСТАЯ ОБОРОТНАЯ</div>`}
                 <div style="position:absolute;top:50%;left:0;width:100%;height:2px;border-top:2px dashed #ff0000;z-index:10;"></div>
             </div>
             `;
@@ -1638,28 +1565,25 @@ function generatePPECardsHTML() {
     } else {
         employees.forEach(emp => {
             cardCount++;
-            
             const faceCardFunc = isDuty ? createDutyFaceCard : createPersonalFaceCard;
             
-            let facePageHTML = `
+            allPagesHTML += `
             <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
                 ${faceCardFunc(emp, true)}
             </div>
             `;
             
-            let reversePageHTML = `
+            allPagesHTML += `
             <div style="page-break-after:always;position:relative;width:100%;height:297mm;margin:0 auto;background:#fff;color:#000;border:1px solid #999;box-sizing:border-box;overflow:hidden;font-family:'Times New Roman',Times,serif;">
                 ${createReverseCard(emp, true)}
             </div>
             `;
-            
-            allPagesHTML += facePageHTML + reversePageHTML;
         });
     }
     
     const win = window.open('', '_blank');
     if (!win) {
-        alert('❌ Браузер заблокировал открытие нового окна. Разрешите всплывающие окна для этого сайта.');
+        alert('❌ Браузер заблокировал открытие нового окна.');
         return;
     }
     
@@ -1679,7 +1603,6 @@ function generatePPECardsHTML() {
                     body { background: #fff; padding: 0; margin: 0; }
                     .no-print { display: none; }
                     div[style*="page-break-after:always"] { page-break-after: always; }
-                    div[style*="border-top:2px dashed #ff0000"] { border-top: 1px dashed #ccc !important; }
                 }
                 .no-print {
                     text-align: center;
@@ -1701,20 +1624,15 @@ function generatePPECardsHTML() {
                     font-weight: 600;
                     cursor: pointer;
                 }
-                .no-print button:hover { transform: scale(1.02); }
                 .no-print .btn-secondary { background: #666; }
                 @media print { .no-print { display: none !important; } }
             </style>
         </head>
         <body>
             <div class="no-print">
-                <h3>🖨️ Карточки ${cardTypeName} готовы к печати (${cardCount} шт., ${modeText})</h3>
+                <h3>🖨️ Карточки ${cardTypeName} (${cardCount} шт., ${modeText})</h3>
                 <button onclick="window.print()">🖨️ Печать</button>
                 <button class="btn-secondary" onclick="window.close()">✖ Закрыть</button>
-                <p style="font-size:11px;color:#666;margin-top:4px;">📄 ${modeText}</p>
-                <p style="font-size:10px;color:#888;">📋 У каждого сотрудника свой номер карточки и ID рабочего места</p>
-                <p style="font-size:10px;color:#888;">📊 На оборотной стороне: заголовки "Выдано" и "Возвращено"</p>
-                <p style="font-size:10px;color:#888;">📋 Всего листов: ${totalPages * 2}</p>
             </div>
             ${allPagesHTML}
             <script>
@@ -1725,21 +1643,15 @@ function generatePPECardsHTML() {
     `);
     win.document.close();
     
-    resultDiv.classList.remove('hidden');
-    contentDiv.innerHTML = `
+    if (resultDiv) resultDiv.classList.remove('hidden');
+    if (contentDiv) contentDiv.innerHTML = `
         <p>✅ Создано ${cardTypeName.toLowerCase()} карточек: <strong>${cardCount}</strong></p>
         <p>📋 Режим: <strong>${modeText}</strong></p>
-        <p>📋 Сотрудники: ${employees.map(e => `${e.last_name} ${e.first_name} (№${e.cardNumber || '___'})`).join(', ')}</p>
+        <p>📋 Сотрудники: ${employees.map(e => `${e.last_name} ${e.first_name}`).join(', ')}</p>
         <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
-        <p style="color:#8888aa;font-size:13px;margin-top:8px;">🖨️ Откроется новое окно для печати.</p>
-        <p style="color:#8888aa;font-size:12px;">📄 Всего листов: ${totalPages * 2}</p>
-        <p style="color:#8888aa;font-size:12px;">📋 Режим: ${modeText}</p>
     `;
 }
 
-// ============================================================
-// ПЕРЕКЛЮЧЕНИЕ ТИПА КАРТОЧКИ
-// ============================================================
 function toggleCardType() {
     const isDuty = document.querySelector('input[name="cardType"][value="duty"]')?.checked || false;
     const dutyFields = document.getElementById('dutyFields');
@@ -1754,7 +1666,7 @@ function toggleCardType() {
     }
 }
 // ============================================================
-// РАЗДЕЛ "МЕДОСМОТРЫ" - ВИДЫ ДЕЯТЕЛЬНОСТИ ПО ПРИКАЗУ №342н
+// ВИДЫ ДЕЯТЕЛЬНОСТИ ПО ПРИКАЗУ №342н
 // ============================================================
 const PSYCHO_ACTIVITIES = [
     { id: 1, title: 'Деятельность, связанная с управлением транспортными средствами или управлением движением транспортных средств по профессиям и должностям согласно перечню работ, профессий, должностей, непосредственно связанных с управлением транспортными средствами или управлением движением транспортных средств' },
@@ -1768,12 +1680,16 @@ const PSYCHO_ACTIVITIES = [
     { id: 9, title: 'Деятельность по присмотру и уходу за детьми' },
     { id: 11, title: 'Деятельность в сфере электроэнергетики, связанная с организацией и осуществлением монтажа, наладки, технического обслуживания, ремонта, управления режимом работы электроустановок' },
     { id: 12, title: 'Деятельность в сфере теплоснабжения, связанная с организацией и осуществлением монтажа, наладки, технического обслуживания, ремонта, управления режимом работы объектов теплоснабжения' },
-    { id: 13, title: 'Деятельность, непосредственно связанная с обслуживанием оборудования, работающего под избыточным давлением более 0,07 МПа и подлежащего учету в органах Федеральной службы по экологическому, технологическому и атомному надзору: пара, газа (в газообразном, сжиженном состоянии); воды при температуре более 115 °С; иных жидкостей при температуре, превышающей температуру их кипения при избыточном давлении 0,07 МПа' },
-    { id: 14, title: 'Деятельность, непосредственно связанная с диспетчеризацией производственных процессов в химической (нефтехимической) промышленности, включая деятельность операторов производственного оборудования в химической (нефтехимической) промышленности (при производстве химических веществ 1 и 2 классов опасности)' },
+    { id: 13, title: 'Деятельность, непосредственно связанная с обслуживанием оборудования, работающего под избыточным давлением более 0,07 МПа и подлежащего учету в органах Федеральной службы по экологическому, технологическому и атомному надзору' },
+    { id: 14, title: 'Деятельность, непосредственно связанная с диспетчеризацией производственных процессов в химической (нефтехимической) промышленности' },
     { id: 15, title: 'Деятельность, связанная с добычей угля подземным способом' },
-    { id: 16, title: 'Деятельность, связанная с эксплуатацией, ремонтом скважин и установок при переработке высокосернистой нефти, очистке нефти и газа от сероводорода, очистке нефтеналивных судов, цистерн, резервуаров, добычей и обработкой озокерита, экстракционноозокеритовым производством' },
-    { id: 17, title: 'Деятельность, непосредственно связанная с контактами с возбудителями инфекционных заболеваний - патогенными микроорганизмами I и II группы патогенности, возбудителями особо опасных инфекций, а также с биологическими токсинами (микробного, растительного и животного происхождения) или с доступом к указанным субстанциям' }
+    { id: 16, title: 'Деятельность, связанная с эксплуатацией, ремонтом скважин и установок при переработке высокосернистой нефти' },
+    { id: 17, title: 'Деятельность, непосредственно связанная с контактами с возбудителями инфекционных заболеваний - патогенными микроорганизмами I и II группы патогенности' }
 ];
+
+// Ручные сотрудники (не из штатки)
+let manualMedEmployees = [];
+let manualPsychoEmployees = [];
 
 // ============================================================
 // ИНИЦИАЛИЗАЦИЯ РАЗДЕЛА "МЕДОСМОТРЫ"
@@ -1789,6 +1705,7 @@ function initMedPage() {
 }
 
 function renderMedOrgSelects() {
+    // Работодатели для медосмотра
     const orgSelect = document.getElementById('medOrgSelect');
     if (orgSelect) {
         const orgs = getOrgs();
@@ -1802,6 +1719,8 @@ function renderMedOrgSelects() {
         const currentOrgId = localStorage.getItem('currentOrgId');
         if (currentOrgId) orgSelect.value = currentOrgId;
     }
+    
+    // Работодатели для психо
     const psychoOrgSelect = document.getElementById('psychoOrgSelect');
     if (psychoOrgSelect) {
         const orgs = getOrgs();
@@ -1815,6 +1734,8 @@ function renderMedOrgSelects() {
         const currentOrgId = localStorage.getItem('currentOrgId');
         if (currentOrgId) psychoOrgSelect.value = currentOrgId;
     }
+    
+    // Медорганизации для медосмотра
     const medOrgSelect = document.getElementById('medMedOrgSelect');
     if (medOrgSelect) {
         const medOrgs = getMedOrgs();
@@ -1826,6 +1747,8 @@ function renderMedOrgSelects() {
             medOrgSelect.appendChild(opt);
         });
     }
+    
+    // Медорганизации для психо
     const psychoMedOrgSelect = document.getElementById('psychoMedOrgSelect');
     if (psychoMedOrgSelect) {
         const medOrgs = getMedOrgs();
@@ -1861,15 +1784,20 @@ function renderMedEmployeeList(mode = 'med') {
     if (!container) return;
     const all = getAllEmployees();
     
+    // Добавляем ручных сотрудников
+    if (mode === 'med') {
+        manualMedEmployees.forEach(e => all.push(e));
+    } else if (mode === 'psycho') {
+        manualPsychoEmployees.forEach(e => all.push(e));
+    }
+    
     if (all.length === 0) {
         container.innerHTML = '<p style="color:#6a6a8a;text-align:center;padding:20px;">Нет загруженных сотрудников.</p>';
         return;
     }
     
-    const services = getServices();
-    const servicesOptions = services.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-    
     let html = '<div style="max-height:500px;overflow-y:auto;">';
+    
     all.forEach(emp => {
         const savedMed = JSON.parse(localStorage.getItem(`medData_${emp.snils}`) || '{}');
         const savedPsycho = JSON.parse(localStorage.getItem(`psychoData_${emp.snils}`) || '{}');
@@ -1880,16 +1808,16 @@ function renderMedEmployeeList(mode = 'med') {
             const birthDate = savedMed.birthDate || emp.birthDate || '';
             const gender = savedMed.gender || emp.gender || '';
             const policy = savedMed.policy || emp.policyNumber || '';
-            const service = savedMed.service || emp.department || '';
             
             html += `
                 <div data-snils="${emp.snils}" style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);">
                     <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
                         <input type="checkbox" class="med-check" data-snils="${emp.snils}" ${checked ? 'checked' : ''} style="width:18px;height:18px;accent-color:#7c3aed;">
-                        <span class="emp-name" style="color:#00d4ff;font-size:14px;">${emp.last_name} ${emp.first_name}</span>
+                        <span class="emp-name" style="color:#00d4ff;font-size:14px;">${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</span>
                         <span style="color:#8888aa;font-size:13px;">${emp.position}</span>
+                        ${emp.department ? `<span style="color:#b388ff;font-size:12px;">📁 ${emp.department}</span>` : ''}
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 2fr;gap:8px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 2fr;gap:8px;">
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Дата рождения</label>
                             <input type="date" class="med-birth-date" data-snils="${emp.snils}" value="${birthDate}" style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
@@ -1907,21 +1835,6 @@ function renderMedEmployeeList(mode = 'med') {
                             <input type="text" class="med-policy" data-snils="${emp.snils}" value="${policy}" placeholder="1234 5678..." style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
                         </div>
                         <div>
-                            <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Служба</label>
-                            <select class="med-service" data-snils="${emp.snils}" style="...">
-    <option value="">--</option>
-    ${(() => {
-        const allServices = services.map(s => s.name);
-        if (service && !allServices.includes(service)) {
-            allServices.unshift(service);
-        }
-        return allServices.map(name => 
-            `<option value="${name}" ${service === name ? 'selected' : ''}>${name}${!services.some(s => s.name === name) && name ? ' (из штатки)' : ''}</option>`
-        ).join('');
-    })()}
-</select>
-                        </div>
-                        <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Вредные факторы (Приказ №29н)</label>
                             <input type="text" class="med-factors" data-snils="${emp.snils}" value="${factors}" placeholder="4.3.1, 4.3.2, 18.1" style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
                         </div>
@@ -1936,7 +1849,6 @@ function renderMedEmployeeList(mode = 'med') {
             const birthDate = savedPsycho.birthDate || emp.birthDate || '';
             const gender = savedPsycho.gender || emp.gender || '';
             const regAddress = savedPsycho.regAddress || emp.registrationAddress || '';
-            const service = savedPsycho.service || emp.department || '';
             
             const activityOptions = PSYCHO_ACTIVITIES.map(a => 
                 `<option value="${a.id}" ${activityId == a.id ? 'selected' : ''}>${a.id}. ${a.title.substring(0, 60)}${a.title.length > 60 ? '...' : ''}</option>`
@@ -1946,10 +1858,11 @@ function renderMedEmployeeList(mode = 'med') {
                 <div data-snils="${emp.snils}" style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);">
                     <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
                         <input type="checkbox" class="psycho-check" data-snils="${emp.snils}" ${checked ? 'checked' : ''} style="width:18px;height:18px;accent-color:#7c3aed;">
-                        <span class="emp-name" style="color:#00d4ff;font-size:14px;">${emp.last_name} ${emp.first_name}</span>
+                        <span class="emp-name" style="color:#00d4ff;font-size:14px;">${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</span>
                         <span style="color:#8888aa;font-size:13px;">${emp.position}</span>
+                        ${emp.department ? `<span style="color:#b388ff;font-size:12px;">📁 ${emp.department}</span>` : ''}
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 2fr;gap:8px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 2fr;gap:8px;">
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Дата рождения</label>
                             <input type="date" class="psycho-birth-date" data-snils="${emp.snils}" value="${birthDate}" style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
@@ -1967,13 +1880,6 @@ function renderMedEmployeeList(mode = 'med') {
                             <input type="text" class="psycho-address" data-snils="${emp.snils}" value="${regAddress}" placeholder="г. ..., ул. ..." style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
                         </div>
                         <div>
-                            <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Служба</label>
-                            <select class="psycho-service" data-snils="${emp.snils}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
-                                <option value="">--</option>
-                                ${services.map(s => `<option value="${s.name}" ${service === s.name ? 'selected' : ''}>${s.name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Вид деятельности (Приказ №342н)</label>
                             <select class="psycho-activity" data-snils="${emp.snils}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
                                 <option value="">-- Выберите вид --</option>
@@ -1989,13 +1895,13 @@ function renderMedEmployeeList(mode = 'med') {
     container.innerHTML = html;
     
     if (mode === 'med') {
-        container.querySelectorAll('.med-check, .med-birth-date, .med-gender, .med-policy, .med-factors, .med-service').forEach(el => {
+        container.querySelectorAll('.med-check, .med-birth-date, .med-gender, .med-policy, .med-factors').forEach(el => {
             el.addEventListener('change', saveMedData);
             el.addEventListener('input', saveMedData);
         });
     }
     if (mode === 'psycho') {
-        container.querySelectorAll('.psycho-check, .psycho-birth-date, .psycho-gender, .psycho-address, .psycho-activity, .psycho-service').forEach(el => {
+        container.querySelectorAll('.psycho-check, .psycho-birth-date, .psycho-gender, .psycho-address, .psycho-activity').forEach(el => {
             el.addEventListener('change', savePsychoData);
             el.addEventListener('input', savePsychoData);
         });
@@ -2009,9 +1915,8 @@ function saveMedData() {
     const gender = document.querySelector(`.med-gender[data-snils="${snils}"]`)?.value || '';
     const policy = document.querySelector(`.med-policy[data-snils="${snils}"]`)?.value || '';
     const factors = document.querySelector(`.med-factors[data-snils="${snils}"]`)?.value || '';
-    const service = document.querySelector(`.med-service[data-snils="${snils}"]`)?.value || '';
     
-    localStorage.setItem(`medData_${snils}`, JSON.stringify({ checked, birthDate, gender, policy, factors, service }));
+    localStorage.setItem(`medData_${snils}`, JSON.stringify({ checked, birthDate, gender, policy, factors }));
     
     const data = getStaffData();
     let found = false;
@@ -2022,7 +1927,6 @@ function saveMedData() {
             deptData.employees[idx].gender = gender;
             deptData.employees[idx].policyNumber = policy;
             deptData.employees[idx].medFactors = factors;
-            deptData.employees[idx].department = service;
             found = true;
             break;
         }
@@ -2034,7 +1938,6 @@ function saveMedData() {
             data.unassigned[idx].gender = gender;
             data.unassigned[idx].policyNumber = policy;
             data.unassigned[idx].medFactors = factors;
-            data.unassigned[idx].department = service;
         }
     }
     saveStaffData(data);
@@ -2047,9 +1950,8 @@ function savePsychoData() {
     const gender = document.querySelector(`.psycho-gender[data-snils="${snils}"]`)?.value || '';
     const regAddress = document.querySelector(`.psycho-address[data-snils="${snils}"]`)?.value || '';
     const activityId = document.querySelector(`.psycho-activity[data-snils="${snils}"]`)?.value || '';
-    const service = document.querySelector(`.psycho-service[data-snils="${snils}"]`)?.value || '';
     
-    localStorage.setItem(`psychoData_${snils}`, JSON.stringify({ checked, birthDate, gender, regAddress, activityId, service }));
+    localStorage.setItem(`psychoData_${snils}`, JSON.stringify({ checked, birthDate, gender, regAddress, activityId }));
     
     const data = getStaffData();
     let found = false;
@@ -2060,7 +1962,6 @@ function savePsychoData() {
             deptData.employees[idx].gender = gender;
             deptData.employees[idx].registrationAddress = regAddress;
             deptData.employees[idx].psychoActivity = activityId;
-            deptData.employees[idx].department = service;
             found = true;
             break;
         }
@@ -2072,7 +1973,6 @@ function savePsychoData() {
             data.unassigned[idx].gender = gender;
             data.unassigned[idx].registrationAddress = regAddress;
             data.unassigned[idx].psychoActivity = activityId;
-            data.unassigned[idx].department = service;
         }
     }
     saveStaffData(data);
@@ -2091,8 +1991,10 @@ function filterMedEmployees(mode) {
         item.style.display = (query === '' || name.includes(query)) ? '' : 'none';
     });
 }
-
-const service = emp.department || '';
+// ============================================================
+// ГЕНЕРАЦИЯ НАПРАВЛЕНИЙ НА МЕДОСМОТР (29н)
+// ============================================================
+function generateMedDirections() {
     const orgId = document.getElementById('medOrgSelect')?.value;
     const medOrgId = document.getElementById('medMedOrgSelect')?.value;
     const directionType = document.getElementById('medDirectionType')?.value || 'ПРЕДВАРИТЕЛЬНЫЙ';
@@ -2114,7 +2016,8 @@ const service = emp.department || '';
     
     checkboxes.forEach(cb => {
         const snils = cb.dataset.snils;
-        const emp = getAllEmployees().find(e => e.snils === snils);
+        let emp = getAllEmployees().find(e => e.snils === snils);
+        if (!emp) emp = manualMedEmployees.find(e => e.snils === snils);
         if (!emp) return;
         
         const savedMed = JSON.parse(localStorage.getItem(`medData_${snils}`) || '{}');
@@ -2122,7 +2025,7 @@ const service = emp.department || '';
         const gender = savedMed.gender || emp.gender || '';
         const policy = savedMed.policy || emp.policyNumber || '';
         const factors = savedMed.factors || emp.medFactors || '';
-        const service = savedMed.service || emp.department || '';
+        const department = emp.department || '';
         
         count++;
         
@@ -2152,7 +2055,7 @@ const service = emp.department || '';
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;width:35%;"><strong>Ф.И.О. работника:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</td></tr>
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Дата рождения:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${formatDate(birthDate)}</td></tr>
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Пол работника:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${gender}</td></tr>
-                <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Наименование структурного подразделения:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${service}</td></tr>
+                <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Наименование структурного подразделения:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${department}</td></tr>
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Наименование должности:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${emp.position}</td></tr>
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Вредные и (или) опасные факторы, виды работ (Приказ № 29н):</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${factors}</td></tr>
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>№ страхового полиса и (или) ДМС:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${policy}</td></tr>
@@ -2189,6 +2092,9 @@ const service = emp.department || '';
     openPrintWindow(allDirectionsHTML, `Направления на медосмотр (${count} шт.)`);
 }
 
+// ============================================================
+// ГЕНЕРАЦИЯ НАПРАВЛЕНИЙ НА ПСИХОСВИДЕТЕЛЬСТВОВАНИЕ (342н)
+// ============================================================
 function generatePsychoDirections() {
     const orgId = document.getElementById('psychoOrgSelect')?.value;
     const medOrgId = document.getElementById('psychoMedOrgSelect')?.value;
@@ -2209,7 +2115,8 @@ function generatePsychoDirections() {
     
     checkboxes.forEach(cb => {
         const snils = cb.dataset.snils;
-        const emp = getAllEmployees().find(e => e.snils === snils);
+        let emp = getAllEmployees().find(e => e.snils === snils);
+        if (!emp) emp = manualPsychoEmployees.find(e => e.snils === snils);
         if (!emp) return;
         
         const savedPsycho = JSON.parse(localStorage.getItem(`psychoData_${snils}`) || '{}');
@@ -2217,7 +2124,7 @@ function generatePsychoDirections() {
         const gender = savedPsycho.gender || emp.gender || '';
         const regAddress = savedPsycho.regAddress || emp.registrationAddress || '';
         const activityId = savedPsycho.activityId || emp.psychoActivity || '';
-        const service = savedPsycho.service || emp.department || '';
+        const department = emp.department || '';
         
         const activity = PSYCHO_ACTIVITIES.find(a => a.id == activityId);
         if (!activity) { alert(`❌ Для ${emp.last_name} не выбран вид деятельности!`); return; }
@@ -2252,7 +2159,7 @@ function generatePsychoDirections() {
             
             <div style="font-size:11pt;margin-bottom:10px;">
                 <div><strong>Наименование структурного подразделения работодателя, в котором работник осуществляет отдельный вид (виды) деятельности:</strong></div>
-                <div style="margin-top:3px;">${service || '(заполняется при наличии)'}</div>
+                <div style="margin-top:3px;">${department || '(заполняется при наличии)'}</div>
             </div>
             
             <div style="font-size:11pt;margin-bottom:20px;">
@@ -2285,7 +2192,7 @@ function generatePsychoDirections() {
                     </td>
                     <td style="vertical-align:bottom;padding:0 5px;text-align:center;">
                         <div style="font-size:11pt;">${getSelectedPersonName() || '________________________'}</div>
-                        <div style="font-size:10pt;color:#555;">${getSelectedPersonPosition() || 'Ф.И.О., должность работодателя (его представителя)'}</div>
+                        <div style="font-size:10pt;color:#555;">${getSelectedPersonPosition() || 'Ф.И.О., должность'}</div>
                     </td>
                 </tr>
             </table>
@@ -2302,10 +2209,13 @@ function generatePsychoDirections() {
     openPrintWindow(allDirectionsHTML, `Направления на психосвидетельствование (${count} шт.)`);
 }
 
+// ============================================================
+// ОКНО ПЕЧАТИ
+// ============================================================
 function openPrintWindow(html, title) {
     const win = window.open('', '_blank');
     if (!win) {
-        alert('❌ Браузер заблокировал открытие нового окна. Разрешите всплывающие окна.');
+        alert('❌ Браузер заблокировал открытие нового окна.');
         return;
     }
     
@@ -2343,7 +2253,6 @@ function openPrintWindow(html, title) {
                     font-weight: 600;
                     cursor: pointer;
                 }
-                .no-print button:hover { transform: scale(1.02); }
                 .no-print .btn-secondary { background: #666; }
                 @media print { .no-print { display: none !important; } }
             </style>
@@ -2353,7 +2262,6 @@ function openPrintWindow(html, title) {
                 <h3>🖨️ ${title}</h3>
                 <button onclick="window.print()">🖨️ Печать</button>
                 <button class="btn-secondary" onclick="window.close()">✖ Закрыть</button>
-                <p style="font-size:11px;color:#666;margin-top:4px;">📄 Один лист А4 на одно направление</p>
             </div>
             ${html}
             <script>
@@ -2365,6 +2273,9 @@ function openPrintWindow(html, title) {
     win.document.close();
 }
 
+// ============================================================
+// МЕДОРГАНИЗАЦИИ - МОДАЛЬНОЕ ОКНО
+// ============================================================
 function openAddMedOrgModal() {
     const modal = document.getElementById('addMedOrgModal');
     if (modal) modal.classList.remove('hidden');
@@ -2398,19 +2309,19 @@ function saveNewMedOrg() {
     alert('✅ Медорганизация добавлена!');
 }
 // ============================================================
-// ГЕНЕРАЦИЯ XML - ФОРМАТ РЕЕСТРА
+// ГЕНЕРАЦИЯ XML (реестр обучения)
 // ============================================================
 function generateXML() {
     const orgSelect = document.getElementById('orgSelect');
     const orgs = getOrgs();
-    const org = orgs.find(o => o.id === parseInt(orgSelect.value));
+    const org = orgs.find(o => o.id === parseInt(orgSelect?.value));
     if (!org) { alert('❌ Выберите организацию!'); return; }
     
     const protocol = getProtocol();
     if (protocol.length === 0) { alert('❌ Нет сотрудников в протоколе!'); return; }
     
-    const number = document.getElementById('protocolNumber').value.trim() || '01/26';
-    const date = document.getElementById('protocolDate').value || new Date().toISOString().split('T')[0];
+    const number = document.getElementById('protocolNumber')?.value.trim() || '01/26';
+    const date = document.getElementById('protocolDate')?.value || new Date().toISOString().split('T')[0];
     
     const PROGRAM_TITLES = {
         1: 'Оказание первой помощи пострадавшим',
@@ -2462,23 +2373,19 @@ function generateXML() {
     
     const resultBlock = document.getElementById('resultBlock');
     const downloadLink = document.getElementById('downloadLink');
-    resultBlock.classList.remove('hidden');
+    if (resultBlock) resultBlock.classList.remove('hidden');
     
     const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = `Реестр_${number}_${date}.xml`;
-    
-    const preview = document.createElement('pre');
-    preview.style.cssText = 'max-height:200px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:11px;color:#aaa;margin-top:12px;';
-    preview.textContent = xml.substring(0, 500) + '...';
-    resultBlock.querySelector('pre')?.remove();
-    resultBlock.appendChild(preview);
+    if (downloadLink) {
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = `Реестр_${number}_${date}.xml`;
+    }
     
     alert(`✅ Создано ${protocol.length * programs.length} записей`);
 }
 
 // ============================================================
-// ИНИЦИАЛИЗАЦИЯ
+// ИНИЦИАЛИЗАЦИЯ ОБУЧЕНИЯ
 // ============================================================
 function initTrainingPage() {
     renderOrgs();
@@ -2494,6 +2401,7 @@ function initTrainingPage() {
     if (showOrgFormBtn) showOrgFormBtn.onclick = function() {
         document.getElementById('orgForm').classList.remove('hidden');
     };
+    
     const saveOrgBtn = document.getElementById('saveOrgBtn');
     if (saveOrgBtn) saveOrgBtn.onclick = function() {
         const name = document.getElementById('orgNameInput').value.trim();
@@ -2518,10 +2426,12 @@ function initTrainingPage() {
         if (document.getElementById('orgAddressInput')) document.getElementById('orgAddressInput').value = '';
         alert('✅ Организация добавлена');
     };
+    
     const cancelOrgBtn = document.getElementById('cancelOrgBtn');
     if (cancelOrgBtn) cancelOrgBtn.onclick = function() {
         document.getElementById('orgForm').classList.add('hidden');
     };
+    
     const deleteOrgBtn = document.getElementById('deleteOrgBtn');
     if (deleteOrgBtn) deleteOrgBtn.onclick = function() {
         const id = parseInt(document.getElementById('orgSelect').value);
@@ -2533,21 +2443,26 @@ function initTrainingPage() {
         renderOrgs();
         alert('✅ Удалено');
     };
+    
     const generateBtn = document.getElementById('generateBtn');
     if (generateBtn) generateBtn.onclick = generateXML;
+    
     const addSelectedBtn = document.getElementById('addSelectedBtn');
     if (addSelectedBtn) addSelectedBtn.onclick = addSelectedToProtocol;
+    
     const staffImportBtn = document.getElementById('staffImportBtn');
     if (staffImportBtn) staffImportBtn.onclick = importStaffFile;
+    
     const generateFamBtn = document.getElementById('generateFamBtn');
     if (generateFamBtn) generateFamBtn.onclick = generateFamiliarization;
+    
     const printFamBtn = document.getElementById('printFamBtn');
     if (printFamBtn) printFamBtn.onclick = function() {
         const content = document.getElementById('famContent');
-        if (!content.innerHTML) { alert('Сначала сформируйте лист'); return; }
+        if (!content || !content.innerHTML) { alert('Сначала сформируйте лист'); return; }
         const win = window.open('', '_blank');
         win.document.write(`<!DOCTYPE html><html><head><title>Лист ознакомления</title>
-            <style>body{font-family:Arial;padding:40px;color:#222;max-width:1000px;margin:0 auto;}*{print-color-adjust:exact;}@media print{body{padding:20px;}}</style>
+            <style>body{font-family:Arial;padding:40px;color:#222;max-width:1000px;margin:0 auto;}</style>
         </head><body>${content.innerHTML}<script>window.print();window.close();<\/script></body></html>`);
         win.document.close();
     };
@@ -2556,28 +2471,9 @@ function initTrainingPage() {
 }
 
 // ============================================================
-// ДОБАВЛЕНИЕ В ПРОТОКОЛ ИЗ ШТАТКИ
-// ============================================================
-function addSelectedToProtocol() {
-    const selected = getSelectedStaffFromView();
-    if (selected.length === 0) { alert('❌ Выберите сотрудников!'); return; }
-    const protocol = getProtocol();
-    const existing = new Set(protocol.map(e => e.snils));
-    let added = 0;
-    selected.forEach(emp => {
-        if (!existing.has(emp.snils)) { protocol.push({...emp}); existing.add(emp.snils); added++; }
-    });
-    saveProtocol(protocol);
-    renderProtocol();
-    document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
-    alert(`✅ Добавлено ${added} сотрудников!`);
-}
-
-// ============================================================
 // DOM READY
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Загрузка...');
     const mainPage = document.getElementById('mainPage');
     if (mainPage) mainPage.style.display = 'block';
     document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
@@ -2585,5 +2481,4 @@ document.addEventListener('DOMContentLoaded', function() {
         if (link.textContent.trim() === 'Главная') link.classList.add('active');
     });
     initTrainingPage();
-    console.log('✅ Готово!');
 });
