@@ -333,61 +333,86 @@ function parseLine(line) {
     const trimmed = line.trim();
     if (!trimmed) return null;
     
-    // Разбиваем по табуляции
-    let parts = trimmed.split(/\t+/).map(p => p.trim()).filter(p => p.length > 0);
-    
-    // Если табуляции нет — по 2+ пробелам
-    if (parts.length < 5) {
-        parts = trimmed.split(/\s{2,}/).map(p => p.trim()).filter(p => p.length > 0);
+    // 1. СНИЛС — маска 123-456-789 00
+    let snils = '';
+    const snilsMatch = trimmed.match(/\d{3}-\d{3}-\d{3}\s\d{2}/);
+    if (snilsMatch) {
+        snils = snilsMatch[0].replace(/[\s-]/g, '');
     }
     
-    if (parts.length < 5) return null;
+    // 2. Дата рождения — ДД.ММ.ГГГГ
+    let birthDate = '';
+    const dateMatch = trimmed.match(/\d{1,2}\.\d{1,2}\.\d{4}/);
+    if (dateMatch) {
+        birthDate = dateMatch[0];
+    }
     
-    // ФИКСИРОВАННЫЙ ПОРЯДОК:
-    // 0 = ФИО
-    // 1 = Подразделение
-    // 2 = Должность
-    // 3 = Полис
-    // 4 = Дата рождения
-    // 5 = Пол
-    // 6 = Вредные факторы (необязательно)
+    // 3. Табельный номер — 3-5 цифр в начале строки (после ФИО)
+    let tabNumber = '';
+    const tabMatch = trimmed.match(/\s(\d{4,5})(?:\s|\t)/);
+    if (tabMatch) {
+        const candidate = tabMatch[1];
+        if (!snilsMatch || !snilsMatch[0].replace(/[\s-]/g, '').includes(candidate)) {
+            if (!dateMatch || !dateMatch[0].includes(candidate)) {
+                tabNumber = candidate;
+            }
+        }
+    }
     
-    const nameWords = parts[0].split(/\s+/).filter(w => w.length > 0);
+    // 4. ФИО — первые 2-3 слова с заглавной буквы
+    const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+    if (words.length < 2) return null;
+    
+    const nameWords = [];
+    for (let i = 0; i < words.length && nameWords.length < 3; i++) {
+        const w = words[i];
+        if (/^[А-ЯЁ][а-яё\-]+$/.test(w)) {
+            nameWords.push(w);
+        } else {
+            break;
+        }
+    }
+    
     if (nameWords.length < 2) return null;
     
-    const last_name = nameWords[0] || '';
-    const first_name = nameWords[1] || '';
+    const last_name = nameWords[0];
+    const first_name = nameWords[1];
     const middle_name = nameWords[2] || '';
-    const department = parts[1] || '';
-    const position = parts[2] || '';
     
-    let policy = '';
-    if (parts[3]) policy = parts[3].replace(/\s/g, '');
+    // 5. Должность — берём ПОСЛЕДНЕЕ слово в строке, если оно похоже на должность
+    // Или всё, что идёт ПОСЛЕ даты рождения
+    let position = '';
     
-    let birthDate = '';
-    if (parts[4]) birthDate = parts[4].trim();
-    
-    let gender = '';
-    if (parts[5]) {
-        const g = parts[5].trim().toLowerCase();
-        if (g === 'м' || g === 'м.') gender = 'М';
-        else if (g === 'ж' || g === 'ж.') gender = 'Ж';
+    if (dateMatch) {
+        // Берём всё, что после даты рождения
+        const afterDate = trimmed.substring(trimmed.indexOf(dateMatch[0]) + dateMatch[0].length).trim();
+        position = afterDate.replace(/\t+/g, ' ').replace(/\s+/g, ' ').trim();
     }
     
-    let factors = '';
-    if (parts[6]) factors = parts[6].trim();
+    // Если после даты пусто — берём всё, что после ФИО, СНИЛС, табельного
+    if (!position) {
+        let remaining = trimmed;
+        for (const nw of nameWords) {
+            remaining = remaining.replace(nw, ' ');
+        }
+        if (snilsMatch) remaining = remaining.replace(snilsMatch[0], ' ');
+        if (dateMatch) remaining = remaining.replace(dateMatch[0], ' ');
+        if (tabNumber) remaining = remaining.replace(new RegExp('\\s' + tabNumber + '\\s'), ' ');
+        position = remaining.replace(/\t+/g, ' ').replace(/\s+/g, ' ').trim();
+    }
     
     return {
         last_name: last_name,
         first_name: first_name,
         middle_name: middle_name,
-        department: department,
         position: position,
-        snils: '',
-        policyNumber: policy,
+        department: '',
+        snils: snils,
+        policyNumber: '',
         birthDate: birthDate,
-        gender: gender,
-        medFactors: factors,
+        gender: '',
+        medFactors: '',
+        tabNumber: tabNumber,
         is_passed: true
     };
 }
