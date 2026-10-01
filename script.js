@@ -320,12 +320,33 @@ function importStaffFile() {
 // ПАРСЕР ШТАТНОГО РАСПИСАНИЯ (формат: ФИО | Подразделение | Должность | Полис | Дата | Пол | Факторы)
 // ============================================================
 function smartParse(content) {
+    // Убираем BOM если есть
+    content = content.replace(/^\uFEFF/, '');
+    
     const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
+    console.log('========== ОТЛАДКА ==========');
+    console.log('Всего строк:', lines.length);
+    console.log('Первая строка (как есть):', JSON.stringify(lines[0]));
+    console.log('Коды первой строки:', 
+        Array.from(lines[0].substring(0, 30)).map(c => c.charCodeAt(0))
+    );
+    
     const employees = [];
+    let failed = 0;
     lines.forEach(line => {
         const result = parseLine(line);
-        if (result) employees.push(result);
+        if (result) {
+            employees.push(result);
+        } else {
+            failed++;
+            if (failed <= 3) {
+                console.log('❌ Не распознана строка:', JSON.stringify(line.substring(0, 80)));
+            }
+        }
     });
+    console.log('✅ Распознано:', employees.length);
+    console.log('❌ Провалено:', failed);
+    console.log('==============================');
     return employees;
 }
 
