@@ -800,65 +800,152 @@ function generateFamiliarization() {
         }
         
         let html = `
-            <div style="padding:30px;background:linear-gradient(145deg, #ffffff 0%, #f5f5ff 100%);color:#1a1a3e;border-radius:12px;max-width:1000px;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,0.15);border:1px solid rgba(124,58,237,0.15);">
+            <div style="
+                padding: 40px 50px;
+                background: #ffffff;
+                color: #1a1a2e;
+                max-width: 900px;
+                margin: 0 auto;
+                font-family: 'Times New Roman', Times, serif;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+                border-radius: 4px;
+                border: 1px solid #e0e0e8;
+            ">
                 
-                <div style="text-align:center;border-bottom:3px solid #7c3aed;padding-bottom:16px;margin-bottom:20px;">
-                    <div style="font-size:14px;color:#555;text-align:left;">
-                        ${orgName ? `<strong>${orgName}</strong>` : ''}
-                    </div>
-                    <h2 style="font-size:22px;color:#1a1a3e;margin:12px 0 4px 0;letter-spacing:1px;">ЛИСТ ОЗНАКОМЛЕНИЯ</h2>
-                    <p style="font-size:14px;color:#666;margin:0;">с нормативными актами по охране труда</p>
+                <!-- ШАПКА -->
+                <div style="text-align: center; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 2px solid #7c3aed;">
+                    ${orgName ? `
+                        <div style="font-size: 13px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">
+                            ${orgName}
+                        </div>
+                    ` : ''}
+                    <h1 style="font-size: 22px; color: #1a1a2e; margin: 0; letter-spacing: 1.5px; font-weight: 700;">
+                        ЛИСТ ОЗНАКОМЛЕНИЯ
+                    </h1>
+                    <p style="font-size: 13px; color: #888; margin: 6px 0 0 0; font-style: italic;">
+                        с нормативными актами по охране труда
+                    </p>
                 </div>
                 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;background:#f0f0f8;padding:16px 20px;border-radius:8px;">
+                <!-- ИНФОРМАЦИЯ О СОТРУДНИКЕ -->
+                <div style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 20px;
+                    margin-bottom: 28px;
+                    padding: 18px 24px;
+                    background: #f8f8fc;
+                    border-left: 4px solid #7c3aed;
+                    border-radius: 4px;
+                ">
                     <div>
-                        <p style="margin:4px 0;font-size:15px;color:#333;"><strong style="color:#555;">Фамилия:</strong> ${emp.last_name}</p>
-                        <p style="margin:4px 0;font-size:15px;color:#333;"><strong style="color:#555;">Имя:</strong> ${emp.first_name}</p>
-                        <p style="margin:4px 0;font-size:15px;color:#333;"><strong style="color:#555;">Отчество:</strong> ${emp.middle_name || '—'}</p>
+                        <div style="font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Фамилия</div>
+                        <div style="font-size: 15px; color: #1a1a2e; font-weight: 600; padding-bottom: 6px; border-bottom: 1px solid #d0d0dc;">${emp.last_name}</div>
                     </div>
                     <div>
-                        <p style="margin:4px 0;font-size:15px;color:#333;"><strong style="color:#555;">Должность:</strong> ${emp.position}</p>
-                        <p style="margin:4px 0;font-size:15px;color:#333;"><strong style="color:#555;">Дата:</strong> ${dateStr}</p>
+                        <div style="font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Имя</div>
+                        <div style="font-size: 15px; color: #1a1a2e; font-weight: 600; padding-bottom: 6px; border-bottom: 1px solid #d0d0dc;">${emp.first_name}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Отчество</div>
+                        <div style="font-size: 15px; color: #1a1a2e; font-weight: 600; padding-bottom: 6px; border-bottom: 1px solid #d0d0dc;">${emp.middle_name || '—'}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Должность</div>
+                        <div style="font-size: 15px; color: #1a1a2e; font-weight: 600; padding-bottom: 6px; border-bottom: 1px solid #d0d0dc;">${emp.position}</div>
                     </div>
                 </div>
                 
-                <div style="border-top:2px solid #7c3aed;padding-top:16px;">
-                    <p style="font-weight:700;color:#1a1a3e;margin-bottom:10px;font-size:16px;">📋 Ознакомлен(а) со следующими нормативными актами:</p>
-                    <ol style="padding-left:24px;margin:0;line-height:2.2;font-size:15px;color:#333;">
+                <!-- СПИСОК ДОКУМЕНТОВ -->
+                <div style="margin-bottom: 28px;">
+                    <div style="
+                        font-size: 15px;
+                        color: #1a1a2e;
+                        font-weight: 700;
+                        margin-bottom: 14px;
+                        padding-bottom: 6px;
+                        border-bottom: 1px solid #e0e0e8;
+                    ">
+                        Ознакомлен(а) со следующими нормативными актами:
+                    </div>
+                    <ol style="
+                        padding-left: 0;
+                        margin: 0;
+                        list-style: none;
+                        counter-reset: doc-counter;
+                    ">
         `;
         
-        docs.forEach(doc => {
+        docs.forEach((doc, idx) => {
             let displayDoc = doc;
             if (doc === 'Специальная оценка условий труда' && soutNumber) {
                 displayDoc = `Специальная оценка условий труда (карта № ${soutNumber})`;
             }
             if (doc === 'Оценка профессиональных рисков') {
-                displayDoc = `Карта оценки профессиональных рисков для <u>${positionGenitive}</u>`;
+                displayDoc = `Карта оценки профессиональных рисков для ${positionGenitive}`;
             }
-            html += `<li style="font-size:15px;color:#333;">${displayDoc}</li>`;
+            html += `
+                <li style="
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 12px;
+                    padding: 10px 16px;
+                    margin-bottom: 6px;
+                    background: #fafafe;
+                    border-radius: 4px;
+                    border: 1px solid #ececf4;
+                    font-size: 14px;
+                    color: #1a1a2e;
+                    line-height: 1.5;
+                ">
+                    <span style="
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        min-width: 24px;
+                        height: 24px;
+                        background: #7c3aed;
+                        color: #fff;
+                        border-radius: 50%;
+                        font-size: 12px;
+                        font-weight: 700;
+                        flex-shrink: 0;
+                    ">${idx + 1}</span>
+                    <span style="padding-top: 2px;">${displayDoc}</span>
+                </li>
+            `;
         });
         
         html += `
                     </ol>
                 </div>
                 
-                <div style="margin-top:24px;padding-top:18px;border-top:2px solid #eee;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;text-align:center;">
+                <!-- ПОДПИСИ -->
+                <div style="
+                    margin-top: 40px;
+                    padding-top: 24px;
+                    border-top: 2px solid #e0e0e8;
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr;
+                    gap: 24px;
+                ">
                     <div>
-                        <div style="border-bottom:1px solid #333;height:40px;"></div>
-                        <p style="font-size:12px;color:#666;margin:4px 0 0 0;">Подпись сотрудника</p>
+                        <div style="height: 50px; border-bottom: 1px solid #1a1a2e;"></div>
+                        <div style="font-size: 11px; color: #888; text-align: center; margin-top: 6px;">Подпись сотрудника</div>
                     </div>
                     <div>
-                        <div style="border-bottom:1px solid #333;height:40px;"></div>
-                        <p style="font-size:12px;color:#666;margin:4px 0 0 0;">Дата</p>
+                        <div style="height: 50px; border-bottom: 1px solid #1a1a2e;"></div>
+                        <div style="font-size: 11px; color: #888; text-align: center; margin-top: 6px;">Дата</div>
                     </div>
                     <div>
-                        <div style="border-bottom:1px solid #333;height:40px;"></div>
-                        <p style="font-size:12px;color:#666;margin:4px 0 0 0;">Расшифровка подписи</p>
+                        <div style="height: 50px; border-bottom: 1px solid #1a1a2e;"></div>
+                        <div style="font-size: 11px; color: #888; text-align: center; margin-top: 6px;">Расшифровка подписи</div>
                     </div>
                 </div>
                 
-                <div style="margin-top:16px;padding-top:12px;border-top:1px solid #eee;text-align:center;">
-                    <p style="font-size:11px;color:#999;margin:0;">Документ сформирован автоматически в системе «ОхранаТруда.Про»</p>
+                <!-- ДАТА ВНИЗУ -->
+                <div style="margin-top: 32px; text-align: right; font-size: 12px; color: #888; font-style: italic;">
+                    ${dateStr}
                 </div>
             </div>
         `;
