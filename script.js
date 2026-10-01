@@ -2502,18 +2502,76 @@ function initTrainingPage() {
     const generateFamBtn = document.getElementById('generateFamBtn');
     if (generateFamBtn) generateFamBtn.onclick = generateFamiliarization;
     
-    const printFamBtn = document.getElementById('printFamBtn');
-    if (printFamBtn) printFamBtn.onclick = function() {
+ const printFamBtn = document.getElementById('printFamBtn');
+if (printFamBtn) {
+    printFamBtn.addEventListener('click', function(e) {
+        e.preventDefault();
         const content = document.getElementById('famContent');
-        if (!content || !content.innerHTML) { alert('Сначала сформируйте лист'); return; }
+        if (!content || !content.innerHTML || content.innerHTML.trim() === '') {
+            alert('❌ Сначала сформируйте лист ознакомления');
+            return;
+        }
+        
         const win = window.open('', '_blank');
-        win.document.write(`<!DOCTYPE html><html><head><title>Лист ознакомления</title>
-            <style>body{font-family:Arial;padding:40px;color:#222;max-width:1000px;margin:0 auto;}</style>
-        </head><body>${content.innerHTML}<script>window.print();window.close();<\/script></body></html>`);
+        if (!win) {
+            alert('❌ Разрешите всплывающие окна для этого сайта');
+            return;
+        }
+        
+        win.document.write(`<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Лист ознакомления</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { 
+                    font-family: 'Times New Roman', Times, serif; 
+                    background: #f0f0f0; 
+                    padding: 20px;
+                }
+                @page { size: A4 portrait; margin: 15mm; }
+                @media print {
+                    body { background: #fff; padding: 0; }
+                    .no-print { display: none !important; }
+                }
+                .no-print {
+                    text-align: center;
+                    padding: 15px;
+                    background: #fff;
+                    margin-bottom: 20px;
+                    border-radius: 8px;
+                    border-bottom: 2px solid #7c3aed;
+                }
+                .no-print button {
+                    padding: 10px 28px;
+                    margin: 0 8px;
+                    background: linear-gradient(135deg, #7c3aed, #00d4ff);
+                    border: none;
+                    border-radius: 8px;
+                    color: #fff;
+                    font-size: 15px;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+                .no-print .btn-secondary {
+                    background: #666;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print">
+                <button onclick="window.print()">🖨️ Печать</button>
+                <button class="btn-secondary" onclick="window.close()">✖ Закрыть</button>
+            </div>
+            ${content.innerHTML}
+            <script>
+                setTimeout(function() { window.print(); }, 800);
+            <\/script>
+        </body>
+        </html>`);
         win.document.close();
-    };
-    
-    initPPECardsPage();
+    });
 }
 
 // ============================================================
