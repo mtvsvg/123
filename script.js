@@ -183,11 +183,11 @@ function renderStaffWithDepartments() {
                     ${deptData.employees && deptData.employees.length > 0 ? 
                         deptData.employees.map((emp, idx) => `
                             <div class="employee-row">
-                                <input type="checkbox" class="staff-check" data-snils="${emp.snils}" data-department="${deptName}">
-                                <span class="emp-name" onclick="openEmployeeCardBySnils('${emp.snils}')">${emp.last_name} ${emp.first_name}</span>
+                                <input type="checkbox" class="staff-check" data-snils="${emp.snils || emp.tabNumber}" data-department="${deptName}">
+                                <span class="emp-name" onclick="openEmployeeCardBySnils('${emp.snils || emp.tabNumber}')">${emp.last_name} ${emp.first_name}</span>
                                 <span class="emp-position">${emp.position}</span>
                                 <span class="emp-snils">${formatSnils(emp.snils)}</span>
-                                <button class="emp-remove" onclick="removeEmployeeBySnils('${emp.snils}')">✖</button>
+                                <button class="emp-remove" onclick="removeEmployeeBySnils('${emp.snils || emp.tabNumber}')">✖</button>
                             </div>
                         `).join('') 
                     : '<div class="dept-empty">Нет сотрудников</div>'}
@@ -203,11 +203,11 @@ function renderStaffWithDepartments() {
                 <div style="padding:0 14px 10px;">
                     ${data.unassigned.map((emp, idx) => `
                         <div class="employee-row">
-                            <input type="checkbox" class="staff-check" data-snils="${emp.snils}" data-unassigned="true">
-                            <span class="emp-name" onclick="openEmployeeCardBySnils('${emp.snils}')">${emp.last_name} ${emp.first_name}</span>
+                            <input type="checkbox" class="staff-check" data-snils="${emp.snils || emp.tabNumber}" data-unassigned="true">
+                            <span class="emp-name" onclick="openEmployeeCardBySnils('${emp.snils || emp.tabNumber}')">${emp.last_name} ${emp.first_name}</span>
                             <span class="emp-position">${emp.position}</span>
                             <span class="emp-snils">${formatSnils(emp.snils)}</span>
-                            <button class="emp-remove" onclick="removeEmployeeBySnils('${emp.snils}')">✖</button>
+                            <button class="emp-remove" onclick="removeEmployeeBySnils('${emp.snils || emp.tabNumber}')">✖</button>
                         </div>
                     `).join('')}
                 </div>
@@ -239,7 +239,7 @@ function deleteDepartment(deptName) {
         delete data.departments[deptName];
         saveStaffData(data);
         renderStaffWithDepartments();
-        alert(`✅ Служба "${deptName}" удалена, сотрудники перемещены в "Без службы"`);
+        alert(`✅ Служба "${deptName}" удалена`);
     }
 }
 
@@ -265,7 +265,7 @@ function createDepartmentFromSelected() {
     
     saveStaffData(data);
     renderStaffWithDepartments();
-    alert(`✅ Создана служба "${deptName}" (${selected.length} сотрудников)`);
+    alert(`✅ Создана служба "${deptName}"`);
 }
 
 function selectAllStaffInCurrentView() {
@@ -301,10 +301,7 @@ function importStaffFile() {
                 
                 const data = getStaffData();
                 employees.forEach(emp => {
-                    const exists = getAllEmployees().some(e => e.snils === emp.snils);
-                    if (!exists) {
-                        data.unassigned.push(emp);
-                    }
+                    data.unassigned.push(emp);
                 });
                 saveStaffData(data);
                 renderStaffWithDepartments();
@@ -317,36 +314,16 @@ function importStaffFile() {
 }
 
 // ============================================================
-// ПАРСЕР ШТАТНОГО РАСПИСАНИЯ (формат: ФИО | Подразделение | Должность | Полис | Дата | Пол | Факторы)
+// ПАРСЕР ШТАТНОГО РАСПИСАНИЯ
 // ============================================================
 function smartParse(content) {
-    // Убираем BOM если есть
     content = content.replace(/^\uFEFF/, '');
-    
     const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
-    console.log('========== ОТЛАДКА ==========');
-    console.log('Всего строк:', lines.length);
-    console.log('Первая строка (как есть):', JSON.stringify(lines[0]));
-    console.log('Коды первой строки:', 
-        Array.from(lines[0].substring(0, 30)).map(c => c.charCodeAt(0))
-    );
-    
     const employees = [];
-    let failed = 0;
     lines.forEach(line => {
         const result = parseLine(line);
-        if (result) {
-            employees.push(result);
-        } else {
-            failed++;
-            if (failed <= 3) {
-                console.log('❌ Не распознана строка:', JSON.stringify(line.substring(0, 80)));
-            }
-        }
+        if (result) employees.push(result);
     });
-    console.log('✅ Распознано:', employees.length);
-    console.log('❌ Провалено:', failed);
-    console.log('==============================');
     return employees;
 }
 
@@ -354,21 +331,18 @@ function parseLine(line) {
     const trimmed = line.trim();
     if (!trimmed) return null;
     
-    // 1. СНИЛС — маска 123-456-789 00
     let snils = '';
     const snilsMatch = trimmed.match(/\d{3}-\d{3}-\d{3}\s\d{2}/);
     if (snilsMatch) {
         snils = snilsMatch[0].replace(/[\s-]/g, '');
     }
     
-    // 2. Дата рождения — ДД.ММ.ГГГГ
     let birthDate = '';
     const dateMatch = trimmed.match(/\d{1,2}\.\d{1,2}\.\d{4}/);
     if (dateMatch) {
         birthDate = dateMatch[0];
     }
     
-    // 3. Табельный номер — 3-5 цифр в начале строки (после ФИО)
     let tabNumber = '';
     const tabMatch = trimmed.match(/\s(\d{4,5})(?:\s|\t)/);
     if (tabMatch) {
@@ -380,7 +354,6 @@ function parseLine(line) {
         }
     }
     
-    // 4. ФИО — первые 2-3 слова с заглавной буквы
     const words = trimmed.split(/\s+/).filter(w => w.length > 0);
     if (words.length < 2) return null;
     
@@ -400,17 +373,12 @@ function parseLine(line) {
     const first_name = nameWords[1];
     const middle_name = nameWords[2] || '';
     
-    // 5. Должность — берём ПОСЛЕДНЕЕ слово в строке, если оно похоже на должность
-    // Или всё, что идёт ПОСЛЕ даты рождения
     let position = '';
-    
     if (dateMatch) {
-        // Берём всё, что после даты рождения
         const afterDate = trimmed.substring(trimmed.indexOf(dateMatch[0]) + dateMatch[0].length).trim();
         position = afterDate.replace(/\t+/g, ' ').replace(/\s+/g, ' ').trim();
     }
     
-    // Если после даты пусто — берём всё, что после ФИО, СНИЛС, табельного
     if (!position) {
         let remaining = trimmed;
         for (const nw of nameWords) {
@@ -565,7 +533,7 @@ function getSelectedPersonPosition() {
 }
 
 // ============================================================
-// СЛУЖБЫ ОРГАНИЗАЦИИ
+// СЛУЖБЫ
 // ============================================================
 function renderServices() {
     const container = document.getElementById('serviceList');
@@ -665,9 +633,6 @@ function removeFromProtocol(index) {
     renderProtocol(); 
 }
 
-// ============================================================
-// ПРОГРАММЫ
-// ============================================================
 function selectAllPrograms() { 
     document.querySelectorAll('#tabProtocol .program-check input[type="checkbox"]').forEach(cb => cb.checked = true); 
 }
@@ -799,156 +764,52 @@ function generateFamiliarization() {
             positionGenitive = emp.position.slice(0, -1) + 'я';
         }
         
-        let html = `
-            <div style="
-                padding: 40px 50px;
-                background: #ffffff;
-                color: #1a1a2e;
-                max-width: 900px;
-                margin: 0 auto;
-                font-family: 'Times New Roman', Times, serif;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-                border-radius: 4px;
-                border: 1px solid #e0e0e8;
-            ">
-                
-                <!-- ШАПКА -->
-                <div style="text-align: center; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 2px solid #7c3aed;">
-                    ${orgName ? `
-                        <div style="font-size: 13px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">
-                            ${orgName}
-                        </div>
-                    ` : ''}
-                    <h1 style="font-size: 22px; color: #1a1a2e; margin: 0; letter-spacing: 1.5px; font-weight: 700;">
-                        ЛИСТ ОЗНАКОМЛЕНИЯ
-                    </h1>
-                    <p style="font-size: 13px; color: #888; margin: 6px 0 0 0; font-style: italic;">
-                        с нормативными актами по охране труда
-                    </p>
-                </div>
-                
-                <!-- ИНФОРМАЦИЯ О СОТРУДНИКЕ -->
-                <div style="
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 20px;
-                    margin-bottom: 28px;
-                    padding: 18px 24px;
-                    background: #f8f8fc;
-                    border-left: 4px solid #7c3aed;
-                    border-radius: 4px;
-                ">
-                    <div>
-                        <div style="font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Фамилия</div>
-                        <div style="font-size: 15px; color: #1a1a2e; font-weight: 600; padding-bottom: 6px; border-bottom: 1px solid #d0d0dc;">${emp.last_name}</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Имя</div>
-                        <div style="font-size: 15px; color: #1a1a2e; font-weight: 600; padding-bottom: 6px; border-bottom: 1px solid #d0d0dc;">${emp.first_name}</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Отчество</div>
-                        <div style="font-size: 15px; color: #1a1a2e; font-weight: 600; padding-bottom: 6px; border-bottom: 1px solid #d0d0dc;">${emp.middle_name || '—'}</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Должность</div>
-                        <div style="font-size: 15px; color: #1a1a2e; font-weight: 600; padding-bottom: 6px; border-bottom: 1px solid #d0d0dc;">${emp.position}</div>
-                    </div>
-                </div>
-                
-                <!-- СПИСОК ДОКУМЕНТОВ -->
-                <div style="margin-bottom: 28px;">
-                    <div style="
-                        font-size: 15px;
-                        color: #1a1a2e;
-                        font-weight: 700;
-                        margin-bottom: 14px;
-                        padding-bottom: 6px;
-                        border-bottom: 1px solid #e0e0e8;
-                    ">
-                        Ознакомлен(а) со следующими нормативными актами:
-                    </div>
-                    <ol style="
-                        padding-left: 0;
-                        margin: 0;
-                        list-style: none;
-                        counter-reset: doc-counter;
-                    ">
-        `;
+        let html = '';
+        html += '<div style="padding:40px 50px;background:#ffffff;color:#1a1a2e;max-width:900px;margin:0 auto;font-family:Times New Roman,serif;box-shadow:0 4px 20px rgba(0,0,0,0.08);border-radius:4px;border:1px solid #e0e0e8;">';
+        html += '<div style="text-align:center;margin-bottom:32px;padding-bottom:20px;border-bottom:2px solid #7c3aed;">';
+        if (orgName) {
+            html += '<div style="font-size:13px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">' + orgName + '</div>';
+        }
+        html += '<h1 style="font-size:22px;color:#1a1a2e;margin:0;letter-spacing:1.5px;font-weight:700;">ЛИСТ ОЗНАКОМЛЕНИЯ</h1>';
+        html += '<p style="font-size:13px;color:#888;margin:6px 0 0 0;font-style:italic;">с нормативными актами по охране труда</p>';
+        html += '</div>';
+        
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;padding:18px 24px;background:#f8f8fc;border-left:4px solid #7c3aed;border-radius:4px;">';
+        html += '<div><div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Фамилия</div><div style="font-size:15px;color:#1a1a2e;font-weight:600;padding-bottom:6px;border-bottom:1px solid #d0d0dc;">' + emp.last_name + '</div></div>';
+        html += '<div><div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Имя</div><div style="font-size:15px;color:#1a1a2e;font-weight:600;padding-bottom:6px;border-bottom:1px solid #d0d0dc;">' + emp.first_name + '</div></div>';
+        html += '<div><div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Отчество</div><div style="font-size:15px;color:#1a1a2e;font-weight:600;padding-bottom:6px;border-bottom:1px solid #d0d0dc;">' + (emp.middle_name || '—') + '</div></div>';
+        html += '<div><div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Должность</div><div style="font-size:15px;color:#1a1a2e;font-weight:600;padding-bottom:6px;border-bottom:1px solid #d0d0dc;">' + emp.position + '</div></div>';
+        html += '</div>';
+        
+        html += '<div style="margin-bottom:28px;">';
+        html += '<div style="font-size:15px;color:#1a1a2e;font-weight:700;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid #e0e0e8;">Ознакомлен(а) со следующими нормативными актами:</div>';
+        html += '<ol style="padding-left:0;margin:0;list-style:none;">';
         
         docs.forEach((doc, idx) => {
             let displayDoc = doc;
             if (doc === 'Специальная оценка условий труда' && soutNumber) {
-                displayDoc = `Специальная оценка условий труда (карта № ${soutNumber})`;
+                displayDoc = 'Специальная оценка условий труда (карта № ' + soutNumber + ')';
             }
             if (doc === 'Оценка профессиональных рисков') {
-                displayDoc = `Карта оценки профессиональных рисков для ${positionGenitive}`;
+                displayDoc = 'Карта оценки профессиональных рисков для ' + positionGenitive;
             }
-            html += `
-                <li style="
-                    display: flex;
-                    align-items: flex-start;
-                    gap: 12px;
-                    padding: 10px 16px;
-                    margin-bottom: 6px;
-                    background: #fafafe;
-                    border-radius: 4px;
-                    border: 1px solid #ececf4;
-                    font-size: 14px;
-                    color: #1a1a2e;
-                    line-height: 1.5;
-                ">
-                    <span style="
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
-                        min-width: 24px;
-                        height: 24px;
-                        background: #7c3aed;
-                        color: #fff;
-                        border-radius: 50%;
-                        font-size: 12px;
-                        font-weight: 700;
-                        flex-shrink: 0;
-                    ">${idx + 1}</span>
-                    <span style="padding-top: 2px;">${displayDoc}</span>
-                </li>
-            `;
+            html += '<li style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;margin-bottom:6px;background:#fafafe;border-radius:4px;border:1px solid #ececf4;font-size:14px;color:#1a1a2e;line-height:1.5;">';
+            html += '<span style="display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;background:#7c3aed;color:#fff;border-radius:50%;font-size:12px;font-weight:700;flex-shrink:0;">' + (idx + 1) + '</span>';
+            html += '<span style="padding-top:2px;">' + displayDoc + '</span>';
+            html += '</li>';
         });
         
-        html += `
-                    </ol>
-                </div>
-                
-                <!-- ПОДПИСИ -->
-                <div style="
-                    margin-top: 40px;
-                    padding-top: 24px;
-                    border-top: 2px solid #e0e0e8;
-                    display: grid;
-                    grid-template-columns: 1fr 1fr 1fr;
-                    gap: 24px;
-                ">
-                    <div>
-                        <div style="height: 50px; border-bottom: 1px solid #1a1a2e;"></div>
-                        <div style="font-size: 11px; color: #888; text-align: center; margin-top: 6px;">Подпись сотрудника</div>
-                    </div>
-                    <div>
-                        <div style="height: 50px; border-bottom: 1px solid #1a1a2e;"></div>
-                        <div style="font-size: 11px; color: #888; text-align: center; margin-top: 6px;">Дата</div>
-                    </div>
-                    <div>
-                        <div style="height: 50px; border-bottom: 1px solid #1a1a2e;"></div>
-                        <div style="font-size: 11px; color: #888; text-align: center; margin-top: 6px;">Расшифровка подписи</div>
-                    </div>
-                </div>
-                
-                <!-- ДАТА ВНИЗУ -->
-                <div style="margin-top: 32px; text-align: right; font-size: 12px; color: #888; font-style: italic;">
-                    ${dateStr}
-                </div>
-            </div>
-        `;
+        html += '</ol>';
+        html += '</div>';
+        
+        html += '<div style="margin-top:40px;padding-top:24px;border-top:2px solid #e0e0e8;display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;">';
+        html += '<div><div style="height:50px;border-bottom:1px solid #1a1a2e;"></div><div style="font-size:11px;color:#888;text-align:center;margin-top:6px;">Подпись сотрудника</div></div>';
+        html += '<div><div style="height:50px;border-bottom:1px solid #1a1a2e;"></div><div style="font-size:11px;color:#888;text-align:center;margin-top:6px;">Дата</div></div>';
+        html += '<div><div style="height:50px;border-bottom:1px solid #1a1a2e;"></div><div style="font-size:11px;color:#888;text-align:center;margin-top:6px;">Расшифровка подписи</div></div>';
+        html += '</div>';
+        
+        html += '<div style="margin-top:32px;text-align:right;font-size:12px;color:#888;font-style:italic;">' + dateStr + '</div>';
+        html += '</div>';
         
         content.innerHTML = html;
         result.classList.remove('hidden');
@@ -1198,31 +1059,31 @@ function renderPPECardStaffList() {
     const all = getAllEmployees();
     
     if (all.length === 0) {
-        container.innerHTML = '<p style="color:#6a6a8a;text-align:center;padding:20px;">Нет загруженных сотрудников. Сначала загрузите штатное расписание.</p>';
+        container.innerHTML = '<p style="color:#6a6a8a;text-align:center;padding:20px;">Нет загруженных сотрудников.</p>';
         return;
     }
     
     let html = '<div style="max-height:500px;overflow-y:auto;">';
     all.forEach((emp) => {
-        const savedData = JSON.parse(localStorage.getItem('ppeCardStaffData_' + emp.snils) || '{}');
+        const savedData = JSON.parse(localStorage.getItem('ppeCardStaffData_' + (emp.snils || emp.tabNumber)) || '{}');
         const cardNumber = savedData.cardNumber || '';
         const workplaceId = savedData.workplaceId || '';
         const checked = savedData.checked || false;
+        const empId = emp.snils || emp.tabNumber;
         
         html += `
-            <div class="staff-item-with-fields" data-snils="${emp.snils}">
+            <div class="staff-item-with-fields" data-snils="${empId}">
                 <div class="staff-info">
-                    <input type="checkbox" class="ppe-card-staff-check" data-snils="${emp.snils}" ${checked ? 'checked' : ''}>
-                    <span class="emp-name" onclick="openEmployeeCardBySnils('${emp.snils}')">${emp.last_name} ${emp.first_name}</span>
+                    <input type="checkbox" class="ppe-card-staff-check" data-snils="${empId}" ${checked ? 'checked' : ''}>
+                    <span class="emp-name" onclick="openEmployeeCardBySnils('${empId}')">${emp.last_name} ${emp.first_name}</span>
                     <span class="emp-position">${emp.position}</span>
                     <span class="emp-snils">${formatSnils(emp.snils)}</span>
-                    ${emp.department ? `<span style="color:#8888aa;font-size:11px;">${emp.department}</span>` : ''}
                 </div>
                 <div class="staff-fields">
                     <span class="field-label">№ карточки:</span>
-                    <input type="text" class="staff-card-number" data-snils="${emp.snils}" placeholder="001" value="${cardNumber}" style="width:70px;">
+                    <input type="text" class="staff-card-number" data-snils="${empId}" placeholder="001" value="${cardNumber}" style="width:70px;">
                     <span class="field-label">ID рабочего места:</span>
-                    <input type="text" class="staff-workplace-id" data-snils="${emp.snils}" placeholder="РМ-001" value="${workplaceId}" style="width:90px;">
+                    <input type="text" class="staff-workplace-id" data-snils="${empId}" placeholder="РМ-001" value="${workplaceId}" style="width:90px;">
                 </div>
             </div>
         `;
@@ -1272,7 +1133,7 @@ function renderPPECardPPEList() {
     
     html += `
         <div style="width:100%;margin-top:8px;padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:6px;border:1px dashed rgba(255,255,255,0.06);display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            <input type="text" id="ppeCardCustomName" placeholder="Свое СИЗ (наименование)" style="flex:2;min-width:150px;padding:6px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
+            <input type="text" id="ppeCardCustomName" placeholder="Свое СИЗ" style="flex:2;min-width:150px;padding:6px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
             <input type="text" id="ppeCardCustomPunkt" placeholder="Пункт норм" style="flex:1;min-width:80px;padding:6px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
             <input type="text" id="ppeCardCustomUnit" placeholder="Ед. изм." style="flex:1;min-width:80px;padding:6px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
             <input type="text" id="ppeCardCustomQuantity" placeholder="Кол-во" style="flex:1;min-width:70px;padding:6px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:13px;">
@@ -1339,18 +1200,13 @@ function updatePPECardSelectionCount() {
     }
 }
 
-function addPPEToCardList() {
-    const el = document.getElementById('ppeCardCustomName');
-    if (el) el.focus();
-}
-
 function getSelectedPPECardEmployees() {
     const checkboxes = document.querySelectorAll('.ppe-card-staff-check:checked');
     const all = getAllEmployees();
     const selected = [];
     checkboxes.forEach(cb => {
         const snils = cb.dataset.snils;
-        const emp = all.find(e => e.snils === snils);
+        const emp = all.find(e => (e.snils || e.tabNumber) === snils);
         if (emp) {
             const cardNumber = document.querySelector(`.staff-card-number[data-snils="${snils}"]`)?.value.trim() || '';
             const workplaceId = document.querySelector(`.staff-workplace-id[data-snils="${snils}"]`)?.value.trim() || '';
@@ -1367,7 +1223,7 @@ function clearPPECardSelection() {
     
     const all = getAllEmployees();
     all.forEach(emp => {
-        localStorage.removeItem('ppeCardStaffData_' + emp.snils);
+        localStorage.removeItem('ppeCardStaffData_' + (emp.snils || emp.tabNumber));
     });
     
     renderPPECardStaffList();
@@ -1377,11 +1233,18 @@ function clearPPECardSelection() {
     alert('✅ Выбор очищен');
 }
 
-function openEmployeeCardBySnils(snils) {
-    const all = getAllEmployees();
-    const emp = all.find(e => e.snils === snils);
-    if (!emp) { alert('❌ Сотрудник не найден'); return; }
-    alert(`👤 ${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}\n💼 ${emp.position}\n📁 ${emp.department || 'Без службы'}`);
+function toggleCardType() {
+    const isDuty = document.querySelector('input[name="cardType"][value="duty"]')?.checked || false;
+    const dutyFields = document.getElementById('dutyFields');
+    const personalFields = document.getElementById('personalFields');
+    
+    if (isDuty) {
+        if (dutyFields) dutyFields.style.display = 'block';
+        if (personalFields) personalFields.style.display = 'none';
+    } else {
+        if (dutyFields) dutyFields.style.display = 'none';
+        if (personalFields) personalFields.style.display = 'block';
+    }
 }
 // ============================================================
 // ГЕНЕРАЦИЯ КАРТОЧЕК СИЗ
@@ -1476,7 +1339,7 @@ function generatePPECardsHTML() {
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Фамилия</strong> ${emp.last_name}</div>
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Имя</strong> ${emp.first_name}</div>
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Отчество</strong> ${emp.middle_name || ''}</div>
-                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Табельный номер</strong> ________</div>
+                            <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Табельный номер</strong> ${emp.tabNumber || '________'}</div>
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Структурное подразделение</strong> ${dept || emp.department || ''}</div>
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Профессия (должность)</strong> ${emp.position}</div>
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Дата поступления на работу</strong> __________</div>
@@ -1784,20 +1647,6 @@ function generatePPECardsHTML() {
         <p>🦺 СИЗ: ${selectedPPECardItems.map(e => e.name).join(', ')}</p>
     `;
 }
-
-function toggleCardType() {
-    const isDuty = document.querySelector('input[name="cardType"][value="duty"]')?.checked || false;
-    const dutyFields = document.getElementById('dutyFields');
-    const personalFields = document.getElementById('personalFields');
-    
-    if (isDuty) {
-        if (dutyFields) dutyFields.style.display = 'block';
-        if (personalFields) personalFields.style.display = 'none';
-    } else {
-        if (dutyFields) dutyFields.style.display = 'none';
-        if (personalFields) personalFields.style.display = 'block';
-    }
-}
 // ============================================================
 // ВИДЫ ДЕЯТЕЛЬНОСТИ ПО ПРИКАЗУ №342н
 // ============================================================
@@ -1820,7 +1669,6 @@ const PSYCHO_ACTIVITIES = [
     { id: 17, title: 'Деятельность, непосредственно связанная с контактами с возбудителями инфекционных заболеваний - патогенными микроорганизмами I и II группы патогенности' }
 ];
 
-// Ручные сотрудники (не из штатки)
 let manualMedEmployees = [];
 let manualPsychoEmployees = [];
 
@@ -1838,7 +1686,6 @@ function initMedPage() {
 }
 
 function renderMedOrgSelects() {
-    // Работодатели для медосмотра
     const orgSelect = document.getElementById('medOrgSelect');
     if (orgSelect) {
         const orgs = getOrgs();
@@ -1853,7 +1700,6 @@ function renderMedOrgSelects() {
         if (currentOrgId) orgSelect.value = currentOrgId;
     }
     
-    // Работодатели для психо
     const psychoOrgSelect = document.getElementById('psychoOrgSelect');
     if (psychoOrgSelect) {
         const orgs = getOrgs();
@@ -1868,7 +1714,6 @@ function renderMedOrgSelects() {
         if (currentOrgId) psychoOrgSelect.value = currentOrgId;
     }
     
-    // Медорганизации для медосмотра
     const medOrgSelect = document.getElementById('medMedOrgSelect');
     if (medOrgSelect) {
         const medOrgs = getMedOrgs();
@@ -1881,7 +1726,6 @@ function renderMedOrgSelects() {
         });
     }
     
-    // Медорганизации для психо
     const psychoMedOrgSelect = document.getElementById('psychoMedOrgSelect');
     if (psychoMedOrgSelect) {
         const medOrgs = getMedOrgs();
@@ -1917,7 +1761,6 @@ function renderMedEmployeeList(mode = 'med') {
     if (!container) return;
     const all = getAllEmployees();
     
-    // Добавляем ручных сотрудников
     if (mode === 'med') {
         manualMedEmployees.forEach(e => all.push(e));
     } else if (mode === 'psycho') {
@@ -1932,8 +1775,9 @@ function renderMedEmployeeList(mode = 'med') {
     let html = '<div style="max-height:500px;overflow-y:auto;">';
     
     all.forEach(emp => {
-        const savedMed = JSON.parse(localStorage.getItem(`medData_${emp.snils}`) || '{}');
-        const savedPsycho = JSON.parse(localStorage.getItem(`psychoData_${emp.snils}`) || '{}');
+        const empId = emp.snils || emp.tabNumber;
+        const savedMed = JSON.parse(localStorage.getItem(`medData_${empId}`) || '{}');
+        const savedPsycho = JSON.parse(localStorage.getItem(`psychoData_${empId}`) || '{}');
         
         if (mode === 'med') {
             const factors = savedMed.factors || emp.medFactors || '';
@@ -1943,9 +1787,9 @@ function renderMedEmployeeList(mode = 'med') {
             const policy = savedMed.policy || emp.policyNumber || '';
             
             html += `
-                <div data-snils="${emp.snils}" style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);">
+                <div data-snils="${empId}" style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);">
                     <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
-                        <input type="checkbox" class="med-check" data-snils="${emp.snils}" ${checked ? 'checked' : ''} style="width:18px;height:18px;accent-color:#7c3aed;">
+                        <input type="checkbox" class="med-check" data-snils="${empId}" ${checked ? 'checked' : ''} style="width:18px;height:18px;accent-color:#7c3aed;">
                         <span class="emp-name" style="color:#00d4ff;font-size:14px;">${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</span>
                         <span style="color:#8888aa;font-size:13px;">${emp.position}</span>
                         ${emp.department ? `<span style="color:#b388ff;font-size:12px;">📁 ${emp.department}</span>` : ''}
@@ -1953,11 +1797,11 @@ function renderMedEmployeeList(mode = 'med') {
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 2fr;gap:8px;">
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Дата рождения</label>
-                            <input type="date" class="med-birth-date" data-snils="${emp.snils}" value="${birthDate}" style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                            <input type="text" class="med-birth-date" data-snils="${empId}" value="${birthDate}" placeholder="12.08.1951" style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
                         </div>
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Пол</label>
-                            <select class="med-gender" data-snils="${emp.snils}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                            <select class="med-gender" data-snils="${empId}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
                                 <option value="">--</option>
                                 <option value="М" ${gender === 'М' ? 'selected' : ''}>М</option>
                                 <option value="Ж" ${gender === 'Ж' ? 'selected' : ''}>Ж</option>
@@ -1965,11 +1809,11 @@ function renderMedEmployeeList(mode = 'med') {
                         </div>
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">№ полиса</label>
-                            <input type="text" class="med-policy" data-snils="${emp.snils}" value="${policy}" placeholder="1234 5678..." style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                            <input type="text" class="med-policy" data-snils="${empId}" value="${policy}" placeholder="1234 5678..." style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
                         </div>
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Вредные факторы (Приказ №29н)</label>
-                            <input type="text" class="med-factors" data-snils="${emp.snils}" value="${factors}" placeholder="4.3.1, 4.3.2, 18.1" style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                            <input type="text" class="med-factors" data-snils="${empId}" value="${factors}" placeholder="4.3.1, 4.3.2, 18.1" style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
                         </div>
                     </div>
                 </div>
@@ -1988,9 +1832,9 @@ function renderMedEmployeeList(mode = 'med') {
             ).join('');
             
             html += `
-                <div data-snils="${emp.snils}" style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);">
+                <div data-snils="${empId}" style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);">
                     <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
-                        <input type="checkbox" class="psycho-check" data-snils="${emp.snils}" ${checked ? 'checked' : ''} style="width:18px;height:18px;accent-color:#7c3aed;">
+                        <input type="checkbox" class="psycho-check" data-snils="${empId}" ${checked ? 'checked' : ''} style="width:18px;height:18px;accent-color:#7c3aed;">
                         <span class="emp-name" style="color:#00d4ff;font-size:14px;">${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</span>
                         <span style="color:#8888aa;font-size:13px;">${emp.position}</span>
                         ${emp.department ? `<span style="color:#b388ff;font-size:12px;">📁 ${emp.department}</span>` : ''}
@@ -1998,11 +1842,11 @@ function renderMedEmployeeList(mode = 'med') {
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 2fr;gap:8px;">
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Дата рождения</label>
-                            <input type="date" class="psycho-birth-date" data-snils="${emp.snils}" value="${birthDate}" style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                            <input type="text" class="psycho-birth-date" data-snils="${empId}" value="${birthDate}" placeholder="12.08.1951" style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
                         </div>
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Пол</label>
-                            <select class="psycho-gender" data-snils="${emp.snils}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                            <select class="psycho-gender" data-snils="${empId}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
                                 <option value="">--</option>
                                 <option value="М" ${gender === 'М' ? 'selected' : ''}>М</option>
                                 <option value="Ж" ${gender === 'Ж' ? 'selected' : ''}>Ж</option>
@@ -2010,11 +1854,11 @@ function renderMedEmployeeList(mode = 'med') {
                         </div>
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Адрес регистрации</label>
-                            <input type="text" class="psycho-address" data-snils="${emp.snils}" value="${regAddress}" placeholder="г. ..., ул. ..." style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                            <input type="text" class="psycho-address" data-snils="${empId}" value="${regAddress}" placeholder="г. ..., ул. ..." style="width:100%;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
                         </div>
                         <div>
                             <label style="color:#8888aa;font-size:11px;display:block;margin-bottom:3px;">Вид деятельности (Приказ №342н)</label>
-                            <select class="psycho-activity" data-snils="${emp.snils}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
+                            <select class="psycho-activity" data-snils="${empId}" style="width:100%;padding:6px 8px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:12px;">
                                 <option value="">-- Выберите вид --</option>
                                 ${activityOptions}
                             </select>
@@ -2054,7 +1898,7 @@ function saveMedData() {
     const data = getStaffData();
     let found = false;
     for (const [dept, deptData] of Object.entries(data.departments)) {
-        const idx = deptData.employees.findIndex(e => e.snils === snils);
+        const idx = deptData.employees.findIndex(e => (e.snils || e.tabNumber) === snils);
         if (idx !== -1) {
             deptData.employees[idx].birthDate = birthDate;
             deptData.employees[idx].gender = gender;
@@ -2065,7 +1909,7 @@ function saveMedData() {
         }
     }
     if (!found) {
-        const idx = data.unassigned.findIndex(e => e.snils === snils);
+        const idx = data.unassigned.findIndex(e => (e.snils || e.tabNumber) === snils);
         if (idx !== -1) {
             data.unassigned[idx].birthDate = birthDate;
             data.unassigned[idx].gender = gender;
@@ -2089,7 +1933,7 @@ function savePsychoData() {
     const data = getStaffData();
     let found = false;
     for (const [dept, deptData] of Object.entries(data.departments)) {
-        const idx = deptData.employees.findIndex(e => e.snils === snils);
+        const idx = deptData.employees.findIndex(e => (e.snils || e.tabNumber) === snils);
         if (idx !== -1) {
             deptData.employees[idx].birthDate = birthDate;
             deptData.employees[idx].gender = gender;
@@ -2100,7 +1944,7 @@ function savePsychoData() {
         }
     }
     if (!found) {
-        const idx = data.unassigned.findIndex(e => e.snils === snils);
+        const idx = data.unassigned.findIndex(e => (e.snils || e.tabNumber) === snils);
         if (idx !== -1) {
             data.unassigned[idx].birthDate = birthDate;
             data.unassigned[idx].gender = gender;
@@ -2149,8 +1993,8 @@ function generateMedDirections() {
     
     checkboxes.forEach(cb => {
         const snils = cb.dataset.snils;
-        let emp = getAllEmployees().find(e => e.snils === snils);
-        if (!emp) emp = manualMedEmployees.find(e => e.snils === snils);
+        let emp = getAllEmployees().find(e => (e.snils || e.tabNumber) === snils);
+        if (!emp) emp = manualMedEmployees.find(e => (e.snils || e.tabNumber) === snils);
         if (!emp) return;
         
         const savedMed = JSON.parse(localStorage.getItem(`medData_${snils}`) || '{}');
@@ -2177,7 +2021,7 @@ function generateMedDirections() {
             </div>
             
             <div style="display:flex;justify-content:space-between;margin-bottom:20px;font-size:12pt;">
-                <div><strong>Дата выдачи:</strong> ${formatDate(directionDate)}</div>
+                <div><strong>Дата выдачи:</strong> ${directionDate}</div>
                 <div><strong>№:</strong> ${directionNumber}</div>
             </div>
             
@@ -2186,7 +2030,7 @@ function generateMedDirections() {
             
             <table style="width:100%;border-collapse:collapse;font-size:11pt;margin-bottom:20px;">
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;width:35%;"><strong>Ф.И.О. работника:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</td></tr>
-                <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Дата рождения:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${formatDate(birthDate)}</td></tr>
+                <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Дата рождения:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${birthDate}</td></tr>
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Пол работника:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${gender}</td></tr>
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Наименование структурного подразделения:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${department}</td></tr>
                 <tr><td style="padding:6px 0;border-bottom:1px solid #ccc;"><strong>Наименование должности:</strong></td><td style="padding:6px 0;border-bottom:1px solid #ccc;">${emp.position}</td></tr>
@@ -2248,8 +2092,8 @@ function generatePsychoDirections() {
     
     checkboxes.forEach(cb => {
         const snils = cb.dataset.snils;
-        let emp = getAllEmployees().find(e => e.snils === snils);
-        if (!emp) emp = manualPsychoEmployees.find(e => e.snils === snils);
+        let emp = getAllEmployees().find(e => (e.snils || e.tabNumber) === snils);
+        if (!emp) emp = manualPsychoEmployees.find(e => (e.snils || e.tabNumber) === snils);
         if (!emp) return;
         
         const savedPsycho = JSON.parse(localStorage.getItem(`psychoData_${snils}`) || '{}');
@@ -2286,7 +2130,7 @@ function generatePsychoDirections() {
             
             <table style="width:100%;border-collapse:collapse;font-size:11pt;margin-bottom:20px;">
                 <tr><td style="padding:4px 0;width:35%;"><strong>Ф.И.О. работника:</strong></td><td style="padding:4px 0;">${emp.last_name} ${emp.first_name} ${emp.middle_name || ''}</td></tr>
-                <tr><td style="padding:4px 0;"><strong>Дата рождения:</strong></td><td style="padding:4px 0;">${formatDate(birthDate)} <strong style="margin-left:20px;">Пол:</strong> ${gender}</td></tr>
+                <tr><td style="padding:4px 0;"><strong>Дата рождения:</strong></td><td style="padding:4px 0;">${birthDate} <strong style="margin-left:20px;">Пол:</strong> ${gender}</td></tr>
                 <tr><td style="padding:4px 0;"><strong>Адрес регистрации:</strong></td><td style="padding:4px 0;">${regAddress}</td></tr>
             </table>
             
@@ -2310,7 +2154,7 @@ function generatePsychoDirections() {
             </div>
             
             <div style="font-size:11pt;margin-bottom:20px;">
-                <strong>Дата выдачи направления работнику:</strong> ${formatDate(directionDate)}
+                <strong>Дата выдачи направления работнику:</strong> ${directionDate}
             </div>
             
             <table style="width:100%;border-collapse:collapse;font-size:11pt;margin-top:40px;table-layout:fixed;">
@@ -2331,7 +2175,7 @@ function generatePsychoDirections() {
             </table>
             
             <div style="margin-top:30px;font-size:11pt;">
-                <strong>Дата формирования направления:</strong> ${formatDate(directionDate)}
+                <strong>Дата формирования направления:</strong> ${directionDate}
             </div>
             
             <div style="margin-top:40px;font-size:12pt;text-align:center;">М.П.</div>
@@ -2440,6 +2284,205 @@ function saveNewMedOrg() {
     document.getElementById('newMedOrgPhone').value = '';
     
     alert('✅ Медорганизация добавлена!');
+}
+// ============================================================
+// ПЕРСОНАЛЬНАЯ КАРТОЧКА СОТРУДНИКА (РЕДАКТИРОВАНИЕ)
+// ============================================================
+function openEmployeeCardBySnils(snils) {
+    const all = getAllEmployees();
+    const emp = all.find(e => e.snils === snils || e.tabNumber === snils);
+    if (!emp) { alert('❌ Сотрудник не найден'); return; }
+    openEmployeeCard(emp);
+}
+
+function openEmployeeCard(emp) {
+    const actualSnils = emp.snils || emp.tabNumber || '';
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'employeeModal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:600px;max-height:90vh;overflow-y:auto;">
+            <div class="modal-header">
+                <h3>✏️ Редактирование сотрудника</h3>
+                <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div class="form-group">
+                        <label style="color:#ccc;font-size:13px;">Фамилия</label>
+                        <input type="text" id="editLastName" value="${emp.last_name || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                    </div>
+                    <div class="form-group">
+                        <label style="color:#ccc;font-size:13px;">Имя</label>
+                        <input type="text" id="editFirstName" value="${emp.first_name || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label style="color:#ccc;font-size:13px;">Отчество</label>
+                    <input type="text" id="editMiddleName" value="${emp.middle_name || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                </div>
+                
+                <div class="form-group">
+                    <label style="color:#ccc;font-size:13px;">Должность</label>
+                    <input type="text" id="editPosition" value="${emp.position || ''}" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                </div>
+                
+                <div class="form-group">
+                    <label style="color:#ccc;font-size:13px;">Структурное подразделение</label>
+                    <input type="text" id="editDepartment" value="${emp.department || ''}" placeholder="Администрация" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                </div>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div class="form-group">
+                        <label style="color:#ccc;font-size:13px;">СНИЛС</label>
+                        <input type="text" id="editSnils" value="${emp.snils || ''}" placeholder="123-456-789 00" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                    </div>
+                    <div class="form-group">
+                        <label style="color:#ccc;font-size:13px;">Табельный номер</label>
+                        <input type="text" id="editTabNumber" value="${emp.tabNumber || ''}" placeholder="26663" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                    </div>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div class="form-group">
+                        <label style="color:#ccc;font-size:13px;">Дата рождения</label>
+                        <input type="text" id="editBirthDate" value="${emp.birthDate || ''}" placeholder="12.08.1951" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                    </div>
+                    <div class="form-group">
+                        <label style="color:#ccc;font-size:13px;">Пол</label>
+                        <select id="editGender" style="width:100%;padding:10px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                            <option value="">--</option>
+                            <option value="М" ${emp.gender === 'М' ? 'selected' : ''}>М</option>
+                            <option value="Ж" ${emp.gender === 'Ж' ? 'selected' : ''}>Ж</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label style="color:#ccc;font-size:13px;">№ полиса ОМС</label>
+                    <input type="text" id="editPolicy" value="${emp.policyNumber || ''}" placeholder="1234 5678 9012 3456" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                </div>
+                
+                <div class="form-group">
+                    <label style="color:#ccc;font-size:13px;">Вредные факторы (Приказ №29н)</label>
+                    <input type="text" id="editFactors" value="${emp.medFactors || ''}" placeholder="4.3.1, 4.3.2, 18.1" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                </div>
+                
+                <div class="form-group">
+                    <label style="color:#ccc;font-size:13px;">Адрес регистрации (для психо)</label>
+                    <input type="text" id="editAddress" value="${emp.registrationAddress || ''}" placeholder="г. ..., ул. ..." style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:14px;">
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex;gap:10px;justify-content:space-between;">
+                <button class="btn-delete" onclick="deleteEmployeeFromModal('${actualSnils}')" style="padding:10px 20px;">🗑 Удалить</button>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn-cancel" onclick="this.closest('.modal-overlay').remove()">Отмена</button>
+                    <button class="btn-primary" onclick="saveEmployeeDataFromModal('${actualSnils}')" style="width:auto;padding:10px 24px;">💾 Сохранить</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function saveEmployeeDataFromModal(oldSnils) {
+    const newLastName = document.getElementById('editLastName')?.value.trim() || '';
+    const newFirstName = document.getElementById('editFirstName')?.value.trim() || '';
+    const newMiddleName = document.getElementById('editMiddleName')?.value.trim() || '';
+    const newPosition = document.getElementById('editPosition')?.value.trim() || '';
+    const newDepartment = document.getElementById('editDepartment')?.value.trim() || '';
+    const newSnilsRaw = document.getElementById('editSnils')?.value.trim() || '';
+    const newTabNumber = document.getElementById('editTabNumber')?.value.trim() || '';
+    const newBirthDate = document.getElementById('editBirthDate')?.value.trim() || '';
+    const newGender = document.getElementById('editGender')?.value || '';
+    const newPolicy = document.getElementById('editPolicy')?.value.trim() || '';
+    const newFactors = document.getElementById('editFactors')?.value.trim() || '';
+    const newAddress = document.getElementById('editAddress')?.value.trim() || '';
+    
+    if (!newLastName || !newFirstName) {
+        alert('❌ Фамилия и Имя обязательны!');
+        return;
+    }
+    
+    const newSnils = newSnilsRaw.replace(/\D/g, '');
+    
+    const data = getStaffData();
+    let found = false;
+    
+    for (const [dept, deptData] of Object.entries(data.departments)) {
+        const idx = deptData.employees.findIndex(e => e.snils === oldSnils || e.tabNumber === oldSnils);
+        if (idx !== -1) {
+            deptData.employees[idx] = {
+                ...deptData.employees[idx],
+                last_name: newLastName,
+                first_name: newFirstName,
+                middle_name: newMiddleName,
+                position: newPosition,
+                snils: newSnils,
+                tabNumber: newTabNumber,
+                birthDate: newBirthDate,
+                gender: newGender,
+                policyNumber: newPolicy,
+                medFactors: newFactors,
+                registrationAddress: newAddress
+            };
+            found = true;
+            break;
+        }
+    }
+    
+    if (!found) {
+        const idx = data.unassigned.findIndex(e => e.snils === oldSnils || e.tabNumber === oldSnils);
+        if (idx !== -1) {
+            data.unassigned[idx] = {
+                ...data.unassigned[idx],
+                last_name: newLastName,
+                first_name: newFirstName,
+                middle_name: newMiddleName,
+                position: newPosition,
+                snils: newSnils,
+                tabNumber: newTabNumber,
+                birthDate: newBirthDate,
+                gender: newGender,
+                policyNumber: newPolicy,
+                medFactors: newFactors,
+                registrationAddress: newAddress
+            };
+        }
+    }
+    
+    saveStaffData(data);
+    document.getElementById('employeeModal')?.remove();
+    renderStaffWithDepartments();
+    alert('✅ Данные сохранены!');
+}
+
+function deleteEmployeeFromModal(snils) {
+    if (!confirm('Удалить этого сотрудника?')) return;
+    const data = getStaffData();
+    
+    for (const [dept, deptData] of Object.entries(data.departments)) {
+        const idx = deptData.employees.findIndex(e => e.snils === snils || e.tabNumber === snils);
+        if (idx !== -1) {
+            deptData.employees.splice(idx, 1);
+            saveStaffData(data);
+            document.getElementById('employeeModal')?.remove();
+            renderStaffWithDepartments();
+            alert('✅ Удалено');
+            return;
+        }
+    }
+    
+    const idx = data.unassigned.findIndex(e => e.snils === snils || e.tabNumber === snils);
+    if (idx !== -1) {
+        data.unassigned.splice(idx, 1);
+        saveStaffData(data);
+        document.getElementById('employeeModal')?.remove();
+        renderStaffWithDepartments();
+        alert('✅ Удалено');
+    }
 }
 // ============================================================
 // ГЕНЕРАЦИЯ XML (реестр обучения)
@@ -2589,76 +2632,79 @@ function initTrainingPage() {
     const generateFamBtn = document.getElementById('generateFamBtn');
     if (generateFamBtn) generateFamBtn.onclick = generateFamiliarization;
     
- const printFamBtn = document.getElementById('printFamBtn');
-if (printFamBtn) {
-    printFamBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const content = document.getElementById('famContent');
-        if (!content || !content.innerHTML || content.innerHTML.trim() === '') {
-            alert('❌ Сначала сформируйте лист ознакомления');
-            return;
-        }
-        
-        const win = window.open('', '_blank');
-        if (!win) {
-            alert('❌ Разрешите всплывающие окна для этого сайта');
-            return;
-        }
-        
-        win.document.write(`<!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Лист ознакомления</title>
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { 
-                    font-family: 'Times New Roman', Times, serif; 
-                    background: #f0f0f0; 
-                    padding: 20px;
-                }
-                @page { size: A4 portrait; margin: 15mm; }
-                @media print {
-                    body { background: #fff; padding: 0; }
-                    .no-print { display: none !important; }
-                }
-                .no-print {
-                    text-align: center;
-                    padding: 15px;
-                    background: #fff;
-                    margin-bottom: 20px;
-                    border-radius: 8px;
-                    border-bottom: 2px solid #7c3aed;
-                }
-                .no-print button {
-                    padding: 10px 28px;
-                    margin: 0 8px;
-                    background: linear-gradient(135deg, #7c3aed, #00d4ff);
-                    border: none;
-                    border-radius: 8px;
-                    color: #fff;
-                    font-size: 15px;
-                    font-weight: 600;
-                    cursor: pointer;
-                }
-                .no-print .btn-secondary {
-                    background: #666;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="no-print">
-                <button onclick="window.print()">🖨️ Печать</button>
-                <button class="btn-secondary" onclick="window.close()">✖ Закрыть</button>
-            </div>
-            ${content.innerHTML}
-            <script>
-                setTimeout(function() { window.print(); }, 800);
-            <\/script>
-        </body>
-        </html>`);
-        win.document.close();
-    });
+    const printFamBtn = document.getElementById('printFamBtn');
+    if (printFamBtn) {
+        printFamBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const content = document.getElementById('famContent');
+            if (!content || !content.innerHTML || content.innerHTML.trim() === '') {
+                alert('❌ Сначала сформируйте лист ознакомления');
+                return;
+            }
+            
+            const win = window.open('', '_blank');
+            if (!win) {
+                alert('❌ Разрешите всплывающие окна для этого сайта');
+                return;
+            }
+            
+            win.document.write(`<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Лист ознакомления</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body { 
+                        font-family: 'Times New Roman', Times, serif; 
+                        background: #f0f0f0; 
+                        padding: 20px;
+                    }
+                    @page { size: A4 portrait; margin: 15mm; }
+                    @media print {
+                        body { background: #fff; padding: 0; }
+                        .no-print { display: none !important; }
+                    }
+                    .no-print {
+                        text-align: center;
+                        padding: 15px;
+                        background: #fff;
+                        margin-bottom: 20px;
+                        border-radius: 8px;
+                        border-bottom: 2px solid #7c3aed;
+                    }
+                    .no-print button {
+                        padding: 10px 28px;
+                        margin: 0 8px;
+                        background: linear-gradient(135deg, #7c3aed, #00d4ff);
+                        border: none;
+                        border-radius: 8px;
+                        color: #fff;
+                        font-size: 15px;
+                        font-weight: 600;
+                        cursor: pointer;
+                    }
+                    .no-print .btn-secondary {
+                        background: #666;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="no-print">
+                    <button onclick="window.print()">🖨️ Печать</button>
+                    <button class="btn-secondary" onclick="window.close()">✖ Закрыть</button>
+                </div>
+                ${content.innerHTML}
+                <script>
+                    setTimeout(function() { window.print(); }, 800);
+                <\/script>
+            </body>
+            </html>`);
+            win.document.close();
+        });
+    }
+    
+    initPPECardsPage();
 }
 
 // ============================================================
