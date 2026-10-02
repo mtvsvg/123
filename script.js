@@ -752,9 +752,17 @@ function generateFamiliarization() {
     const content = document.getElementById('famContent');
     
     if (result && content) {
-        const now = new Date();
-        const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-        const dateStr = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} г.`;
+                const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+        
+        const famDateInput = document.getElementById('famCustomDate')?.value;
+        let dateStr;
+        if (famDateInput) {
+            const d = new Date(famDateInput);
+            dateStr = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} г.`;
+        } else {
+            const now = new Date();
+            dateStr = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} г.`;
+        }
         
         let positionGenitive = emp.position;
         const lastChar = emp.position.slice(-1);
@@ -2703,7 +2711,10 @@ function initTrainingPage() {
             win.document.close();
         });
     }
-    
+    const famCustomDate = document.getElementById('famCustomDate');
+    if (famCustomDate && !famCustomDate.value) {
+        famCustomDate.value = new Date().toISOString().split('T')[0];
+    }
     initPPECardsPage();
 }
 
