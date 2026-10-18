@@ -554,11 +554,44 @@
             </div>
 
             <div class="block">
-                <h2>👤 Выберите сотрудников и вид деятельности</h2>
-                <input type="text" id="psychoSearchInput" placeholder="🔍 Поиск по фамилии..." oninput="filterMedEmployees('psycho')" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;margin-bottom:10px;">
-                <div id="psychoEmployeeList"><p style="color:#6a6a8a;text-align:center;padding:20px;">Нет сотрудников.</p></div>
-                <button class="btn-primary" onclick="generatePsychoDirections()" style="margin-top:16px;width:auto;padding:12px 32px;">🖨️ Сформировать направления</button>
-            </div>
+    <div class="block-header">
+        <h2>👤 Выберите сотрудников и вид деятельности</h2>
+        <button class="btn-add" onclick="togglePsychoManualForm()">➕ Добавить вручную</button>
+    </div>
+    
+    <div id="psychoManualForm" class="hidden" style="margin-bottom:12px;padding:14px;background:rgba(0,212,255,0.05);border-radius:10px;border:1px solid rgba(0,212,255,0.1);">
+        <p style="color:#00d4ff;font-size:13px;font-weight:600;margin-bottom:10px;">➕ Новый сотрудник (нет в штатке)</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+            <input type="text" id="psychoManualLastName" placeholder="Фамилия" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+            <input type="text" id="psychoManualFirstName" placeholder="Имя" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+            <input type="text" id="psychoManualMiddleName" placeholder="Отчество" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+            <input type="text" id="psychoManualPosition" placeholder="Должность" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+            <input type="text" id="psychoManualDepartment" placeholder="Структурное подразделение" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+            <input type="text" id="psychoManualBirthDate" placeholder="Дата рождения (12.08.1951)" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+            <select id="psychoManualGender" style="padding:8px 12px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+                <option value="">Пол</option>
+                <option value="М">М</option>
+                <option value="Ж">Ж</option>
+            </select>
+            <input type="text" id="psychoManualAddress" placeholder="Адрес регистрации" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+            <select id="psychoManualActivity" style="padding:8px 12px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+                <option value="">Вид деятельности</option>
+            </select>
+        </div>
+        <div style="display:flex;gap:10px;">
+            <button class="btn-save" onclick="addManualPsychoEmployee()">➕ Добавить в список</button>
+            <button class="btn-cancel" onclick="togglePsychoManualForm()">Отмена</button>
+        </div>
+    </div>
+    
+    <input type="text" id="psychoSearchInput" placeholder="🔍 Поиск по фамилии..." oninput="filterMedEmployees('psycho')" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;margin-bottom:10px;">
+    <div id="psychoEmployeeList"><p style="color:#6a6a8a;text-align:center;padding:20px;">Нет сотрудников.</p></div>
+    <button class="btn-primary" onclick="generatePsychoDirections()" style="margin-top:16px;width:auto;padding:12px 32px;">🖨️ Сформировать направления</button>
+</div>
         </div>
     </div>
 </div>
