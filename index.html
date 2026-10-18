@@ -495,12 +495,43 @@
                 </div>
             </div>
 
-            <div class="block">
-                <h2>👤 Выберите сотрудников</h2>
-                <input type="text" id="medSearchInput" placeholder="🔍 Поиск по фамилии..." oninput="filterMedEmployees('med')" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;margin-bottom:10px;">
-                <div id="medEmployeeList"><p style="color:#6a6a8a;text-align:center;padding:20px;">Нет сотрудников.</p></div>
-                <button class="btn-primary" onclick="generateMedDirections()" style="margin-top:16px;width:auto;padding:12px 32px;">🖨️ Сформировать направления</button>
-            </div>
+           <div class="block">
+    <div class="block-header">
+        <h2>👤 Выберите сотрудников</h2>
+        <button class="btn-add" onclick="toggleMedManualForm()">➕ Добавить вручную</button>
+    </div>
+    
+    <div id="medManualForm" class="hidden" style="margin-bottom:12px;padding:14px;background:rgba(0,212,255,0.05);border-radius:10px;border:1px solid rgba(0,212,255,0.1);">
+        <p style="color:#00d4ff;font-size:13px;font-weight:600;margin-bottom:10px;">➕ Новый сотрудник (нет в штатке)</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+            <input type="text" id="manualLastName" placeholder="Фамилия" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+            <input type="text" id="manualFirstName" placeholder="Имя" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+            <input type="text" id="manualMiddleName" placeholder="Отчество" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+            <input type="text" id="manualPosition" placeholder="Должность" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+            <input type="text" id="manualDepartment" placeholder="Структурное подразделение" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+            <input type="text" id="manualBirthDate" placeholder="Дата рождения (12.08.1951)" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+            <select id="manualGender" style="padding:8px 12px;background:#1a1a3e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+                <option value="">Пол</option>
+                <option value="М">М</option>
+                <option value="Ж">Ж</option>
+            </select>
+            <input type="text" id="manualPolicy" placeholder="№ полиса ОМС" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+            <input type="text" id="manualFactors" placeholder="Вредные факторы (4.3.1, 18.1)" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-size:14px;">
+        </div>
+        <div style="display:flex;gap:10px;">
+            <button class="btn-save" onclick="addManualMedEmployee()">➕ Добавить в список</button>
+            <button class="btn-cancel" onclick="toggleMedManualForm()">Отмена</button>
+        </div>
+    </div>
+    
+    <input type="text" id="medSearchInput" placeholder="🔍 Поиск по фамилии..." oninput="filterMedEmployees('med')" style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;margin-bottom:10px;">
+    <div id="medEmployeeList"><p style="color:#6a6a8a;text-align:center;padding:20px;">Нет сотрудников.</p></div>
+    <button class="btn-primary" onclick="generateMedDirections()" style="margin-top:16px;width:auto;padding:12px 32px;">🖨️ Сформировать направления</button>
+</div>
         </div>
 
         <!-- ВКЛАДКА: ПСИХОСВИДЕТЕЛЬСТВОВАНИЕ -->
