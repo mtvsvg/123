@@ -1617,3 +1617,24 @@ input::placeholder, textarea::placeholder {
     font-size: 11px;
     min-width: 90px;
 }
+
+/* ===== Учёт сотрудников ===== */
+.rg-summary{display:flex;gap:12px;flex-wrap:wrap}
+.rg-card{flex:1;min-width:140px;padding:14px 18px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column}
+.rg-card b{font-size:28px}.rg-card span{color:#8888aa;font-size:13px}
+.rg-card.ok b{color:#34d399}.rg-card.bad b{color:#f87171}
+.rg-table{width:100%;border-collapse:collapse;font-size:14px}
+.rg-table th{text-align:left;padding:10px;color:#8888aa;font-weight:600;border-bottom:1px solid rgba(255,255,255,.1)}
+.rg-table td{padding:10px;border-bottom:1px solid rgba(255,255,255,.05)}
+.rg-table tr:hover td{background:rgba(124,58,237,.08)}
+.rg-name{color:#c4b5fd;text-decoration:none;font-weight:600;cursor:pointer}
+.rg-badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;user-select:none}
+.rg-badge.ok{background:rgba(52,211,153,.15);color:#34d399}
+.rg-badge.bad{background:rgba(248,113,113,.15);color:#f87171}
+.rg-badge.na{background:rgba(255,255,255,.07);color:#8888aa}
+.rg-input{width:100%;padding:9px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#fff;font:inherit;box-sizing:border-box}
+.rg-input option{color:#000}
+.rg-h{margin:16px 0 8px;color:#c4b5fd}
+.rg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rg-grid label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#8888aa}
+@media(max-width:600px){.rg-grid{grid-template-columns:1fr}}
