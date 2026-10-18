@@ -714,10 +714,16 @@ function getOrgName() {
 }
 
 function generateFamiliarization() {
-    const emp = getFamEmployeeData();
-    if (!emp) {
-        alert('❌ Выберите сотрудника или заполните поля вручную!');
-        return;
+    let emp = getFamEmployeeData();
+    const isEmptyTemplate = !emp;
+    
+    if (isEmptyTemplate) {
+        emp = {
+            last_name: '________________________',
+            first_name: '________________________',
+            middle_name: '________________________',
+            position: '________________________'
+        };
     }
     
     const docLabels = document.querySelectorAll('.doc-check');
@@ -765,12 +771,14 @@ function generateFamiliarization() {
         }
         
         let positionGenitive = emp.position;
-        const lastChar = emp.position.slice(-1);
-        if (['а', 'я'].includes(lastChar)) {
-            positionGenitive = emp.position.slice(0, -1) + 'ы';
-        } else if (['й', 'ь'].includes(lastChar)) {
-            positionGenitive = emp.position.slice(0, -1) + 'я';
-        }
+if (!isEmptyTemplate) {
+    const lastChar = emp.position.slice(-1);
+    if (['а', 'я'].includes(lastChar)) {
+        positionGenitive = emp.position.slice(0, -1) + 'ы';
+    } else if (['й', 'ь'].includes(lastChar)) {
+        positionGenitive = emp.position.slice(0, -1) + 'я';
+    }
+}
         
         let html = '';
         html += '<div style="padding:40px 50px;background:#ffffff;color:#1a1a2e;max-width:900px;margin:0 auto;font-family:Times New Roman,serif;box-shadow:0 4px 20px rgba(0,0,0,0.08);border-radius:4px;border:1px solid #e0e0e8;">';
@@ -1769,8 +1777,11 @@ function showMedTab(name) {
 function renderMedEmployeeList(mode = 'med') {
     const container = document.getElementById(mode === 'med' ? 'medEmployeeList' : 'psychoEmployeeList');
     if (!container) return;
-    const all = getAllEmployees();
     
+    const staffEmployees = getAllEmployees();
+    const all = staffEmployees.map(e => ({ ...e, department: e.department || '' }));
+    
+    // Добавляем ручных
     if (mode === 'med') {
         manualMedEmployees.forEach(e => all.push(e));
     } else if (mode === 'psycho') {
