@@ -1687,8 +1687,6 @@ const PSYCHO_ACTIVITIES = [
     { id: 17, title: 'Деятельность, непосредственно связанная с контактами с возбудителями инфекционных заболеваний - патогенными микроорганизмами I и II группы патогенности' }
 ];
 
-let manualMedEmployees = [];
-let manualPsychoEmployees = [];
 
 // ============================================================
 // ИНИЦИАЛИЗАЦИЯ РАЗДЕЛА "МЕДОСМОТРЫ"
@@ -2871,3 +2869,141 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     initTrainingPage();
 });
+
+
+// ============================================================
+// УЧЁТ СОТРУДНИКОВ: обучение / медосмотр / психо / СИЗ + ПРОТОКОЛ НАРУШЕНИЙ
+// Данные: localStorage['empRecords'] = { <СНИЛС|табельный|ФИО>: {...} }
+// ============================================================
+function rgEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function rgKey(e) { return e.snils || e.tabNumber || ((e.last_name || '') + '_' + (e.first_name || '') + '_' + (e.birthDate || '')); }
+function getEmpRecords() { try { return JSON.parse(localStorage.getItem('empRecords') || '{}'); } catch (e) { return {}; } }
+function saveEmpRecords(r) { localStorage.setItem('empRecords', JSON.stringify(r)); }
+function rgRec(key) {
+    const r = getEmpRecords()[key] || {};
+    return {
+        training: r.training || { status: '', program: '', date: '', next: '' },
+        med: r.med || { status: '', date: '', next: '' },
+        psycho: r.psycho || { status: '', date: '', next: '' },
+        ppeIssued: r.ppeIssued || '',
+        ppeMissing: r.ppeMissing || ''
+    };
+}
+function rgFio(e) { return [e.last_name, e.first_name, e.middle_name].filter(Boolean).join(' '); }
+function rgExpired(next) { return !!next && next < new Date().toISOString().split('T')[0]; }
+function rgState(b) {
+    if (b.status === 'no') return { cls: 'bad', txt: 'Не пройдено' };
+    if (b.status === 'yes' && rgExpired(b.next)) return { cls: 'bad', txt: 'Просрочено' };
+    if (b.status === 'yes') return { cls: 'ok', txt: 'Пройдено' };
+    return { cls: 'na', txt: 'Нет данных' };
+}
+function rgPpeState(r) {
+    const miss = r.ppeMissing.split('\n').map(s => s.trim()).filter(Boolean).length;
+    const got = r.ppeIssued.split('\n').map(s => s.trim()).filter(Boolean).length;
+    if (miss) return { cls: 'bad', txt: 'Не выдано: ' + miss };
+    if (got) return { cls: 'ok', txt: 'Выдано: ' + got };
+    return { cls: 'na', txt: 'Нет данных' };
+}
+function renderRegistry() {
+    const box = document.getElementById('registryTable');
+    if (!box) return;
+    const q = ((document.getElementById('registrySearch') || {}).value || '').toLowerCase();
+    const emps = getAllEmployees().filter(e => (rgFio(e) + ' ' + (e.position || '')).toLowerCase().includes(q));
+    let bad = 0, ok = 0;
+    const rows = emps.map(e => {
+        const k = rgKey(e), r = rgRec(k);
+        const st = [rgState(r.training), rgState(r.med), rgState(r.psycho), rgPpeState(r)];
+        if (st.some(s => s.cls === 'bad')) bad++; else if (st.every(s => s.cls === 'ok')) ok++;
+        const cell = (s, tab) => `<td><span class="rg-badge ${s.cls}" onclick="openRegistryModal(decodeURIComponent('${encodeURIComponent(k)}'))">${s.txt}</span></td>`;
+        return `<tr><td><a href="#" class="rg-name" onclick="event.preventDefault();openRegistryModal(decodeURIComponent('${encodeURIComponent(k)}'))">${rgEsc(rgFio(e))}</a></td><td>${rgEsc(e.position)}</td>${cell(st[0])}${cell(st[1])}${cell(st[2])}${cell(st[3])}</tr>`;
+    }).join('');
+    document.getElementById('registrySummary').innerHTML =
+        `<div class="rg-card"><b>${emps.length}</b><span>сотрудников</span></div>` +
+        `<div class="rg-card ok"><b>${ok}</b><span>без замечаний</span></div>` +
+        `<div class="rg-card bad"><b>${bad}</b><span>с нарушениями</span></div>`;
+    box.innerHTML = emps.length
+        ? `<table class="rg-table"><thead><tr><th>ФИО</th><th>Должность</th><th>Обучение</th><th>Медосмотр</th><th>Психо</th><th>СИЗ</th></tr></thead><tbody>${rows}</tbody></table>`
+        : '<p style="color:#8888aa;text-align:center;padding:30px;">Сотрудников нет. Загрузите штатное расписание в разделе «Обучение».</p>';
+}
+function openRegistryModal(key) {
+    const e = getAllEmployees().find(x => rgKey(x) === key);
+    if (!e) { alert('❌ Сотрудник не найден'); return; }
+    const r = rgRec(key);
+    const sel = (id, v) => `<select id="${id}" class="rg-input"><option value=""${v === '' ? ' selected' : ''}>— нет данных —</option><option value="yes"${v === 'yes' ? ' selected' : ''}>Пройдено</option><option value="no"${v === 'no' ? ' selected' : ''}>Не пройдено</option></select>`;
+    const old = document.getElementById('registryModal'); if (old) old.remove();
+    const m = document.createElement('div');
+    m.className = 'modal-overlay'; m.id = 'registryModal';
+    m.innerHTML = `<div class="modal-content" style="max-width:640px;max-height:90vh;overflow-y:auto;">
+        <div class="modal-header"><h3>📋 ${rgEsc(rgFio(e))}</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button></div>
+        <div style="padding:16px 20px;">
+            <h4 class="rg-h">Обучение по охране труда</h4>
+            <div class="rg-grid">${sel('rgTrSt', r.training.status)}<input id="rgTrProg" class="rg-input" placeholder="Программа (А, Б, В, ПП...)" value="${rgEsc(r.training.program)}"><label>Дата<input type="date" id="rgTrDate" class="rg-input" value="${rgEsc(r.training.date)}"></label><label>Следующее до<input type="date" id="rgTrNext" class="rg-input" value="${rgEsc(r.training.next)}"></label></div>
+            <h4 class="rg-h">Медосмотр</h4>
+            <div class="rg-grid">${sel('rgMedSt', r.med.status)}<span></span><label>Дата<input type="date" id="rgMedDate" class="rg-input" value="${rgEsc(r.med.date)}"></label><label>Следующий до<input type="date" id="rgMedNext" class="rg-input" value="${rgEsc(r.med.next)}"></label></div>
+            <h4 class="rg-h">Психосвидетельствование</h4>
+            <div class="rg-grid">${sel('rgPsSt', r.psycho.status)}<span></span><label>Дата<input type="date" id="rgPsDate" class="rg-input" value="${rgEsc(r.psycho.date)}"></label><label>Следующее до<input type="date" id="rgPsNext" class="rg-input" value="${rgEsc(r.psycho.next)}"></label></div>
+            <h4 class="rg-h">СИЗ (по одному в строке)</h4>
+            <div class="rg-grid"><label>Выдано<textarea id="rgPpeOk" class="rg-input" rows="4">${rgEsc(r.ppeIssued)}</textarea></label><label>Не выдано (нарушение)<textarea id="rgPpeNo" class="rg-input" rows="4">${rgEsc(r.ppeMissing)}</textarea></label></div>
+        </div>
+        <div class="modal-footer"><button class="btn-primary" id="rgSaveBtn">Сохранить</button><button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">Отмена</button></div>
+    </div>`;
+    document.body.appendChild(m);
+    const v = id => document.getElementById(id).value;
+    document.getElementById('rgSaveBtn').addEventListener('click', function () {
+        const all = getEmpRecords();
+        all[key] = {
+            training: { status: v('rgTrSt'), program: v('rgTrProg').trim(), date: v('rgTrDate'), next: v('rgTrNext') },
+            med: { status: v('rgMedSt'), date: v('rgMedDate'), next: v('rgMedNext') },
+            psycho: { status: v('rgPsSt'), date: v('rgPsDate'), next: v('rgPsNext') },
+            ppeIssued: v('rgPpeOk').trim(), ppeMissing: v('rgPpeNo').trim()
+        };
+        saveEmpRecords(all);
+        m.remove();
+        renderRegistry();
+    });
+}
+function generateViolationsProtocol() {
+    const today = new Date();
+    const due = new Date(today.getTime() + 30 * 86400000);
+    const fmt = d => d.toLocaleDateString('ru-RU');
+    const rows = [];
+    getAllEmployees().forEach(e => {
+        const r = rgRec(rgKey(e));
+        const add = (v, m) => rows.push({ fio: rgFio(e), pos: e.position || '', v: v, m: m });
+        if (r.training.status === 'no') add('Не пройдено обучение по охране труда' + (r.training.program ? ' (программа ' + r.training.program + ')' : ''), 'Организовать и провести обучение, оформить протокол проверки знаний');
+        else if (r.training.status === 'yes' && rgExpired(r.training.next)) add('Истёк срок обучения по охране труда (' + new Date(r.training.next).toLocaleDateString('ru-RU') + ')', 'Организовать повторное обучение и проверку знаний');
+        if (r.med.status === 'no') add('Не пройден обязательный периодический медицинский осмотр', 'Выдать направление, обеспечить прохождение осмотра');
+        else if (r.med.status === 'yes' && rgExpired(r.med.next)) add('Просрочен периодический медицинский осмотр', 'Выдать направление, обеспечить прохождение осмотра');
+        if (r.psycho.status === 'no') add('Не пройдено психиатрическое освидетельствование', 'Выдать направление, обеспечить прохождение освидетельствования');
+        else if (r.psycho.status === 'yes' && rgExpired(r.psycho.next)) add('Просрочено психиатрическое освидетельствование', 'Выдать направление, обеспечить прохождение освидетельствования');
+        r.ppeMissing.split('\n').map(s => s.trim()).filter(Boolean).forEach(p => add('Не выданы СИЗ: ' + p, 'Выдать СИЗ, внести запись в личную карточку учёта выдачи СИЗ'));
+    });
+    if (!rows.length) { alert('✅ Нарушений не найдено. Отметьте «Не пройдено» / «Не выдано» в карточках сотрудников или проверьте сроки.'); return; }
+    const org = (typeof getOrgName === 'function' ? getOrgName() : '') || '________________________';
+    const body = rows.map((x, i) => `<tr><td>${i + 1}</td><td>${rgEsc(x.fio)}<br><small>${rgEsc(x.pos)}</small></td><td>${rgEsc(x.v)}</td><td>${rgEsc(x.m)}</td><td>${fmt(due)}</td><td></td></tr>`).join('');
+    const html = `<div style="font-family:'Times New Roman',serif;color:#000;padding:10mm;">
+        <h2 style="text-align:center;margin:0 0 4px;">ПРОТОКОЛ</h2>
+        <p style="text-align:center;margin:0 0 14px;">выявленных нарушений требований охраны труда и мероприятий по их устранению<br>${rgEsc(org)} · от ${fmt(today)}</p>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;" border="1" cellpadding="6">
+        <thead><tr style="background:#f3f0ff;"><th>№</th><th>Работник</th><th>Выявленное нарушение</th><th>Мероприятие по устранению</th><th>Срок</th><th>Отметка об исполнении</th></tr></thead>
+        <tbody>${body}</tbody></table>
+        <p style="margin-top:30px;">Ответственный за охрану труда: ______________ / ______________<br><br>Руководитель организации: ______________ / ______________</p></div>`;
+    openPrintWindow(html, 'Протокол устранения нарушений');
+}
+
+// Подключение страницы «Учёт» к навигации (оригинальный showPage не трогаем)
+(function () {
+    const orig = showPage;
+    showPage = function (page) {
+        const rp = document.getElementById('registryPage');
+        if (rp) rp.classList.add('hidden');
+        if (page === 'registry') {
+            orig('__none');
+            if (rp) rp.classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.textContent.indexOf('Учёт') !== -1));
+            renderRegistry();
+        } else {
+            orig(page);
+        }
+    };
+})();
