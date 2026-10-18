@@ -186,6 +186,15 @@
         <!-- ШТАТНОЕ РАСПИСАНИЕ -->
         <div id="tabStaff">
             <div class="block">
+                <div class="block-header"><h2>🎓 Выписки из реестра обученных лиц</h2></div>
+                <p style="color:#8888aa;font-size:13px;margin:0 0 10px;">Загрузите одну или несколько PDF-выписок (по 500+ записей). Сотрудники из штатки сопоставляются по СНИЛС/ФИО; результат виден в списке штатки (значок 🎓) и на странице «Учёт».</p>
+                <input type="file" id="registryPdfInput" accept="application/pdf" multiple style="color:#8888aa;">
+                <button class="btn-secondary" style="margin-left:8px;" onclick="clearTrainingRegistry()">🗑 Очистить реестры</button>
+                <div id="registryImportStatus" style="margin-top:8px;font-size:13px;color:#c4b5fd;"></div>
+                <div id="registryImportInfo" style="margin-top:6px;font-size:13px;color:#8888aa;"></div>
+            </div>
+
+            <div class="block">
                 <div class="block-header">
                     <h2>📋 Штатное расписание</h2>
                     <button class="btn-add" id="staffImportBtn">📤 Загрузить файл</button>
@@ -651,6 +660,7 @@
         <div id="registrySummary" class="rg-summary"></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;">
             <input id="registrySearch" class="rg-input" style="flex:1;min-width:220px;" placeholder="🔍 Поиск по ФИО или должности" oninput="renderRegistry()">
+            <button class="btn-secondary" onclick="openPpeNormsModal()">📚 Нормы СИЗ (767н)</button>
             <button class="btn-primary" onclick="generateViolationsProtocol()">📄 Протокол устранения нарушений</button>
         </div>
         <div id="registryTable" style="overflow-x:auto;"></div>
