@@ -23,6 +23,7 @@
                 <a href="#" class="nav-link" onclick="showPage('training')">Обучение</a>
                 <a href="#" class="nav-link" onclick="showPage('ppeCards')">🦺 Карточки СИЗ</a>
                 <a href="#" class="nav-link" onclick="showPage('med')">🩺 Медосмотры</a>
+                <a href="#" class="nav-link" onclick="showPage('registry')">✅ Учёт и нарушения</a>
                 <a href="#" class="nav-link" onclick="showPage('risks')">Оценка рисков</a>
                 <a href="#" class="nav-link" onclick="showPage('analytics')">Аналитика</a>
             </nav>
@@ -643,6 +644,19 @@
 <!-- ============================================================ -->
 <!-- СТРАНИЦЫ В РАЗРАБОТКЕ -->
 <!-- ============================================================ -->
+<div id="registryPage" class="page hidden">
+    <div class="container" style="padding:30px 20px;">
+        <h2 style="font-size:28px;margin-bottom:6px;">✅ Учёт сотрудников и нарушения</h2>
+        <p style="color:#8888aa;margin-bottom:16px;">Нажмите на ФИО или на статус, чтобы отметить обучение, медосмотр, психосвидетельствование и выдачу СИЗ.</p>
+        <div id="registrySummary" class="rg-summary"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;">
+            <input id="registrySearch" class="rg-input" style="flex:1;min-width:220px;" placeholder="🔍 Поиск по ФИО или должности" oninput="renderRegistry()">
+            <button class="btn-primary" onclick="generateViolationsProtocol()">📄 Протокол устранения нарушений</button>
+        </div>
+        <div id="registryTable" style="overflow-x:auto;"></div>
+    </div>
+</div>
+
 <div id="risksPage" class="page hidden">
     <div class="container" style="text-align:center;padding:60px 20px;">
         <div style="font-size:80px;margin-bottom:20px;">🧠</div>
