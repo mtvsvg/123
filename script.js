@@ -2719,7 +2719,135 @@ function initTrainingPage() {
     }
     initPPECardsPage();
 }
+// ============================================================
+// РУЧНОЙ ВВОД СОТРУДНИКОВ ДЛЯ МЕДОСМОТРОВ
+// ============================================================
+function toggleMedManualForm() {
+    const form = document.getElementById('medManualForm');
+    if (form) form.classList.toggle('hidden');
+}
 
+function togglePsychoManualForm() {
+    const form = document.getElementById('psychoManualForm');
+    if (form) form.classList.toggle('hidden');
+    
+    const activitySelect = document.getElementById('psychoManualActivity');
+    if (activitySelect && activitySelect.options.length <= 1) {
+        activitySelect.innerHTML = '<option value="">Вид деятельности</option>' +
+            PSYCHO_ACTIVITIES.map(a => `<option value="${a.id}">${a.id}. ${a.title.substring(0, 80)}${a.title.length > 80 ? '...' : ''}</option>`).join('');
+    }
+}
+
+function addManualMedEmployee() {
+    const lastName = document.getElementById('manualLastName')?.value.trim();
+    const firstName = document.getElementById('manualFirstName')?.value.trim();
+    const middleName = document.getElementById('manualMiddleName')?.value.trim() || '';
+    const position = document.getElementById('manualPosition')?.value.trim();
+    const department = document.getElementById('manualDepartment')?.value.trim() || '';
+    const birthDate = document.getElementById('manualBirthDate')?.value.trim() || '';
+    const gender = document.getElementById('manualGender')?.value || '';
+    const policy = document.getElementById('manualPolicy')?.value.trim() || '';
+    const factors = document.getElementById('manualFactors')?.value.trim() || '';
+    
+    if (!lastName || !firstName || !position) {
+        alert('❌ Заполните Фамилию, Имя и Должность!');
+        return;
+    }
+    
+    const snils = 'manual_med_' + Date.now();
+    const manualEmp = {
+        last_name: lastName,
+        first_name: firstName,
+        middle_name: middleName,
+        position: position,
+        department: department,
+        birthDate: birthDate,
+        gender: gender,
+        policyNumber: policy,
+        medFactors: factors,
+        snils: snils,
+        tabNumber: snils,
+        is_manual: true
+    };
+    
+    manualMedEmployees.push(manualEmp);
+    localStorage.setItem(`medData_${snils}`, JSON.stringify({
+        checked: true,
+        birthDate, gender, policy, factors, department
+    }));
+    
+    // Очищаем форму
+    ['manualLastName','manualFirstName','manualMiddleName','manualPosition','manualDepartment',
+     'manualBirthDate','manualPolicy','manualFactors'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    ['manualGender'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    
+    document.getElementById('medManualForm').classList.add('hidden');
+    renderMedEmployeeList('med');
+    alert('✅ Сотрудник добавлен!');
+}
+
+function addManualPsychoEmployee() {
+    const lastName = document.getElementById('psychoManualLastName')?.value.trim();
+    const firstName = document.getElementById('psychoManualFirstName')?.value.trim();
+    const middleName = document.getElementById('psychoManualMiddleName')?.value.trim() || '';
+    const position = document.getElementById('psychoManualPosition')?.value.trim();
+    const department = document.getElementById('psychoManualDepartment')?.value.trim() || '';
+    const birthDate = document.getElementById('psychoManualBirthDate')?.value.trim() || '';
+    const gender = document.getElementById('psychoManualGender')?.value || '';
+    const address = document.getElementById('psychoManualAddress')?.value.trim() || '';
+    const activityId = document.getElementById('psychoManualActivity')?.value || '';
+    
+    if (!lastName || !firstName || !position) {
+        alert('❌ Заполните Фамилию, Имя и Должность!');
+        return;
+    }
+    if (!activityId) {
+        alert('❌ Выберите вид деятельности!');
+        return;
+    }
+    
+    const snils = 'manual_psycho_' + Date.now();
+    const manualEmp = {
+        last_name: lastName,
+        first_name: firstName,
+        middle_name: middleName,
+        position: position,
+        department: department,
+        birthDate: birthDate,
+        gender: gender,
+        registrationAddress: address,
+        psychoActivity: activityId,
+        snils: snils,
+        tabNumber: snils,
+        is_manual: true
+    };
+    
+    manualPsychoEmployees.push(manualEmp);
+    localStorage.setItem(`psychoData_${snils}`, JSON.stringify({
+        checked: true,
+        birthDate, gender, regAddress: address, activityId, department
+    }));
+    
+    ['psychoManualLastName','psychoManualFirstName','psychoManualMiddleName','psychoManualPosition',
+     'psychoManualDepartment','psychoManualBirthDate','psychoManualAddress'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    ['psychoManualGender','psychoManualActivity'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    
+    document.getElementById('psychoManualForm').classList.add('hidden');
+    renderMedEmployeeList('psycho');
+    alert('✅ Сотрудник добавлен!');
+}
 // ============================================================
 // DOM READY
 // ============================================================
