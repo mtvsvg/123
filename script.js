@@ -1301,17 +1301,17 @@ function generatePPECardsHTML() {
     
     function buildPPETableFull(fullPage) {
         let rows = '';
-        const rowHeight = fullPage ? '60px' : '38px';
-        const cellPad = fullPage ? '8px 12px' : '6px 8px';
+        const rowHeight = fullPage ? '30px' : '24px';
+        const cellPad = fullPage ? '4px 10px' : '3px 6px';
         const fontSize = fullPage ? '12px' : '11px';
         
         selectedPPECardItems.forEach((ppe) => {
             rows += `
                 <tr>
-                    <td style="border:1px solid #000;padding:${cellPad};font-size:${fontSize};height:${rowHeight};">${ppe.name}</td>
-                    <td style="border:1px solid #000;padding:${cellPad};font-size:${fontSize};text-align:center;height:${rowHeight};">${ppe.punkt || ''}</td>
-                    <td style="border:1px solid #000;padding:${cellPad};font-size:${fontSize};text-align:center;height:${rowHeight};">${ppe.unit || ''}</td>
-                    <td style="border:1px solid #000;padding:${cellPad};font-size:${fontSize};text-align:center;height:${rowHeight};">${ppe.quantity || ''}</td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};font-size:${fontSize};height:${rowHeight};">${ppe.name}</td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};font-size:${fontSize};text-align:center;height:${rowHeight};">${ppe.punkt || ''}</td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};font-size:${fontSize};text-align:center;height:${rowHeight};">${ppe.unit || ''}</td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};font-size:${fontSize};text-align:center;height:${rowHeight};">${ppe.quantity || ''}</td>
                 </tr>
             `;
         });
@@ -1320,10 +1320,10 @@ function generatePPECardsHTML() {
         for (let i = 0; i < emptyRows; i++) {
             rows += `
                 <tr>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};"></td>
                 </tr>
             `;
         }
@@ -1351,7 +1351,7 @@ function generatePPECardsHTML() {
                 
                 <table style="width:100%;border-collapse:collapse;font-size:${fontSize};margin-bottom:${fullPage ? '10px' : '4px'};flex-shrink:0;">
                     <tr>
-                        <td style="width:55%;vertical-align:top;padding:${fullPage ? '6px 10px' : '2px 5px'};border:1px solid #000;">
+                        <td style="width:55%;vertical-align:top;padding:${fullPage ? '6px 10px' : '2px 5px'};border:0.5px solid #444;">
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Фамилия</strong> ${emp.last_name}</div>
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Имя</strong> ${emp.first_name}</div>
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Отчество</strong> ${emp.middle_name || ''}</div>
@@ -1361,7 +1361,7 @@ function generatePPECardsHTML() {
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Дата поступления на работу</strong> __________</div>
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Дата изменения профессии (должности) или перевода</strong> __________</div>
                         </td>
-                        <td style="width:45%;vertical-align:top;padding:${fullPage ? '6px 10px' : '2px 5px'};border:1px solid #000;">
+                        <td style="width:45%;vertical-align:top;padding:${fullPage ? '6px 10px' : '2px 5px'};border:0.5px solid #444;">
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Пол</strong> ${gender}</div>
                             <div style="margin:${fullPage ? '3px 0' : '1px 0'};"><strong>Рост</strong> ${height}</div>
                             <div style="margin-top:${fullPage ? '6px' : '3px'};"><strong>Размер:</strong></div>
@@ -1374,13 +1374,13 @@ function generatePPECardsHTML() {
                     </tr>
                 </table>
                 
-                <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:1px solid #000;flex:1;">
+                <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:0.5px solid #444;flex:1;">
                     <thead>
                         <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:32%;font-size:${headerFontSize};font-weight:bold;">Наименование СИЗ</th>
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:22%;font-size:${headerFontSize};font-weight:bold;">Пункт Норм</th>
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:26%;font-size:${headerFontSize};font-weight:bold;">Единица измерения, периодичность выдачи</th>
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:20%;font-size:${headerFontSize};font-weight:bold;">Количество на период</th>
+                            <th style="border:0.5px solid #444;padding:${pad};text-align:center;width:32%;font-size:${headerFontSize};font-weight:bold;">Наименование СИЗ</th>
+                            <th style="border:0.5px solid #444;padding:${pad};text-align:center;width:22%;font-size:${headerFontSize};font-weight:bold;">Пункт Норм</th>
+                            <th style="border:0.5px solid #444;padding:${pad};text-align:center;width:26%;font-size:${headerFontSize};font-weight:bold;">Единица измерения, периодичность выдачи</th>
+                            <th style="border:0.5px solid #444;padding:${pad};text-align:center;width:20%;font-size:${headerFontSize};font-weight:bold;">Количество на период</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1396,7 +1396,7 @@ function generatePPECardsHTML() {
                     </div>
                     <div style="text-align:center;">
                         <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">&nbsp;</div>
-                        <div style="border-bottom:1px solid #000;height:${signHeight};"></div>
+                        <div style="border-bottom:0.5px solid #444;height:${signHeight};"></div>
                         <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(подпись)</div>
                     </div>
                     <div style="text-align:center;">
@@ -1441,13 +1441,13 @@ function generatePPECardsHTML() {
                     <div style="margin:${fullPage ? '4px 0' : '1px 0'};"><strong>Предусмотрена приказом (номер и дата приказа об утверждении Норм) выдача:</strong> ${dutyOrder || '________________'}</div>
                 </div>
                 
-                <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:1px solid #000;flex:1;">
+                <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:0.5px solid #444;flex:1;">
                     <thead>
                         <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:32%;font-size:${headerFontSize};font-weight:bold;">Наименование СИЗ</th>
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:22%;font-size:${headerFontSize};font-weight:bold;">Пункт Норм</th>
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:26%;font-size:${headerFontSize};font-weight:bold;">Единица измерения, периодичность выдачи</th>
-                            <th style="border:1px solid #000;padding:${pad};text-align:center;width:20%;font-size:${headerFontSize};font-weight:bold;">Количество на период</th>
+                            <th style="border:0.5px solid #444;padding:${pad};text-align:center;width:32%;font-size:${headerFontSize};font-weight:bold;">Наименование СИЗ</th>
+                            <th style="border:0.5px solid #444;padding:${pad};text-align:center;width:22%;font-size:${headerFontSize};font-weight:bold;">Пункт Норм</th>
+                            <th style="border:0.5px solid #444;padding:${pad};text-align:center;width:26%;font-size:${headerFontSize};font-weight:bold;">Единица измерения, периодичность выдачи</th>
+                            <th style="border:0.5px solid #444;padding:${pad};text-align:center;width:20%;font-size:${headerFontSize};font-weight:bold;">Количество на период</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1463,7 +1463,7 @@ function generatePPECardsHTML() {
                     </div>
                     <div style="text-align:center;">
                         <div style="font-size:${fontSize};margin-bottom:2px;min-height:${fullPage ? '22px' : '16px'};">&nbsp;</div>
-                        <div style="border-bottom:1px solid #000;height:${signHeight};"></div>
+                        <div style="border-bottom:0.5px solid #444;height:${signHeight};"></div>
                         <div style="font-size:${signFontSize};color:#333;margin-top:2px;">(подпись)</div>
                     </div>
                     <div style="text-align:center;">
@@ -1479,22 +1479,22 @@ function generatePPECardsHTML() {
     function createReverseCard(emp, fullPage) {
         const headerFontSize = fullPage ? '11px' : '8px';
         const subHeaderFontSize = fullPage ? '10px' : '7px';
-        const cellPad = fullPage ? '6px 8px' : '4px 6px';
-        const rowHeight = fullPage ? '50px' : '30px';
+        const cellPad = fullPage ? '3px 8px' : '2px 5px';
+        const rowHeight = fullPage ? '26px' : '20px';
         
         let rows = '';
         selectedPPECardItems.forEach((ppe) => {
             rows += `
                 <tr>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};font-weight:bold;">${ppe.name}</td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};font-weight:bold;">${ppe.name}</td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
                 </tr>
             `;
         });
@@ -1503,15 +1503,15 @@ function generatePPECardsHTML() {
         for (let i = 0; i < emptyRows; i++) {
             rows += `
                 <tr>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:1px solid #000;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
                 </tr>
             `;
         }
@@ -2912,7 +2912,7 @@ function renderRegistry() {
     let bad = 0, ok = 0;
     const rows = emps.map(e => {
         const k = rgKey(e), r = rgRec(k);
-        const st = [rgState(r.training), rgState(r.med), rgState(r.psycho), rgPpeState(r)];
+        const st = [rgTrainingState(e, r), rgState(r.med), rgState(r.psycho), rgPpeState(r)];
         if (st.some(s => s.cls === 'bad')) bad++; else if (st.every(s => s.cls === 'ok')) ok++;
         const cell = (s, tab) => `<td><span class="rg-badge ${s.cls}" onclick="openRegistryModal(decodeURIComponent('${encodeURIComponent(k)}'))">${s.txt}</span></td>`;
         return `<tr><td><a href="#" class="rg-name" onclick="event.preventDefault();openRegistryModal(decodeURIComponent('${encodeURIComponent(k)}'))">${rgEsc(rgFio(e))}</a></td><td>${rgEsc(e.position)}</td>${cell(st[0])}${cell(st[1])}${cell(st[2])}${cell(st[3])}</tr>`;
@@ -2936,13 +2936,14 @@ function openRegistryModal(key) {
     m.innerHTML = `<div class="modal-content" style="max-width:640px;max-height:90vh;overflow-y:auto;">
         <div class="modal-header"><h3>📋 ${rgEsc(rgFio(e))}</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button></div>
         <div style="padding:16px 20px;">
-            <h4 class="rg-h">Обучение по охране труда</h4>
+            ${registryDetailsHtml(e)}
+            <h4 class="rg-h">Обучение по охране труда (ручная отметка, приоритетнее реестра)</h4>
             <div class="rg-grid">${sel('rgTrSt', r.training.status)}<input id="rgTrProg" class="rg-input" placeholder="Программа (А, Б, В, ПП...)" value="${rgEsc(r.training.program)}"><label>Дата<input type="date" id="rgTrDate" class="rg-input" value="${rgEsc(r.training.date)}"></label><label>Следующее до<input type="date" id="rgTrNext" class="rg-input" value="${rgEsc(r.training.next)}"></label></div>
             <h4 class="rg-h">Медосмотр</h4>
             <div class="rg-grid">${sel('rgMedSt', r.med.status)}<span></span><label>Дата<input type="date" id="rgMedDate" class="rg-input" value="${rgEsc(r.med.date)}"></label><label>Следующий до<input type="date" id="rgMedNext" class="rg-input" value="${rgEsc(r.med.next)}"></label></div>
             <h4 class="rg-h">Психосвидетельствование</h4>
             <div class="rg-grid">${sel('rgPsSt', r.psycho.status)}<span></span><label>Дата<input type="date" id="rgPsDate" class="rg-input" value="${rgEsc(r.psycho.date)}"></label><label>Следующее до<input type="date" id="rgPsNext" class="rg-input" value="${rgEsc(r.psycho.next)}"></label></div>
-            <h4 class="rg-h">СИЗ (по одному в строке)</h4>
+            <h4 class="rg-h">СИЗ (по одному в строке) <button class="btn-secondary" style="float:right;padding:4px 10px;font-size:12px;" onclick="autoPickPPE(decodeURIComponent('${encodeURIComponent(key)}'))">⚙️ Подобрать по нормам 767н</button></h4>
             <div class="rg-grid"><label>Выдано<textarea id="rgPpeOk" class="rg-input" rows="4">${rgEsc(r.ppeIssued)}</textarea></label><label>Не выдано (нарушение)<textarea id="rgPpeNo" class="rg-input" rows="4">${rgEsc(r.ppeMissing)}</textarea></label></div>
         </div>
         <div class="modal-footer"><button class="btn-primary" id="rgSaveBtn">Сохранить</button><button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">Отмена</button></div>
@@ -2970,7 +2971,8 @@ function generateViolationsProtocol() {
     getAllEmployees().forEach(e => {
         const r = rgRec(rgKey(e));
         const add = (v, m) => rows.push({ fio: rgFio(e), pos: e.position || '', v: v, m: m });
-        if (r.training.status === 'no') add('Не пройдено обучение по охране труда' + (r.training.program ? ' (программа ' + r.training.program + ')' : ''), 'Организовать и провести обучение, оформить протокол проверки знаний');
+        if (r.training.status === '' && localStorage.getItem('trainingApplied') && !getTrainingMatches(e).some(m => /^успешно/i.test(m.result))) add('Не найдена запись об успешной проверке знаний в реестре обученных лиц', 'Организовать обучение по охране труда и внесение сведений в реестр');
+        else if (r.training.status === 'no') add('Не пройдено обучение по охране труда' + (r.training.program ? ' (программа ' + r.training.program + ')' : ''), 'Организовать и провести обучение, оформить протокол проверки знаний');
         else if (r.training.status === 'yes' && rgExpired(r.training.next)) add('Истёк срок обучения по охране труда (' + new Date(r.training.next).toLocaleDateString('ru-RU') + ')', 'Организовать повторное обучение и проверку знаний');
         if (r.med.status === 'no') add('Не пройден обязательный периодический медицинский осмотр', 'Выдать направление, обеспечить прохождение осмотра');
         else if (r.med.status === 'yes' && rgExpired(r.med.next)) add('Просрочен периодический медицинский осмотр', 'Выдать направление, обеспечить прохождение осмотра');
@@ -3007,3 +3009,323 @@ function generateViolationsProtocol() {
         }
     };
 })();
+
+
+// ============================================================
+// ИМПОРТ ВЫПИСОК ИЗ РЕЕСТРА ОБУЧЕННЫХ ЛИЦ (PDF) И СОПОСТАВЛЕНИЕ СО ШТАТКОЙ
+// Хранение: localStorage['trainingRegistry'] = { orgs:[], progs:[], recs:[[reg,fio,snils,pos,orgIdx,progIdx,protocol,result,checkDate,regDate],...] }
+// Совпадение: СНИЛС или ФИО. Должность совпала -> 'full', не совпала -> 'fio'.
+// ============================================================
+async function loadPdfJs() {
+    if (window.pdfjsLib) return window.pdfjsLib;
+    const bases = ['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/', 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/'];
+    let lastErr = null;
+    for (const base of bases) {
+        try {
+            await new Promise((res, rej) => {
+                const sc = document.createElement('script');
+                sc.src = base + 'pdf.min.js';
+                sc.onload = res;
+                sc.onerror = () => rej(new Error('не загрузился ' + sc.src));
+                document.head.appendChild(sc);
+            });
+            let wsrc = base + 'pdf.worker.min.js';
+            try { const txt = await (await fetch(wsrc)).text(); wsrc = URL.createObjectURL(new Blob([txt], { type: 'text/javascript' })); } catch (e) { /* останется прямая ссылка */ }
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = wsrc;
+            return window.pdfjsLib;
+        } catch (e) { lastErr = e; }
+    }
+    throw new Error('Не удалось загрузить библиотеку чтения PDF (проверьте интернет). ' + (lastErr ? lastErr.message : ''));
+}
+function getTrainingRegistry() {
+    try { const r = JSON.parse(localStorage.getItem('trainingRegistry')); if (r && r.recs) return r; } catch (e) {}
+    return { orgs: [], progs: [], recs: [] };
+}
+function saveTrainingRegistry(r) { localStorage.setItem('trainingRegistry', JSON.stringify(r)); }
+function trNorm(s) { return String(s || '').toLowerCase().replace(/ё/g, 'е').replace(/[^а-яa-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim(); }
+function trSamePos(a, b) {
+    a = trNorm(a); b = trNorm(b);
+    if (!a || !b) return false;
+    if (a === b || a.includes(b) || b.includes(a)) return true;
+    const ta = a.split(' ').filter(w => w.length > 3).map(w => w.slice(0, 5)), tb = b.split(' ').filter(w => w.length > 3).map(w => w.slice(0, 5));
+    if (!ta.length || !tb.length) return false;
+    const common = ta.filter(w => tb.includes(w)).length;
+    return common / Math.min(ta.length, tb.length) >= 0.7;
+}
+
+// Разбор страницы: items -> записи. Колонки по X (масштаб относительно ширины 935pt).
+function parseRegistryPage(items, pageWidth) {
+    const k = pageWidth / 935, B = [0, 120 * k, 250 * k, 380 * k, 635 * k];
+    const colOf = x => { let c = 0; for (let i = 0; i < B.length; i++) if (x >= B[i] - 1) c = i; return c; };
+    const raw = items.filter(i => i.str && i.str.trim()).map(i => ({ x: i.transform[4], y: -i.transform[5], s: i.str.trim() }));
+    raw.sort((a, b) => a.y - b.y || a.x - b.x);
+    const lines = [];
+    raw.forEach(it => {
+        const c = colOf(it.x);
+        const last = lines.slice(-12).reverse().find(l => l.c === c && Math.abs(l.y - it.y) < 2.5);
+        if (last) last.s += ' ' + it.s; else lines.push({ c: c, y: it.y, x: it.x, s: it.s });
+    });
+    lines.sort((a, b) => a.y - b.y || a.x - b.x);
+    const starts = lines.filter(l => l.c === 3 && /пройдена в/.test(l.s)).map(l => l.y);
+    const out = [];
+    starts.forEach((s, i) => {
+        const e = i + 1 < starts.length ? starts[i + 1] - 3 : Infinity;
+        const blk = lines.filter(l => l.y >= s - 3 && l.y < e);
+        const col = n => blk.filter(l => l.c === n).map(l => l.s).join(' ');
+        const c1 = col(0), c2 = col(1), c3 = col(2), c45 = col(3) + ' ' + col(4);
+        const dates = c45.match(/\d{2}\.\d{2}\.\d{4}/g) || [];
+        const c4 = col(3).replace(/\d{2}\.\d{2}\.\d{4}/g, '').replace(/\s+/g, ' ');
+        const snM = c2.match(/\d{3}-\d{3}-\d{3} \d{2}/);
+        const fio = c2.replace(/\d{3}-\d{3}-\d{3} \d{2}/, '').replace(/\s+/g, ' ').trim();
+        const innM = c3.match(/\b\d{10,12}\b/);
+        let org = '', pos = c3;
+        if (innM) { const i2 = c3.indexOf(innM[0]); org = c3.slice(0, i2).trim(); pos = c3.slice(i2 + innM[0].length).trim(); }
+        const tm = c4.match(/Место обучения:\s*(\d{10,12})?\s*(.*?)\s*Номер протокола:\s*(\S+)/);
+        let prog = '';
+        const pm = c4.match(/Программа обучения:\s*(.*?)\s*Результат:\s*(.*)$/);
+        const pm2 = c4.match(/Номер протокола:\s*\S+\s*(.*?)\s*Результат:\s*(.*)$/);
+        const resM = (pm || pm2);
+        if (resM) prog = resM[1].trim();
+        const resRaw = resM ? resM[2].trim() : '';
+        const resK = resRaw.match(/^(Не\s?успешно|Успешно|Неуспешно)/i);
+        const result = resK ? resK[1] : resRaw.slice(0, 30);
+        const reg = (c1.match(/\d{9}/) || [''])[0];
+        if (!fio) return;
+        const inSys = (col(3).match(/пройдена в системе:\s*(Да|Нет)/i) || ['', ''])[1];
+        out.push({ workOrg: org, workInn: innM ? innM[0] : '', inSystem: inSys, reg: reg, fio: fio, snils: snM ? snM[0] : '', pos: pos, trainOrg: tm ? ((tm[1] ? tm[1] + ' ' : '') + tm[2]).trim() : '', protocol: tm ? tm[3] : '', prog: prog, result: result, checkDate: dates[0] || '', regDate: dates[1] || '' });
+    });
+    return out;
+}
+async function importRegistryFiles(fileList) {
+    const status = document.getElementById('registryImportStatus');
+    if (status) status.textContent = 'Загружаю библиотеку чтения PDF…';
+    const pdfjs = await loadPdfJs();
+    const reg = getTrainingRegistry();
+    const known = new Set(reg.recs.map(r => r[0] + '|' + r[5] + '|' + r[6]));
+    let added = 0, skipped = 0;
+    for (const file of fileList) {
+        const buf = await file.arrayBuffer();
+        const pdf = await pdfjs.getDocument({ data: buf }).promise;
+        for (let p = 1; p <= pdf.numPages; p++) {
+            if (status) status.textContent = `${file.name}: страница ${p} из ${pdf.numPages}…`;
+            const page = await pdf.getPage(p);
+            const vp = page.getViewport({ scale: 1 });
+            const tc = await page.getTextContent();
+            parseRegistryPage(tc.items, vp.width).forEach(r => {
+                let oi = reg.orgs.indexOf(r.trainOrg); if (oi < 0) { reg.orgs.push(r.trainOrg); oi = reg.orgs.length - 1; }
+                let pi = reg.progs.indexOf(r.prog); if (pi < 0) { reg.progs.push(r.prog); pi = reg.progs.length - 1; }
+                const key = r.reg + '|' + pi + '|' + r.protocol;
+                if (known.has(key)) { skipped++; return; }
+                known.add(key);
+                let wi = reg.orgs.indexOf(r.workOrg); if (wi < 0) { reg.orgs.push(r.workOrg); wi = reg.orgs.length - 1; }
+                reg.recs.push([r.reg, r.fio, r.snils, r.pos, oi, pi, r.protocol, r.result, r.checkDate, r.regDate, wi, r.workInn, r.inSystem]);
+                added++;
+            });
+            if (p % 20 === 0) await new Promise(r => setTimeout(r, 0));
+        }
+    }
+    try { saveTrainingRegistry(reg); } catch (e) { alert('❌ Не хватает места в localStorage. Очистите старые реестры или импортируйте меньше файлов.'); return; }
+        localStorage.setItem('trainingApplied', String(Date.now()));
+    return { added: added, skipped: skipped };
+}
+let pendingRegistryFiles = [];
+function addRegistryFiles(input) {
+    [...input.files].forEach(f => { if (!pendingRegistryFiles.some(x => x.name === f.name && x.size === f.size)) pendingRegistryFiles.push(f); });
+    input.value = '';
+    renderPendingRegistryFiles();
+}
+function removePendingRegistryFile(i) { pendingRegistryFiles.splice(i, 1); renderPendingRegistryFiles(); }
+function renderPendingRegistryFiles() {
+    const el = document.getElementById('registryPendingList'); if (!el) return;
+    el.innerHTML = pendingRegistryFiles.map((f, i) => `<div class="rg-file">📄 ${rgEsc(f.name)} <small>(${Math.round(f.size / 1024)} КБ)</small> <a href="#" onclick="event.preventDefault();removePendingRegistryFile(${i})">✖</a></div>`).join('');
+    const btn = document.getElementById('registryApplyBtn'); if (btn) btn.disabled = false;
+}
+async function applyRegistryFiles() {
+    const status = document.getElementById('registryImportStatus');
+    const btn = document.getElementById('registryApplyBtn');
+    const reg0 = getTrainingRegistry();
+    if (!pendingRegistryFiles.length && !reg0.recs.length) { if (status) { status.style.color = '#f87171'; status.textContent = '❌ Сначала выберите PDF-файлы реестровых записей.'; } return; }
+    if (btn) btn.disabled = true;
+    if (status) status.style.color = '#c4b5fd';
+    try {
+        let res = { added: 0, skipped: 0 };
+        if (pendingRegistryFiles.length) res = await importRegistryFiles(pendingRegistryFiles);
+        else localStorage.setItem('trainingApplied', String(Date.now()));
+        pendingRegistryFiles = []; renderPendingRegistryFiles();
+        _trIndex = null;
+        renderRegistryImportInfo();
+        renderStaffWithDepartments();
+        if (status) status.textContent = `✅ Применено. Новых записей: ${res.added}, дублей: ${res.skipped}. Результаты — на странице «Учёт».`;
+        showPage('registry');
+    } catch (e) {
+        console.error(e);
+        if (status) { status.style.color = '#f87171'; status.textContent = '❌ Ошибка: ' + e.message; }
+        else alert('❌ Ошибка: ' + e.message);
+    }
+    if (btn) btn.disabled = false;
+}
+function clearTrainingRegistry() {
+    if (!confirm('Удалить все импортированные реестры? Штатка не изменится.')) return;
+    localStorage.removeItem('trainingRegistry');
+    renderRegistryImportInfo(); renderStaffWithDepartments();
+}
+// Совпадения для одного сотрудника
+let _trIndex = null, _trIndexLen = -1;
+function trIndex() {
+    const reg = getTrainingRegistry();
+    if (_trIndex && _trIndexLen === reg.recs.length) return _trIndex;
+    const bySn = {}, byFio = {}, byLF = {};
+    reg.recs.forEach((r, i) => {
+        const sn = String(r[2]).replace(/\D/g, ''); if (sn) (bySn[sn] = bySn[sn] || []).push(i);
+        const f = trNorm(r[1]); (byFio[f] = byFio[f] || []).push(i);
+        const w = f.split(' '); if (w.length >= 2) { const k = w[0] + ' ' + w[1]; (byLF[k] = byLF[k] || []).push(i); }
+    });
+    _trIndex = { reg: reg, bySn: bySn, byFio: byFio, byLF: byLF }; _trIndexLen = reg.recs.length;
+    return _trIndex;
+}
+function getTrainingMatches(e) {
+    const ix = trIndex();
+    const fio = trNorm([e.last_name, e.first_name, e.middle_name].filter(Boolean).join(' '));
+    const fw = fio.split(' ');
+    const sn = String(e.snils || '').replace(/\D/g, '');
+    const kind = new Map();
+    if (sn.length === 11) (ix.bySn[sn] || []).forEach(i => kind.set(i, 'snils'));
+    (ix.byFio[fio] || []).forEach(i => { if (!kind.has(i)) kind.set(i, 'fio'); });
+    if (fw.length >= 2) (ix.byLF[fw[0] + ' ' + fw[1]] || []).forEach(i => {
+        if (kind.has(i)) return;
+        const rw = trNorm(ix.reg.recs[i][1]).split(' ');
+        if (fw[2] && rw[2] && fw[2][0] !== rw[2][0]) return;
+        kind.set(i, 'lf');
+    });
+    return [...kind.entries()].map(([i, k]) => {
+        const r = ix.reg.recs[i];
+        const posOk = trSamePos(r[3], e.position);
+        return { reg: r[0], fio: r[1], snils: r[2], pos: r[3], trainOrg: ix.reg.orgs[r[4]], prog: ix.reg.progs[r[5]], protocol: r[6], result: r[7], checkDate: r[8], regDate: r[9],
+            workOrg: r[10] != null ? ix.reg.orgs[r[10]] : '', workInn: r[11] || '', inSystem: r[12] || '',
+            how: k, posOk: posOk, type: (k === 'snils' || (k === 'fio' && posOk)) ? 'full' : 'fio' };
+    }).sort((a, b) => (b.checkDate.split('.').reverse().join('') > a.checkDate.split('.').reverse().join('')) ? 1 : -1);
+}
+function trProgShort(p) {
+    p = trNorm(p);
+    if (p.startsWith('общие вопросы')) return 'А';
+    if (p.includes('воздействии вредных')) return 'Б';
+    if (p.includes('перв') && p.includes('помощ')) return 'ПП';
+    if (p.includes('средств индивидуальной защиты')) return 'СИЗ';
+    if (p.includes('высот')) return 'Высота';
+    if (p.includes('земляных')) return 'Земляные';
+    if (p.includes('строительных')) return 'Строит.';
+    if (p.includes('полотна')) return 'Дороги';
+    return p.slice(0, 14);
+}
+function openTrainingResults(key) {
+    const e = getAllEmployees().find(x => rgKey(x) === key); if (!e) return;
+    const ms = getTrainingMatches(e);
+    const old = document.getElementById('trainingResultsModal'); if (old) old.remove();
+    const rows = ms.map(m => `<tr><td>${rgEsc(m.prog)}</td><td>${rgEsc(m.trainOrg)}</td><td>${rgEsc(m.protocol)}</td><td>${rgEsc(m.result)}</td><td>${rgEsc(m.checkDate)}</td><td>${rgEsc(m.regDate)}</td><td>${m.type === 'full' ? '✅ ФИО и должность' : '⚠️ только ФИО<br><small>в реестре: ' + rgEsc(m.pos) + '</small>'}</td></tr>`).join('');
+    const m = document.createElement('div'); m.className = 'modal-overlay'; m.id = 'trainingResultsModal';
+    m.innerHTML = `<div class="modal-content" style="max-width:1000px;max-height:90vh;overflow:auto;"><div class="modal-header"><h3>🎓 ${rgEsc(rgFio(e))} — результаты по реестру</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button></div><div style="padding:16px 20px;overflow-x:auto;">${ms.length ? `<table class="rg-table"><thead><tr><th>Программа</th><th>Организация-обучатель</th><th>Протокол</th><th>Результат</th><th>Проверка знаний</th><th>Внесено в реестр</th><th>Совпадение</th></tr></thead><tbody>${rows}</tbody></table>` : '<p style="color:#8888aa">В импортированных реестрах записей нет.</p>'}</div></div>`;
+    document.body.appendChild(m);
+}
+// Бейдж в строках штатки
+(function () {
+    const orig = renderStaffWithDepartments;
+    renderStaffWithDepartments = function () {
+        orig.apply(this, arguments);
+        try { decorateStaffWithTraining(); } catch (e) { console.error(e); }
+    };
+})();
+function decorateStaffWithTraining() {
+    if (!getTrainingRegistry().recs.length) return;
+    const emps = getAllEmployees();
+    document.querySelectorAll('#staffContainer .employee-row').forEach(row => {
+        const cb = row.querySelector('.staff-check'); if (!cb) return;
+        const id = cb.dataset.snils;
+        const e = emps.find(x => (x.snils || x.tabNumber) === id); if (!e) return;
+        const ms = getTrainingMatches(e);
+        const b = document.createElement('span');
+        const full = ms.filter(m => m.type === 'full').length;
+        b.className = 'rg-badge ' + (ms.length ? (full ? 'ok' : 'warn') : 'bad');
+        b.style.marginLeft = '8px';
+        b.title = 'Результаты обучения по реестру';
+        b.textContent = ms.length ? '🎓 ' + [...new Set(ms.map(m => trProgShort(m.prog)))].join(', ') + (full ? '' : ' ⚠') : '🎓 нет в реестре';
+        b.onclick = ev => { ev.stopPropagation(); openTrainingResults(rgKey(e)); };
+        const name = row.querySelector('.emp-name'); if (name) name.after(b);
+    });
+}
+function renderRegistryImportInfo() {
+    const el = document.getElementById('registryImportInfo'); if (!el) return;
+    const reg = getTrainingRegistry();
+    let full = 0, fioOnly = 0, none = 0;
+    if (reg.recs.length) getAllEmployees().forEach(e => { const ms = getTrainingMatches(e); if (!ms.length) none++; else if (ms.some(m => m.type === 'full')) full++; else fioOnly++; });
+    el.innerHTML = reg.recs.length ? `В базе: <b>${reg.recs.length}</b> записей. Сотрудников: полное совпадение — <b style="color:#34d399">${full}</b>, только ФИО — <b style="color:#fbbf24">${fioOnly}</b>, нет в реестре — <b style="color:#f87171">${none}</b>.` : 'Реестры ещё не импортированы.';
+}
+document.addEventListener('DOMContentLoaded', function () {
+    renderRegistryImportInfo();
+});
+
+
+// ============================================================
+// НОРМЫ СИЗ (приказ 767н): база хранится локально, импорт строками «Профессия | СИЗ | Норма»
+// ВАЖНО: база наполняется из официального текста приказа, в коде её нет.
+// ============================================================
+function getPpeNorms() { try { return JSON.parse(localStorage.getItem('ppeNorms') || '[]'); } catch (e) { return []; } }
+function openPpeNormsModal() {
+    const old = document.getElementById('ppeNormsModal'); if (old) old.remove();
+    const m = document.createElement('div'); m.className = 'modal-overlay'; m.id = 'ppeNormsModal';
+    const cur = getPpeNorms();
+    m.innerHTML = `<div class="modal-content" style="max-width:760px;max-height:90vh;overflow:auto;"><div class="modal-header"><h3>📚 Нормы СИЗ (767н)</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button></div>
+    <div style="padding:16px 20px;"><p style="color:#8888aa;font-size:13px;">Одна строка — одна позиция: <b>Профессия | Наименование СИЗ | Норма выдачи</b>. В базе сейчас: <b>${cur.length}</b> позиций. Вставьте текст или загрузите .txt/.csv — новые строки добавятся к существующим.</p>
+    <textarea id="ppeNormsText" class="rg-input" rows="10" placeholder="Электросварщик ручной сварки | Костюм для защиты от искр и брызг металла | 1 шт. на 12 мес."></textarea>
+    <input type="file" id="ppeNormsFile" accept=".txt,.csv" style="margin-top:8px;color:#8888aa;"></div>
+    <div class="modal-footer"><button class="btn-primary" id="ppeNormsSave">Добавить в базу</button><button class="btn-secondary" id="ppeNormsClear">Очистить базу</button></div></div>`;
+    document.body.appendChild(m);
+    document.getElementById('ppeNormsFile').addEventListener('change', function () {
+        const f = this.files[0]; if (!f) return;
+        const r = new FileReader(); r.onload = () => { document.getElementById('ppeNormsText').value = r.result; }; r.readAsText(f, 'utf-8');
+    });
+    document.getElementById('ppeNormsSave').addEventListener('click', function () {
+        const add = document.getElementById('ppeNormsText').value.split(/\r?\n/).map(l => l.split(/\||;|\t/).map(x => x.trim())).filter(a => a.length >= 2 && a[0] && a[1]).map(a => ({ prof: a[0], name: a[1], norm: a[2] || '' }));
+        if (!add.length) { alert('Не найдено строк формата «Профессия | СИЗ | Норма»'); return; }
+        try { localStorage.setItem('ppeNorms', JSON.stringify(getPpeNorms().concat(add))); } catch (e) { alert('❌ Не хватает места'); return; }
+        m.remove(); alert('✅ Добавлено позиций: ' + add.length);
+    });
+    document.getElementById('ppeNormsClear').addEventListener('click', function () { if (confirm('Очистить всю базу норм?')) { localStorage.removeItem('ppeNorms'); m.remove(); } });
+}
+function autoPickPPE(key) {
+    const e = getAllEmployees().find(x => rgKey(x) === key); if (!e) return;
+    const norms = getPpeNorms();
+    if (!norms.length) { alert('База норм 767н пуста. Откройте «📚 Нормы СИЗ (767н)» на странице «Учёт» и загрузите нормы.'); return; }
+    const found = norms.filter(n => trSamePos(n.prof, e.position));
+    if (!found.length) { alert('Для должности «' + (e.position || '') + '» в базе норм ничего не найдено. Добавьте её вручную.'); return; }
+    const issued = document.getElementById('rgPpeOk').value.toLowerCase();
+    const box = document.getElementById('rgPpeNo');
+    const have = box.value.split('\n').map(s => s.trim().toLowerCase());
+    const lines = found.filter(n => !issued.includes(n.name.toLowerCase()) && !have.some(h => h.startsWith(n.name.toLowerCase()))).map(n => n.name + (n.norm ? ' — ' + n.norm : ''));
+    box.value = (box.value.trim() ? box.value.trim() + '\n' : '') + lines.join('\n');
+}
+
+
+function registryDetailsHtml(e) {
+    const applied = !!localStorage.getItem('trainingApplied');
+    const ms = getTrainingMatches(e);
+    if (!getTrainingRegistry().recs.length) return '<div class="rg-reg-box"><b>Реестр обученных лиц:</b> файлы ещё не загружены (раздел «Обучение» → «Применить»).</div>';
+    if (!ms.length) return '<div class="rg-reg-box bad"><b>✖ В загруженных реестрах не найден</b> (искал по СНИЛС, ФИО, фамилии и имени).</div>';
+    const how = { snils: 'по СНИЛС', fio: 'по ФИО', lf: 'по фамилии и имени (проверьте!)' };
+    const f = (l, v) => v ? `<div><span>${l}</span>${rgEsc(v)}</div>` : '';
+    return '<h4 class="rg-h">Сведения из реестра обученных лиц</h4>' + ms.map(m => `<div class="rg-reg-box ${/^успешно/i.test(m.result) ? 'ok' : 'bad'}">
+        <div class="rg-reg-title">${/^успешно/i.test(m.result) ? '✔' : '✖'} ${rgEsc(m.prog)}</div>
+        ${f('Номер в реестре', m.reg)}${f('ФИО в реестре', m.fio)}${f('СНИЛС', m.snils)}${f('Место работы', m.workOrg)}${f('ИНН места работы', m.workInn)}${f('Должность в реестре', m.pos)}
+        ${f('Место обучения', m.trainOrg)}${f('Номер протокола', m.protocol)}${f('Результат', m.result)}${f('Проверка знаний пройдена в системе', m.inSystem)}
+        ${f('Дата проверки знаний', m.checkDate)}${f('Дата внесения в реестр', m.regDate)}
+        <div style="margin-top:6px;font-size:12px;color:#8888aa;">Совпадение ${how[m.how]}${m.posOk ? '' : ' · ⚠ должность в реестре отличается от штатки'}</div></div>`).join('');
+}
+function rgTrainingState(e, r) {
+    if (r.training.status !== '') return rgState(r.training);
+    if (!localStorage.getItem('trainingApplied')) return { cls: 'na', txt: 'Нет данных' };
+    const ms = getTrainingMatches(e);
+    const okm = ms.filter(m => /^успешно/i.test(m.result));
+    if (!okm.length) return { cls: 'bad', txt: '✖ ' + (ms.length ? 'Не пройдено' : 'Нет в реестре') };
+    const sure = okm.some(m => m.type === 'full');
+    const progs = [...new Set(okm.map(m => trProgShort(m.prog)))].join(', ');
+    return sure ? { cls: 'ok', txt: '✔ ' + progs } : { cls: 'warn', txt: '✔ ' + progs + ' ⚠' };
+}
