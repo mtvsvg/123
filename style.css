@@ -1640,3 +1640,9 @@ input::placeholder, textarea::placeholder {
 @media(max-width:600px){.rg-grid{grid-template-columns:1fr}}
 
 .rg-badge.warn{background:rgba(251,191,36,.15);color:#fbbf24}
+
+.rg-file{font-size:13px;color:#c4b5fd;padding:2px 0}.rg-file a{color:#f87171;text-decoration:none;margin-left:6px}
+.rg-reg-box{padding:10px 14px;margin:8px 0;border-radius:10px;background:rgba(255,255,255,.04);border-left:3px solid #8888aa;font-size:13px}
+.rg-reg-box.ok{border-left-color:#34d399}.rg-reg-box.bad{border-left-color:#f87171}
+.rg-reg-box div span{display:inline-block;min-width:200px;color:#8888aa}
+.rg-reg-title{font-weight:600;margin-bottom:6px;color:#fff}
