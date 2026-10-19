@@ -188,8 +188,10 @@
             <div class="block">
                 <div class="block-header"><h2>🎓 Выписки из реестра обученных лиц</h2></div>
                 <p style="color:#8888aa;font-size:13px;margin:0 0 10px;">Загрузите одну или несколько PDF-выписок (по 500+ записей). Сотрудники из штатки сопоставляются по СНИЛС/ФИО; результат виден в списке штатки (значок 🎓) и на странице «Учёт».</p>
-                <input type="file" id="registryPdfInput" accept="application/pdf" multiple style="color:#8888aa;">
-                <button class="btn-secondary" style="margin-left:8px;" onclick="clearTrainingRegistry()">🗑 Очистить реестры</button>
+                <label class="btn-add" style="display:inline-block;cursor:pointer;">📎 Выбрать PDF-файлы<input type="file" id="registryPdfInput" accept="application/pdf,.pdf" multiple style="display:none;" onchange="addRegistryFiles(this)"></label>
+                <button class="btn-primary" id="registryApplyBtn" onclick="applyRegistryFiles()">✅ Применить</button>
+                <button class="btn-secondary" onclick="clearTrainingRegistry()">🗑 Очистить реестры</button>
+                <div id="registryPendingList" style="margin-top:8px;"></div>
                 <div id="registryImportStatus" style="margin-top:8px;font-size:13px;color:#c4b5fd;"></div>
                 <div id="registryImportInfo" style="margin-top:6px;font-size:13px;color:#8888aa;"></div>
             </div>
@@ -655,7 +657,7 @@
 <!-- ============================================================ -->
 <div id="registryPage" class="page hidden">
     <div class="container" style="padding:30px 20px;">
-        <h2 style="font-size:28px;margin-bottom:6px;">✅ Учёт сотрудников и нарушения</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><h2 style="font-size:28px;margin-bottom:6px;">✅ Учёт сотрудников и нарушения</h2><button class="btn-secondary" onclick="showPage('main')">← На главную</button></div>
         <p style="color:#8888aa;margin-bottom:16px;">Нажмите на ФИО или на статус, чтобы отметить обучение, медосмотр, психосвидетельствование и выдачу СИЗ.</p>
         <div id="registrySummary" class="rg-summary"></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;">
