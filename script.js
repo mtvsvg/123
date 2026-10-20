@@ -1301,9 +1301,9 @@ function generatePPECardsHTML() {
     
     function buildPPETableFull(fullPage) {
         let rows = '';
-        const rowHeight = fullPage ? '30px' : '24px';
-        const cellPad = fullPage ? '4px 10px' : '3px 6px';
-        const fontSize = fullPage ? '12px' : '11px';
+        const rowHeight = fullPage ? '20px' : '16px';
+        const cellPad = fullPage ? '2px 8px' : '1px 5px';
+        const fontSize = fullPage ? '11px' : '9px';
         
         selectedPPECardItems.forEach((ppe) => {
             rows += `
@@ -1316,7 +1316,7 @@ function generatePPECardsHTML() {
             `;
         });
         
-        const emptyRows = 4 - selectedPPECardItems.length;
+        const emptyRows = Math.max(0, (fullPage ? 9 : 6) - selectedPPECardItems.length);
         for (let i = 0; i < emptyRows; i++) {
             rows += `
                 <tr>
@@ -1479,39 +1479,39 @@ function generatePPECardsHTML() {
     function createReverseCard(emp, fullPage) {
         const headerFontSize = fullPage ? '11px' : '8px';
         const subHeaderFontSize = fullPage ? '10px' : '7px';
-        const cellPad = fullPage ? '3px 8px' : '2px 5px';
-        const rowHeight = fullPage ? '26px' : '20px';
+        const cellPad = fullPage ? '1px 6px' : '1px 4px';
+        const rowHeight = fullPage ? '18px' : '14px';
         
         let rows = '';
         selectedPPECardItems.forEach((ppe) => {
             rows += `
                 <tr>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};font-weight:bold;">${ppe.name}</td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};font-weight:bold;">${ppe.name}</td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
                 </tr>
             `;
         });
         
-        const emptyRows = 6 - selectedPPECardItems.length;
+        const emptyRows = Math.max(0, (fullPage ? 15 : 10) - selectedPPECardItems.length);
         for (let i = 0; i < emptyRows; i++) {
             rows += `
                 <tr>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
-                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '11px' : '9px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
+                    <td style="border:0.5px solid #444;padding:${cellPad};height:${rowHeight};font-size:${fullPage ? '10px' : '8px'};"></td>
                 </tr>
             `;
         }
@@ -3329,3 +3329,345 @@ function rgTrainingState(e, r) {
     const progs = [...new Set(okm.map(m => trProgShort(m.prog)))].join(', ');
     return sure ? { cls: 'ok', txt: '✔ ' + progs } : { cls: 'warn', txt: '✔ ' + progs + ' ⚠' };
 }
+
+
+// ============================================================
+// ИНСТРУКТАЖИ (журнал) И ТЕСТЫ (банк вопросов, прохождение, протокол)
+// localStorage: briefingJournal, testBank, testResults
+// ============================================================
+const SF_TYPES = { INTRO: 'Вводный', PRIMARY: 'Первичный на рабочем месте', REPEAT: 'Повторный', UNPLANNED: 'Внеплановый', TARGET: 'Целевой' };
+function sfGet(k) { try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch (e) { return []; } }
+function sfSet(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+function sfUid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function sfFmt(d) { return d ? d.split('-').reverse().join('.') : ''; }
+function sfYear(e) { const m = String(e.birthDate || '').match(/(19|20)\d{2}/); return m ? m[0] : ''; }
+function sfShuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function sfOrg() { return (typeof getOrgName === 'function' ? getOrgName() : '') || '________________________'; }
+
+function sfTab(name) {
+    ['brief', 'bank', 'test', 'results'].forEach(t => {
+        const p = document.getElementById('sfTab_' + t), b = document.getElementById('sfBtn_' + t);
+        if (p) p.classList.toggle('hidden', t !== name);
+        if (b) b.classList.toggle('active', t === name);
+    });
+    if (name === 'brief') { sfRenderEmps(); sfRenderJournal(); }
+    if (name === 'bank') sfRenderBank();
+    if (name === 'test') sfFillTestSelects();
+    if (name === 'results') sfRenderResults();
+}
+function sfInit() {
+    const t = document.getElementById('sfBrType');
+    if (t && !t.options.length) t.innerHTML = Object.keys(SF_TYPES).map(k => `<option value="${k}">${SF_TYPES[k]}</option>`).join('');
+    const f = document.getElementById('sfJrType');
+    if (f && !f.options.length) f.innerHTML = '<option value="">Все виды</option>' + Object.keys(SF_TYPES).map(k => `<option value="${k}">${SF_TYPES[k]}</option>`).join('');
+    const d = document.getElementById('sfBrDate'); if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
+    sfTab('brief');
+}
+
+// ---------- Инструктажи ----------
+function sfRenderEmps() {
+    const q = ((document.getElementById('sfBrSearch') || {}).value || '').toLowerCase();
+    const box = document.getElementById('sfBrEmps'); if (!box) return;
+    const list = getAllEmployees().filter(e => (rgFio(e) + ' ' + (e.position || '')).toLowerCase().includes(q));
+    box.innerHTML = list.length ? list.map(e => `<label class="sf-emp"><input type="checkbox" class="sf-br-chk" value="${rgEsc(rgKey(e))}"> ${rgEsc(rgFio(e))} <small>${rgEsc(e.position || '')}</small></label>`).join('') : '<p style="color:#8888aa">Сотрудников нет. Загрузите штатку в разделе «Обучение».</p>';
+}
+function sfToggleAll(on) { document.querySelectorAll('.sf-br-chk').forEach(c => { c.checked = on; }); }
+function sfSaveBriefing() {
+    const keys = [...document.querySelectorAll('.sf-br-chk:checked')].map(c => c.value);
+    const v = id => (document.getElementById(id) || {}).value || '';
+    const type = v('sfBrType'), date = v('sfBrDate'), instr = v('sfBrInstr').trim(), pos = v('sfBrInstrPos').trim(), reason = v('sfBrReason').trim();
+    if (!keys.length) { alert('Отметьте хотя бы одного сотрудника'); return; }
+    if (!date) { alert('Укажите дату'); return; }
+    if (!instr) { alert('Укажите ФИО инструктирующего'); return; }
+    if ((type === 'UNPLANNED' || type === 'TARGET') && !reason) { alert('Для внепланового и целевого инструктажа укажите причину'); return; }
+    const j = sfGet('briefingJournal'), all = getAllEmployees();
+    keys.forEach(k => {
+        const e = all.find(x => rgKey(x) === k); if (!e) return;
+        j.push({ id: sfUid(), no: j.length + 1, type: type, date: date, key: k, fio: rgFio(e), year: sfYear(e), position: e.position || '', dept: e.department || e.dept || '', instr: instr, instrPos: pos, reason: reason });
+    });
+    sfSet('briefingJournal', j);
+    sfToggleAll(false);
+    sfRenderJournal();
+    alert('✅ Записано в журнал: ' + keys.length);
+}
+function sfRenderJournal() {
+    const box = document.getElementById('sfJournal'); if (!box) return;
+    const f = (document.getElementById('sfJrType') || {}).value || '';
+    const rows = sfGet('briefingJournal').filter(r => !f || r.type === f);
+    box.innerHTML = rows.length ? `<table class="rg-table"><thead><tr><th>№</th><th>Дата</th><th>ФИО</th><th>Должность</th><th>Вид</th><th>Инструктор</th><th></th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.no}</td><td>${sfFmt(r.date)}</td><td>${rgEsc(r.fio)}</td><td>${rgEsc(r.position)}</td><td>${SF_TYPES[r.type]}${r.remote ? ' 🔗' : ''}</td><td>${rgEsc(r.instr)}</td><td><a href="#" class="rg-name" onclick="event.preventDefault();sfDelBriefing('${r.id}')">✖</a></td></tr>`).join('')}</tbody></table>` : '<p style="color:#8888aa">Записей нет.</p>';
+}
+function sfDelBriefing(id) { if (!confirm('Удалить запись из журнала?')) return; sfSet('briefingJournal', sfGet('briefingJournal').filter(r => r.id !== id)); sfRenderJournal(); }
+function sfPrintJournal() {
+    const f = (document.getElementById('sfJrType') || {}).value || '';
+    const rows = sfGet('briefingJournal').filter(r => !f || r.type === f);
+    if (!rows.length) { alert('Нет записей для печати'); return; }
+    const td = 'border:1px solid #000;padding:5px;vertical-align:top;';
+    const body = rows.map((r, i) => `<tr><td style="${td}">${i + 1}</td><td style="${td}">${sfFmt(r.date)}</td><td style="${td}">${rgEsc(r.fio)}</td><td style="${td}">${r.year}</td><td style="${td}">${rgEsc(r.position)}${r.dept ? '<br><small>' + rgEsc(r.dept) + '</small>' : ''}</td><td style="${td}">${SF_TYPES[r.type]}${r.reason ? '<br><small>' + rgEsc(r.reason) + '</small>' : ''}</td><td style="${td}">${rgEsc(r.instr)}<br><small>${rgEsc(r.instrPos)}</small></td><td style="${td}"></td><td style="${td}font-size:10px;">${r.remote ? 'Дистанционно<br>' + sfFmt(r.done) : ''}</td></tr>`).join('');
+    const html = `<style>@page{size:A4 landscape;margin:10mm}</style><div style="font-family:'Times New Roman',serif;color:#000;font-size:12px;"><h2 style="text-align:center;margin:0 0 4px;">ЖУРНАЛ РЕГИСТРАЦИИ ИНСТРУКТАЖЕЙ ПО ОХРАНЕ ТРУДА</h2><p style="text-align:center;margin:0 0 10px;">${rgEsc(sfOrg())}${f ? ' · ' + SF_TYPES[f] + ' инструктаж' : ''}</p><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#f3f0ff;"><th style="${td}">№</th><th style="${td}">Дата</th><th style="${td}">ФИО инструктируемого</th><th style="${td}">Год рожд.</th><th style="${td}">Профессия, должность</th><th style="${td}">Вид инструктажа, причина</th><th style="${td}">ФИО, должность инструктирующего</th><th style="${td}">Подпись инструктирующего</th><th style="${td}">Подпись инструктируемого</th></tr></thead><tbody>${body}</tbody></table></div>`;
+    openPrintWindow(html, 'Журнал инструктажей');
+}
+
+// ---------- Банк вопросов ----------
+// Формат: «# Тема», «? Вопрос», «+ верный ответ», «- неверный ответ»
+function sfImportBank() {
+    const txt = (document.getElementById('sfBankText') || {}).value || '';
+    const bank = sfGet('testBank'); let topic = '', cur = null, added = 0;
+    const push = () => { if (cur && cur.options.length >= 2 && cur.options.some(o => o.ok)) { bank.push(cur); added++; } cur = null; };
+    txt.split(/\r?\n/).map(l => l.trim()).filter(Boolean).forEach(l => {
+        if (l[0] === '#') { push(); topic = l.slice(1).trim(); }
+        else if (l[0] === '?') { push(); cur = { id: sfUid() + bank.length, topic: topic, text: l.slice(1).trim(), options: [] }; }
+        else if ((l[0] === '+' || l[0] === '-') && cur) cur.options.push({ t: l.slice(1).trim(), ok: l[0] === '+' });
+    });
+    push();
+    if (!added) { alert('Вопросы не распознаны. Проверьте формат: # Тема, ? Вопрос, + верный, - неверный (минимум 2 ответа, хотя бы один верный).'); return; }
+    sfSet('testBank', bank); document.getElementById('sfBankText').value = ''; sfRenderBank();
+    alert('✅ Добавлено вопросов: ' + added);
+}
+function sfRenderBank() {
+    const box = document.getElementById('sfBankList'); if (!box) return;
+    const bank = sfGet('testBank'), by = {};
+    bank.forEach(q => { by[q.topic || 'Без темы'] = (by[q.topic || 'Без темы'] || 0) + 1; });
+    box.innerHTML = Object.keys(by).length ? Object.keys(by).map(t => `<div class="rg-reg-box"><b>${rgEsc(t)}</b> — вопросов: ${by[t]} <a href="#" class="rg-name" style="float:right" onclick="event.preventDefault();sfDelTopic(decodeURIComponent('${encodeURIComponent(t)}'))">🗑 удалить тему</a></div>`).join('') : '<p style="color:#8888aa">Банк пуст.</p>';
+}
+function sfDelTopic(t) { if (!confirm('Удалить все вопросы темы «' + t + '»?')) return; sfSet('testBank', sfGet('testBank').filter(q => (q.topic || 'Без темы') !== t)); sfRenderBank(); }
+
+// ---------- Прохождение теста ----------
+let sfRun = null;
+function sfFillTestSelects() {
+    const topics = [...new Set(sfGet('testBank').map(q => q.topic || 'Без темы'))];
+    const ts = document.getElementById('sfTestTopic'); if (ts) ts.innerHTML = topics.map(t => `<option>${rgEsc(t)}</option>`).join('') || '<option value="">— банк пуст —</option>';
+    const es = document.getElementById('sfTestEmp'); if (es) es.innerHTML = getAllEmployees().map(e => `<option value="${rgEsc(rgKey(e))}">${rgEsc(rgFio(e))}</option>`).join('');
+}
+function sfStartTest() {
+    const topic = document.getElementById('sfTestTopic').value, key = document.getElementById('sfTestEmp').value;
+    const n = Math.max(1, parseInt(document.getElementById('sfTestN').value) || 10), pass = parseInt(document.getElementById('sfTestPass').value) || 80;
+    const pool = sfGet('testBank').filter(q => (q.topic || 'Без темы') === topic);
+    if (!pool.length || !key) { alert('Выберите тему из банка и сотрудника'); return; }
+    const qs = sfShuffle(pool).slice(0, n).map(q => ({ q: q, opts: sfShuffle(q.options) }));
+    sfRun = { key: key, topic: topic, pass: pass, qs: qs };
+    document.getElementById('sfTestArea').innerHTML = qs.map((x, i) => {
+        const multi = x.q.options.filter(o => o.ok).length > 1;
+        return `<div class="rg-reg-box"><b>${i + 1}. ${rgEsc(x.q.text)}</b>${multi ? ' <small>(несколько верных)</small>' : ''}${x.opts.map((o, j) => `<label class="sf-opt"><input type="${multi ? 'checkbox' : 'radio'}" name="sfq${i}" value="${j}"> ${rgEsc(o.t)}</label>`).join('')}</div>`;
+    }).join('') + '<button class="btn-primary" onclick="sfFinishTest()">Завершить тест</button>';
+}
+function sfFinishTest() {
+    if (!sfRun) return;
+    const e = getAllEmployees().find(x => rgKey(x) === sfRun.key); if (!e) return;
+    let right = 0; const wrong = [];
+    sfRun.qs.forEach((x, i) => {
+        const chosen = new Set([...document.querySelectorAll(`input[name="sfq${i}"]:checked`)].map(c => +c.value));
+        const ok = x.opts.every((o, j) => o.ok === chosen.has(j));
+        if (ok) right++; else wrong.push({ q: x.q.text, correct: x.opts.filter(o => o.ok).map(o => o.t) });
+    });
+    const total = sfRun.qs.length, score = Math.round(right / total * 100), passed = score >= sfRun.pass;
+    const res = sfGet('testResults');
+    const attempt = res.filter(r => r.key === sfRun.key && r.topic === sfRun.topic).length + 1;
+    const date = new Date().toISOString().split('T')[0];
+    res.push({ id: sfUid(), key: sfRun.key, fio: rgFio(e), position: e.position || '', topic: sfRun.topic, date: date, total: total, right: right, score: score, pass: sfRun.pass, passed: passed, attempt: attempt, wrong: wrong });
+    sfSet('testResults', res);
+    if (passed && document.getElementById('sfTestToAccount').checked) {
+        const all = getEmpRecords(), cur = all[sfRun.key] || {};
+        const next = new Date(); next.setFullYear(next.getFullYear() + 1);
+        cur.training = { status: 'yes', program: sfRun.topic, date: date, next: next.toISOString().split('T')[0], source: 'lms' };
+        all[sfRun.key] = cur; saveEmpRecords(all);
+    }
+    document.getElementById('sfTestArea').innerHTML = `<div class="rg-reg-box ${passed ? 'ok' : 'bad'}"><div class="rg-reg-title">${passed ? '✔ Тест сдан' : '✖ Тест не сдан'}: ${score}% (верно ${right} из ${total}, проходной ${sfRun.pass}%)</div>${wrong.map(w => `<div style="margin-top:8px;font-size:13px;"><b>${rgEsc(w.q)}</b><br><span style="color:#34d399">Верно: ${rgEsc(w.correct.join('; '))}</span></div>`).join('')}<div style="margin-top:10px;"><button class="btn-secondary" onclick="sfPrintResult('${res[res.length - 1].id}')">🖨 Протокол</button></div></div>`;
+    sfRun = null;
+}
+function sfRenderResults() {
+    const box = document.getElementById('sfResults'); if (!box) return;
+    const r = sfGet('testResults').slice().reverse();
+    box.innerHTML = r.length ? `<table class="rg-table"><thead><tr><th>Дата</th><th>ФИО</th><th>Тема</th><th>Попытка</th><th>Результат</th><th></th></tr></thead><tbody>${r.map(x => `<tr><td>${sfFmt(x.date)}</td><td>${rgEsc(x.fio)}</td><td>${rgEsc(x.topic)}</td><td>${x.attempt}</td><td><span class="rg-badge ${x.passed ? 'ok' : 'bad'}">${x.passed ? '✔' : '✖'} ${x.score}%</span></td><td><a href="#" class="rg-name" onclick="event.preventDefault();sfPrintResult('${x.id}')">🖨</a></td></tr>`).join('')}</tbody></table>` : '<p style="color:#8888aa">Тестов ещё не проходили.</p>';
+}
+function sfPrintResult(id) {
+    const r = sfGet('testResults').find(x => x.id === id); if (!r) return;
+    const html = `<div style="font-family:'Times New Roman',serif;color:#000;padding:15mm;font-size:14px;"><h2 style="text-align:center;margin:0 0 6px;">ПРОТОКОЛ ТЕСТИРОВАНИЯ</h2><p style="text-align:center;margin:0 0 18px;">${rgEsc(sfOrg())} · ${sfFmt(r.date)}</p>
+    <p><b>Работник:</b> ${rgEsc(r.fio)}<br><b>Должность:</b> ${rgEsc(r.position)}<br><b>Тема:</b> ${rgEsc(r.topic)}<br><b>Попытка:</b> ${r.attempt}</p>
+    <p>Вопросов: ${r.total}; верных ответов: ${r.right}; результат: <b>${r.score}%</b>; проходной балл: ${r.pass}%.<br><b>Итог: ${r.passed ? 'ТЕСТ СДАН' : 'ТЕСТ НЕ СДАН'}</b></p>
+    <p style="font-size:12px;color:#444;">Результат тестирования подтверждает усвоение материала и не заменяет проверку знаний требований охраны труда комиссией работодателя.</p>
+    <p style="margin-top:40px;">Работник: ______________ / ${rgEsc(r.fio)}<br><br>Ответственный: ______________ / ______________</p></div>`;
+    openPrintWindow(html, 'Протокол тестирования');
+}
+
+// Подключение страницы к навигации
+(function () {
+    const prev = showPage;
+    showPage = function (page) {
+        const sp = document.getElementById('safetyPage');
+        if (sp) sp.classList.add('hidden');
+        if (page === 'safety') {
+            prev('__none');
+            if (sp) sp.classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.textContent.indexOf('Инструктажи') !== -1));
+            sfInit();
+        } else prev(page);
+    };
+})();
+// «Усвоено (LMS)» в Учёте
+(function () {
+    const prev = rgTrainingState;
+    rgTrainingState = function (e, r) {
+        if (r.training && r.training.status === 'yes' && r.training.source === 'lms' && !rgExpired(r.training.next)) return { cls: 'warn', txt: '✔ Усвоено (тест)' };
+        return prev(e, r);
+    };
+})();
+
+
+// ============================================================
+// ДИСТАНЦИОННЫЙ ИНСТРУКТАЖ ПО ССЫЛКЕ (без сервера)
+// Содержимое инструктажа/теста зашито в саму ссылку (#learn=...). Сотрудник проходит и получает КОД результата,
+// который присылает вам; вы вставляете код в «Принять результаты».
+// ============================================================
+function b64uEnc(bytes) { let s = ''; bytes.forEach(b => { s += String.fromCharCode(b); }); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function b64uDec(str) { str = str.replace(/-/g, '+').replace(/_/g, '/'); while (str.length % 4) str += '='; return Uint8Array.from(atob(str), c => c.charCodeAt(0)); }
+async function rmEncode(obj) {
+    const raw = new TextEncoder().encode(JSON.stringify(obj));
+    if (window.CompressionStream) {
+        const cs = new CompressionStream('deflate-raw'), w = cs.writable.getWriter(); w.write(raw); w.close();
+        return 'z' + b64uEnc(new Uint8Array(await new Response(cs.readable).arrayBuffer()));
+    }
+    return 'r' + b64uEnc(raw);
+}
+async function rmDecode(s) {
+    let bytes = b64uDec(s.slice(1));
+    if (s[0] === 'z') { const ds = new DecompressionStream('deflate-raw'), w = ds.writable.getWriter(); w.write(bytes); w.close(); bytes = new Uint8Array(await new Response(ds.readable).arrayBuffer()); }
+    return JSON.parse(new TextDecoder().decode(bytes));
+}
+// ---------- Сторона специалиста ----------
+async function sfMakeLinks() {
+    const v = id => (document.getElementById(id) || {}).value || '';
+    const keys = [...document.querySelectorAll('.sf-br-chk:checked')].map(c => c.value);
+    const type = v('sfBrType'), text = v('sfRmText').trim(), instr = v('sfBrInstr').trim();
+    let base = v('sfRmBase').trim();
+    if (!keys.length) { alert('Отметьте сотрудников выше в списке'); return; }
+    if (!text) { alert('Впишите текст инструктажа'); return; }
+    if (!instr) { alert('Укажите ФИО инструктирующего'); return; }
+    if (!base) { alert('Укажите адрес сайта, на котором лежит копия сервиса (см. подсказку ниже)'); return; }
+    if (/^file:/i.test(base)) { alert('Адрес file:// не откроется на телефоне сотрудника. Нужен адрес сайта (подсказка ниже).'); return; }
+    localStorage.setItem('sfBaseUrl', base);
+    base = base.split('#')[0];
+    let qs;
+    if (document.getElementById('sfRmWithTest').checked) {
+        const topic = v('sfRmTopic'), n = Math.max(1, parseInt(v('sfRmN')) || 10);
+        const pool = sfGet('testBank').filter(q => (q.topic || 'Без темы') === topic);
+        if (!pool.length) { alert('В банке нет вопросов по выбранной теме'); return; }
+        qs = sfShuffle(pool).slice(0, n).map(q => ({ t: q.text, o: q.options.map(o => [o.t, o.ok ? 1 : 0]) }));
+    }
+    const all = getAllEmployees(), box = document.getElementById('sfRmLinks'); box.innerHTML = ''; let txt = '';
+    for (const k of keys) {
+        const e = all.find(x => rgKey(x) === k); if (!e) continue;
+        const d = { v: 1, k: k, f: rgFio(e), p: e.position || '', ty: type, ti: v('sfRmTitle').trim() || (SF_TYPES[type] + ' инструктаж'), b: text, m: Math.max(0, parseInt(v('sfRmMin')) || 0), d: v('sfBrDate'), i: instr, ip: v('sfBrInstrPos').trim(), r: v('sfBrReason').trim() };
+        if (qs) { d.q = qs; d.ps = Math.max(1, parseInt(v('sfRmPass')) || 80); }
+        const link = base + '#learn=' + await rmEncode(d);
+        txt += rgFio(e) + ' — ' + link + '\n\n';
+        const row = document.createElement('div'); row.className = 'rg-reg-box';
+        row.innerHTML = `<b>${rgEsc(rgFio(e))}</b> <small style="color:#8888aa">(${link.length} симв.)</small><input class="rg-input" readonly style="margin-top:6px;" value="${rgEsc(link)}" onclick="this.select()">`;
+        box.appendChild(row);
+    }
+    const cp = document.createElement('button'); cp.className = 'btn-primary'; cp.textContent = '📋 Скопировать все (ФИО — ссылка)';
+    cp.onclick = () => navigator.clipboard.writeText(txt).then(() => alert('Скопировано'), () => alert('Не удалось скопировать, выделите ссылки вручную'));
+    box.appendChild(cp);
+}
+async function sfAcceptCodes() {
+    const raw = (document.getElementById('sfRmCodes') || {}).value || '';
+    const tokens = raw.split(/\s+/).filter(t => t.indexOf('OT1.') === 0);
+    if (!tokens.length) { alert('Коды не найдены (они начинаются с OT1.)'); return; }
+    const j = sfGet('briefingJournal'), res = sfGet('testResults'), all = getAllEmployees();
+    const toAcc = document.getElementById('sfRmAcc').checked;
+    let ok = 0, dup = 0, bad = 0;
+    for (const t of tokens) {
+        let r; try { r = await rmDecode(t.slice(4)); } catch (e) { bad++; continue; }
+        if (!r || !r.k || !r.done) { bad++; continue; }
+        if (j.some(x => x.key === r.k && x.done === r.done.slice(0, 10) && x.fin === r.done)) { dup++; continue; }
+        const e = all.find(x => rgKey(x) === r.k);
+        const date = r.d || r.done.slice(0, 10);
+        j.push({ id: sfUid(), no: j.length + 1, type: r.ty, date: date, key: r.k, fio: r.f, year: e ? sfYear(e) : '', position: r.p || '', dept: e ? (e.department || e.dept || '') : '', instr: r.i, instrPos: r.ip, reason: r.r || '', remote: true, done: r.done.slice(0, 10), fin: r.done, readSec: r.rs });
+        if (r.t) {
+            res.push({ id: sfUid(), key: r.k, fio: r.f, position: r.p || '', topic: r.ti, date: r.done.slice(0, 10), total: r.tt, right: r.rt, score: r.s, pass: r.ps, passed: !!r.ok, attempt: r.a || 1, wrong: [] });
+            if (r.ok && toAcc) {
+                const recs = getEmpRecords(), cur = recs[r.k] || {}, nx = new Date(r.done); nx.setFullYear(nx.getFullYear() + 1);
+                cur.training = { status: 'yes', program: r.ti, date: r.done.slice(0, 10), next: nx.toISOString().slice(0, 10), source: 'lms' };
+                recs[r.k] = cur; saveEmpRecords(recs);
+            }
+        }
+        ok++;
+    }
+    sfSet('briefingJournal', j); sfSet('testResults', res);
+    sfRenderJournal();
+    alert(`Принято: ${ok}. Дублей: ${dup}. Ошибочных кодов: ${bad}.`);
+    if (ok) document.getElementById('sfRmCodes').value = '';
+}
+function sfFillRemoteTopics() {
+    const topics = [...new Set(sfGet('testBank').map(q => q.topic || 'Без темы'))];
+    const ts = document.getElementById('sfRmTopic'); if (ts) ts.innerHTML = topics.map(t => `<option>${rgEsc(t)}</option>`).join('') || '<option value="">— банк пуст —</option>';
+    const b = document.getElementById('sfRmBase'); if (b && !b.value) b.value = localStorage.getItem('sfBaseUrl') || (/^https?:/i.test(location.href) ? location.href.split('#')[0] : '');
+}
+(function () {
+    const prev = sfTab;
+    sfTab = function (name) { prev(name); if (name === 'brief') sfFillRemoteTopics(); };
+})();
+
+// ---------- Сторона сотрудника (светлая мобильная страница) ----------
+function lnKey(hash) { let h = 0; for (let i = 0; i < hash.length; i++) h = (h * 31 + hash.charCodeAt(i)) | 0; return 'learnDone_' + h; }
+async function lnBoot() {
+    const m = location.hash.match(/^#learn=(.+)$/); if (!m) return;
+    let d; try { d = await rmDecode(m[1]); } catch (e) { document.body.innerHTML = '<p style="padding:30px;font-family:sans-serif">Ссылка повреждена. Попросите прислать её заново.</p>'; return; }
+    Array.from(document.body.children).forEach(el => { el.style.display = 'none'; });
+    document.body.style.background = '#f4f5fa'; document.body.style.color = '#1a1a2e';
+    const root = document.createElement('div'); root.id = 'learnRoot'; root.className = 'ln-root'; document.body.appendChild(root);
+    const saved = localStorage.getItem(lnKey(m[1]));
+    if (saved) return lnShowResult(root, saved);
+    lnRun(root, d, m[1]);
+}
+function lnRun(root, d, hash) {
+    const st = { read: 0, blur: 0, scrolled: false, attempts: 0 };
+    root.innerHTML = `<div class="ln-brand">ОхранаТруда.Про</div><div class="ln-card"><h1>${rgEsc(d.ti)}</h1><p class="ln-who">Сотрудник: <b>${rgEsc(d.f)}</b>${d.p ? ' · ' + rgEsc(d.p) : ''}</p><div class="ln-text">${rgEsc(d.b)}</div><div id="lnEnd"></div><div class="ln-status" id="lnStatus"></div><div id="lnAct"><button class="ln-btn" id="lnNext" disabled>Далее</button></div></div>`;
+    const nextBtn = document.getElementById('lnNext'), status = document.getElementById('lnStatus');
+    const upd = () => {
+        const left = Math.max(0, (d.m || 0) - st.read), ok = left === 0 && st.scrolled;
+        status.textContent = ok ? '✔ Можно продолжать' : (left > 0 ? `Прочитайте материал: осталось ${left} с. ` : '') + (st.scrolled ? '' : 'Прокрутите текст до конца.');
+        nextBtn.disabled = !ok;
+    };
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') st.blur++; });
+    new IntersectionObserver(es => { if (es[0].isIntersecting) { st.scrolled = true; upd(); } }).observe(document.getElementById('lnEnd'));
+    setInterval(() => { if (document.visibilityState === 'visible') st.read++; upd(); }, 1000);
+    upd();
+    const finish = async extra => {
+        const r = Object.assign({ v: 1, k: d.k, f: d.f, p: d.p, ty: d.ty, ti: d.ti, d: d.d, i: d.i, ip: d.ip, r: d.r, done: new Date().toISOString(), rs: st.read, bl: st.blur }, extra);
+        const code = 'OT1.' + await rmEncode(r);
+        localStorage.setItem(lnKey(hash), code);
+        lnShowResult(root, code);
+    };
+    const ack = () => {
+        root.querySelector('.ln-card').insertAdjacentHTML('beforeend', '');
+        document.getElementById('lnAct').innerHTML = '<label class="ln-check"><input type="checkbox" id="lnAck"> Инструктаж получил(а), содержание понятно, вопросов не имею</label><button class="ln-btn" id="lnDone" disabled>Подтвердить</button>';
+        const cb = document.getElementById('lnAck'), b = document.getElementById('lnDone');
+        cb.onchange = () => { b.disabled = !cb.checked; };
+        b.onclick = () => finish({ t: 0 });
+    };
+    const test = () => {
+        st.attempts++;
+        const qs = sfShuffle(d.q).map(q => ({ t: q.t, o: sfShuffle(q.o) }));
+        root.querySelector('.ln-card').innerHTML = `<h1>Тест</h1>${qs.map((q, i) => { const multi = q.o.filter(o => o[1]).length > 1; return `<div class="ln-q"><b>${i + 1}. ${rgEsc(q.t)}</b>${multi ? ' <small>(несколько верных)</small>' : ''}${q.o.map((o, j) => `<label class="ln-opt"><input type="${multi ? 'checkbox' : 'radio'}" name="lq${i}" value="${j}"> ${rgEsc(o[0])}</label>`).join('')}</div>`; }).join('')}<button class="ln-btn" id="lnFin">Завершить тест</button>`;
+        window.scrollTo(0, 0);
+        document.getElementById('lnFin').onclick = () => {
+            let right = 0;
+            qs.forEach((q, i) => { const ch = new Set([...document.querySelectorAll(`input[name="lq${i}"]:checked`)].map(c => +c.value)); if (q.o.every((o, j) => !!o[1] === ch.has(j))) right++; });
+            const score = Math.round(right / qs.length * 100), ok = score >= d.ps;
+            if (!ok && st.attempts < 3) {
+                root.querySelector('.ln-card').innerHTML = `<h1>Не сдано: ${score}%</h1><p>Нужно не менее ${d.ps}%. Использовано попыток: ${st.attempts} из 3.</p><button class="ln-btn" id="lnAgain">Пройти ещё раз</button>`;
+                document.getElementById('lnAgain').onclick = test; return;
+            }
+            finish({ t: 1, s: score, rt: right, tt: qs.length, ok: ok ? 1 : 0, ps: d.ps, a: st.attempts });
+        };
+    };
+    nextBtn.onclick = () => { if (d.q && d.q.length) test(); else ack(); };
+}
+async function lnShowResult(root, code) {
+    let r = {}; try { r = await rmDecode(code.slice(4)); } catch (e) {}
+    const line = r.t ? (r.ok ? `✔ Тест сдан: ${r.s}%` : `✖ Тест не сдан: ${r.s}%`) : '✔ Ознакомление подтверждено';
+    root.innerHTML = `<div class="ln-brand">ОхранаТруда.Про</div><div class="ln-card"><h1>${line}</h1><p>Отправьте этот код специалисту по охране труда (сообщением), чтобы результат был засчитан:</p><textarea class="ln-code" id="lnCode" readonly>${rgEsc(code)}</textarea><button class="ln-btn" id="lnCopy">📋 Скопировать код</button>${navigator.share ? '<button class="ln-btn ln-btn2" id="lnShare">📤 Отправить…</button>' : ''}</div>`;
+    document.getElementById('lnCopy').onclick = () => { const t = document.getElementById('lnCode'); t.select(); (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject()).then(() => alert('Скопировано'), () => { document.execCommand('copy'); }); };
+    const sh = document.getElementById('lnShare'); if (sh) sh.onclick = () => navigator.share({ text: code }).catch(() => {});
+}
+lnBoot();
