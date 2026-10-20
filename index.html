@@ -23,6 +23,7 @@
                 <a href="#" class="nav-link" onclick="showPage('training')">Обучение</a>
                 <a href="#" class="nav-link" onclick="showPage('ppeCards')">🦺 Карточки СИЗ</a>
                 <a href="#" class="nav-link" onclick="showPage('med')">🩺 Медосмотры</a>
+                <a href="#" class="nav-link" onclick="showPage('safety')">📝 Инструктажи и тесты</a>
                 <a href="#" class="nav-link" onclick="showPage('registry')">✅ Учёт и нарушения</a>
                 <a href="#" class="nav-link" onclick="showPage('risks')">Оценка рисков</a>
                 <a href="#" class="nav-link" onclick="showPage('analytics')">Аналитика</a>
@@ -655,6 +656,88 @@
 <!-- ============================================================ -->
 <!-- СТРАНИЦЫ В РАЗРАБОТКЕ -->
 <!-- ============================================================ -->
+<div id="safetyPage" class="page hidden">
+    <div class="container" style="padding:30px 20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+            <h2 style="font-size:28px;margin:0;">📝 Инструктажи и тесты</h2>
+            <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
+        </div>
+        <div class="sf-tabs">
+            <button id="sfBtn_brief" class="sf-tab active" onclick="sfTab('brief')">Инструктажи</button>
+            <button id="sfBtn_bank" class="sf-tab" onclick="sfTab('bank')">Банк вопросов</button>
+            <button id="sfBtn_test" class="sf-tab" onclick="sfTab('test')">Пройти тест</button>
+            <button id="sfBtn_results" class="sf-tab" onclick="sfTab('results')">Результаты тестов</button>
+        </div>
+
+        <div id="sfTab_brief">
+            <div class="rg-grid">
+                <label>Вид инструктажа<select id="sfBrType" class="rg-input"></select></label>
+                <label>Дата<input type="date" id="sfBrDate" class="rg-input"></label>
+                <label>ФИО инструктирующего<input id="sfBrInstr" class="rg-input" placeholder="Иванов И.И."></label>
+                <label>Должность инструктирующего<input id="sfBrInstrPos" class="rg-input" placeholder="Специалист по охране труда"></label>
+            </div>
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#8888aa;margin-top:10px;">Причина (обязательна для внепланового и целевого)<input id="sfBrReason" class="rg-input"></label>
+            <h4 class="rg-h">Кого проинструктировали</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+                <input id="sfBrSearch" class="rg-input" style="flex:1;min-width:200px;" placeholder="🔍 Поиск" oninput="sfRenderEmps()">
+                <button class="btn-secondary" onclick="sfToggleAll(true)">Отметить всех</button>
+                <button class="btn-secondary" onclick="sfToggleAll(false)">Снять</button>
+            </div>
+            <div id="sfBrEmps" class="sf-emps"></div>
+            <button class="btn-primary" style="margin-top:12px;" onclick="sfSaveBriefing()">✅ Записать в журнал</button>
+            <div class="rg-reg-box" style="margin-top:22px;">
+                <h4 class="rg-h" style="margin-top:0;">🔗 Дистанционный инструктаж по ссылке</h4>
+                <p style="color:#8888aa;font-size:13px;margin:0 0 10px;">Используются вид, дата, инструктирующий и отмеченные сотрудники выше. Сотрудник открывает ссылку на телефоне, читает, проходит тест и получает код — вы вставляете код ниже.</p>
+                <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#8888aa;">Название (необязательно)<input id="sfRmTitle" class="rg-input"></label>
+                <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#8888aa;margin-top:8px;">Текст инструктажа<textarea id="sfRmText" class="rg-input" rows="8" placeholder="Вставьте текст инструкции или инструктажа..."></textarea></label>
+                <div class="rg-grid" style="margin-top:8px;">
+                    <label>Минимальное время чтения, сек<input type="number" id="sfRmMin" class="rg-input" value="60" min="0"></label>
+                    <label>Адрес сайта для ссылок<input id="sfRmBase" class="rg-input" placeholder="https://ваш-сайт.netlify.app/"></label>
+                </div>
+                <label style="display:block;margin:10px 0;color:#8888aa;"><input type="checkbox" id="sfRmWithTest"> Добавить тест после чтения</label>
+                <div class="rg-grid">
+                    <label>Тема из банка<select id="sfRmTopic" class="rg-input"></select></label>
+                    <label>Вопросов<input type="number" id="sfRmN" class="rg-input" value="10" min="1"></label>
+                    <label>Проходной балл, %<input type="number" id="sfRmPass" class="rg-input" value="80" min="1" max="100"></label>
+                </div>
+                <button class="btn-primary" style="margin-top:12px;" onclick="sfMakeLinks()">🔗 Сформировать ссылки</button>
+                <div id="sfRmLinks" style="margin-top:12px;"></div>
+                <h4 class="rg-h">📥 Принять результаты (коды от сотрудников)</h4>
+                <textarea id="sfRmCodes" class="rg-input" rows="4" placeholder="Вставьте один или несколько кодов (OT1.…), каждый с новой строки"></textarea>
+                <label style="display:block;margin:8px 0;color:#8888aa;"><input type="checkbox" id="sfRmAcc" checked> При сданном тесте внести в «Учёт»</label>
+                <button class="btn-primary" onclick="sfAcceptCodes()">✅ Принять в журнал</button>
+            </div>
+            <h4 class="rg-h" style="margin-top:28px;">Журнал</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                <select id="sfJrType" class="rg-input" style="max-width:280px;" onchange="sfRenderJournal()"></select>
+                <button class="btn-primary" onclick="sfPrintJournal()">🖨 Печать журнала (А4 альбомная)</button>
+            </div>
+            <div id="sfJournal" style="overflow-x:auto;"></div>
+        </div>
+
+        <div id="sfTab_bank" class="hidden">
+            <p style="color:#8888aa;font-size:13px;">Вставьте вопросы в формате: <b># Тема</b>, <b>? Вопрос</b>, <b>+ верный ответ</b>, <b>- неверный ответ</b> (несколько «+» = вопрос с несколькими верными).</p>
+            <textarea id="sfBankText" class="rg-input" rows="10" placeholder="# Работы на высоте&#10;? С какой высоты работы считаются работами на высоте?&#10;+ 1,8 м и более&#10;- 5 м и более&#10;- 10 м и более"></textarea>
+            <button class="btn-primary" style="margin:10px 0;" onclick="sfImportBank()">➕ Добавить в банк</button>
+            <div id="sfBankList"></div>
+        </div>
+
+        <div id="sfTab_test" class="hidden">
+            <div class="rg-grid">
+                <label>Тема<select id="sfTestTopic" class="rg-input"></select></label>
+                <label>Сотрудник<select id="sfTestEmp" class="rg-input"></select></label>
+                <label>Вопросов в тесте<input type="number" id="sfTestN" class="rg-input" value="10" min="1"></label>
+                <label>Проходной балл, %<input type="number" id="sfTestPass" class="rg-input" value="80" min="1" max="100"></label>
+            </div>
+            <label style="display:block;margin:10px 0;color:#8888aa;"><input type="checkbox" id="sfTestToAccount" checked> При сдаче внести в «Учёт» (бейдж «Усвоено (тест)»)</label>
+            <button class="btn-primary" onclick="sfStartTest()">▶ Начать тест</button>
+            <div id="sfTestArea" style="margin-top:16px;"></div>
+        </div>
+
+        <div id="sfTab_results" class="hidden"><div id="sfResults" style="overflow-x:auto;"></div></div>
+    </div>
+</div>
+
 <div id="registryPage" class="page hidden">
     <div class="container" style="padding:30px 20px;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><h2 style="font-size:28px;margin-bottom:6px;">✅ Учёт сотрудников и нарушения</h2><button class="btn-secondary" onclick="showPage('main')">← На главную</button></div>
