@@ -1646,3 +1646,25 @@ input::placeholder, textarea::placeholder {
 .rg-reg-box.ok{border-left-color:#34d399}.rg-reg-box.bad{border-left-color:#f87171}
 .rg-reg-box div span{display:inline-block;min-width:200px;color:#8888aa}
 .rg-reg-title{font-weight:600;margin-bottom:6px;color:#fff}
+
+/* ===== Инструктажи и тесты ===== */
+.sf-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.sf-tab{padding:8px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#c4b5fd;cursor:pointer;font:inherit}
+.sf-tab.active{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.sf-emps{max-height:260px;overflow:auto;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:6px}
+.sf-emp{display:block;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:14px}.sf-emp:hover{background:rgba(124,58,237,.1)}
+.sf-emp small{color:#8888aa;margin-left:6px}
+.sf-opt{display:block;padding:6px 4px;font-size:14px;cursor:pointer}
+
+/* ===== Страница сотрудника (по ссылке) ===== */
+.ln-root{max-width:640px;margin:0 auto;padding:16px;font-family:-apple-system,"Segoe UI",Roboto,sans-serif;color:#1a1a2e}
+.ln-brand{font-weight:700;color:#7c3aed;margin:6px 4px 12px}
+.ln-card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 14px rgba(0,0,0,.08)}
+.ln-card h1{font-size:22px;margin:0 0 8px}.ln-who{color:#555;margin:0 0 14px;font-size:14px}
+.ln-text{white-space:pre-wrap;line-height:1.6;font-size:17px}
+.ln-status{margin:16px 0 8px;font-size:14px;color:#7c3aed;min-height:20px}
+.ln-btn{display:block;width:100%;padding:14px;margin-top:10px;border:0;border-radius:12px;background:#7c3aed;color:#fff;font-size:16px;font-weight:600;cursor:pointer}
+.ln-btn:disabled{background:#c9c9d6;cursor:not-allowed}.ln-btn2{background:#4b5563}
+.ln-check{display:flex;gap:10px;align-items:flex-start;margin:14px 0;font-size:16px;line-height:1.4}
+.ln-q{margin:18px 0}.ln-opt{display:flex;gap:10px;align-items:flex-start;padding:10px;margin-top:6px;border:1px solid #e3e3ee;border-radius:10px;font-size:16px}
+.ln-code{width:100%;min-height:110px;font-family:monospace;font-size:12px;padding:10px;border:1px solid #d5d5e5;border-radius:10px;box-sizing:border-box}
