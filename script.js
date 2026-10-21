@@ -3617,13 +3617,7 @@ function sfFillRemoteTopics() {
 function lnKey(hash) { let h = 0; for (let i = 0; i < hash.length; i++) h = (h * 31 + hash.charCodeAt(i)) | 0; return 'learnDone_' + h; }
 async function lnBoot() {
     const m = location.hash.match(/^#learn=(.+)$/);
-    if (!m) {
-        if (/^https?:/i.test(location.protocol) && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
-            if (/[?&]admin=1/.test(location.search)) localStorage.setItem('adminHost', '1');
-            if (!localStorage.getItem('adminHost')) { Array.from(document.body.children).forEach(el => { el.style.display = 'none'; }); document.body.insertAdjacentHTML('beforeend', '<div style="font-family:sans-serif;padding:40px;text-align:center;color:#444">Это страница прохождения инструктажа.<br>Откройте персональную ссылку, которую вам прислали.</div>'); }
-        }
-        return;
-    }
+    if (!m) return;
     let d; try { d = await rmDecode(m[1]); } catch (e) { document.body.innerHTML = '<p style="padding:30px;font-family:sans-serif">Ссылка повреждена. Попросите прислать её заново.</p>'; return; }
     Array.from(document.body.children).forEach(el => { el.style.display = 'none'; });
     if (d.x && new Date().toISOString().slice(0, 10) > d.x) { document.body.insertAdjacentHTML('beforeend', '<div style="font-family:sans-serif;padding:40px;text-align:center;color:#444;background:#fff">Срок действия ссылки истёк. Запросите новую у специалиста по охране труда.</div>'); return; }
