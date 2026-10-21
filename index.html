@@ -23,6 +23,7 @@
                 <a href="#" class="nav-link" onclick="showPage('training')">Обучение</a>
                 <a href="#" class="nav-link" onclick="showPage('ppeCards')">🦺 Карточки СИЗ</a>
                 <a href="#" class="nav-link" onclick="showPage('med')">🩺 Медосмотры</a>
+                <a href="#" class="nav-link" onclick="showPage('groups')">🏢 Службы сотрудников</a>
                 <a href="#" class="nav-link" onclick="showPage('safety')">📝 Инструктажи и тесты</a>
                 <a href="#" class="nav-link" onclick="showPage('registry')">✅ Учёт и нарушения</a>
                 <a href="#" class="nav-link" onclick="showPage('risks')">Оценка рисков</a>
@@ -656,6 +657,16 @@
 <!-- ============================================================ -->
 <!-- СТРАНИЦЫ В РАЗРАБОТКЕ -->
 <!-- ============================================================ -->
+<div id="groupsPage" class="page hidden">
+    <div class="container" style="padding:30px 20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+            <h2 style="font-size:28px;margin:0;">🏢 Службы (группы сотрудников)</h2>
+            <button class="btn-secondary" onclick="showPage('main')">← На главную</button>
+        </div>
+        <div id="grpRoot"></div>
+    </div>
+</div>
+
 <div id="safetyPage" class="page hidden">
     <div class="container" style="padding:30px 20px;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
@@ -694,6 +705,7 @@
                     <label>Минимальное время чтения, сек<input type="number" id="sfRmMin" class="rg-input" value="60" min="0"></label>
                     <label>Адрес сайта для ссылок<input id="sfRmBase" class="rg-input" placeholder="https://ваш-сайт.netlify.app/"></label>
                 </div>
+                <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#8888aa;margin-top:8px;">Ссылка действует до (необязательно)<input type="date" id="sfRmExp" class="rg-input"></label>
                 <label style="display:block;margin:10px 0;color:#8888aa;"><input type="checkbox" id="sfRmWithTest"> Добавить тест после чтения</label>
                 <div class="rg-grid">
                     <label>Тема из банка<select id="sfRmTopic" class="rg-input"></select></label>
@@ -748,6 +760,7 @@
             <button class="btn-secondary" onclick="openPpeNormsModal()">📚 Нормы СИЗ (767н)</button>
             <button class="btn-primary" onclick="generateViolationsProtocol()">📄 Протокол устранения нарушений</button>
         </div>
+        <div class="rg-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px;"><label>Искать по дате<select id="rgDateMode" class="rg-input" onchange="renderRegistry()"><option value="">— без фильтра по датам —</option><option value="check">Дата проведения проверки знаний</option><option value="reg">Дата внесения в реестр</option></select></label><label>С<input type="date" id="rgFrom" class="rg-input" onchange="renderRegistry()"></label><label>По<input type="date" id="rgTo" class="rg-input" onchange="renderRegistry()"></label></div>
         <div id="registryTable" style="overflow-x:auto;"></div>
     </div>
 </div>
