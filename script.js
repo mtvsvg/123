@@ -2998,7 +2998,6 @@ function generateViolationsProtocol() {
         <p style="margin-top:30px;">Ответственный за охрану труда: ______________ / ______________<br><br>Руководитель организации: ______________ / ______________</p></div>`;
     openPrintWindow(html, 'Протокол устранения нарушений');
 }
-
 // Подключение страницы «Учёт» к навигации (оригинальный showPage не трогаем)
 (function () {
     const orig = showPage;
