@@ -1480,7 +1480,7 @@ function generatePPECardsHTML() {
         const headerFontSize = fullPage ? '11px' : '8px';
         const subHeaderFontSize = fullPage ? '10px' : '7px';
         const cellPad = fullPage ? '1px 6px' : '1px 4px';
-        const rowHeight = fullPage ? '18px' : '14px';
+        const rowHeight = fullPage ? '28px' : '22px';
         
         let rows = '';
         selectedPPECardItems.forEach((ppe) => {
@@ -1499,7 +1499,7 @@ function generatePPECardsHTML() {
             `;
         });
         
-        const emptyRows = Math.max(0, (fullPage ? 15 : 10) - selectedPPECardItems.length);
+        const emptyRows = Math.max(0, (fullPage ? 10 : 7) - selectedPPECardItems.length);
         for (let i = 0; i < emptyRows; i++) {
             rows += `
                 <tr>
@@ -1523,11 +1523,11 @@ function generatePPECardsHTML() {
                 <table style="width:100%;border-collapse:collapse;font-size:${headerFontSize};border:1px solid #000;flex:1;">
                     <thead>
                         <tr style="background:#f0f0f0;">
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;width:11%;font-size:${headerFontSize};font-weight:bold;" rowspan="2">Наименование СИЗ</th>
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;width:12%;font-size:${headerFontSize};font-weight:bold;" rowspan="2">Модель, марка, артикул</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;width:17%;font-size:${headerFontSize};font-weight:bold;" rowspan="2">Наименование СИЗ</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;width:17%;font-size:${headerFontSize};font-weight:bold;" rowspan="2">Модель, марка, артикул</th>
                             <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${headerFontSize};font-weight:bold;" colspan="3">Выдано</th>
                             <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${headerFontSize};font-weight:bold;" colspan="3">Возвращено</th>
-                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;width:10%;font-size:${headerFontSize};font-weight:bold;" rowspan="2">Акт списания</th>
+                            <th style="border:1px solid #000;padding:${cellPad};text-align:center;width:9%;font-size:${headerFontSize};font-weight:bold;" rowspan="2">Акт списания</th>
                         </tr>
                         <tr style="background:#f0f0f0;">
                             <th style="border:1px solid #000;padding:${cellPad};text-align:center;font-size:${subHeaderFontSize};">дата</th>
@@ -2908,21 +2908,27 @@ function renderRegistry() {
     const box = document.getElementById('registryTable');
     if (!box) return;
     const q = ((document.getElementById('registrySearch') || {}).value || '').toLowerCase();
-    const emps = getAllEmployees().filter(e => (rgFio(e) + ' ' + (e.position || '')).toLowerCase().includes(q));
+    let emps = getAllEmployees().filter(e => (rgFio(e) + ' ' + (e.position || '')).toLowerCase().includes(q));
+    const dm = (document.getElementById('rgDateMode') || {}).value || '', dFrom = (document.getElementById('rgFrom') || {}).value || '', dTo = (document.getElementById('rgTo') || {}).value || '';
+    const hits = {};
+    if (dm) emps = emps.filter(e => {
+        const h = getTrainingMatches(e).filter(m => { const iso = rgIso(dm === 'check' ? m.checkDate : m.regDate); return iso && (!dFrom || iso >= dFrom) && (!dTo || iso <= dTo); });
+        if (h.length) hits[rgKey(e)] = h; return h.length > 0;
+    });
     let bad = 0, ok = 0;
     const rows = emps.map(e => {
         const k = rgKey(e), r = rgRec(k);
         const st = [rgTrainingState(e, r), rgState(r.med), rgState(r.psycho), rgPpeState(r)];
         if (st.some(s => s.cls === 'bad')) bad++; else if (st.every(s => s.cls === 'ok')) ok++;
         const cell = (s, tab) => `<td><span class="rg-badge ${s.cls}" onclick="openRegistryModal(decodeURIComponent('${encodeURIComponent(k)}'))">${s.txt}</span></td>`;
-        return `<tr><td><a href="#" class="rg-name" onclick="event.preventDefault();openRegistryModal(decodeURIComponent('${encodeURIComponent(k)}'))">${rgEsc(rgFio(e))}</a></td><td>${rgEsc(e.position)}</td>${cell(st[0])}${cell(st[1])}${cell(st[2])}${cell(st[3])}</tr>`;
+        return `<tr><td><a href="#" class="rg-name" onclick="event.preventDefault();openRegistryModal(decodeURIComponent('${encodeURIComponent(k)}'))">${rgEsc(rgFio(e))}</a></td><td>${rgEsc(e.position)}</td>${cell(st[0])}${cell(st[1])}${cell(st[2])}${cell(st[3])}${dm ? '<td style="font-size:12px;">' + (hits[k] || []).map(m => rgEsc(trProgShort(m.prog)) + ': проверка ' + rgEsc(m.checkDate) + ', в реестре ' + rgEsc(m.regDate) + (m.type === 'full' ? '' : ' ⚠')).join('<br>') + '</td>' : ''}</tr>`;
     }).join('');
     document.getElementById('registrySummary').innerHTML =
         `<div class="rg-card"><b>${emps.length}</b><span>сотрудников</span></div>` +
         `<div class="rg-card ok"><b>${ok}</b><span>без замечаний</span></div>` +
         `<div class="rg-card bad"><b>${bad}</b><span>с нарушениями</span></div>`;
     box.innerHTML = emps.length
-        ? `<table class="rg-table"><thead><tr><th>ФИО</th><th>Должность</th><th>Обучение</th><th>Медосмотр</th><th>Психо</th><th>СИЗ</th></tr></thead><tbody>${rows}</tbody></table>`
+        ? `<table class="rg-table"><thead><tr><th>ФИО</th><th>Должность</th><th>Обучение</th><th>Медосмотр</th><th>Психо</th><th>СИЗ</th>${dm ? '<th>Даты по реестру</th>' : ''}</tr></thead><tbody>${rows}</tbody></table>`
         : '<p style="color:#8888aa;text-align:center;padding:30px;">Сотрудников нет. Загрузите штатное расписание в разделе «Обучение».</p>';
 }
 function openRegistryModal(key) {
@@ -3438,13 +3444,13 @@ function sfFillTestSelects() {
     const ts = document.getElementById('sfTestTopic'); if (ts) ts.innerHTML = topics.map(t => `<option>${rgEsc(t)}</option>`).join('') || '<option value="">— банк пуст —</option>';
     const es = document.getElementById('sfTestEmp'); if (es) es.innerHTML = getAllEmployees().map(e => `<option value="${rgEsc(rgKey(e))}">${rgEsc(rgFio(e))}</option>`).join('');
 }
-function sfStartTest() {
+function sfBeginTest() {
     const topic = document.getElementById('sfTestTopic').value, key = document.getElementById('sfTestEmp').value;
     const n = Math.max(1, parseInt(document.getElementById('sfTestN').value) || 10), pass = parseInt(document.getElementById('sfTestPass').value) || 80;
     const pool = sfGet('testBank').filter(q => (q.topic || 'Без темы') === topic);
     if (!pool.length || !key) { alert('Выберите тему из банка и сотрудника'); return; }
     const qs = sfShuffle(pool).slice(0, n).map(q => ({ q: q, opts: sfShuffle(q.options) }));
-    sfRun = { key: key, topic: topic, pass: pass, qs: qs };
+    sfRun = { key: key, topic: topic, pass: pass, qs: qs, tr: sfLeaveTracker() };
     document.getElementById('sfTestArea').innerHTML = qs.map((x, i) => {
         const multi = x.q.options.filter(o => o.ok).length > 1;
         return `<div class="rg-reg-box"><b>${i + 1}. ${rgEsc(x.q.text)}</b>${multi ? ' <small>(несколько верных)</small>' : ''}${x.opts.map((o, j) => `<label class="sf-opt"><input type="${multi ? 'checkbox' : 'radio'}" name="sfq${i}" value="${j}"> ${rgEsc(o.t)}</label>`).join('')}</div>`;
@@ -3459,11 +3465,12 @@ function sfFinishTest() {
         const ok = x.opts.every((o, j) => o.ok === chosen.has(j));
         if (ok) right++; else wrong.push({ q: x.q.text, correct: x.opts.filter(o => o.ok).map(o => o.t) });
     });
+    const leaves = sfRun.tr.stop();
     const total = sfRun.qs.length, score = Math.round(right / total * 100), passed = score >= sfRun.pass;
     const res = sfGet('testResults');
     const attempt = res.filter(r => r.key === sfRun.key && r.topic === sfRun.topic).length + 1;
     const date = new Date().toISOString().split('T')[0];
-    res.push({ id: sfUid(), key: sfRun.key, fio: rgFio(e), position: e.position || '', topic: sfRun.topic, date: date, total: total, right: right, score: score, pass: sfRun.pass, passed: passed, attempt: attempt, wrong: wrong });
+    res.push({ id: sfUid(), key: sfRun.key, fio: rgFio(e), position: e.position || '', topic: sfRun.topic, date: date, total: total, right: right, score: score, pass: sfRun.pass, passed: passed, attempt: attempt, wrong: wrong, leaves: leaves });
     sfSet('testResults', res);
     if (passed && document.getElementById('sfTestToAccount').checked) {
         const all = getEmpRecords(), cur = all[sfRun.key] || {};
@@ -3471,21 +3478,21 @@ function sfFinishTest() {
         cur.training = { status: 'yes', program: sfRun.topic, date: date, next: next.toISOString().split('T')[0], source: 'lms' };
         all[sfRun.key] = cur; saveEmpRecords(all);
     }
-    document.getElementById('sfTestArea').innerHTML = `<div class="rg-reg-box ${passed ? 'ok' : 'bad'}"><div class="rg-reg-title">${passed ? '✔ Тест сдан' : '✖ Тест не сдан'}: ${score}% (верно ${right} из ${total}, проходной ${sfRun.pass}%)</div>${wrong.map(w => `<div style="margin-top:8px;font-size:13px;"><b>${rgEsc(w.q)}</b><br><span style="color:#34d399">Верно: ${rgEsc(w.correct.join('; '))}</span></div>`).join('')}<div style="margin-top:10px;"><button class="btn-secondary" onclick="sfPrintResult('${res[res.length - 1].id}')">🖨 Протокол</button></div></div>`;
+    document.getElementById('sfTestArea').innerHTML = `<div class="rg-reg-box ${passed ? 'ok' : 'bad'}"><div class="rg-reg-title">${passed ? '✔ Тест сдан' : '✖ Тест не сдан'}: ${score}% (верно ${right} из ${total}, проходной ${sfRun.pass}%)</div>${sfLeavesHtml(leaves)}${wrong.map(w => `<div style="margin-top:8px;font-size:13px;"><b>${rgEsc(w.q)}</b><br><span style="color:#34d399">Верно: ${rgEsc(w.correct.join('; '))}</span></div>`).join('')}<div style="margin-top:10px;"><button class="btn-secondary" onclick="sfPrintResult('${res[res.length - 1].id}')">🖨 Протокол</button></div></div>`;
     sfRun = null;
 }
 function sfRenderResults() {
     const box = document.getElementById('sfResults'); if (!box) return;
     const r = sfGet('testResults').slice().reverse();
-    box.innerHTML = r.length ? `<table class="rg-table"><thead><tr><th>Дата</th><th>ФИО</th><th>Тема</th><th>Попытка</th><th>Результат</th><th></th></tr></thead><tbody>${r.map(x => `<tr><td>${sfFmt(x.date)}</td><td>${rgEsc(x.fio)}</td><td>${rgEsc(x.topic)}</td><td>${x.attempt}</td><td><span class="rg-badge ${x.passed ? 'ok' : 'bad'}">${x.passed ? '✔' : '✖'} ${x.score}%</span></td><td><a href="#" class="rg-name" onclick="event.preventDefault();sfPrintResult('${x.id}')">🖨</a></td></tr>`).join('')}</tbody></table>` : '<p style="color:#8888aa">Тестов ещё не проходили.</p>';
+    box.innerHTML = r.length ? `<table class="rg-table"><thead><tr><th>Дата</th><th>ФИО</th><th>Тема</th><th>Попытка</th><th>Результат</th><th>Уходы</th><th></th></tr></thead><tbody>${r.map(x => `<tr><td>${sfFmt(x.date)}</td><td>${rgEsc(x.fio)}</td><td>${rgEsc(x.topic)}</td><td>${x.attempt}</td><td><span class="rg-badge ${x.passed ? 'ok' : 'bad'}">${x.passed ? '✔' : '✖'} ${x.score}%</span></td><td>${(x.leaves && x.leaves.length) ? '<span class="rg-badge bad">⚠ ' + x.leaves.length + '</span>' : '<span class="rg-badge ok">нет</span>'}</td><td><a href="#" class="rg-name" onclick="event.preventDefault();sfPrintResult('${x.id}')">🖨</a></td></tr>`).join('')}</tbody></table>` : '<p style="color:#8888aa">Тестов ещё не проходили.</p>';
 }
 function sfPrintResult(id) {
     const r = sfGet('testResults').find(x => x.id === id); if (!r) return;
     const html = `<div style="font-family:'Times New Roman',serif;color:#000;padding:15mm;font-size:14px;"><h2 style="text-align:center;margin:0 0 6px;">ПРОТОКОЛ ТЕСТИРОВАНИЯ</h2><p style="text-align:center;margin:0 0 18px;">${rgEsc(sfOrg())} · ${sfFmt(r.date)}</p>
     <p><b>Работник:</b> ${rgEsc(r.fio)}<br><b>Должность:</b> ${rgEsc(r.position)}<br><b>Тема:</b> ${rgEsc(r.topic)}<br><b>Попытка:</b> ${r.attempt}</p>
     <p>Вопросов: ${r.total}; верных ответов: ${r.right}; результат: <b>${r.score}%</b>; проходной балл: ${r.pass}%.<br><b>Итог: ${r.passed ? 'ТЕСТ СДАН' : 'ТЕСТ НЕ СДАН'}</b></p>
-    <p style="font-size:12px;color:#444;">Результат тестирования подтверждает усвоение материала и не заменяет проверку знаний требований охраны труда комиссией работодателя.</p>
-    <p style="margin-top:40px;">Работник: ______________ / ${rgEsc(r.fio)}<br><br>Ответственный: ______________ / ______________</p></div>`;
+    
+    ${sfLeavesHtml(r.leaves, true)}<p style="margin-top:40px;">Работник: ______________ / ${rgEsc(r.fio)}<br><br>Ответственный: ______________ / ______________</p></div>`;
     openPrintWindow(html, 'Протокол тестирования');
 }
 
@@ -3556,7 +3563,7 @@ async function sfMakeLinks() {
     const all = getAllEmployees(), box = document.getElementById('sfRmLinks'); box.innerHTML = ''; let txt = '';
     for (const k of keys) {
         const e = all.find(x => rgKey(x) === k); if (!e) continue;
-        const d = { v: 1, k: k, f: rgFio(e), p: e.position || '', ty: type, ti: v('sfRmTitle').trim() || (SF_TYPES[type] + ' инструктаж'), b: text, m: Math.max(0, parseInt(v('sfRmMin')) || 0), d: v('sfBrDate'), i: instr, ip: v('sfBrInstrPos').trim(), r: v('sfBrReason').trim() };
+        const d = { v: 1, k: k, f: rgFio(e), p: e.position || '', ty: type, ti: v('sfRmTitle').trim() || (SF_TYPES[type] + ' инструктаж'), b: text, m: Math.max(0, parseInt(v('sfRmMin')) || 0), d: v('sfBrDate'), i: instr, ip: v('sfBrInstrPos').trim(), r: v('sfBrReason').trim(), x: v('sfRmExp') };
         if (qs) { d.q = qs; d.ps = Math.max(1, parseInt(v('sfRmPass')) || 80); }
         const link = base + '#learn=' + await rmEncode(d);
         txt += rgFio(e) + ' — ' + link + '\n\n';
@@ -3583,7 +3590,7 @@ async function sfAcceptCodes() {
         const date = r.d || r.done.slice(0, 10);
         j.push({ id: sfUid(), no: j.length + 1, type: r.ty, date: date, key: r.k, fio: r.f, year: e ? sfYear(e) : '', position: r.p || '', dept: e ? (e.department || e.dept || '') : '', instr: r.i, instrPos: r.ip, reason: r.r || '', remote: true, done: r.done.slice(0, 10), fin: r.done, readSec: r.rs });
         if (r.t) {
-            res.push({ id: sfUid(), key: r.k, fio: r.f, position: r.p || '', topic: r.ti, date: r.done.slice(0, 10), total: r.tt, right: r.rt, score: r.s, pass: r.ps, passed: !!r.ok, attempt: r.a || 1, wrong: [] });
+            res.push({ id: sfUid(), key: r.k, fio: r.f, position: r.p || '', topic: r.ti, date: r.done.slice(0, 10), total: r.tt, right: r.rt, score: r.s, pass: r.ps, passed: !!r.ok, attempt: r.a || 1, wrong: [], leaves: (r.lv || []).map(x => ({ at: x[0], sec: x[1] })) });
             if (r.ok && toAcc) {
                 const recs = getEmpRecords(), cur = recs[r.k] || {}, nx = new Date(r.done); nx.setFullYear(nx.getFullYear() + 1);
                 cur.training = { status: 'yes', program: r.ti, date: r.done.slice(0, 10), next: nx.toISOString().slice(0, 10), source: 'lms' };
@@ -3610,9 +3617,17 @@ function sfFillRemoteTopics() {
 // ---------- Сторона сотрудника (светлая мобильная страница) ----------
 function lnKey(hash) { let h = 0; for (let i = 0; i < hash.length; i++) h = (h * 31 + hash.charCodeAt(i)) | 0; return 'learnDone_' + h; }
 async function lnBoot() {
-    const m = location.hash.match(/^#learn=(.+)$/); if (!m) return;
+    const m = location.hash.match(/^#learn=(.+)$/);
+    if (!m) {
+        if (/^https?:/i.test(location.protocol) && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+            if (/[?&]admin=1/.test(location.search)) localStorage.setItem('adminHost', '1');
+            if (!localStorage.getItem('adminHost')) { Array.from(document.body.children).forEach(el => { el.style.display = 'none'; }); document.body.insertAdjacentHTML('beforeend', '<div style="font-family:sans-serif;padding:40px;text-align:center;color:#444">Это страница прохождения инструктажа.<br>Откройте персональную ссылку, которую вам прислали.</div>'); }
+        }
+        return;
+    }
     let d; try { d = await rmDecode(m[1]); } catch (e) { document.body.innerHTML = '<p style="padding:30px;font-family:sans-serif">Ссылка повреждена. Попросите прислать её заново.</p>'; return; }
     Array.from(document.body.children).forEach(el => { el.style.display = 'none'; });
+    if (d.x && new Date().toISOString().slice(0, 10) > d.x) { document.body.insertAdjacentHTML('beforeend', '<div style="font-family:sans-serif;padding:40px;text-align:center;color:#444;background:#fff">Срок действия ссылки истёк. Запросите новую у специалиста по охране труда.</div>'); return; }
     document.body.style.background = '#f4f5fa'; document.body.style.color = '#1a1a2e';
     const root = document.createElement('div'); root.id = 'learnRoot'; root.className = 'ln-root'; document.body.appendChild(root);
     const saved = localStorage.getItem(lnKey(m[1]));
@@ -3646,19 +3661,24 @@ function lnRun(root, d, hash) {
         b.onclick = () => finish({ t: 0 });
     };
     const test = () => {
-        st.attempts++;
+        root.querySelector('.ln-card').innerHTML = '<h1>Перед тестом</h1><p>⚠ Во время теста нельзя переключаться на другие вкладки и приложения (например, чтобы найти ответ в интернете). Все уходы со страницы фиксируются и будут показаны проверяющему.</p><button class="ln-btn" id="lnGo">Понятно, начать тест</button>';
+        document.getElementById('lnGo').onclick = testRun;
+    };
+    const testRun = () => {
+        st.attempts++; st.tr = sfLeaveTracker();
         const qs = sfShuffle(d.q).map(q => ({ t: q.t, o: sfShuffle(q.o) }));
         root.querySelector('.ln-card').innerHTML = `<h1>Тест</h1>${qs.map((q, i) => { const multi = q.o.filter(o => o[1]).length > 1; return `<div class="ln-q"><b>${i + 1}. ${rgEsc(q.t)}</b>${multi ? ' <small>(несколько верных)</small>' : ''}${q.o.map((o, j) => `<label class="ln-opt"><input type="${multi ? 'checkbox' : 'radio'}" name="lq${i}" value="${j}"> ${rgEsc(o[0])}</label>`).join('')}</div>`; }).join('')}<button class="ln-btn" id="lnFin">Завершить тест</button>`;
         window.scrollTo(0, 0);
         document.getElementById('lnFin').onclick = () => {
             let right = 0;
             qs.forEach((q, i) => { const ch = new Set([...document.querySelectorAll(`input[name="lq${i}"]:checked`)].map(c => +c.value)); if (q.o.every((o, j) => !!o[1] === ch.has(j))) right++; });
+            st.lv = (st.lv || []).concat(st.tr.stop().map(x => [x.at, x.sec]));
             const score = Math.round(right / qs.length * 100), ok = score >= d.ps;
             if (!ok && st.attempts < 3) {
                 root.querySelector('.ln-card').innerHTML = `<h1>Не сдано: ${score}%</h1><p>Нужно не менее ${d.ps}%. Использовано попыток: ${st.attempts} из 3.</p><button class="ln-btn" id="lnAgain">Пройти ещё раз</button>`;
-                document.getElementById('lnAgain').onclick = test; return;
+                document.getElementById('lnAgain').onclick = testRun; return;
             }
-            finish({ t: 1, s: score, rt: right, tt: qs.length, ok: ok ? 1 : 0, ps: d.ps, a: st.attempts });
+            finish({ t: 1, s: score, rt: right, tt: qs.length, ok: ok ? 1 : 0, ps: d.ps, a: st.attempts, lv: st.lv });
         };
     };
     nextBtn.onclick = () => { if (d.q && d.q.length) test(); else ack(); };
@@ -3671,3 +3691,132 @@ async function lnShowResult(root, code) {
     const sh = document.getElementById('lnShare'); if (sh) sh.onclick = () => navigator.share({ text: code }).catch(() => {});
 }
 lnBoot();
+
+function rgIso(d) { const m = String(d || '').match(/^(\d{2})\.(\d{2})\.(\d{4})$/); return m ? m[3] + '-' + m[2] + '-' + m[1] : ''; }
+
+function sfStartTest() {
+    if (!document.getElementById('sfTestTopic').value || !document.getElementById('sfTestEmp').value) { alert('Выберите тему из банка и сотрудника'); return; }
+    document.getElementById('sfTestArea').innerHTML = '<div class="rg-reg-box bad"><div class="rg-reg-title">⚠ Предупреждение перед тестом</div>Во время теста нельзя переключаться на другие вкладки, окна и приложения (например, чтобы найти ответ в интернете). Все уходы со страницы теста фиксируются и будут показаны проверяющему в конце.<div style="margin-top:10px;"><button class="btn-primary" onclick="sfBeginTest()">Понятно, начать тест</button></div></div>';
+}
+function sfLeaveTracker() {
+    const list = []; let st = null;
+    const out = () => { if (st === null) st = Date.now(); };
+    const back = () => { if (st !== null) { list.push({ at: new Date(st).toISOString(), sec: Math.round((Date.now() - st) / 1000) }); st = null; } };
+    const vis = () => { if (document.visibilityState === 'hidden') out(); else back(); };
+    document.addEventListener('visibilitychange', vis); window.addEventListener('blur', out); window.addEventListener('focus', back);
+    return { stop() { document.removeEventListener('visibilitychange', vis); window.removeEventListener('blur', out); window.removeEventListener('focus', back); back(); return list; } };
+}
+function sfLeavesHtml(leaves, plain) {
+    if (!leaves || !leaves.length) return plain ? '<p>Уходов со страницы теста не зафиксировано.</p>' : '<div style="margin-top:8px;color:#34d399;">✔ Уходов со страницы теста не зафиксировано</div>';
+    const tot = leaves.reduce((a, x) => a + (x.sec || 0), 0);
+    const items = leaves.map(x => (x.at ? new Date(x.at).toLocaleTimeString('ru-RU') : '') + ' — ' + x.sec + ' с').join('; ');
+    return plain ? `<p><b>Уходы со страницы теста:</b> ${leaves.length}, суммарно ${tot} с (${items}).</p>` : `<div style="margin-top:8px;color:#f87171;"><b>⚠ Уходов со страницы теста: ${leaves.length}, суммарно ${tot} с</b><br><small>${items}</small></div>`;
+}
+
+
+// ============================================================
+// СЛУЖБЫ (группы сотрудников) + МОНИТОРИНГ ИНСТРУКТАЖЕЙ
+// localStorage: empGroups = [{ id, name, keys:[rgKey], periods:{ТИП:месяцев} }]
+// Последний инструктаж берётся из журнала (briefingJournal); напоминание — раз в день при открытии сайта.
+// ============================================================
+let grpCur = null;
+function grpGet() { return sfGet('empGroups'); }
+function grpSet(v) { sfSet('empGroups', v); }
+function grpAddMonths(iso, m) { const d = new Date(iso + 'T00:00:00'); d.setMonth(d.getMonth() + m); return d.toISOString().slice(0, 10); }
+function grpLast(key, type) { const dates = sfGet('briefingJournal').filter(r => r.key === key && r.type === type).map(r => r.date).sort(); return dates.length ? dates[dates.length - 1] : ''; }
+function grpState(key, type, months) {
+    const last = grpLast(key, type);
+    if (!last) return { cls: 'bad', txt: 'нет записей', last: '', next: '' };
+    const next = grpAddMonths(last, months), today = new Date().toISOString().slice(0, 10), soon = grpAddMonths(today, 0).slice(0, 8);
+    const days = Math.round((new Date(next) - new Date(today)) / 86400000);
+    if (days < 0) return { cls: 'bad', txt: 'просрочен ' + sfFmt(next), last: last, next: next };
+    if (days <= 14) return { cls: 'warn', txt: 'до ' + sfFmt(next) + ' (' + days + ' дн.)', last: last, next: next };
+    return { cls: 'ok', txt: 'до ' + sfFmt(next), last: last, next: next };
+}
+function grpTypes(g) { return [...new Set(['REPEAT'].concat(Object.keys(g.periods || {}).filter(t => g.periods[t] > 0)))]; }
+function grpRender() {
+    const root = document.getElementById('grpRoot'); if (!root) return;
+    const gs = grpGet(); if (!grpCur && gs.length) grpCur = gs[0].id;
+    root.innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">${gs.map(g => `<button class="sf-tab ${g.id === grpCur ? 'active' : ''}" onclick="grpSelect('${g.id}')">${rgEsc(g.name)} (${g.keys.length})</button>`).join('')}<button class="btn-secondary" onclick="grpNew()">➕ Создать службу</button><button class="btn-secondary" onclick="grpShowDue(true)">🔔 Проверить сроки</button></div><div id="grpDetail"></div>`;
+    const g = gs.find(x => x.id === grpCur), det = document.getElementById('grpDetail');
+    if (!g) { det.innerHTML = '<p style="color:#8888aa">Создайте службу (например, «Водители»), добавьте сотрудников — вся информация по ним будет в одной таблице.</p>'; return; }
+    const all = getAllEmployees(), types = grpTypes(g);
+    const rows = g.keys.map(k => {
+        const e = all.find(x => rgKey(x) === k); if (!e) return '';
+        const r = rgRec(k), tr = rgTrainingState(e, r), md = rgState(r.med), ps = rgPpeState(r);
+        const b = (s) => `<span class="rg-badge ${s.cls}">${s.txt}</span>`;
+        return `<tr><td><a href="#" class="rg-name" onclick="event.preventDefault();openRegistryModal(decodeURIComponent('${encodeURIComponent(k)}'))">${rgEsc(rgFio(e))}</a></td><td>${rgEsc(e.position)}</td><td>${b(tr)}</td><td>${b(md)}</td><td>${b(ps)}</td>${types.map(t => `<td>${b(grpState(k, t, (g.periods || {})[t] || 6))}</td>`).join('')}</tr>`;
+    }).join('');
+    det.innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;"><button class="btn-primary" onclick="grpMembers('${g.id}')">👥 Состав</button><button class="btn-secondary" onclick="grpRename('${g.id}')">✏️ Переименовать</button><button class="btn-secondary" onclick="grpDelete('${g.id}')">🗑 Удалить службу</button></div>
+    <div style="overflow-x:auto;">${g.keys.length ? `<table class="rg-table"><thead><tr><th>ФИО</th><th>Должность</th><th>Обучение</th><th>Медосмотр</th><th>СИЗ</th>${types.map(t => `<th>${SF_TYPES[t]} инструктаж</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>` : '<p style="color:#8888aa">В службе пока нет сотрудников. Нажмите «Состав».</p>'}</div>
+    <h4 class="rg-h">Периодичность инструктажей (месяцев, 0 — не контролировать)</h4>
+    <div class="rg-grid" style="grid-template-columns:repeat(5,1fr);">${Object.keys(SF_TYPES).map(t => `<label>${SF_TYPES[t]}<input type="number" min="0" class="rg-input" value="${(g.periods || {})[t] != null ? g.periods[t] : (t === 'REPEAT' ? 6 : 0)}" onchange="grpPeriod('${g.id}','${t}',this.value)"></label>`).join('')}</div>
+    <h4 class="rg-h">Записать инструктаж всей службе</h4>
+    <div class="rg-grid"><label>Вид<select id="grpType" class="rg-input">${Object.keys(SF_TYPES).map(t => `<option value="${t}">${SF_TYPES[t]}</option>`).join('')}</select></label><label>Дата<input type="date" id="grpDate" class="rg-input" value="${new Date().toISOString().slice(0, 10)}"></label><label>Инструктирующий (ФИО)<input id="grpInstr" class="rg-input"></label><label>Должность инструктирующего<input id="grpInstrPos" class="rg-input"></label></div>
+    <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#8888aa;margin-top:8px;">Причина (для внепланового и целевого)<input id="grpReason" class="rg-input"></label>
+    <button class="btn-primary" style="margin-top:10px;" onclick="grpRecord('${g.id}')">✅ Записать в журнал всем (${g.keys.length})</button>`;
+}
+function grpSelect(id) { grpCur = id; grpRender(); }
+function grpNew() {
+    const name = (prompt('Название службы (например, Водители):') || '').trim(); if (!name) return;
+    const gs = grpGet(), g = { id: sfUid(), name: name, keys: [], periods: { REPEAT: 6 } }; gs.push(g); grpSet(gs); grpCur = g.id; grpRender(); grpMembers(g.id);
+}
+function grpRename(id) { const gs = grpGet(), g = gs.find(x => x.id === id); const n = (prompt('Новое название:', g.name) || '').trim(); if (n) { g.name = n; grpSet(gs); grpRender(); } }
+function grpDelete(id) { if (!confirm('Удалить службу? Сотрудники и журнал не удаляются.')) return; grpSet(grpGet().filter(x => x.id !== id)); grpCur = null; grpRender(); }
+function grpPeriod(id, t, v) { const gs = grpGet(), g = gs.find(x => x.id === id); g.periods = g.periods || {}; g.periods[t] = Math.max(0, parseInt(v) || 0); grpSet(gs); grpRender(); }
+function grpMembers(id) {
+    const g = grpGet().find(x => x.id === id), old = document.getElementById('grpModal'); if (old) old.remove();
+    const m = document.createElement('div'); m.className = 'modal-overlay'; m.id = 'grpModal';
+    m.innerHTML = `<div class="modal-content" style="max-width:640px;max-height:90vh;overflow:auto;"><div class="modal-header"><h3>👥 Состав: ${rgEsc(g.name)}</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button></div><div style="padding:16px 20px;"><input id="grpSearch" class="rg-input" placeholder="🔍 Поиск по ФИО или должности" style="margin-bottom:8px;"><div id="grpList" class="sf-emps" style="max-height:50vh;"></div></div><div class="modal-footer"><button class="btn-primary" id="grpSave">Сохранить</button></div></div>`;
+    document.body.appendChild(m);
+    const sel = new Set(g.keys), all = getAllEmployees();
+    const draw = () => {
+        const q = document.getElementById('grpSearch').value.toLowerCase();
+        document.getElementById('grpList').innerHTML = all.filter(e => (rgFio(e) + ' ' + (e.position || '')).toLowerCase().includes(q)).map(e => `<label class="sf-emp"><input type="checkbox" value="${rgEsc(rgKey(e))}" ${sel.has(rgKey(e)) ? 'checked' : ''}> ${rgEsc(rgFio(e))} <small>${rgEsc(e.position || '')}</small></label>`).join('');
+        document.querySelectorAll('#grpList input').forEach(c => { c.onchange = () => { if (c.checked) sel.add(c.value); else sel.delete(c.value); }; });
+    };
+    document.getElementById('grpSearch').oninput = draw; draw();
+    document.getElementById('grpSave').onclick = () => { const gs = grpGet(), gg = gs.find(x => x.id === id); gg.keys = [...sel]; grpSet(gs); m.remove(); grpRender(); };
+}
+function grpRecord(id) {
+    const g = grpGet().find(x => x.id === id), v = i => (document.getElementById(i) || {}).value || '';
+    const type = v('grpType'), date = v('grpDate'), instr = v('grpInstr').trim(), reason = v('grpReason').trim();
+    if (!g.keys.length) { alert('В службе нет сотрудников'); return; }
+    if (!date || !instr) { alert('Укажите дату и ФИО инструктирующего'); return; }
+    if ((type === 'UNPLANNED' || type === 'TARGET') && !reason) { alert('Укажите причину'); return; }
+    const j = sfGet('briefingJournal'), all = getAllEmployees();
+    g.keys.forEach(k => { const e = all.find(x => rgKey(x) === k); if (!e) return; j.push({ id: sfUid(), no: j.length + 1, type: type, date: date, key: k, fio: rgFio(e), year: sfYear(e), position: e.position || '', dept: e.department || e.dept || '', instr: instr, instrPos: v('grpInstrPos').trim(), reason: reason }); });
+    sfSet('briefingJournal', j); grpRender(); alert('✅ Записано в журнал: ' + g.keys.length);
+}
+function grpDueList() {
+    const out = [], all = getAllEmployees();
+    grpGet().forEach(g => grpTypes(g).forEach(t => {
+        const months = (g.periods || {})[t] != null ? g.periods[t] : 6; if (!months) return;
+        g.keys.forEach(k => { const st = grpState(k, t, months); if (st.cls === 'bad' || st.cls === 'warn') { const e = all.find(x => rgKey(x) === k); if (e) out.push({ g: g.name, t: t, fio: rgFio(e), st: st }); } });
+    }));
+    return out;
+}
+function grpShowDue(force) {
+    const list = grpDueList(), today = new Date().toISOString().slice(0, 10);
+    if (!list.length) { if (force) alert('✅ Всё в сроке: инструктажи служб не просрочены.'); return; }
+    if (!force && localStorage.getItem('grpDueShown') === today) return;
+    localStorage.setItem('grpDueShown', today);
+    const old = document.getElementById('grpDueModal'); if (old) old.remove();
+    const by = {}; list.forEach(x => { (by[x.g + ' — ' + SF_TYPES[x.t] + ' инструктаж'] = by[x.g + ' — ' + SF_TYPES[x.t] + ' инструктаж'] || []).push(x); });
+    const m = document.createElement('div'); m.className = 'modal-overlay'; m.id = 'grpDueModal';
+    m.innerHTML = `<div class="modal-content" style="max-width:700px;max-height:90vh;overflow:auto;"><div class="modal-header"><h3>🔔 Пора провести инструктаж</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button></div><div style="padding:16px 20px;">${Object.keys(by).map(k => `<h4 class="rg-h">${rgEsc(k)}</h4>${by[k].map(x => `<div style="font-size:14px;padding:3px 0;">${rgEsc(x.fio)} <span class="rg-badge ${x.st.cls}">${x.st.txt}</span></div>`).join('')}`).join('')}</div><div class="modal-footer"><button class="btn-primary" onclick="this.closest('.modal-overlay').remove();showPage('groups')">Открыть «Службы»</button></div></div>`;
+    document.body.appendChild(m);
+}
+(function () {
+    const prev = showPage;
+    showPage = function (page) {
+        const gp = document.getElementById('groupsPage');
+        if (gp) gp.classList.add('hidden');
+        if (page === 'groups') {
+            prev('__none'); if (gp) gp.classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.textContent.indexOf('Службы сотрудников') !== -1));
+            grpRender();
+        } else prev(page);
+    };
+})();
+document.addEventListener('DOMContentLoaded', function () { if (!/^#learn=/.test(location.hash)) setTimeout(() => grpShowDue(false), 800); });
