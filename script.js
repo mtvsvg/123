@@ -2911,9 +2911,12 @@ function renderRegistry() {
     let emps = getAllEmployees().filter(e => (rgFio(e) + ' ' + (e.position || '')).toLowerCase().includes(q));
     const dm = (document.getElementById('rgDateMode') || {}).value || '', dFrom = (document.getElementById('rgFrom') || {}).value || '', dTo = (document.getElementById('rgTo') || {}).value || '';
     const hits = {};
+    const ds = (document.getElementById('rgDateShow') || {}).value || 'in', lastOf = {};
     if (dm) emps = emps.filter(e => {
-        const h = getTrainingMatches(e).filter(m => { const iso = rgIso(dm === 'check' ? m.checkDate : m.regDate); return iso && (!dFrom || iso >= dFrom) && (!dTo || iso <= dTo); });
-        if (h.length) hits[rgKey(e)] = h; return h.length > 0;
+        const ms = getTrainingMatches(e), k = rgKey(e);
+        hits[k] = ms.filter(m => { const iso = rgIso(dm === 'check' ? m.checkDate : m.regDate); return iso && (!dFrom || iso >= dFrom) && (!dTo || iso <= dTo); });
+        lastOf[k] = ms.map(m => rgIso(dm === 'check' ? m.checkDate : m.regDate)).filter(Boolean).sort().pop() || '';
+        return ds === 'all' ? true : ds === 'out' ? hits[k].length === 0 : hits[k].length > 0;
     });
     let bad = 0, ok = 0;
     const rows = emps.map(e => {
@@ -2921,7 +2924,7 @@ function renderRegistry() {
         const st = [rgTrainingState(e, r), rgState(r.med), rgState(r.psycho), rgPpeState(r)];
         if (st.some(s => s.cls === 'bad')) bad++; else if (st.every(s => s.cls === 'ok')) ok++;
         const cell = (s, tab) => `<td><span class="rg-badge ${s.cls}" onclick="openRegistryModal(decodeURIComponent('${encodeURIComponent(k)}'))">${s.txt}</span></td>`;
-        return `<tr><td><a href="#" class="rg-name" onclick="event.preventDefault();openRegistryModal(decodeURIComponent('${encodeURIComponent(k)}'))">${rgEsc(rgFio(e))}</a></td><td>${rgEsc(e.position)}</td>${cell(st[0])}${cell(st[1])}${cell(st[2])}${cell(st[3])}${dm ? '<td style="font-size:12px;">' + (hits[k] || []).map(m => rgEsc(trProgShort(m.prog)) + ': проверка ' + rgEsc(m.checkDate) + ', в реестре ' + rgEsc(m.regDate) + (m.type === 'full' ? '' : ' ⚠')).join('<br>') + '</td>' : ''}</tr>`;
+        return `<tr><td><a href="#" class="rg-name" onclick="event.preventDefault();openRegistryModal(decodeURIComponent('${encodeURIComponent(k)}'))">${rgEsc(rgFio(e))}</a></td><td>${rgEsc(e.position)}</td>${cell(st[0])}${cell(st[1])}${cell(st[2])}${cell(st[3])}${dm ? '<td style="font-size:12px;">' + ((hits[k] || []).length ? hits[k] : [null]).map(m => !m ? '<span style="color:#f87171">✖ в диапазоне не проходил' + (lastOf[k] ? ' (последняя дата: ' + sfFmt(lastOf[k]) + ')' : ' (записей в реестре нет)') + '</span>' :  rgEsc(trProgShort(m.prog)) + ': проверка ' + rgEsc(m.checkDate) + ', в реестре ' + rgEsc(m.regDate) + (m.type === 'full' ? '' : ' ⚠')).join('<br>') + '</td>' : ''}</tr>`;
     }).join('');
     document.getElementById('registrySummary').innerHTML =
         `<div class="rg-card"><b>${emps.length}</b><span>сотрудников</span></div>` +
@@ -2998,6 +3001,7 @@ function generateViolationsProtocol() {
         <p style="margin-top:30px;">Ответственный за охрану труда: ______________ / ______________<br><br>Руководитель организации: ______________ / ______________</p></div>`;
     openPrintWindow(html, 'Протокол устранения нарушений');
 }
+
 // Подключение страницы «Учёт» к навигации (оригинальный showPage не трогаем)
 (function () {
     const orig = showPage;
@@ -3350,7 +3354,7 @@ function sfShuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { 
 function sfOrg() { return (typeof getOrgName === 'function' ? getOrgName() : '') || '________________________'; }
 
 function sfTab(name) {
-    ['brief', 'bank', 'test', 'results'].forEach(t => {
+    ['brief', 'bank', 'test', 'results', 'ele'].forEach(t => {
         const p = document.getElementById('sfTab_' + t), b = document.getElementById('sfBtn_' + t);
         if (p) p.classList.toggle('hidden', t !== name);
         if (b) b.classList.toggle('active', t === name);
@@ -3359,6 +3363,7 @@ function sfTab(name) {
     if (name === 'bank') sfRenderBank();
     if (name === 'test') sfFillTestSelects();
     if (name === 'results') sfRenderResults();
+    if (name === 'ele') eleInit();
 }
 function sfInit() {
     const t = document.getElementById('sfBrType');
@@ -3813,3 +3818,176 @@ function grpShowDue(force) {
     };
 })();
 document.addEventListener('DOMContentLoaded', function () { if (!/^#learn=/.test(location.hash)) setTimeout(() => grpShowDue(false), 800); });
+
+
+// ============================================================
+// ШТАТКА: добавление по одному (с датой вводного инструктажа) и удаление выбранных
+// ============================================================
+function sfIsoToRu(iso) { return iso ? iso.split('-').reverse().join('.') : ''; }
+function sfAddEmployeeModal() {
+    const old = document.getElementById('addEmpModal'); if (old) old.remove();
+    const depts = Object.keys(getStaffData().departments);
+    const m = document.createElement('div'); m.className = 'modal-overlay'; m.id = 'addEmpModal';
+    const f = (id, l, t, ph) => `<label>${l}<input id="${id}" type="${t || 'text'}" class="rg-input" placeholder="${ph || ''}"></label>`;
+    m.innerHTML = `<div class="modal-content" style="max-width:640px;max-height:90vh;overflow:auto;"><div class="modal-header"><h3>➕ Добавить сотрудника</h3><button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✖</button></div><div style="padding:16px 20px;">
+        <div class="rg-grid">${f('neLast', 'Фамилия')}${f('neFirst', 'Имя')}${f('neMid', 'Отчество')}${f('nePos', 'Должность')}
+        <label>Подразделение<input id="neDept" list="neDeptList" class="rg-input"><datalist id="neDeptList">${depts.map(d => `<option value="${rgEsc(d)}">`).join('')}</datalist></label>${f('neSnils', 'СНИЛС', 'text', '000-000-000 00')}${f('neTab', 'Табельный номер')}${f('neBirth', 'Дата рождения', 'date')}
+        <label>Пол<select id="neGender" class="rg-input"><option value="">—</option><option value="м">м</option><option value="ж">ж</option></select></label>${f('nePolicy', 'Полис ОМС')}</div>
+        <h4 class="rg-h">Приём и вводный инструктаж</h4>
+        <div class="rg-grid"><label>Дата приёма = дата вводного инструктажа<input id="neDate" type="date" class="rg-input" value="${new Date().toISOString().slice(0, 10)}"></label>${f('neInstr', 'Инструктаж провёл (ФИО)', 'text', '')}${f('neInstrPos', 'Должность инструктирующего')}</div>
+        <label style="display:block;margin-top:10px;color:#8888aa;"><input type="checkbox" id="neJournal" checked> Записать вводный инструктаж в журнал</label>
+    </div><div class="modal-footer"><button class="btn-primary" id="neSave">Добавить</button><button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">Отмена</button></div></div>`;
+    document.body.appendChild(m);
+    document.getElementById('neInstr').value = localStorage.getItem('sfLastInstr') || ''; document.getElementById('neInstrPos').value = localStorage.getItem('sfLastInstrPos') || '';
+    document.getElementById('neSave').onclick = () => {
+        const v = id => document.getElementById(id).value.trim();
+        if (!v('neLast') || !v('neFirst') || !v('nePos')) { alert('Заполните фамилию, имя и должность'); return; }
+        const emp = { last_name: v('neLast'), first_name: v('neFirst'), middle_name: v('neMid'), position: v('nePos'), snils: v('neSnils'), tabNumber: v('neTab'), birthDate: sfIsoToRu(v('neBirth')), gender: v('neGender'), policyNumber: v('nePolicy'), hiredDate: v('neDate') };
+        const dupe = getAllEmployees().find(e => (emp.snils && e.snils === emp.snils) || (rgFio(e).toLowerCase() === rgFio(emp).toLowerCase() && e.birthDate === emp.birthDate));
+        if (dupe && !confirm('Такой сотрудник уже есть в штатке (' + rgFio(dupe) + '). Всё равно добавить?')) return;
+        const data = getStaffData(), dept = v('neDept');
+        if (dept) { data.departments[dept] = data.departments[dept] || { employees: [] }; data.departments[dept].employees.push(emp); } else data.unassigned.push(emp);
+        saveStaffData(data);
+        if (document.getElementById('neJournal').checked && v('neInstr') && v('neDate')) {
+            const j = sfGet('briefingJournal');
+            j.push({ id: sfUid(), no: j.length + 1, type: 'INTRO', date: v('neDate'), key: rgKey(emp), fio: rgFio(emp), year: sfYear(emp), position: emp.position, dept: dept, instr: v('neInstr'), instrPos: v('neInstrPos'), reason: '' });
+            sfSet('briefingJournal', j); localStorage.setItem('sfLastInstr', v('neInstr')); localStorage.setItem('sfLastInstrPos', v('neInstrPos'));
+        }
+        m.remove(); renderStaffWithDepartments();
+    };
+}
+function sfRemoveSelected() {
+    const ids = [...document.querySelectorAll('.staff-check:checked')].map(c => c.dataset.snils);
+    if (!ids.length) { alert('Отметьте галочками сотрудников, которых нужно убрать'); return; }
+    if (!confirm('Убрать из штатки сотрудников: ' + ids.length + '? Записи журнала инструктажей сохранятся.')) return;
+    const data = getStaffData(), match = e => ids.indexOf(e.snils || e.tabNumber) !== -1;
+    Object.keys(data.departments).forEach(d => { data.departments[d].employees = (data.departments[d].employees || []).filter(e => !match(e)); });
+    data.unassigned = data.unassigned.filter(e => !match(e));
+    saveStaffData(data); renderStaffWithDepartments();
+}
+
+// ============================================================
+// СЛУЖБЫ: быстрый выбор по должности + «инструктаж проведён / нужно провести»
+// ============================================================
+function grpQuickMount() {
+    const root = document.getElementById('grpRoot'); if (!root) return;
+    const today = new Date().toISOString().slice(0, 10);
+    root.insertAdjacentHTML('afterbegin', `<div class="rg-reg-box" id="grpQuick"><b>⚡ Быстрый выбор по должности</b>
+        <div class="rg-grid" style="margin-top:8px;"><input id="qpPos" class="rg-input" placeholder="Название должности, например: водитель" oninput="grpQuickList()"><select id="qpType" class="rg-input" onchange="grpQuickList()">${Object.keys(SF_TYPES).map(t => `<option value="${t}" ${t === 'REPEAT' ? 'selected' : ''}>${SF_TYPES[t]} инструктаж</option>`).join('')}</select>
+        <label>Дата проведения<input type="date" id="qpDate" class="rg-input" value="${today}"></label><input id="qpInstr" class="rg-input" placeholder="Инструктирующий (ФИО)" value="${rgEsc(localStorage.getItem('sfLastInstr') || '')}"><input id="qpInstrPos" class="rg-input" placeholder="Должность инструктирующего" value="${rgEsc(localStorage.getItem('sfLastInstrPos') || '')}"><input id="qpReason" class="rg-input" placeholder="Причина (для внепланового и целевого)"></div>
+        <div id="qpList" class="sf-emps" style="margin:10px 0;max-height:240px;"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-secondary" onclick="document.querySelectorAll('.qp-chk').forEach(c=>c.checked=true)">Отметить всех</button><button class="btn-primary" onclick="grpQuickDone()">✅ Инструктаж проведён</button><button class="btn-secondary" onclick="grpQuickNeed()">⏳ Инструктаж нужно провести</button></div>
+        <div id="qpPending" style="margin-top:10px;"></div></div>`);
+    grpQuickList(); grpQuickPending();
+}
+function grpQuickList() {
+    const box = document.getElementById('qpList'); if (!box) return;
+    const q = document.getElementById('qpPos').value.trim().toLowerCase(), type = document.getElementById('qpType').value;
+    if (!q) { box.innerHTML = '<p style="color:#8888aa;padding:6px;">Введите должность, и здесь появятся работники на этих должностях.</p>'; return; }
+    const pend = sfGet('briefPending');
+    box.innerHTML = getAllEmployees().filter(e => (e.position || '').toLowerCase().includes(q)).map(e => {
+        const k = rgKey(e), last = grpLast(k, type), p = pend.some(x => x.key === k && x.type === type);
+        return `<label class="sf-emp"><input type="checkbox" class="qp-chk" value="${rgEsc(k)}"> ${rgEsc(rgFio(e))} <small>${rgEsc(e.position || '')} · последний: ${last ? sfFmt(last) : 'нет записей'}</small>${p ? ' <span class="rg-badge warn">⏳ нужно провести</span>' : ''}</label>`;
+    }).join('') || '<p style="color:#8888aa;padding:6px;">По такой должности никого нет.</p>';
+}
+function grpQuickKeys() { return [...document.querySelectorAll('.qp-chk:checked')].map(c => c.value); }
+function grpQuickDone() {
+    const keys = grpQuickKeys(), v = id => document.getElementById(id).value.trim();
+    const type = v('qpType'), date = v('qpDate'), instr = v('qpInstr');
+    if (!keys.length) { alert('Отметьте работников'); return; }
+    if (!date || !instr) { alert('Укажите дату и ФИО инструктирующего'); return; }
+    if ((type === 'UNPLANNED' || type === 'TARGET') && !v('qpReason')) { alert('Укажите причину'); return; }
+    const j = sfGet('briefingJournal'), all = getAllEmployees();
+    keys.forEach(k => { const e = all.find(x => rgKey(x) === k); if (e) j.push({ id: sfUid(), no: j.length + 1, type: type, date: date, key: k, fio: rgFio(e), year: sfYear(e), position: e.position || '', dept: e.department || '', instr: instr, instrPos: v('qpInstrPos'), reason: v('qpReason') }); });
+    sfSet('briefingJournal', j); sfSet('briefPending', sfGet('briefPending').filter(x => !(x.type === type && keys.indexOf(x.key) !== -1)));
+    localStorage.setItem('sfLastInstr', instr); localStorage.setItem('sfLastInstrPos', v('qpInstrPos'));
+    grpQuickList(); grpQuickPending(); alert('✅ Инструктаж записан в журнал: ' + keys.length);
+}
+function grpQuickNeed() {
+    const keys = grpQuickKeys(), type = document.getElementById('qpType').value;
+    if (!keys.length) { alert('Отметьте работников'); return; }
+    const p = sfGet('briefPending'); keys.forEach(k => { if (!p.some(x => x.key === k && x.type === type)) p.push({ key: k, type: type, since: new Date().toISOString().slice(0, 10) }); });
+    sfSet('briefPending', p); grpQuickList(); grpQuickPending();
+}
+function grpQuickPending() {
+    const box = document.getElementById('qpPending'); if (!box) return;
+    const p = sfGet('briefPending'), all = getAllEmployees();
+    box.innerHTML = p.length ? '<b style="font-size:13px;">⏳ Ожидают инструктажа (' + p.length + '):</b> ' + p.map((x, i) => { const e = all.find(y => rgKey(y) === x.key); return e ? `<span class="rg-badge warn" style="margin:2px;">${rgEsc(rgFio(e))} · ${SF_TYPES[x.type]} <a href="#" onclick="event.preventDefault();grpPendDel(${i})" style="color:inherit">✖</a></span>` : ''; }).join('') : '';
+}
+function grpPendDel(i) { const p = sfGet('briefPending'); p.splice(i, 1); sfSet('briefPending', p); grpQuickList(); grpQuickPending(); }
+(function () { const prev = grpRender; grpRender = function () { prev(); grpQuickMount(); }; })();
+(function () {
+    const prev = grpDueList;
+    grpDueList = function () {
+        const out = prev(), all = getAllEmployees();
+        sfGet('briefPending').forEach(x => { const e = all.find(y => rgKey(y) === x.key); if (e) out.push({ g: 'Отмечено «нужно провести»', t: x.type, fio: rgFio(e), st: { cls: 'warn', txt: 'с ' + sfFmt(x.since) } }); });
+        return out;
+    };
+})();
+
+// ============================================================
+// ПРОТОКОЛ ПРОВЕРКИ ЗНАНИЙ ПРАВИЛ РАБОТЫ В ЭЛЕКТРОУСТАНОВКАХ: бланк-черновик и помощник
+// ============================================================
+function eleHtml(d) {
+    const B = (v, n) => v ? '<u>&nbsp;' + rgEsc(v) + '&nbsp;</u>' : '_'.repeat(n || 24);
+    const cap = t => '<div style="font-size:10px;text-align:center;color:#333;margin:0 0 6px;">' + t + '</div>';
+    const deps = (d.deps && d.deps.length) ? d.deps : [{ pos: '', fio: '', grp: '' }, { pos: '', fio: '', grp: '' }];
+    const depLines = deps.map(x => '<div>' + B(((x.pos || '') + ' ' + (x.fio || '') + ' ' + (x.grp || '')).trim(), 60) + '</div>' + cap('(должность, фамилия и инициалы, группа по электробезопасности)')).join('');
+    const sign = (name) => '<div style="margin:12px 0 0;">______________________ / ' + (name ? rgEsc(name) : '____________') + ' /</div>' + cap('(подпись, фамилия и инициалы)');
+    return `<style>@page{size:A4;margin:15mm}</style><div style="font-family:'Times New Roman',serif;color:#000;font-size:13px;line-height:1.5;">
+    <h3 style="text-align:center;margin:0;">ПРОТОКОЛ № ${B(d.n, 10)}</h3>
+    <h3 style="text-align:center;margin:2px 0 14px;">ПРОВЕРКИ ЗНАНИЙ ПРАВИЛ РАБОТЫ В ЭЛЕКТРОУСТАНОВКАХ</h3>
+    <div>Дата проверки: ${B(d.date ? sfFmt(d.date) : '', 14)}</div>
+    <div>Причина проверки: ${B(d.reason, 16)} &nbsp; Комиссия: ${B(d.comm, 40)}</div>${cap('(наименование комиссии)')}
+    <div>в составе:</div>
+    <div>председатель комиссии: ${B(((d.chairPos || '') + ' ' + (d.chairName || '') + ' ' + (d.chairGroup || '')).trim(), 55)}</div>${cap('(должность, фамилия и инициалы, группа по электробезопасности)')}
+    <div>заместители председателя комиссии:</div>${depLines}
+    <div>На основании приказа ${B(d.order, 40)} провела проверку знаний правил работ в электроустановках.</div>
+    <div style="margin-top:8px;"><b>Проверяемый:</b></div>
+    <div>фамилия, имя, отчество: ${B(d.fio, 45)}</div>
+    <div>место работы: ${B(d.place, 50)}</div>
+    <div>должность: ${B(d.pos, 50)}</div>
+    <div>дата предыдущей проверки: ${B(d.prev ? sfFmt(d.prev) : '', 14)} &nbsp; оценка, группа по электробезопасности: ${B(d.prevGroup, 22)}</div>
+    <div style="margin-top:8px;"><b>Результаты проверки знаний:</b></div>
+    <div>по устройству электроустановок и технической эксплуатации: ${B(d.r1, 22)}</div>
+    <div>по охране труда: ${B(d.r2, 22)}</div>
+    <div>по пожарной безопасности: ${B(d.r3, 22)}</div>
+    <div>других правил и инструкций: ${B(d.r4, 22)}</div>
+    <div style="margin-top:8px;"><b>Заключение комиссии:</b></div>
+    <div>общая оценка: ${B(d.total, 22)}</div>
+    <div>группа по электробезопасности: ${B(d.group, 22)} &nbsp; продолжительность дублирования: ${B(d.dubl, 14)}</div>
+    <div>допущен к работе в качестве: ${B(d.permit, 40)} &nbsp; дата следующей проверки: ${B(d.next ? sfFmt(d.next) : '', 14)}</div>
+    <div style="margin-top:12px;"><b>Подписи:</b></div>
+    <div>председатель комиссии:</div>${sign(d.chairName)}
+    <div>заместители председателя комиссии:</div>${deps.map(x => sign(x.fio)).join('')}
+    <div style="margin-top:14px;">С заключением комиссии ознакомлен: ______________________ / ${d.fio ? rgEsc(d.fio) : '____________'} /</div>${cap('(подпись, фамилия и инициалы)')}</div>`;
+}
+function eleInit() {
+    const box = document.getElementById('sfTab_ele'); if (!box || box.dataset.ready) return;
+    box.dataset.ready = '1';
+    const c = JSON.parse(localStorage.getItem('eleCommission') || '{}');
+    const f = (id, l, v, t) => `<label>${l}<input id="${id}" type="${t || 'text'}" class="rg-input" value="${rgEsc(v || '')}"></label>`;
+    const sel = (id, l, opts) => `<label>${l}<select id="${id}" class="rg-input">${opts.map(o => `<option>${o}</option>`).join('')}</select></label>`;
+    box.innerHTML = `<p style="color:#8888aa;font-size:13px;">Два варианта: <b>пустой бланк</b> для заполнения от руки или <b>помощник</b> — вводите данные и печатаете готовый протокол. Состав комиссии запоминается.</p>
+    <button class="btn-secondary" onclick="openPrintWindow(eleHtml({}),'Протокол проверки знаний (бланк)')">🖨 Пустой бланк (черновик)</button>
+    <h4 class="rg-h">Помощник</h4>
+    <div class="rg-grid">${f('eN', 'Номер протокола')}${f('eDate', 'Дата проверки', new Date().toISOString().slice(0, 10), 'date')}${sel('eReason', 'Причина проверки', ['очередная', 'первичная', 'внеочередная'])}${f('eComm', 'Комиссия (наименование)', c.comm || (c.comm === undefined ? 'постоянно действующая аттестационная комиссия ' + sfOrg().replace(/_+/, '') : ''))}</div>
+    <div class="rg-grid" style="margin-top:8px;">${f('eChairPos', 'Председатель: должность', c.chairPos)}${f('eChairName', 'Председатель: Ф.И.О. (И.О. Фамилия)', c.chairName)}${f('eChairGroup', 'Группа по электробезопасности', c.chairGroup)}${f('eOrder', 'Приказ (директора ... № ... от ...)', c.order)}</div>
+    <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#8888aa;margin-top:8px;">Заместители председателя (по строке: должность | Ф.И.О. | группа)<textarea id="eDeps" class="rg-input" rows="3" placeholder="начальник службы | Ю.А. Иванов | V группа до и свыше 1000В">${rgEsc(c.deps || '')}</textarea></label>
+    <h4 class="rg-h">Проверяемый</h4>
+    <div class="rg-grid"><label>Выбрать из штатки<select id="eEmp" class="rg-input" onchange="eleFill()"><option value="">— или впишите вручную —</option>${getAllEmployees().map(e => `<option value="${rgEsc(rgKey(e))}">${rgEsc(rgFio(e))}</option>`).join('')}</select></label>${f('eFio', 'Фамилия, имя, отчество')}${f('ePlace', 'Место работы', sfOrg().replace(/_+/, ''))}${f('ePos', 'Должность')}${f('ePrev', 'Дата предыдущей проверки', '', 'date')}${f('ePrevGroup', 'Оценка, группа (предыдущая)')}</div>
+    <h4 class="rg-h">Результаты</h4>
+    <div class="rg-grid">${sel('eR1', 'По устройству электроустановок и технической эксплуатации', ['удовлетворительно', 'неудовлетворительно'])}${sel('eR2', 'По охране труда', ['удовлетворительно', 'неудовлетворительно'])}${sel('eR3', 'По пожарной безопасности', ['удовлетворительно', 'неудовлетворительно'])}${sel('eR4', 'Других правил и инструкций', ['удовлетворительно', 'неудовлетворительно'])}${sel('eTotal', 'Общая оценка', ['удовлетворительно', 'неудовлетворительно'])}${f('eGroup', 'Присвоена группа по электробезопасности')}${f('eDubl', 'Продолжительность дублирования')}${f('ePermit', 'Допущен к работе в качестве')}${f('eNext', 'Дата следующей проверки', '', 'date')}</div>
+    <button class="btn-primary" style="margin-top:12px;" onclick="elePrint()">🖨 Печать протокола</button>`;
+}
+function eleFill() {
+    const k = document.getElementById('eEmp').value, e = getAllEmployees().find(x => rgKey(x) === k); if (!e) return;
+    document.getElementById('eFio').value = rgFio(e); document.getElementById('ePos').value = e.position || '';
+}
+function elePrint() {
+    const v = id => (document.getElementById(id) || {}).value || '';
+    const deps = v('eDeps').split(/\n/).map(l => l.trim()).filter(Boolean).map(l => { const a = l.split('|').map(x => x.trim()); return { pos: a[0] || '', fio: a[1] || '', grp: a[2] || '' }; });
+    const d = { n: v('eN'), date: v('eDate'), reason: v('eReason'), comm: v('eComm'), chairPos: v('eChairPos'), chairName: v('eChairName'), chairGroup: v('eChairGroup'), deps: deps, order: v('eOrder'), fio: v('eFio'), place: v('ePlace'), pos: v('ePos'), prev: v('ePrev'), prevGroup: v('ePrevGroup'), r1: v('eR1'), r2: v('eR2'), r3: v('eR3'), r4: v('eR4'), total: v('eTotal'), group: v('eGroup'), dubl: v('eDubl'), permit: v('ePermit'), next: v('eNext') };
+    localStorage.setItem('eleCommission', JSON.stringify({ comm: d.comm, chairPos: d.chairPos, chairName: d.chairName, chairGroup: d.chairGroup, order: d.order, deps: v('eDeps') }));
+    openPrintWindow(eleHtml(d), 'Протокол проверки знаний');
+}
