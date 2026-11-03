@@ -1668,3 +1668,14 @@ input::placeholder, textarea::placeholder {
 .ln-check{display:flex;gap:10px;align-items:flex-start;margin:14px 0;font-size:16px;line-height:1.4}
 .ln-q{margin:18px 0}.ln-opt{display:flex;gap:10px;align-items:flex-start;padding:10px;margin-top:6px;border:1px solid #e3e3ee;border-radius:10px;font-size:16px}
 .ln-code{width:100%;min-height:110px;font-family:monospace;font-size:12px;padding:10px;border:1px solid #d5d5e5;border-radius:10px;box-sizing:border-box}
+
+/* ===== Общая аккуратность интерфейса ===== */
+.nav{flex-wrap:wrap;gap:2px 4px}
+.nav-link{font-size:13px;padding:6px 10px;white-space:nowrap;transition:background .15s}
+.rg-input:focus,.sf-tab:focus-visible{outline:2px solid #7c3aed;outline-offset:1px}
+.rg-table tr td{vertical-align:middle}
+.rg-reg-box,.rg-card{border-radius:12px}
+.btn-primary,.btn-secondary,.btn-add{transition:transform .1s,opacity .15s}
+.btn-primary:hover,.btn-secondary:hover,.btn-add:hover{opacity:.9}.btn-primary:active,.btn-secondary:active{transform:scale(.98)}
+.sf-emps::-webkit-scrollbar,.rg-table::-webkit-scrollbar{height:8px;width:8px}.sf-emps::-webkit-scrollbar-thumb{background:rgba(124,58,237,.35);border-radius:8px}
+@media(max-width:700px){.rg-grid[style*="repeat(4"],.rg-grid[style*="repeat(5"]{grid-template-columns:1fr!important}}
