@@ -207,6 +207,8 @@
                     <button class="btn-add" onclick="createDepartmentFromSelected()">📁 Создать службу</button>
                     <button class="btn-add" onclick="selectAllStaffInCurrentView()">✅ Выбрать всех</button>
                     <button class="btn-add" onclick="deselectAllStaff()">✖ Снять всех</button>
+                    <button class="btn-add" onclick="sfAddEmployeeModal()">➕ Добавить сотрудника</button>
+                    <button class="btn-add" onclick="sfRemoveSelected()">➖ Убрать выбранных</button>
                     <button class="btn-add" onclick="clearAllStaff()" style="background:rgba(255,70,70,0.15);color:#ff6b6b;">🗑 Очистить всё</button>
                     <span style="color:#8888aa;font-size:13px;margin-left:auto;" id="staffTotalCount">Всего: 0</span>
                 </div>
@@ -678,6 +680,7 @@
             <button id="sfBtn_bank" class="sf-tab" onclick="sfTab('bank')">Банк вопросов</button>
             <button id="sfBtn_test" class="sf-tab" onclick="sfTab('test')">Пройти тест</button>
             <button id="sfBtn_results" class="sf-tab" onclick="sfTab('results')">Результаты тестов</button>
+            <button id="sfBtn_ele" class="sf-tab" onclick="sfTab('ele')">⚡ Протокол электроустановок</button>
         </div>
 
         <div id="sfTab_brief">
@@ -746,6 +749,8 @@
             <div id="sfTestArea" style="margin-top:16px;"></div>
         </div>
 
+        <div id="sfTab_ele" class="hidden"></div>
+
         <div id="sfTab_results" class="hidden"><div id="sfResults" style="overflow-x:auto;"></div></div>
     </div>
 </div>
@@ -760,7 +765,7 @@
             <button class="btn-secondary" onclick="openPpeNormsModal()">📚 Нормы СИЗ (767н)</button>
             <button class="btn-primary" onclick="generateViolationsProtocol()">📄 Протокол устранения нарушений</button>
         </div>
-        <div class="rg-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px;"><label>Искать по дате<select id="rgDateMode" class="rg-input" onchange="renderRegistry()"><option value="">— без фильтра по датам —</option><option value="check">Дата проведения проверки знаний</option><option value="reg">Дата внесения в реестр</option></select></label><label>С<input type="date" id="rgFrom" class="rg-input" onchange="renderRegistry()"></label><label>По<input type="date" id="rgTo" class="rg-input" onchange="renderRegistry()"></label></div>
+        <div class="rg-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px;"><label>Показать<select id="rgDateShow" class="rg-input" onchange="renderRegistry()"><option value="in">Кто проходил в диапазоне</option><option value="out">Кто НЕ проходил в диапазоне</option><option value="all">Все (с отметкой)</option></select></label><label>Искать по дате<select id="rgDateMode" class="rg-input" onchange="renderRegistry()"><option value="">— без фильтра по датам —</option><option value="check">Дата проведения проверки знаний</option><option value="reg">Дата внесения в реестр</option></select></label><label>С<input type="date" id="rgFrom" class="rg-input" onchange="renderRegistry()"></label><label>По<input type="date" id="rgTo" class="rg-input" onchange="renderRegistry()"></label></div>
         <div id="registryTable" style="overflow-x:auto;"></div>
     </div>
 </div>
